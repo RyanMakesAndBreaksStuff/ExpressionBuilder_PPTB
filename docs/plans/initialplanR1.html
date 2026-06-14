@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Initial Plan Review R1</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f7f9fb;
+      --surface-strong: #eef4f8;
+      --text: #17212b;
+      --muted: #5b6773;
+      --border: #d9e1e8;
+      --primary: #0f6cbd;
+      --primary-dark: #084b83;
+      --success: #247a3b;
+      --warning: #9a5b00;
+      --danger: #b42318;
+      --code-bg: #f3f6f9;
+      --radius: 8px;
+      --shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    header,
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding-top: 44px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    main {
+      padding-top: 28px;
+      padding-bottom: 48px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 1.45rem;
+      margin-top: 34px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.08rem;
+      margin: 0 0 8px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    a {
+      color: var(--primary);
+      text-underline-offset: 2px;
+    }
+
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+      padding: 1px 5px;
+    }
+
+    ul {
+      margin: 8px 0 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-strong);
+      font-weight: 700;
+    }
+
+    .summary,
+    .finding,
+    .evidence {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin: 16px 0 20px;
+    }
+
+    .summary {
+      border-left: 5px solid var(--primary);
+    }
+
+    .finding.critical {
+      border-left: 5px solid var(--danger);
+    }
+
+    .finding.warning {
+      border-left: 5px solid var(--warning);
+    }
+
+    .finding.suggestion {
+      border-left: 5px solid var(--primary);
+    }
+
+    .evidence {
+      border-left: 5px solid var(--success);
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-right: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .badge.critical {
+      color: var(--danger);
+      border-color: #f0b8b3;
+      background: #fff1f0;
+    }
+
+    .badge.warning {
+      color: var(--warning);
+      border-color: #f1d19a;
+      background: #fff7e8;
+    }
+
+    .badge.suggestion {
+      color: var(--primary-dark);
+      border-color: #b9d8f5;
+      background: #edf6ff;
+    }
+
+    .badge.pass {
+      color: var(--success);
+      border-color: #b8dfc1;
+      background: #eef8f1;
+    }
+
+    @media (max-width: 780px) {
+      header,
+      main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Initial Plan Review R1</h1>
+    <p class="meta">Review target: <a href="initialplan.html">docs/plans/initialplan.html</a>. Review date: 2026-06-13. Requested skills: Power Automate Expression Builder and React Code Review.</p>
+  </header>
+
+  <main>
+    <section class="summary">
+      <p><strong>Verdict:</strong> the plan is directionally valid, but it is not implementation-ready until the critical findings below are fixed.</p>
+      <p>The core direction is sound: a framework-free TypeScript expression engine, React web-first UI, and platform adapter boundary match the earlier architecture decision. The basic expression examples for Trigger Condition and Filter array advanced mode are valid. The main gaps are around boolean-root validation, type-aware expression generation, date handling, RAQB/Fluent UI dependency reality, and sharing the React app between web and PPTB without cross-app imports.</p>
+    </section>
+
+    <h2>Critical Issues</h2>
+
+    <section class="finding critical">
+      <h3><span class="badge critical">Critical</span>Shared React app has no package boundary</h3>
+      <p><strong>Plan references:</strong> <code>apps/web/src/App.tsx</code> at initialplan.html:531, <code>apps/pptb/src/main.tsx</code> at initialplan.html:604, PPTB wiring at initialplan.html:624, and "same React app" acceptance at initialplan.html:634.</p>
+      <p>The plan says web and PPTB boot paths render the same React app, but Wave 0 only creates <code>apps/web</code>, <code>apps/pptb</code>, <code>packages/engine</code>, and <code>packages/platform</code>. That leaves no clean place for shared UI. The likely implementation would either import source from <code>apps/web</code> into <code>apps/pptb</code> or duplicate screens, both of which violate the stated boundary.</p>
+      <p><strong>Fix:</strong> add a shared UI package in Wave 0, for example <code>packages/app</code> or <code>packages/builder-ui</code>. Move <code>AppShell</code>, builder components, import/export, preview, and copy UI there. Keep <code>apps/web</code> and <code>apps/pptb</code> as thin bootstrap packages that pass different <code>PlatformAdapter</code> implementations.</p>
+    </section>
+
+    <section class="finding critical">
+      <h3><span class="badge critical">Critical</span>Predicate roots are not constrained to boolean output</h3>
+      <p><strong>Plan references:</strong> AST root can be any <code>ExpressionNode</code> at initialplan.html:371-376, function nodes allow arbitrary calls at initialplan.html:391-395, literals include non-boolean values at initialplan.html:402-405, and required behavior only says root expressions get one leading <code>@</code> at initialplan.html:492.</p>
+      <p>Trigger conditions and Filter array advanced mode predicates must evaluate to boolean. The plan exposes string/date-returning wrappers such as <code>formatDateTime</code>, <code>utcNow</code>, and <code>addDays</code> at initialplan.html:487, but does not require diagnostics when one of those functions, a field reference, or a literal becomes the root expression.</p>
+      <p><strong>Fix:</strong> add expression return-type metadata and require <code>formatExpression()</code> to emit an error diagnostic for non-boolean roots in <code>triggerCondition</code> and <code>filterArray</code> modes. Add tests for invalid roots such as <code>utcNow()</code>, <code>triggerBody()?['Title']</code>, <code>'text'</code>, and <code>42</code>.</p>
+    </section>
+
+    <section class="finding critical">
+      <h3><span class="badge critical">Critical</span>Expression operators are not type-gated</h3>
+      <p><strong>Plan references:</strong> field types include <code>number</code>, <code>boolean</code>, <code>dateTime</code>, and <code>choice</code> at initialplan.html:361; empty checks are included generically at initialplan.html:485; sample fields include all those types at initialplan.html:571.</p>
+      <p><code>empty()</code> is safe for null, strings, arrays, and objects, but it is not a general-purpose check for numbers and booleans. The plan also lists comparison operators for all fields without specifying date handling. Date comparisons should be explicit, usually through <code>ticks()</code> or an ISO-8601-only contract, otherwise lexicographic string comparison can be wrong.</p>
+      <p><strong>Fix:</strong> make the operator registry field-type aware. Disallow or warn on <code>empty()</code> for numeric and boolean fields. Add date fixtures for <code>@greater(ticks(triggerBody()?['DueDate']), ticks(utcNow()))</code> and the equivalent <code>item()</code> form, or document and enforce a strict sortable timestamp format.</p>
+    </section>
+
+    <section class="finding critical">
+      <h3><span class="badge critical">Critical</span>RAQB Fluent dependency conflicts with a Fluent UI v9 assumption</h3>
+      <p><strong>Plan references:</strong> tech stack lists Fluent UI and <code>@react-awesome-query-builder/fluent</code> at initialplan.html:271, the canvas implementation uses RAQB Fluent at initialplan.html:575, and release hardening pins RAQB at initialplan.html:759.</p>
+      <p>Current npm metadata still reports <code>@react-awesome-query-builder/fluent</code> as <code>6.7.0-alpha.0</code>. Its peer dependencies are Fluent UI v8 packages: <code>@fluentui/react</code>, <code>@fluentui/font-icons-mdl2</code>, and <code>@fluentui/react-icons</code>. The current Fluent UI v9 package is <code>@fluentui/react-components</code>. If the implementation assumes Fluent UI v9 everywhere, the RAQB Fluent package does not cleanly match that design system.</p>
+      <p><strong>Fix:</strong> explicitly choose one of two paths before implementation: use Fluent UI v8 for the MVP shell because RAQB Fluent expects it, or isolate RAQB v8 styling inside the builder surface while using v9 elsewhere with documented theme bridging. Keep the exact RAQB pin and verify install, render, and CSS behavior in Wave 0 or an explicit dependency spike.</p>
+    </section>
+
+    <section class="finding critical">
+      <h3><span class="badge critical">Critical</span>Root TypeScript build gate is underspecified</h3>
+      <p><strong>Plan references:</strong> Wave 0 creates <code>tsconfig.base.json</code> at initialplan.html:323, but no root <code>tsconfig.json</code>. The root script runs <code>tsc -b</code> at initialplan.html:348, and the Wave 0 gate expects package references to typecheck at initialplan.html:450.</p>
+      <p><code>tsc -b</code> needs a root project file and project references, or it has no reliable build graph for package ordering and declarations. The plan also does not require <code>composite</code>, declaration output, package <code>types</code>, or package <code>exports</code>, all of which matter once workspaces import <code>@pavb/engine</code>, <code>@pavb/platform</code>, and the shared app package.</p>
+      <p><strong>Fix:</strong> add root <code>tsconfig.json</code>, package-level <code>composite</code> configs, project references, declaration emit settings, and package <code>exports</code>/<code>types</code> requirements to Wave 0 before parallel work starts.</p>
+    </section>
+
+    <h2>Warnings</h2>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>Null-safe string wrappers are not required</h3>
+      <p><strong>Plan reference:</strong> trigger formatter tests include <code>@contains(toLower(triggerBody()?['Title']), 'urgent')</code> at initialplan.html:503.</p>
+      <p>If <code>Title</code> is missing or null, safe navigation returns null and <code>toLower()</code> receives a non-string value. The plan should either emit a diagnostic for nullable wrapper input or generate a deliberate null-safe pattern such as <code>@contains(toLower(coalesce(triggerBody()?['Title'], '')), 'urgent')</code>.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>Case sensitivity is not locked down in acceptance tests</h3>
+      <p><strong>Plan references:</strong> text operators are listed at initialplan.html:483, and the only case-insensitive example lowercases the field at initialplan.html:503.</p>
+      <p>Power Automate text comparisons and Filter array text filtering are case-sensitive unless the expression deliberately normalizes case. The plan should add exact-case fixtures and case-insensitive fixtures that normalize both the dynamic value and the user-entered value.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>Saved JSON stores two sources of truth</h3>
+      <p><strong>Plan reference:</strong> saved JSON includes both <code>raqbTree</code> and <code>engineAst</code> at initialplan.html:563-564.</p>
+      <p>Persisting both the RAQB tree and engine AST can drift. If they disagree, import/export round trips can silently change the generated expression or mask a converter bug.</p>
+      <p><strong>Fix:</strong> persist the app-owned shape plus one canonical query representation, then derive the engine AST on load. If both must be stored for debugging, include a schema rule that validates both representations produce the same expression before import succeeds.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>ESLint config target is stale for current latest ESLint</h3>
+      <p><strong>Plan reference:</strong> Agent D owns <code>.eslintrc.cjs</code> at initialplan.html:652 while the root script runs <code>eslint .</code> at initialplan.html:347.</p>
+      <p>Current npm metadata reports ESLint <code>10.5.0</code>. Modern ESLint defaults to flat config, so a new project using latest ESLint should use <code>eslint.config.js</code> or explicitly pin an older ESLint version that still uses <code>.eslintrc.cjs</code> cleanly.</p>
+      <p><strong>Fix:</strong> update Wave 0 and Agent D ownership to use <code>eslint.config.js</code>, or pin ESLint intentionally and document why.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>RAQB pinning happens too late</h3>
+      <p><strong>Plan references:</strong> Wave 0 runs <code>npm install</code> at initialplan.html:449, Agent B implements RAQB at initialplan.html:575, but the exact RAQB pin is not required until release hardening at initialplan.html:759.</p>
+      <p>The project should not discover RAQB alpha or peer dependency behavior after most implementation work is complete.</p>
+      <p><strong>Fix:</strong> move exact RAQB and peer package pinning into Wave 0 or the first Agent B task, and make the dependency spike a merge gate before broad UI work.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>Field references assume only top-level payload properties</h3>
+      <p><strong>Plan references:</strong> trigger fields render as <code>triggerBody()?['FieldName']</code> at initialplan.html:493, and Filter array fields render as <code>item()?['FieldName']</code> at initialplan.html:494.</p>
+      <p>Those references are valid for direct properties, but many trigger/action payloads need nested paths or trigger output metadata. Without field path metadata, the builder can only safely claim direct-property support.</p>
+      <p><strong>Fix:</strong> add <code>path</code> or <code>segments</code> metadata to <code>FieldDefinition</code>, keep <code>name</code> as the stable field id, and document that MVP sample fields are direct properties unless metadata says otherwise.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>E2E persistence claim has no matching test step</h3>
+      <p><strong>Plan references:</strong> E2E acceptance says tests prove persistence at initialplan.html:690, but the E2E coverage list at initialplan.html:657-661 only covers mode switching, import/export, copy, and PPTB bridge calls.</p>
+      <p><strong>Fix:</strong> add a web adapter settings persistence test and a PPTB settings persistence test, or remove "persistence" from the E2E acceptance criteria until settings are in scope.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>PPTB E2E target is not served</h3>
+      <p><strong>Plan references:</strong> Agent D creates <code>tests/e2e/pptb-smoke.spec.ts</code> at initialplan.html:647, but Playwright only starts <code>npm run dev:web</code> before tests at initialplan.html:673.</p>
+      <p>A PPTB smoke test needs a page to load. Starting only the web dev server does not prove the PPTB bundle, entrypoint, or mocked <code>window.toolboxAPI</code> boot path.</p>
+      <p><strong>Fix:</strong> add a <code>dev:pptb</code> or <code>preview:pptb</code> target, or make the PPTB smoke test build <code>apps/pptb</code> and serve a static fixture with the toolbox API mock injected before app bootstrap.</p>
+    </section>
+
+    <section class="finding warning">
+      <h3><span class="badge warning">Warning</span>Accessibility is not part of acceptance</h3>
+      <p><strong>Plan references:</strong> UI requirements at initialplan.html:546-553 and E2E coverage at initialplan.html:657-661 do not require keyboard flow, focus management, labels, live regions for diagnostics, or segmented-control semantics.</p>
+      <p>A visual builder still needs keyboard-operable controls and accessible diagnostics. RAQB may supply some semantics, but the shell, mode selector, preview, import/export, and copy flow remain app responsibilities.</p>
+      <p><strong>Fix:</strong> add Testing Library <code>user-event</code> tests for mode selection and copy/import/export keyboard flows, plus Playwright or axe checks for labels, focus order, and diagnostics announcements.</p>
+    </section>
+
+    <h2>Suggestions</h2>
+
+    <section class="finding suggestion">
+      <h3><span class="badge suggestion">Suggestion</span>Strengthen function registry acceptance before broad wrappers</h3>
+      <p><strong>Plan reference:</strong> function wrappers are included at initialplan.html:487, and function registry implementation is assigned at initialplan.html:509.</p>
+      <p>Add catalog metadata for parameter counts, parameter types, return type, allowed surfaces, and null behavior before exposing wrappers in the UI. This keeps <code>formatDateTime</code>, <code>utcNow</code>, and <code>addDays</code> from becoming free-form calls that are hard to validate.</p>
+    </section>
+
+    <section class="finding suggestion">
+      <h3><span class="badge suggestion">Suggestion</span>Add a dependency spike to Wave 0</h3>
+      <p><strong>Plan reference:</strong> Wave 0 currently gates on package shells compiling at initialplan.html:293 and install/typecheck at initialplan.html:449-450.</p>
+      <p>Because RAQB Fluent is alpha and peers on Fluent UI v8, Wave 0 should include a minimal render spike that imports the RAQB Fluent builder in Vite, starts the web app, and captures one Playwright smoke screenshot before parallel work starts.</p>
+    </section>
+
+    <section class="finding suggestion">
+      <h3><span class="badge suggestion">Suggestion</span>Add package-local scripts and an RAQB error boundary</h3>
+      <p>The plan calls workspace-specific commands such as <code>npm test --workspace @pavb/web</code>, so each workspace package should explicitly define <code>test</code>, <code>build</code>, and where relevant <code>dev</code>/<code>preview</code>. Add an error boundary around the RAQB canvas and preview path because RAQB is the highest-risk UI dependency in the MVP.</p>
+    </section>
+
+    <h2>Positive Validations</h2>
+    <section class="evidence">
+      <ul>
+        <li><span class="badge pass">Valid</span>The basic examples <code>@equals(triggerBody()?['Status'], 'Approved')</code> and <code>@equals(item()?['Status'], 'Approved')</code> are valid for trigger conditions and Filter array advanced mode.</li>
+        <li><span class="badge pass">Valid</span>The one-leading-<code>@</code> requirement at initialplan.html:492 correctly avoids the nested-<code>@</code> pattern shown in older drafts.</li>
+        <li><span class="badge pass">Valid</span>Keeping the engine free of React, RAQB, DOM, and PPTB imports at initialplan.html:460 and initialplan.html:520 is the right core boundary.</li>
+        <li><span class="badge pass">Valid</span>Using an app-owned import/export shape rather than raw RAQB-only state at initialplan.html:552 is the right direction, as long as the source of truth is clarified.</li>
+        <li><span class="badge pass">Valid</span>Pinning <code>@react-awesome-query-builder/fluent</code> at initialplan.html:759 is necessary; current npm metadata confirms the package still resolves to <code>6.7.0-alpha.0</code>.</li>
+      </ul>
+    </section>
+
+    <h2>Evidence Checked</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Power Automate expressions</td>
+          <td>Local skill references for expression functions, trigger conditions, and Filter array; Microsoft Learn search results for trigger conditions, Filter array advanced mode, WDL expression functions, null/empty behavior, and string literal rules.</td>
+        </tr>
+        <tr>
+          <td>React and package feasibility</td>
+          <td>Initial plan package layout and current npm metadata for <code>@react-awesome-query-builder/fluent</code>, <code>@fluentui/react</code>, <code>@fluentui/react-components</code>, and <code>eslint</code>.</td>
+        </tr>
+        <tr>
+          <td>Source plan lineage</td>
+          <td><a href="../reviews/3option.html">docs/reviews/3option.html</a>, <a href="../PowerAutomateVisualBuilder-FirstDrafts/reactpath.html">reactpath.html</a>, and <a href="../PowerAutomateVisualBuilder-FirstDrafts/vue-sveltepath.html">vue-sveltepath.html</a>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Power Automate Expression Builder Mock</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --colorNeutralBackground1: #ffffff;
+      --colorNeutralBackground2: #faf9f8;
+      --colorNeutralBackground3: #f5f5f5;
+      --colorNeutralBackground4: #f0f0f0;
+      --colorNeutralForeground1: #242424;
+      --colorNeutralForeground2: #424242;
+      --colorNeutralForeground3: #616161;
+      --colorNeutralForegroundOnBrand: #ffffff;
+      --colorNeutralStroke1: #d1d1d1;
+      --colorNeutralStroke2: #e0e0e0;
+      --colorNeutralStrokeAccessible: #616161;
+      --colorBrandBackground: #0f6cbd;
+      --colorBrandBackgroundHover: #115ea3;
+      --colorBrandForeground1: #0f6cbd;
+      --colorBrandStroke1: #0f6cbd;
+      --colorPaletteGreenBackground1: #f1faf1;
+      --colorPaletteGreenForeground1: #0e700e;
+      --colorPaletteYellowBackground1: #fff9e8;
+      --colorPaletteYellowForeground1: #817400;
+      --colorPaletteRedBackground1: #fdf3f4;
+      --colorPaletteRedForeground1: #bc2f32;
+      --colorPaletteBlueBackground1: #ebf3fc;
+      --colorPaletteBlueForeground1: #0f6cbd;
+      --shadow4: 0 2px 4px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+      --shadow8: 0 4px 8px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+      --radiusSmall: 2px;
+      --radiusMedium: 4px;
+      --radiusLarge: 6px;
+      --fontBase: "Segoe UI", "Segoe UI Variable", sans-serif;
+      --fontMono: "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(15, 108, 189, 0.06) 0, rgba(15, 108, 189, 0) 232px),
+        var(--colorNeutralBackground2);
+      color: var(--colorNeutralForeground1);
+      font-family: var(--fontBase);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--colorNeutralStroke2);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-inner {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto;
+      align-items: center;
+      gap: 20px;
+      min-height: 64px;
+      padding: 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radiusLarge);
+      background: var(--colorBrandBackground);
+      color: var(--colorNeutralForegroundOnBrand);
+      font-family: var(--fontMono);
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow4);
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      overflow: hidden;
+      color: var(--colorNeutralForeground1);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .brand-meta {
+      margin: 1px 0 0;
+      overflow: hidden;
+      color: var(--colorNeutralForeground3);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .environment-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--colorNeutralForeground2);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--colorPaletteGreenForeground1);
+      box-shadow: 0 0 0 4px rgba(14, 112, 14, 0.12);
+      animation: breathe 2.6s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(0.92);
+        opacity: 0.76;
+      }
+      50% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .commandbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .button,
+    .icon-button {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--colorNeutralStroke1);
+      border-radius: var(--radiusMedium);
+      background: var(--colorNeutralBackground1);
+      color: var(--colorNeutralForeground1);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 100ms ease;
+    }
+
+    .button {
+      padding: 0 12px;
+    }
+
+    .icon-button {
+      width: 32px;
+      padding: 0;
+    }
+
+    .button:hover,
+    .icon-button:hover {
+      background: var(--colorNeutralBackground3);
+    }
+
+    .button:active,
+    .icon-button:active {
+      transform: translateY(1px);
+    }
+
+    .button.primary {
+      border-color: var(--colorBrandBackground);
+      background: var(--colorBrandBackground);
+      color: var(--colorNeutralForegroundOnBrand);
+    }
+
+    .button.primary:hover {
+      background: var(--colorBrandBackgroundHover);
+    }
+
+    .button.subtle {
+      border-color: transparent;
+      background: transparent;
+      color: var(--colorBrandForeground1);
+    }
+
+    .glyph {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      flex: 0 0 auto;
+      position: relative;
+    }
+
+    .glyph.copy::before,
+    .glyph.copy::after {
+      content: "";
+      position: absolute;
+      border: 1.6px solid currentColor;
+      border-radius: 2px;
+    }
+
+    .glyph.copy::before {
+      inset: 4px 2px 2px 5px;
+      background: currentColor;
+      opacity: 0.12;
+    }
+
+    .glyph.copy::after {
+      inset: 1px 5px 5px 2px;
+    }
+
+    .glyph.download::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 2px;
+      width: 2px;
+      height: 8px;
+      background: currentColor;
+    }
+
+    .glyph.download::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 7px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+    }
+
+    .glyph.upload::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 6px;
+      width: 2px;
+      height: 8px;
+      background: currentColor;
+    }
+
+    .glyph.upload::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 1px;
+      width: 8px;
+      height: 8px;
+      border-left: 2px solid currentColor;
+      border-top: 2px solid currentColor;
+      transform: rotate(45deg);
+    }
+
+    .glyph.save::before {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border: 1.7px solid currentColor;
+      border-radius: 2px;
+    }
+
+    .glyph.save::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      bottom: 4px;
+      height: 5px;
+      border: 1.7px solid currentColor;
+      background: currentColor;
+      opacity: 0.12;
+    }
+
+    .glyph.more::before {
+      content: "";
+      position: absolute;
+      inset: 7px auto auto 2px;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 5px 0 currentColor, 10px 0 currentColor;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 280px minmax(420px, 1fr) minmax(360px, 0.72fr);
+      gap: 16px;
+      max-width: 1680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px 24px 24px;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow4);
+    }
+
+    .panel-header {
+      display: flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--colorNeutralStroke2);
+      padding: 12px 14px;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: var(--colorNeutralForeground1);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .panel-subtitle {
+      margin: 2px 0 0;
+      color: var(--colorNeutralForeground3);
+      font-size: 12px;
+    }
+
+    .panel-body {
+      padding: 14px;
+    }
+
+    .field-panel {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: calc(100dvh - 106px);
+    }
+
+    .searchbox {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--colorNeutralStroke1);
+      border-radius: var(--radiusMedium);
+      background: var(--colorNeutralBackground1);
+      color: var(--colorNeutralForeground1);
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .searchbox:focus {
+      border-color: var(--colorBrandStroke1);
+      box-shadow: inset 0 -1px 0 var(--colorBrandStroke1);
+    }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-top: 12px;
+      padding: 3px;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground3);
+    }
+
+    .mode-tab {
+      min-height: 34px;
+      border-radius: var(--radiusMedium);
+      background: transparent;
+      color: var(--colorNeutralForeground2);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .mode-tab[data-active="true"] {
+      background: var(--colorNeutralBackground1);
+      color: var(--colorBrandForeground1);
+      box-shadow: var(--shadow4);
+    }
+
+    .section-label {
+      margin: 18px 0 8px;
+      color: var(--colorNeutralForeground3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .field-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+      padding: 7px 8px;
+      border: 1px solid transparent;
+      border-radius: var(--radiusMedium);
+      background: transparent;
+    }
+
+    .field-row:hover {
+      border-color: var(--colorNeutralStroke2);
+      background: var(--colorNeutralBackground3);
+    }
+
+    .field-name {
+      overflow: hidden;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .field-type,
+    .pill {
+      display: inline-flex;
+      min-height: 22px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: 999px;
+      background: var(--colorNeutralBackground1);
+      color: var(--colorNeutralForeground3);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    .pill.brand {
+      border-color: rgba(15, 108, 189, 0.22);
+      background: var(--colorPaletteBlueBackground1);
+      color: var(--colorPaletteBlueForeground1);
+    }
+
+    .pill.success {
+      border-color: rgba(14, 112, 14, 0.22);
+      background: var(--colorPaletteGreenBackground1);
+      color: var(--colorPaletteGreenForeground1);
+    }
+
+    .pill.warning {
+      border-color: rgba(129, 116, 0, 0.24);
+      background: var(--colorPaletteYellowBackground1);
+      color: var(--colorPaletteYellowForeground1);
+    }
+
+    .source-footer {
+      border-top: 1px solid var(--colorNeutralStroke2);
+      padding: 14px;
+    }
+
+    .callout {
+      border: 1px solid rgba(15, 108, 189, 0.18);
+      border-radius: var(--radiusLarge);
+      background: var(--colorPaletteBlueBackground1);
+      color: var(--colorNeutralForeground2);
+      padding: 10px;
+    }
+
+    .callout-title {
+      margin: 0 0 3px;
+      color: var(--colorNeutralForeground1);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .callout p {
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .builder-panel {
+      min-height: calc(100dvh - 106px);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .builder-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--colorNeutralStroke2);
+      padding: 10px 14px;
+    }
+
+    .toolbar-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .split-button {
+      display: inline-flex;
+      min-height: 32px;
+      overflow: hidden;
+      border: 1px solid var(--colorNeutralStroke1);
+      border-radius: var(--radiusMedium);
+      background: var(--colorNeutralBackground1);
+    }
+
+    .split-button button {
+      min-height: 30px;
+      padding: 0 10px;
+      background: transparent;
+      color: var(--colorNeutralForeground1);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .split-button button + button {
+      border-left: 1px solid var(--colorNeutralStroke2);
+    }
+
+    .context-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--colorNeutralStroke2);
+      border-bottom: 1px solid var(--colorNeutralStroke2);
+    }
+
+    .metric {
+      min-width: 0;
+      background: var(--colorNeutralBackground1);
+      padding: 11px 14px;
+    }
+
+    .metric-label {
+      margin: 0;
+      color: var(--colorNeutralForeground3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 3px 0 0;
+      overflow: hidden;
+      color: var(--colorNeutralForeground1);
+      font-size: 14px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .query-canvas {
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .query-group {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground1);
+      padding: 14px;
+    }
+
+    .query-group::before {
+      content: "";
+      position: absolute;
+      top: 52px;
+      bottom: 18px;
+      left: 25px;
+      width: 2px;
+      border-radius: 99px;
+      background: var(--colorPaletteBlueBackground1);
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logic-switch {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusMedium);
+      background: var(--colorNeutralBackground3);
+    }
+
+    .logic-switch span {
+      display: inline-flex;
+      min-width: 44px;
+      min-height: 26px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radiusSmall);
+      color: var(--colorNeutralForeground3);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .logic-switch span.active {
+      background: var(--colorBrandBackground);
+      color: var(--colorNeutralForegroundOnBrand);
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .rule-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1.1fr) minmax(100px, 0.85fr) minmax(120px, 1fr) auto;
+      align-items: end;
+      gap: 8px;
+      min-width: 680px;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground2);
+      padding: 10px;
+      animation: rowIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .rule-row:nth-child(2) {
+      animation-delay: 70ms;
+    }
+
+    .rule-row:nth-child(3) {
+      animation-delay: 140ms;
+    }
+
+    @keyframes rowIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-field {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .form-field label {
+      color: var(--colorNeutralForeground3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .control {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--colorNeutralStroke1);
+      border-radius: var(--radiusMedium);
+      background: var(--colorNeutralBackground1);
+      color: var(--colorNeutralForeground1);
+      padding: 0 9px;
+      outline: none;
+    }
+
+    .control:focus {
+      border-color: var(--colorBrandStroke1);
+      box-shadow: inset 0 -1px 0 var(--colorBrandStroke1);
+    }
+
+    .rule-action {
+      align-self: end;
+    }
+
+    .nested-group {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      min-width: 680px;
+      padding-left: 10px;
+    }
+
+    .nested-tag {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      min-height: 96px;
+      border: 1px solid rgba(15, 108, 189, 0.24);
+      border-radius: var(--radiusLarge);
+      background: var(--colorPaletteBlueBackground1);
+      color: var(--colorBrandForeground1);
+      font-weight: 700;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .nested-rules {
+      display: grid;
+      gap: 8px;
+      border: 1px dashed var(--colorNeutralStrokeAccessible);
+      border-radius: var(--radiusLarge);
+      padding: 10px;
+      background: var(--colorNeutralBackground1);
+    }
+
+    .mini-rule {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(100px, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .preview-panel {
+      min-height: calc(100dvh - 106px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+    }
+
+    .preview-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .code-box {
+      margin: 0;
+      overflow: auto;
+      border: 1px solid #1f1f1f;
+      border-radius: var(--radiusLarge);
+      background: #1b1a19;
+      color: #f3f2f1;
+      font-family: var(--fontMono);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 14px;
+      white-space: pre;
+    }
+
+    .code-line {
+      display: block;
+    }
+
+    .code-muted {
+      color: #a19f9d;
+    }
+
+    .code-function {
+      color: #9cdcfe;
+    }
+
+    .code-string {
+      color: #ce9178;
+    }
+
+    .code-path {
+      color: #b5cea8;
+    }
+
+    .diagnostics {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .diagnostic {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground1);
+      padding: 9px 10px;
+    }
+
+    .diagnostic.ok {
+      border-color: rgba(14, 112, 14, 0.22);
+      background: var(--colorPaletteGreenBackground1);
+    }
+
+    .diagnostic.warn {
+      border-color: rgba(129, 116, 0, 0.24);
+      background: var(--colorPaletteYellowBackground1);
+    }
+
+    .diagnostic-icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--colorNeutralForegroundOnBrand);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .diagnostic.ok .diagnostic-icon {
+      background: var(--colorPaletteGreenForeground1);
+    }
+
+    .diagnostic.warn .diagnostic-icon {
+      background: var(--colorPaletteYellowForeground1);
+    }
+
+    .diagnostic-title {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .diagnostic-copy {
+      margin: 2px 0 0;
+      color: var(--colorNeutralForeground2);
+      font-size: 12px;
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .state-sample {
+      min-width: 0;
+      border: 1px solid var(--colorNeutralStroke2);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground1);
+      padding: 10px;
+    }
+
+    .state-sample p {
+      margin: 0 0 8px;
+      color: var(--colorNeutralForeground3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .skeleton {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--colorNeutralBackground4);
+      position: relative;
+    }
+
+    .skeleton + .skeleton {
+      margin-top: 7px;
+      width: 74%;
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+      animation: shimmer 1.8s infinite;
+      transform: translateX(-100%);
+    }
+
+    @keyframes shimmer {
+      to {
+        transform: translateX(100%);
+      }
+    }
+
+    .empty-state {
+      display: grid;
+      min-height: 70px;
+      place-items: center;
+      border: 1px dashed var(--colorNeutralStrokeAccessible);
+      border-radius: var(--radiusLarge);
+      color: var(--colorNeutralForeground3);
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .error-strip {
+      border: 1px solid rgba(188, 47, 50, 0.28);
+      border-radius: var(--radiusLarge);
+      background: var(--colorPaletteRedBackground1);
+      color: var(--colorPaletteRedForeground1);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px;
+    }
+
+    .platform-footer {
+      display: grid;
+      gap: 10px;
+      border-top: 1px solid var(--colorNeutralStroke2);
+      padding: 12px 14px 14px;
+    }
+
+    .adapter-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      color: var(--colorNeutralForeground2);
+      font-size: 12px;
+    }
+
+    .adapter-row strong {
+      color: var(--colorNeutralForeground1);
+      font-weight: 600;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      display: none;
+      max-width: min(340px, calc(100vw - 48px));
+      border: 1px solid rgba(14, 112, 14, 0.22);
+      border-radius: var(--radiusLarge);
+      background: var(--colorNeutralBackground1);
+      box-shadow: var(--shadow8);
+      padding: 12px 14px;
+      color: var(--colorNeutralForeground1);
+    }
+
+    .toast[data-visible="true"] {
+      display: block;
+      animation: toastIn 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .toast-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .toast p {
+      margin: 2px 0 0;
+      color: var(--colorNeutralForeground3);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1280px) {
+      .workspace {
+        grid-template-columns: 250px minmax(420px, 1fr);
+      }
+
+      .preview-panel {
+        grid-column: 1 / -1;
+        min-height: auto;
+      }
+
+      .field-panel,
+      .builder-panel {
+        min-height: 720px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .topbar-inner {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        gap: 10px;
+        padding: 14px 16px;
+      }
+
+      .environment-strip,
+      .commandbar {
+        justify-content: flex-start;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        padding: 14px 16px 18px;
+      }
+
+      .field-panel,
+      .builder-panel,
+      .preview-panel {
+        min-height: auto;
+      }
+
+      .context-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .query-canvas {
+        padding: 14px;
+      }
+
+      .state-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .commandbar,
+      .toolbar-cluster,
+      .preview-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+      }
+
+      .button,
+      .split-button,
+      .split-button button {
+        width: 100%;
+      }
+
+      .rule-row,
+      .nested-group {
+        min-width: 620px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">fx</div>
+          <div class="brand-text">
+            <h1 class="brand-title">Power Automate Expression Builder</h1>
+            <p class="brand-meta">React 18, TypeScript, Vite, Fluent UI v9, @react-awesome-query-builder/fluent</p>
+          </div>
+        </div>
+        <div class="environment-strip">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span><strong>Web adapter</strong> active, PPTB bridge available later</span>
+        </div>
+        <nav class="commandbar" aria-label="Global commands">
+          <button class="button"><span class="glyph save" aria-hidden="true"></span>Save draft</button>
+          <button class="button"><span class="glyph upload" aria-hidden="true"></span>Import</button>
+          <button class="button"><span class="glyph download" aria-hidden="true"></span>Export</button>
+          <button class="icon-button" aria-label="More commands"><span class="glyph more" aria-hidden="true"></span></button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel field-panel" aria-label="Field source">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Field Source</h2>
+            <p class="panel-subtitle">Sample schema for formatter snapshots</p>
+          </div>
+          <span class="pill brand">v1 JSON</span>
+        </div>
+        <div class="panel-body">
+          <input class="searchbox" type="search" value="Status" aria-label="Search fields">
+          <div class="mode-tabs" role="tablist" aria-label="Expression mode">
+            <button class="mode-tab" type="button" data-mode="trigger" data-active="true">Trigger Condition</button>
+            <button class="mode-tab" type="button" data-mode="filter" data-active="false">Filter Array</button>
+          </div>
+
+          <p class="section-label">Available Fields</p>
+          <div class="field-list">
+            <div class="field-row">
+              <div>
+                <div class="field-name">Status</div>
+                <div class="panel-subtitle">Choice: Approved, Rejected, Pending</div>
+              </div>
+              <span class="field-type">choice</span>
+            </div>
+            <div class="field-row">
+              <div>
+                <div class="field-name">Title</div>
+                <div class="panel-subtitle">Request title from trigger body</div>
+              </div>
+              <span class="field-type">string</span>
+            </div>
+            <div class="field-row">
+              <div>
+                <div class="field-name">Amount</div>
+                <div class="panel-subtitle">Purchase amount</div>
+              </div>
+              <span class="field-type">number</span>
+            </div>
+            <div class="field-row">
+              <div>
+                <div class="field-name">DueDate</div>
+                <div class="panel-subtitle">ISO date time</div>
+              </div>
+              <span class="field-type">dateTime</span>
+            </div>
+            <div class="field-row">
+              <div>
+                <div class="field-name">IsPriority</div>
+                <div class="panel-subtitle">Boolean flag</div>
+              </div>
+              <span class="field-type">boolean</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-footer">
+          <div class="callout">
+            <p class="callout-title">Dataverse Discovery</p>
+            <p>Disconnected in web mode. PPTB adapter can populate this list from an active connection.</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel builder-panel" aria-label="Visual expression builder">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Visual Builder</h2>
+            <p class="panel-subtitle">RAQB Fluent surface converted into engine AST</p>
+          </div>
+          <span class="pill success">Diagnostics clean</span>
+        </div>
+
+        <div class="builder-toolbar">
+          <div class="toolbar-cluster">
+            <button class="button primary">Add rule</button>
+            <button class="button">Add group</button>
+            <div class="split-button" aria-label="Function wrapper">
+              <button type="button">toLower</button>
+              <button type="button" aria-label="More functions">More</button>
+            </div>
+          </div>
+          <div class="toolbar-cluster">
+            <span class="pill">Max depth 10</span>
+            <span class="pill">3 rules</span>
+          </div>
+        </div>
+
+        <div class="context-summary">
+          <div class="metric">
+            <p class="metric-label">Mode</p>
+            <p class="metric-value" data-role="mode-name">Trigger Condition</p>
+          </div>
+          <div class="metric">
+            <p class="metric-label">Field Context</p>
+            <p class="metric-value" data-role="context-ref">triggerBody()?['Field']</p>
+          </div>
+          <div class="metric">
+            <p class="metric-label">Engine Output</p>
+            <p class="metric-value">FormatResult.expression plus diagnostics</p>
+          </div>
+        </div>
+
+        <div class="query-canvas">
+          <div class="query-group">
+            <div class="group-header">
+              <div>
+                <h3 class="panel-title">Root group</h3>
+                <p class="panel-subtitle">Nested and/or logic serializes to Power Automate functions</p>
+              </div>
+              <div class="logic-switch" aria-label="Root conjunction">
+                <span class="active">AND</span>
+                <span>OR</span>
+              </div>
+            </div>
+
+            <div class="rule-list">
+              <div class="rule-row">
+                <div class="form-field">
+                  <label for="field-status">Field</label>
+                  <select id="field-status" class="control">
+                    <option>Status</option>
+                    <option>Title</option>
+                    <option>Amount</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="operator-equals">Operator</label>
+                  <select id="operator-equals" class="control">
+                    <option>equals</option>
+                    <option>not equals</option>
+                    <option>contains</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="value-approved">Value</label>
+                  <select id="value-approved" class="control">
+                    <option>Approved</option>
+                    <option>Pending</option>
+                    <option>Rejected</option>
+                  </select>
+                </div>
+                <button class="icon-button rule-action" aria-label="Remove Status rule"><span class="glyph more" aria-hidden="true"></span></button>
+              </div>
+
+              <div class="rule-row">
+                <div class="form-field">
+                  <label for="field-title">Function</label>
+                  <select id="field-title" class="control">
+                    <option>toLower(Title)</option>
+                    <option>trim(Title)</option>
+                    <option>Title</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="operator-contains">Operator</label>
+                  <select id="operator-contains" class="control">
+                    <option>contains</option>
+                    <option>startsWith</option>
+                    <option>endsWith</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="value-urgent">Value</label>
+                  <input id="value-urgent" class="control" value="urgent">
+                </div>
+                <button class="icon-button rule-action" aria-label="Remove Title rule"><span class="glyph more" aria-hidden="true"></span></button>
+              </div>
+
+              <div class="nested-group">
+                <div class="nested-tag">OR</div>
+                <div class="nested-rules">
+                  <div class="mini-rule">
+                    <select class="control" aria-label="Nested field">
+                      <option>Amount</option>
+                    </select>
+                    <select class="control" aria-label="Nested operator">
+                      <option>greater</option>
+                    </select>
+                    <input class="control" value="1250">
+                  </div>
+                  <div class="mini-rule">
+                    <select class="control" aria-label="Nested function">
+                      <option>empty(Email)</option>
+                    </select>
+                    <select class="control" aria-label="Nested empty operator">
+                      <option>is false</option>
+                    </select>
+                    <input class="control" value="not(empty(...))">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel preview-panel" aria-label="Expression preview">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Expression Preview</h2>
+            <p class="panel-subtitle">Advanced mode output with engine diagnostics</p>
+          </div>
+          <div class="preview-actions">
+            <button id="copyButton" class="button primary"><span class="glyph copy" aria-hidden="true"></span>Copy</button>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <pre class="code-box" aria-label="Generated expression"><code data-role="expression"><span class="code-line"><span class="code-muted">@</span><span class="code-function">and</span>(</span>
+<span class="code-line">  <span class="code-function">equals</span>(<span class="code-path">triggerBody()?['Status']</span>, <span class="code-string">'Approved'</span>),</span>
+<span class="code-line">  <span class="code-function">contains</span>(<span class="code-function">toLower</span>(<span class="code-path">triggerBody()?['Title']</span>), <span class="code-string">'urgent'</span>),</span>
+<span class="code-line">  <span class="code-function">or</span>(</span>
+<span class="code-line">    <span class="code-function">greater</span>(<span class="code-path">triggerBody()?['Amount']</span>, 1250),</span>
+<span class="code-line">    <span class="code-function">not</span>(<span class="code-function">empty</span>(<span class="code-path">triggerBody()?['Email']</span>))</span>
+<span class="code-line">  )</span>
+<span class="code-line">)</span></code></pre>
+
+          <div class="diagnostics">
+            <div class="diagnostic ok">
+              <div class="diagnostic-icon" aria-hidden="true">OK</div>
+              <div>
+                <p class="diagnostic-title">Formatter accepted the AST</p>
+                <p class="diagnostic-copy">Root expression has one leading @ and all field references match the active mode.</p>
+              </div>
+            </div>
+            <div class="diagnostic warn">
+              <div class="diagnostic-icon" aria-hidden="true">!</div>
+              <div>
+                <p class="diagnostic-title">Case-sensitive comparison</p>
+                <p class="diagnostic-copy">Status values are compared exactly; no case normalization is applied.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="state-grid">
+            <div class="state-sample">
+              <p>Metadata Loading</p>
+              <div class="skeleton"></div>
+              <div class="skeleton"></div>
+            </div>
+            <div class="state-sample">
+              <p>Empty Import</p>
+              <div class="empty-state">No saved expression loaded</div>
+            </div>
+            <div class="state-sample">
+              <p>Import Error</p>
+              <div class="error-strip">Unsupported saved expression version: 2</div>
+            </div>
+            <div class="state-sample">
+              <p>Adapter Boundary</p>
+              <div class="empty-state">UI calls PlatformAdapter only</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="platform-footer">
+          <div class="adapter-row">
+            <span><strong>Copy</strong> delegates to PlatformAdapter.copyToClipboard</span>
+            <span class="pill success">ready</span>
+          </div>
+          <div class="adapter-row">
+            <span><strong>Theme</strong> resolves from web or PPTB host</span>
+            <span class="pill brand">light</span>
+          </div>
+          <div class="adapter-row">
+            <span><strong>Persistence</strong> uses app-owned JSON, not raw RAQB state</span>
+            <span class="pill">version 1</span>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <p class="toast-title">Expression copied</p>
+    <p>Clipboard request routed through the active platform adapter.</p>
+  </div>
+
+  <script>
+    const expressions = {
+      trigger: `<span class="code-line"><span class="code-muted">@</span><span class="code-function">and</span>(</span>
+<span class="code-line">  <span class="code-function">equals</span>(<span class="code-path">triggerBody()?['Status']</span>, <span class="code-string">'Approved'</span>),</span>
+<span class="code-line">  <span class="code-function">contains</span>(<span class="code-function">toLower</span>(<span class="code-path">triggerBody()?['Title']</span>), <span class="code-string">'urgent'</span>),</span>
+<span class="code-line">  <span class="code-function">or</span>(</span>
+<span class="code-line">    <span class="code-function">greater</span>(<span class="code-path">triggerBody()?['Amount']</span>, 1250),</span>
+<span class="code-line">    <span class="code-function">not</span>(<span class="code-function">empty</span>(<span class="code-path">triggerBody()?['Email']</span>))</span>
+<span class="code-line">  )</span>
+<span class="code-line">)</span>`,
+      filter: `<span class="code-line"><span class="code-muted">@</span><span class="code-function">and</span>(</span>
+<span class="code-line">  <span class="code-function">equals</span>(<span class="code-path">item()?['Status']</span>, <span class="code-string">'Approved'</span>),</span>
+<span class="code-line">  <span class="code-function">contains</span>(<span class="code-function">toLower</span>(<span class="code-path">item()?['Title']</span>), <span class="code-string">'urgent'</span>),</span>
+<span class="code-line">  <span class="code-function">or</span>(</span>
+<span class="code-line">    <span class="code-function">greater</span>(<span class="code-path">item()?['Amount']</span>, 1250),</span>
+<span class="code-line">    <span class="code-function">not</span>(<span class="code-function">empty</span>(<span class="code-path">item()?['Email']</span>))</span>
+<span class="code-line">  )</span>
+<span class="code-line">)</span>`
+    };
+
+    const tabs = document.querySelectorAll(".mode-tab");
+    const expression = document.querySelector("[data-role='expression']");
+    const modeName = document.querySelector("[data-role='mode-name']");
+    const contextRef = document.querySelector("[data-role='context-ref']");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const mode = tab.dataset.mode;
+        tabs.forEach((item) => item.dataset.active = String(item === tab));
+        expression.innerHTML = expressions[mode];
+        modeName.textContent = mode === "trigger" ? "Trigger Condition" : "Filter Array";
+        contextRef.textContent = mode === "trigger" ? "triggerBody()?['Field']" : "item()?['Field']";
+      });
+    });
+
+    const copyButton = document.getElementById("copyButton");
+    const toast = document.getElementById("toast");
+    let toastTimer = 0;
+
+    copyButton.addEventListener("click", () => {
+      copyButton.innerHTML = '<span class="glyph copy" aria-hidden="true"></span>Copied';
+      toast.dataset.visible = "true";
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        copyButton.innerHTML = '<span class="glyph copy" aria-hidden="true"></span>Copy';
+        toast.dataset.visible = "false";
+      }, 2100);
+    });
+  </script>
+</body>
+</html>

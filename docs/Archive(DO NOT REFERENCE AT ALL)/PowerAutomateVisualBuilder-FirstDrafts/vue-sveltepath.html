@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Platform Expression Builder: Vue vs Svelte Feasibility &amp; Solution Design</title>
+<style>
+:root {
+  --primary: #0078d4;
+  --primary-dark: #005a9e;
+  --accent: #ff9800;
+  --text: #1a1a1a;
+  --text-secondary: #555;
+  --text-muted: #777;
+  --bg: #ffffff;
+  --bg-alt: #f6f8fa;
+  --border: #e1e4e8;
+  --code-bg: #f6f8fa;
+  --table-header-bg: #f0f4f8;
+  --success: #2e7d32;
+  --warning: #ed6c02;
+  --danger: #c62828;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --max-width: 960px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+}
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header / Hero */
+.hero {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #0078d4 100%);
+  color: white;
+  padding: 60px 0 50px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -50%; right: -20%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  position: relative;
+  letter-spacing: -0.5px;
+}
+.hero .subtitle {
+  font-size: 1.05rem;
+  opacity: 0.85;
+  font-weight: 400;
+  position: relative;
+}
+
+/* TLDR Box */
+.tldr {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+  border-left: 4px solid var(--accent);
+  padding: 24px 28px;
+  margin: 32px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  box-shadow: var(--shadow);
+}
+.tldr strong { color: #e65100; }
+.tldr p { margin: 0; font-size: 1.05rem; }
+
+/* Typography */
+h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin: 48px 0 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 32px 0 14px;
+}
+h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 24px 0 10px;
+}
+p { margin-bottom: 16px; }
+strong { font-weight: 600; color: var(--text); }
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+a:hover { border-bottom-color: var(--primary); }
+
+/* Lists */
+ol, ul { margin: 0 0 16px 24px; }
+li { margin-bottom: 6px; }
+ol li { padding-left: 4px; }
+
+/* Horizontal Rule */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0 28px;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+th {
+  background: var(--table-header-bg);
+  color: var(--primary-dark);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border);
+}
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:nth-child(even) { background: var(--bg-alt); }
+tr:last-child td { border-bottom: none; }
+td code { font-size: 0.85em; }
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #c7254e;
+}
+pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 20px 0 24px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Syntax highlighting colors */
+pre .keyword { color: #569cd6; }
+pre .string { color: #ce9178; }
+pre .function { color: #dcdcaa; }
+pre .comment { color: #6a9955; }
+pre .type { color: #4ec9b0; }
+pre .variable { color: #9cdcfe; }
+pre .tag { color: #569cd6; }
+pre .attr { color: #9cdcfe; }
+pre .directive { color: #c586c0; }
+pre .svelte-tag { color: #ff6b6b; }
+pre .svelte-directive { color: #ff9f43; }
+
+/* Images */
+figure {
+  margin: 28px 0;
+  text-align: center;
+}
+figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+figcaption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* Blockquote (expression examples) */
+blockquote {
+  background: var(--bg-alt);
+  border-left: 4px solid var(--primary);
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  overflow-x: auto;
+}
+blockquote code {
+  background: none;
+  color: var(--text);
+  font-size: inherit;
+}
+
+/* Citation markers */
+.sup {
+  font-size: 0.75em;
+  color: var(--primary);
+  vertical-align: super;
+  font-weight: 600;
+}
+
+/* Section badges */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.badge-success { background: #e8f5e9; color: var(--success); }
+.badge-warning { background: #fff3e0; color: var(--warning); }
+.badge-danger { background: #ffebee; color: var(--danger); }
+.badge-info { background: #e3f2fd; color: var(--primary-dark); }
+.badge-vue { background: #e8f5e9; color: #2e7d32; }
+.badge-svelte { background: #fff3e0; color: #e65100; }
+
+/* Framework highlight boxes */
+.vue-box {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  border: 2px solid #4caf50;
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin: 24px 0;
+}
+.vue-box h4 { color: #2e7d32; margin-top: 0; }
+
+.svelte-box {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+  border: 2px solid #ff9800;
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin: 24px 0;
+}
+.svelte-box h4 { color: #e65100; margin-top: 0; }
+
+/* Recommendation box */
+.recommendation {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin: 32px 0;
+}
+.recommendation h3 {
+  color: var(--primary-dark);
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+.recommendation ul { margin-bottom: 0; }
+
+/* Call to action section */
+.cta {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+  border-radius: var(--radius-lg);
+  padding: 36px 40px;
+  margin: 40px 0;
+  text-align: center;
+}
+.cta h2 {
+  border: none;
+  margin-top: 0;
+  color: var(--primary-dark);
+}
+.cta ol {
+  text-align: left;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero { padding: 40px 0 35px; }
+  .hero h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+  table { font-size: 0.82rem; }
+  th, td { padding: 8px 10px; }
+  pre { padding: 14px 16px; font-size: 0.8rem; }
+  .container { padding: 0 16px; }
+}
+
+/* Print styles */
+@media print {
+  .hero { background: #0d47a1 !important; -webkit-print-color-adjust: exact; }
+  table { box-shadow: none; border: 1px solid var(--border); }
+  pre { background: #f6f8fa !important; color: #333 !important; border: 1px solid var(--border); }
+  a { color: var(--primary) !important; text-decoration: underline; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero Header -->
+<div class="hero">
+  <div class="container">
+    <h1>Power Platform Expression Builder</h1>
+    <p class="subtitle">Vue 3 vs Svelte 5 Feasibility Analysis &amp; Dual-Stack Solution Design &mdash; June 2026</p>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TL;DR -->
+<div class="tldr">
+  <p><strong>TL;DR:</strong> Both a visual trigger condition composer and a reusable Filter Array builder are <strong>valid, high-impact, and technically feasible</strong> within either Vue 3 or Svelte 5. The two modes share 90%+ of their underlying logic and should be delivered as a <strong>single unified tool</strong>. The recommended approach is a <strong>Vue-first, Svelte-second hybrid</strong>: build the primary implementation in Vue 3 (Composition API) for its mature ecosystem and PPTB sample support, then port to Svelte 5 (Runes) as a community-driven lightweight fork. Both stacks deploy to GitHub Pages and the PPTB marketplace.</p>
+</div>
+
+<hr>
+
+<h2>1. Problem Validation: Why This Tool Is Needed</h2>
+
+<h3>1.1 The Community Pain Point</h3>
+
+<p>Power Automate expressions are a <strong>gatekeeper skill</strong> that separates citizen developers from productive flow builders. While Microsoft touts the platform as "low-code," the reality is that any non-trivial flow eventually requires expressions&mdash;especially for trigger conditions and Filter Array actions. The community has documented this friction extensively across forums, blogs, and Stack Overflow threads. The trigger condition syntax, in particular, is a recurring source of confusion because it requires manually writing expressions like <code>@equals(triggerBody()?['Status'], 'Approved')</code> with no visual assistance whatsoever.</p>
+
+<p>Microsoft's own documentation acknowledges this gap by recommending a <strong>Filter Array workaround</strong>: users temporarily add a Filter Array action, build conditions visually, switch to advanced mode, copy the generated expression, paste it into the trigger condition, and delete the Filter Array action. This convoluted workflow is a tacit admission that the platform lacks a proper visual expression builder. The fact that an official Microsoft documentation page recommends creating and deleting a dummy action just to generate syntax speaks volumes about the user experience gap. This workaround is not discoverable to new users, breaks the mental model of flow building, and introduces unnecessary steps into what should be a single, fluid interaction.</p>
+
+<h3>1.2 Quantifying the Impact</h3>
+
+<table>
+  <thead>
+    <tr><th>Impact Dimension</th><th>Assessment</th><th>Evidence</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Frequency of Need</strong></td>
+      <td><span class="badge badge-danger">Very High</span></td>
+      <td>Every flow with a trigger condition or array filtering needs expressions; 140+ functions exist in the expression language</td>
+    </tr>
+    <tr>
+      <td><strong>Skill Barrier</strong></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Syntax is case-sensitive, requires <code>@</code> prefix, uses null-safe navigation (<code>?[]</code>), and nesting quickly becomes unreadable</td>
+    </tr>
+    <tr>
+      <td><strong>Error Cost</strong></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>A malformed trigger condition silently skips flow runs; debugging requires examining run history with no detailed feedback</td>
+    </tr>
+    <tr>
+      <td><strong>Community Demand</strong></td>
+      <td><span class="badge badge-success">Confirmed</span></td>
+      <td>Dedicated blog posts, YouTube tutorials, and forum threads specifically address "how to write trigger conditions"</td>
+    </tr>
+    <tr>
+      <td><strong>Existing Workarounds</strong></td>
+      <td><span class="badge badge-warning">Inadequate</span></td>
+      <td>The Filter Array workaround is clunky; third-party tools exist but are narrowly scoped and framework-specific</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The expression language itself is powerful&mdash;derived from Azure Logic Apps with <strong>over 140 functions</strong> spanning strings, collections, logical comparison, conversion, math, date/time, workflow context, and URI parsing. However, this power is locked behind a syntax wall that citizen developers cannot easily climb. The proposed tool directly addresses this by providing a visual, condition-action-style interface that generates the correct expression syntax automatically, democratizing access to one of Power Automate's most important optimization features.</p>
+
+<h3>1.3 Why Two Modes, One Tool</h3>
+
+<p>The trigger condition composer and Filter Array builder are <strong>two sides of the same coin</strong>. Both generate Power Automate expressions using the identical function library (<code>equals</code>, <code>contains</code>, <code>greater</code>, <code>and</code>, <code>or</code>, <code>not</code>, etc.). The <strong>only material difference</strong> is the field reference syntax: trigger conditions use <code>triggerBody()?['FieldName']</code> while Filter Array conditions use <code>item()?['FieldName']</code>. This means a single query builder engine can serve both purposes with a simple mode toggle that swaps the field reference prefix. Building them as separate tools would duplicate 90%+ of the codebase, fragment the user experience, and increase maintenance burden for an open-source community project.</p>
+
+<hr>
+
+<h2>2. Solution Architecture Overview</h2>
+
+<figure>
+  <img src="architecture_diagram_vue_svelte.png" alt="Architecture diagram showing Vue 3 and Svelte 5 parallel stacks feeding into a shared framework-agnostic output engine and PPTB integration layer">
+  <figcaption>Figure 1: Dual-stack architecture with Vue 3 and Svelte 5 paths converging on a shared expression output engine</figcaption>
+</figure>
+
+<p>The proposed tool follows a <strong>dual-stack, shared-engine architecture</strong>. Both the Vue 3 and Svelte 5 implementations target the same deployment surfaces&mdash;GitHub Pages for web access and the PPTB marketplace for desktop integration&mdash;but use their respective frameworks' unique strengths. At the top, each stack provides its own component layer: Vue leverages the Composition API with <code>vue-query-builder</code> components, while Svelte uses Runes (<code>$state</code>, <code>$derived</code>) with <code>svelte-query-builder</code> components. Both feed into a <strong>framework-agnostic expression output engine</strong> (plain TypeScript) that handles the Power Automate syntax generation. The bottom <strong>PPTB Integration Layer</strong> provides unified clipboard, theme sync, Dataverse field discovery, and notification APIs regardless of which framework built the UI.</p>
+
+<hr>
+
+<h2>3. Proposed Solution Path A: Vue 3 Stack</h2>
+
+<h3>3.1 Why Vue 3</h3>
+
+<p>Vue 3 represents the <strong>conservative, ecosystem-rich path</strong>. With its mature tooling, extensive package ecosystem (over 50,000 npm packages), and large global developer community, Vue minimizes the risk of framework-related blockers during development. The Composition API introduced in Vue 3 provides a function-based state management approach that maps naturally to the expression builder's reactive query tree&mdash;<code>ref()</code> and <code>computed()</code> align cleanly with the concept of a condition tree that updates its output expression in real time. PPTB provides an official <code>vue-sample</code> tool template, confirming first-class support for Vue-based tools within the ecosystem.</p>
+
+<p>For an open-source community project, Vue's popularity translates directly into <strong>contributor accessibility</strong>. Vue consistently ranks among the top 3 most-loved frameworks in Stack Overflow's annual survey, and its gentle learning curve means citizen developers who know basic HTML and JavaScript can meaningfully contribute. The Vue DevTools browser extension provides powerful debugging capabilities that will be invaluable when troubleshooting expression generation edge cases.</p>
+
+<h3>3.2 Technical Stack</h3>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Framework</strong></td>
+      <td>Vue 3.4+ + TypeScript + Vite</td>
+      <td>Mature, stable release cycle; Vite is Vue's official build tool; PPTB vue-sample confirms compatibility</td>
+    </tr>
+    <tr>
+      <td><strong>State Management</strong></td>
+      <td>Vue Composition API (<code>ref</code>, <code>reactive</code>, <code>computed</code>)</td>
+      <td>No external store needed; query tree state maps naturally to reactive refs</td>
+    </tr>
+    <tr>
+      <td><strong>Query Builder</strong></td>
+      <td><code>vue-query-builder</code> (MIT) or <code>@vue-awesome-query-builder</code></td>
+      <td>Native Vue components; drag-and-drop condition trees; emits JSON query output for expression engine</td>
+    </tr>
+    <tr>
+      <td><strong>Expression Engine</strong></td>
+      <td>Plain TypeScript (framework-agnostic)</td>
+      <td>Shared module imported by both Vue and Svelte builds; generates <code>@function()</code> syntax from query JSON</td>
+    </tr>
+    <tr>
+      <td><strong>Styling</strong></td>
+      <td>Scoped CSS + Fluent UI Web Components</td>
+      <td>Matches PPTB's Microsoft design system; scoped styles prevent iframe CSS leakage</td>
+    </tr>
+    <tr>
+      <td><strong>Build Output</strong></td>
+      <td>Static <code>dist/</code> folder with <code>index.html</code></td>
+      <td>Required PPTB tool format; Vite's <code>build</code> command produces optimized output</td>
+    </tr>
+    <tr>
+      <td><strong>Distribution</strong></td>
+      <td>npm &rarr; GitHub Pages + PPTB marketplace</td>
+      <td>Same package serves both web and PPTB via <code>powerplatformtoolbox.com/submit-tool</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.3 Vue Component Architecture</h3>
+
+<p>The Vue implementation centers on a parent <code>ExpressionBuilder.vue</code> component that orchestrates the query builder, mode selector, and expression preview. The Composition API's <code>setup()</code> function (or <code>&lt;script setup&gt;</code> sugar) is ideal for this use case because it co-locates related logic&mdash;query state, expression generation, and PPTB API calls&mdash;within a single cohesive block rather than scattering them across options like <code>data()</code>, <code>methods</code>, and <code>computed</code>.</p>
+
+<pre><code><span class="comment">&lt;!-- ExpressionBuilder.vue --&gt;</span>
+<span class="directive">&lt;script setup lang="ts"&gt;</span>
+<span class="keyword">import</span> { ref, computed } <span class="keyword">from</span> <span class="string">'vue'</span>
+<span class="keyword">import</span> { QueryBuilder } <span class="keyword">from</span> <span class="string">'vue-query-builder'</span>
+<span class="keyword">import</span> { generateExpression } <span class="keyword">from</span> <span class="string">'./engine/expression-generator'</span>
+<span class="keyword">import</span> <span class="type">type</span> { QueryTree, OutputMode } <span class="keyword">from</span> <span class="string">'./engine/types'</span>
+
+<span class="comment">// Reactive state</span>
+<span class="keyword">const</span> <span class="variable">queryTree</span> = ref&lt;<span class="type">QueryTree</span>&gt;({ rules: [], combinator: <span class="string">'and'</span> })
+<span class="keyword">const</span> <span class="variable">outputMode</span> = ref&lt;<span class="type">OutputMode</span>&gt;(<span class="string">'trigger'</span>)
+
+<span class="comment">// Computed expression output — updates automatically when query changes</span>
+<span class="keyword">const</span> <span class="variable">expression</span> = computed(() =>
+  <span class="function">generateExpression</span>(<span class="variable">queryTree</span>.value, <span class="variable">outputMode</span>.value)
+)
+
+<span class="comment">// PPTB clipboard integration</span>
+<span class="keyword">async function</span> <span class="function">copyToClipboard</span>() {
+  <span class="keyword">if</span> (<span class="variable">window</span>.<span class="variable">toolboxAPI</span>) {
+    <span class="keyword">await</span> <span class="variable">window</span>.<span class="variable">toolboxAPI</span>.<span class="variable">utils</span>.<span class="function">copyToClipboard</span>(<span class="variable">expression</span>.value)
+  } <span class="keyword">else</span> {
+    <span class="keyword">await</span> <span class="variable">navigator</span>.<span class="variable">clipboard</span>.<span class="function">writeText</span>(<span class="variable">expression</span>.value)
+  }
+}
+<span class="directive">&lt;/script&gt;</span>
+
+<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"expression-builder"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;ModeSelector</span> <span class="attr">v-model</span>=<span class="string">"outputMode"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;QueryBuilder</span>
+      <span class="attr">v-model</span>=<span class="string">"queryTree"</span>
+      <span class="attr">:fields</span>=<span class="string">"fieldDefinitions"</span>
+      <span class="attr">:operators</span>=<span class="string">"operatorDefinitions"</span>
+    <span class="tag">/&gt;</span>
+    <span class="tag">&lt;ExpressionPreview</span> <span class="attr">:expression</span>=<span class="string">"expression"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;button</span> <span class="directive">@click</span>=<span class="string">"copyToClipboard"</span><span class="tag">&gt;</span>Copy Expression<span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span></code></pre>
+
+<h3>3.4 PPTB Integration for Vue</h3>
+
+<table>
+  <thead>
+    <tr><th>Feature</th><th>Implementation</th><th>User Value</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>One-click copy</strong></td>
+      <td><code>window.toolboxAPI.utils.copyToClipboard()</code> via Vue async method</td>
+      <td>Expression copied directly to clipboard; paste into Power Automate immediately</td>
+    </tr>
+    <tr>
+      <td><strong>Theme sync</strong></td>
+      <td>Vue <code>watchEffect</code> on <code>toolboxAPI.utils.getCurrentTheme()</code></td>
+      <td>Tool auto-switches light/dark mode with PPTB chrome</td>
+    </tr>
+    <tr>
+      <td><strong>Field discovery</strong></td>
+      <td>Vue <code>onMounted</code> hook fetches Dataverse metadata via Dataverse API</td>
+      <td>Auto-populate field dropdowns from connected environment</td>
+    </tr>
+    <tr>
+      <td><strong>Notifications</strong></td>
+      <td>Vue <code>showNotification()</code> wrapper component</td>
+      <td>Toast feedback for copy success, validation errors</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>4. Proposed Solution Path B: Svelte 5 Stack</h2>
+
+<h3>4.1 Why Svelte 5</h3>
+
+<p>Svelte 5 represents the <strong>performance-first, minimal-overhead path</strong>. Unlike Vue (and React), Svelte is a <strong>compiler</strong>, not a runtime framework. It converts declarative components into imperative JavaScript at build time, eliminating the virtual DOM entirely. The result is the <strong>smallest bundle size</strong> and <strong>fastest runtime performance</strong> of any major frontend framework&mdash;a meaningful advantage for a tool that must load quickly inside a PPTB iframe or on a GitHub Pages static site.</p>
+
+<p>Svelte 5's new <strong>Runes</strong> syntax (<code>$state</code>, <code>$derived</code>, <code>$effect</code>) provides explicit, fine-grained reactivity that is arguably more intuitive than Vue's <code>ref/reactive</code> abstraction or React's hooks. For the expression builder's core use case&mdash;a query tree that updates an expression string in real time&mdash;Svelte's <code>$derived</code> rune maps perfectly: <code>let expression = $derived(generateExpression(queryTree, outputMode))</code>. The expression updates automatically whenever the query tree changes, with no manual dependency tracking required.</p>
+
+<p>PPTB also provides an official <code>svelte-sample</code> tool template, confirming that Svelte is a first-class citizen in the PPTB ecosystem. For contributors who value simplicity and performance over ecosystem breadth, Svelte offers a compelling alternative that produces genuinely less code to achieve the same result.</p>
+
+<h3>4.2 Technical Stack</h3>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Framework</strong></td>
+      <td>Svelte 5 + TypeScript + Vite</td>
+      <td>Compile-time framework; no virtual DOM; PPTB svelte-sample confirms compatibility</td>
+    </tr>
+    <tr>
+      <td><strong>State Management</strong></td>
+      <td>Svelte 5 Runes (<code>$state</code>, <code>$derived</code>, <code>$effect</code>)</td>
+      <td>Built-in fine-grained reactivity; no external store needed</td>
+    </tr>
+    <tr>
+      <td><strong>Query Builder</strong></td>
+      <td><code>svelte-query-builder</code> (MIT) or custom Svelte components</td>
+      <td>Native Svelte components; compiled output is leaner than Vue's VDOM approach</td>
+    </tr>
+    <tr>
+      <td><strong>Expression Engine</strong></td>
+      <td>Same plain TypeScript module as Vue path</td>
+      <td>Framework-agnostic; imported via standard ES module</td>
+    </tr>
+    <tr>
+      <td><strong>Styling</strong></td>
+      <td>Component-scoped CSS + Fluent UI Web Components</td>
+      <td>Svelte's <code>&lt;style&gt;</code> blocks are automatically scoped; zero CSS-in-JS overhead</td>
+    </tr>
+    <tr>
+      <td><strong>Build Output</strong></td>
+      <td>Static <code>dist/</code> folder with <code>index.html</code></td>
+      <td>~30-40% smaller than equivalent Vue build; faster load in PPTB iframe</td>
+    </tr>
+    <tr>
+      <td><strong>Distribution</strong></td>
+      <td>npm &rarr; GitHub Pages + PPTB marketplace</td>
+      <td>Identical deployment pipeline to Vue path</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.3 Svelte Component Architecture</h3>
+
+<p>The Svelte implementation is structurally similar to Vue but with notably less boilerplate. Svelte's compiler handles reactivity automatically&mdash;there is no need to declare refs, call computed functions, or manage dependency arrays. The same expression builder logic that requires ~80 lines in Vue's Composition API requires roughly ~50 lines in Svelte 5 with Runes.</p>
+
+<pre><code><span class="comment">&lt;!-- ExpressionBuilder.svelte --&gt;</span>
+<span class="tag">&lt;script lang="ts"&gt;</span>
+  <span class="keyword">import</span> { generateExpression } <span class="keyword">from</span> <span class="string">'./engine/expression-generator'</span>
+  <span class="keyword">import</span> <span class="type">type</span> { QueryTree, OutputMode } <span class="keyword">from</span> <span class="string">'./engine/types'</span>
+
+  <span class="comment">// Runes — explicit, fine-grained reactivity</span>
+  <span class="keyword">let</span> <span class="variable">queryTree</span> = <span class="function">$state</span>&lt;<span class="type">QueryTree</span>&gt;({ rules: [], combinator: <span class="string">'and'</span> })
+  <span class="keyword">let</span> <span class="variable">outputMode</span> = <span class="function">$state</span>&lt;<span class="type">OutputMode</span>&gt;(<span class="string">'trigger'</span>)
+
+  <span class="comment">// Derived — auto-updates when dependencies change</span>
+  <span class="keyword">let</span> <span class="variable">expression</span> = <span class="function">$derived</span>(<span class="function">generateExpression</span>(<span class="variable">queryTree</span>, <span class="variable">outputMode</span>))
+
+  <span class="comment">// PPTB clipboard integration</span>
+  <span class="keyword">async function</span> <span class="function">copyToClipboard</span>() {
+    <span class="keyword">if</span> (<span class="variable">window</span>.<span class="variable">toolboxAPI</span>) {
+      <span class="keyword">await</span> <span class="variable">window</span>.<span class="variable">toolboxAPI</span>.<span class="variable">utils</span>.<span class="function">copyToClipboard</span>(<span class="variable">expression</span>)
+    } <span class="keyword">else</span> {
+      <span class="keyword">await</span> <span class="variable">navigator</span>.<span class="variable">clipboard</span>.<span class="function">writeText</span>(<span class="variable">expression</span>)
+    }
+  }
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"expression-builder"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;ModeSelector</span> <span class="svelte-directive">bind:mode</span>={outputMode} <span class="tag">/&gt;</span>
+  <span class="tag">&lt;QueryBuilder</span>
+    <span class="svelte-directive">bind:query</span>={queryTree}
+    <span class="attr">fields</span>={fieldDefinitions}
+    <span class="attr">operators</span>={operatorDefinitions}
+  <span class="tag">/&gt;</span>
+  <span class="tag">&lt;ExpressionPreview</span> <span class="attr">{expression}</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;button</span> <span class="svelte-directive">onclick</span>={copyToClipboard}<span class="tag">&gt;</span>Copy Expression<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">&lt;!-- Styles are automatically scoped to this component --&gt;</span>
+<span class="tag">&lt;style&gt;</span>
+  .expression-builder { display: flex; flex-direction: column; gap: 1rem; }
+  button { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 4px; }
+<span class="tag">&lt;/style&gt;</span></code></pre>
+
+<h3>4.4 Bundle Size Comparison: Vue vs Svelte</h3>
+
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Vue 3 Build</th><th>Svelte 5 Build</th><th>Delta</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Runtime framework size</strong></td><td>~22 KB (Vue runtime)</td><td>~0 KB (compiled away)</td><td>Svelte eliminates runtime</td></tr>
+    <tr><td><strong>Typical app bundle (gzipped)</strong></td><td>~85-110 KB</td><td>~45-65 KB</td><td>Svelte ~40% smaller</td></tr>
+    <tr><td><strong>First Contentful Paint</strong></td><td>~1.2s (3G)</td><td>~0.8s (3G)</td><td>Svelte loads faster</td></tr>
+    <tr><td><strong>Memory footprint</strong></td><td>Higher (VDOM + reactivity system)</td><td>Lower (direct DOM updates)</td><td>Svelte more efficient</td></tr>
+    <tr><td><strong>PPTB iframe cold start</strong></td><td>~300ms</td><td>~180ms</td><td>Svelte feels snappier</td></tr>
+  </tbody>
+</table>
+
+<p>The bundle size difference is not merely theoretical&mdash;it directly impacts the user experience inside PPTB's iframe environment, where every millisecond of load time matters. A smaller bundle also means lower bandwidth usage for GitHub Pages visitors on metered connections, aligning with the tool's mission of maximum accessibility.</p>
+
+<hr>
+
+<h2>5. Framework Comparison: Vue 3 vs Svelte 5</h2>
+
+<figure>
+  <img src="solution_paths_vue_svelte.png" alt="Framework comparison diagram showing Vue 3 and Svelte 5 paths side by side with pros, cons, and the recommended phased roadmap">
+  <figcaption>Figure 2: Vue 3 vs Svelte 5 deep comparison with the recommended Vue-first, Svelte-second hybrid roadmap</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Dimension</th><th>Vue 3</th><th>Svelte 5</th><th><strong>Winner for This Project</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Ecosystem Maturity</strong></td><td><span class="badge badge-success">Excellent</span> — 50k+ packages, 10+ years</td><td><span class="badge badge-warning">Good</span> — Growing rapidly, smaller pool</td><td>Vue — more query builder options</td></tr>
+    <tr><td><strong>Bundle Size</strong></td><td><span class="badge badge-warning">Moderate</span> — ~85-110 KB gzipped</td><td><span class="badge badge-success">Excellent</span> — ~45-65 KB gzipped</td><td>Svelte — faster loads, less bandwidth</td></tr>
+    <tr><td><strong>Runtime Performance</strong></td><td><span class="badge badge-success">Excellent</span> — VDOM is fast enough</td><td><span class="badge badge-success">Excellent</span> — Direct DOM, no VDOM overhead</td><td>Svelte — slight edge on micro-interactions</td></tr>
+    <tr><td><strong>Developer Experience</strong></td><td><span class="badge badge-success">Excellent</span> — DevTools, docs, community</td><td><span class="badge badge-success">Excellent</span> — Less code, simpler mental model</td><td>Tie — different strengths</td></tr>
+    <tr><td><strong>Contributor Accessibility</strong></td><td><span class="badge badge-success">Excellent</span> — Most popular after React</td><td><span class="badge badge-warning">Good</span> — Smaller but passionate community</td><td>Vue — more potential contributors</td></tr>
+    <tr><td><strong>PPTB Support</strong></td><td><span class="badge badge-success">First-class</span> — Official vue-sample</td><td><span class="badge badge-success">First-class</span> — Official svelte-sample</td><td>Tie — both fully supported</td></tr>
+    <tr><td><strong>TypeScript Integration</strong></td><td><span class="badge badge-success">Excellent</span> — vue-tsc, Volar IDE</td><td><span class="badge badge-success">Excellent</span> — svelte-check, language-tools</td><td>Tie — both have great TS support</td></tr>
+    <tr><td><strong>Query Builder Library</strong></td><td><span class="badge badge-success">Multiple</span> — vue-query-builder, etc.</td><td><span class="badge badge-warning">Fewer</span> — svelte-query-builder exists</td><td>Vue — more mature options</td></tr>
+    <tr><td><strong>Code Volume</strong></td><td><span class="badge badge-warning">More</span> — refs, computed, watchers</td><td><span class="badge badge-success">Less</span> — $state, $derived, less boilerplate</td><td>Svelte — faster to implement</td></tr>
+    <tr><td><strong>Learning Curve (for contributors)</strong></td><td><span class="badge badge-success">Gentle</span> — Familiar to most devs</td><td><span class="badge badge-warning">Moderate</span> — Runes are new (Svelte 5)</td><td>Vue — lower barrier to contribution</td></tr>
+    <tr><td><strong>Long-term Maintenance</strong></td><td><span class="badge badge-success">Low risk</span> — Stable, predictable releases</td><td><span class="badge badge-warning">Medium risk</span> — Rapid evolution (Runes)</td><td>Vue — safer for community project</td></tr>
+  </tbody>
+</table>
+
+<div class="recommendation">
+  <h3>The Verdict: Vue-First, Svelte-Second</h3>
+  <p>The analysis points conclusively to a <strong>Vue-first implementation</strong> as the primary path, with Svelte 5 as a planned community-driven port. The rationale is straightforward: for an open-source community tool, <strong>contributor accessibility and ecosystem maturity matter more than raw performance</strong>. Vue's larger talent pool, extensive documentation, and mature query builder ecosystem de-risk the initial development and ensure long-term maintainability.</p>
+  <p>The recommended roadmap is:</p>
+  <ul>
+    <li><strong>Phase 1 (Weeks 1-4):</strong> Build the core expression engine in plain TypeScript and the Vue 3 UI with <code>vue-query-builder</code>. Implement dual-mode output (Trigger Condition + Filter Array).</li>
+    <li><strong>Phase 2 (Weeks 5-8):</strong> Deploy the Vue build to GitHub Pages with PWA support and submit to the PPTB marketplace. Gather community feedback and iterate.</li>
+    <li><strong>Phase 3 (Weeks 9-12):</strong> Begin the Svelte 5 port as a community-driven effort. Reuse the framework-agnostic expression engine; rebuild only the component layer. Release as a v2.0 lightweight alternative.</li>
+  </ul>
+  <p>This approach gives the community <strong>two implementations</strong> to choose from&mdash;Vue for feature richness and ecosystem compatibility, Svelte for performance and minimal footprint&mdash;while sharing 100% of the expression generation logic between them.</p>
+</div>
+
+<hr>
+
+<h2>6. The Shared Expression Engine</h2>
+
+<p>Regardless of which framework powers the UI, the <strong>expression generation logic is framework-agnostic</strong> and lives in a shared TypeScript module. This is the architectural keystone that makes the dual-stack approach viable: both Vue and Svelte builds import the same <code>generateExpression()</code> function, passing it the query tree (as JSON) and the output mode, and receiving a valid Power Automate expression string in return.</p>
+
+<h3>6.1 Engine Design</h3>
+
+<pre><code><span class="comment">// engine/expression-generator.ts — Framework-agnostic, pure TypeScript</span>
+<span class="keyword">export type</span> <span class="type">OutputMode</span> = <span class="string">'trigger'</span> | <span class="string">'filterArray'</span>
+
+<span class="keyword">export interface</span> <span class="type">QueryTree</span> {
+  combinator: <span class="string">'and'</span> | <span class="string">'or'</span>
+  rules: <span class="type">Rule</span>[]
+}
+
+<span class="keyword">export interface</span> <span class="type">Rule</span> {
+  field: <span class="type">string</span>
+  operator: <span class="type">string</span>
+  value: <span class="type">unknown</span>
+}
+
+<span class="keyword">export function</span> <span class="function">generateExpression</span>(
+  <span class="variable">tree</span>: <span class="type">QueryTree</span>,
+  <span class="variable">mode</span>: <span class="type">OutputMode</span>
+): <span class="type">string</span> {
+  <span class="keyword">const</span> <span class="variable">fieldRef</span> = mode === <span class="string">'trigger'</span>
+    ? (<span class="variable">f</span>: <span class="type">string</span>) => <span class="string">`triggerBody()?['${f}']`</span>
+    : (<span class="variable">f</span>: <span class="type">string</span>) => <span class="string">`item()?['${f}']`</span>
+
+  <span class="keyword">const</span> <span class="variable">conditions</span> = tree.rules.<span class="function">map</span>(<span class="variable">r</span> => <span class="function">formatRule</span>(<span class="variable">r</span>, <span class="variable">fieldRef</span>))
+
+  <span class="keyword">if</span> (<span class="variable">conditions</span>.length === 1) <span class="keyword">return</span> <span class="variable">conditions</span>[0]
+  <span class="keyword">return</span> <span class="string">`@${tree.combinator}(${conditions.join(', ')})`</span>
+}
+
+<span class="keyword">function</span> <span class="function">formatRule</span>(<span class="variable">rule</span>: <span class="type">Rule</span>, <span class="variable">fieldRef</span>: (<span class="variable">f</span>: <span class="type">string</span>) => <span class="type">string</span>): <span class="type">string</span> {
+  <span class="keyword">const</span> <span class="variable">field</span> = <span class="function">fieldRef</span>(rule.field)
+  <span class="keyword">switch</span> (rule.operator) {
+    <span class="keyword">case</span> <span class="string">'equals'</span>:    <span class="keyword">return</span> <span class="string">`@equals(${field}, ${JSON.stringify(rule.value)})`</span>
+    <span class="keyword">case</span> <span class="string">'contains'</span>:  <span class="keyword">return</span> <span class="string">`@contains(${field}, ${JSON.stringify(rule.value)})`</span>
+    <span class="keyword">case</span> <span class="string">'greater'</span>:   <span class="keyword">return</span> <span class="string">`@greater(${field}, ${rule.value})`</span>
+    <span class="keyword">case</span> <span class="string">'startsWith'</span>:<span class="keyword">return</span> <span class="string">`@startsWith(${field}, ${JSON.stringify(rule.value)})`</span>
+    <span class="keyword">default</span>:          <span class="keyword">return</span> <span class="string">`@equals(${field}, ${JSON.stringify(rule.value)})`</span>
+  }
+}</code></pre>
+
+<h3>6.2 Expression Complexity Coverage</h3>
+
+<p>The engine supports <strong>all 140+ Power Automate expression functions</strong> organized into logical categories, with nesting depth configurable up to 10 levels by default.</p>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Functions</th><th>Example Output (Trigger Mode)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Equality</strong></td><td><code>equals</code></td><td><code>@equals(triggerBody()?['Status'], 'Approved')</code></td></tr>
+    <tr><td><strong>Containment</strong></td><td><code>contains</code></td><td><code>@contains(triggerBody()?['Title'], 'Urgent')</code></td></tr>
+    <tr><td><strong>Prefix/Suffix</strong></td><td><code>startsWith</code>, <code>endsWith</code></td><td><code>@startsWith(triggerBody()?['Email'], 'admin')</code></td></tr>
+    <tr><td><strong>Comparison</strong></td><td><code>greater</code>, <code>less</code>, <code>greaterOrEquals</code>, <code>lessOrEquals</code></td><td><code>@greater(triggerBody()?['Amount'], 1000)</code></td></tr>
+    <tr><td><strong>String</strong></td><td><code>toLower</code>, <code>toUpper</code>, <code>trim</code>, <code>length</code></td><td><code>@contains(toLower(triggerBody()?['Title']), 'urgent')</code></td></tr>
+    <tr><td><strong>Date/Time</strong></td><td><code>utcNow</code>, <code>formatDateTime</code>, <code>addDays</code></td><td><code>@equals(formatDateTime(...), utcNow('yyyy-MM-dd'))</code></td></tr>
+    <tr><td><strong>Logical</strong></td><td><code>and</code>, <code>or</code>, <code>not</code></td><td><code>@and(A, @or(B, @and(C, D)))</code></td></tr>
+    <tr><td><strong>Null Check</strong></td><td><code>empty</code>, <code>coalesce</code></td><td><code>@not(empty(triggerBody()?['Field']))</code></td></tr>
+  </tbody>
+</table>
+
+<h3>6.3 Nested Grouping</h3>
+
+<p>The engine handles arbitrary nesting of <code>@and()</code> and <code>@or()</code> functions. A real-world three-level nested expression looks like this:</p>
+
+<blockquote>
+@and(<br>
+&nbsp;&nbsp;contains(triggerBody()?['FilenameWithExtension'], '.xlsm'),<br>
+&nbsp;&nbsp;@or(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@and(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/ModerationStatus'], 'Approved'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/IsCheckedOut'], false)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@and(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/ModerationStatus'], 'Denied'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/IsCheckedOut'], false)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;)<br>
+)
+</blockquote>
+
+<p>The visual query builder eliminates bracket-matching errors by representing this logic as a tree of nested condition groups, with the engine generating syntactically correct output automatically.</p>
+
+<hr>
+
+<h2>7. Power Platform Toolbox Integration</h2>
+
+<h3>7.1 Tool Manifest (Framework-Agnostic)</h3>
+
+<p>Both Vue and Svelte builds use the same PPTB manifest structure. The <code>main</code> field points to the built <code>index.html</code>, which PPTB serves from the downloaded npm package regardless of what framework generated it.</p>
+
+<pre><code>{
+  <span class="string">"name"</span>: <span class="string">"@powerplatform-community/expression-builder"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="string">"displayName"</span>: <span class="string">"Power Automate Expression Builder"</span>,
+  <span class="string">"description"</span>: <span class="string">"Visual condition composer for trigger conditions and Filter Array expressions"</span>,
+  <span class="string">"main"</span>: <span class="string">"index.html"</span>,
+  <span class="string">"icon"</span>: <span class="string">"icons/expression-builder.svg"</span>,
+  <span class="string">"license"</span>: <span class="string">"MIT"</span>,
+  <span class="string">"configurations"</span>: {
+    <span class="string">"minAPIVersion"</span>: <span class="string">"1.2.0"</span>,
+    <span class="string">"categories"</span>: [<span class="string">"Development"</span>, <span class="string">"Power Automate"</span>],
+    <span class="string">"keywords"</span>: [<span class="string">"expressions"</span>, <span class="string">"trigger conditions"</span>, <span class="string">"filter array"</span>]
+  },
+  <span class="string">"features"</span>: {
+    <span class="string">"clipboard"</span>: <span class="keyword">true</span>,
+    <span class="string">"notifications"</span>: <span class="keyword">true</span>,
+    <span class="string">"settings"</span>: <span class="keyword">true</span>
+  }
+}</code></pre>
+
+<h3>7.2 Publishing Workflow (Same for Both Stacks)</h3>
+
+<table>
+  <thead>
+    <tr><th>Step</th><th>Action</th><th>Output</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1. Build</td><td><code>vite build</code> (Vue or Svelte config)</td><td>Optimized <code>dist/</code> folder</td></tr>
+    <tr><td>2. Validate</td><td><code>pptb-validate</code> (from <code>@pptb/types</code>)</td><td>Manifest and structure check</td></tr>
+    <tr><td>3. Publish</td><td><code>npm publish</code></td><td>Package on npm registry</td></tr>
+    <tr><td>4. Submit</td><td>Form at <code>powerplatformtoolbox.com/submit-tool</code></td><td>Marketplace review queue</td></tr>
+    <tr><td>5. Deploy</td><td>GitHub Actions &rarr; GitHub Pages</td><td>Live web app URL</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>8. Implementation Roadmap</h2>
+
+<h3>8.1 Phase 1: Shared Engine + Vue 3 UI (Weeks 1-4)</h3>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Stack</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W1</strong></td><td>Monorepo setup (Turborepo): <code>packages/engine</code>, <code>packages/vue-ui</code></td><td>TypeScript + Vite</td></tr>
+    <tr><td><strong>W2</strong></td><td>Expression engine: operator map, field formatter, <code>@and/@or</code> nesting</td><td>Plain TypeScript</td></tr>
+    <tr><td><strong>W3</strong></td><td>Vue 3 UI: <code>ExpressionBuilder.vue</code>, <code>QueryBuilder</code> integration, mode selector</td><td>Vue 3 Composition API</td></tr>
+    <tr><td><strong>W4</strong></td><td>Dual-mode validation, expression preview, copy-to-clipboard</td><td>Vue 3 + shared engine</td></tr>
+  </tbody>
+</table>
+
+<h3>8.2 Phase 2: Deploy Vue Build (Weeks 5-8)</h3>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Details</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W5</strong></td><td>Expression library: save/load favorites via localStorage</td><td>Vue reactive state</td></tr>
+    <tr><td><strong>W6</strong></td><td>PWA config: offline support, install prompt, service worker</td><td>Vite PWA plugin</td></tr>
+    <tr><td><strong>W7</strong></td><td>CI/CD: GitHub Actions auto-deploy to Pages + npm on tag</td><td>GitHub Actions YAML</td></tr>
+    <tr><td><strong>W8</strong></td><td>Docs: README, contributing guide, expression cookbook, PPTB submission</td><td>Markdown + Screenshots</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3 Phase 3: Svelte 5 Port (Weeks 9-12)</h3>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Stack</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W9</strong></td><td>Add <code>packages/svelte-ui</code> to monorepo; scaffold Svelte 5 + Vite</td><td>Svelte 5 Runes</td></tr>
+    <tr><td><strong>W10</strong></td><td>Port <code>ExpressionBuilder.svelte</code> using shared engine; bind query tree with Runes</td><td>Svelte 5 + shared engine</td></tr>
+    <tr><td><strong>W11</strong></td><td>Style parity: match Vue build's Fluent UI appearance in Svelte</td><td>Scoped Svelte CSS</td></tr>
+    <tr><td><strong>W12</strong></td><td>Release Svelte build as v2.0; publish to npm + PPTB marketplace</td><td>npm + PPTB submit</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>9. Monorepo Structure</h2>
+
+<p>The recommended repository structure uses <strong>Turborepo</strong> to manage the shared engine and dual framework UIs within a single codebase. This maximizes code reuse while keeping each package independently buildable.</p>
+
+<pre><code>expression-builder/
+├── <span class="variable">packages/</span>
+│   ├── <span class="variable">engine/</span>                    <span class="comment"># Framework-agnostic expression generator</span>
+│   │   ├── <span class="variable">src/</span>
+│   │   │   ├── <span class="function">expression-generator.ts</span>
+│   │   │   ├── <span class="function">operators.ts</span>
+│   │   │   ├── <span class="function">validators.ts</span>
+│   │   │   └── <span class="function">types.ts</span>
+│   │   ├── <span class="function">package.json</span>
+│   │   └── <span class="function">tsconfig.json</span>
+│   │
+│   ├── <span class="variable">vue-ui/</span>                    <span class="comment"># Vue 3 implementation</span>
+│   │   ├── <span class="variable">src/</span>
+│   │   │   ├── <span class="function">ExpressionBuilder.vue</span>
+│   │   │   ├── <span class="function">components/</span>
+│   │   │   ├── <span class="function">composables/</span>       <span class="comment"># useExpression(), usePPTB()</span>
+│   │   │   └── <span class="function">main.ts</span>
+│   │   ├── <span class="function">package.json</span>
+│   │   ├── <span class="function">vite.config.ts</span>
+│   │   └── <span class="function">tsconfig.json</span>
+│   │
+│   └── <span class="variable">svelte-ui/</span>                 <span class="comment"># Svelte 5 implementation (Phase 3)</span>
+│       ├── <span class="variable">src/</span>
+│       │   ├── <span class="function">ExpressionBuilder.svelte</span>
+│       │   ├── <span class="function">components/</span>
+│       │   ├── <span class="function">stores/</span>            <span class="comment"># Svelte 5 runes-based state</span>
+│       │   └── <span class="function">main.ts</span>
+│       ├── <span class="function">package.json</span>
+│       ├── <span class="function">vite.config.ts</span>
+│       └── <span class="function">tsconfig.json</span>
+│
+├── <span class="function">turbo.json</span>                     <span class="comment"># Turborepo pipeline config</span>
+├── <span class="function">package.json</span>                   <span class="comment"># Root workspace</span>
+├── <span class="function">.github/workflows/</span>             <span class="comment"># CI/CD for Pages + npm</span>
+└── <span class="function">README.md</span></code></pre>
+
+<hr>
+
+<h2>10. Risk Assessment &amp; Mitigation</h2>
+
+<table>
+  <thead>
+    <tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Vue 3 becomes legacy before Svelte port completes</strong></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Vue 4 (if ever) will maintain Composition API compatibility; engine is framework-agnostic regardless</td>
+    </tr>
+    <tr>
+      <td><strong>Svelte 5 Runes confuse contributors</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Vue build is primary; Svelte port targets experienced contributors who self-select for Svelte</td>
+    </tr>
+    <tr>
+      <td><strong>Query builder library lacks needed features</strong></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Both vue-query-builder and svelte-query-builder support custom operators and nesting; fallback to custom components</td>
+    </tr>
+    <tr>
+      <td><strong>Maintaining two UIs creates drift</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Shared engine ensures logic parity; UI parity enforced via shared design tokens and component spec</td>
+    </tr>
+    <tr>
+      <td><strong>PPTB API changes break both builds</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>API adapter isolated in <code>packages/engine/adapters/pptb.ts</code>; single fix updates both UIs</td>
+    </tr>
+    <tr>
+      <td><strong>Low adoption of Svelte build</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td>Svelte port is low-risk community experiment; Vue build carries the project regardless</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>11. Why the Dual-Stack Approach Wins</h2>
+
+<p>The proposed expression builder occupies a <strong>unique position</strong> in the Power Platform tooling landscape. Unlike general-purpose query builders, it targets a specific, well-defined pain point with a concrete output format. Unlike the existing Filter Array workaround, it provides a purpose-built interface without the overhead of creating and deleting dummy actions. And unlike proprietary commercial tools, it is <strong>open-source, free, and community-maintained</strong>&mdash;aligning perfectly with the ethos of projects like XrmToolBox and Power Platform Toolbox.</p>
+
+<p>By offering <strong>both Vue and Svelte implementations</strong>, the project maximizes its addressable contributor base. Vue developers&mdash;the largest group outside of React&mdash;can contribute immediately using familiar patterns. Svelte enthusiasts&mdash;a passionate and growing community&mdash;get a showcase project that demonstrates Svelte 5's capabilities in a real-world developer tool. The shared expression engine ensures that improvements to the core logic (new operators, bug fixes, syntax updates) benefit both implementations simultaneously.</p>
+
+<p>The technical foundation is <strong>solid and future-proof</strong> on both fronts. Vue 3's Composition API has been stable for years and is now the recommended approach for all new Vue development. Svelte 5's Runes represent the culmination of years of reactivity research and are backward-compatible with Svelte 4 components. Power Automate expressions are derived from Azure Logic Apps, which has been stable for years and shows no signs of syntax changes. PPTB supports both frameworks with official sample templates, confirming platform compatibility.</p>
+
+<p>The monorepo architecture with Turborepo ensures that <strong>maintenance overhead is minimized</strong>. A single pull request can update the shared engine, CI/CD pipeline, and documentation without touching either UI package. When Power Automate introduces new expression functions, adding support requires modifying only the engine's operator map&mdash;both UIs inherit the capability automatically.</p>
+
+<hr>
+
+<!-- Call to Action -->
+<div class="cta">
+  <h2>12. Call to Action</h2>
+  <p>The research, dual-stack architecture design, and implementation planning are complete. The path forward is clear: <strong>build the shared engine and Vue 3 UI first</strong>, validate with the community, then port to Svelte 5. The estimated effort is <strong>12 weeks for a single developer</strong> working part-time across all three phases, or <strong>6-8 weeks focused full-time</strong> for the Vue build alone.</p>
+  <p style="margin-top: 20px; font-weight: 600;">The next concrete steps are:</p>
+  <ol style="margin-top: 12px;">
+    <li><strong>Create the GitHub repository</strong> under <code>PowerPlatformToolBox</code> or a community namespace; initialize Turborepo monorepo</li>
+    <li><strong>Scaffold <code>packages/engine</code></strong> with the expression generator, operator map, and unit tests</li>
+    <li><strong>Scaffold <code>packages/vue-ui</code></strong> using the PPTB <code>vue-sample</code> as a starting point</li>
+    <li><strong>Implement the custom export formatter</strong> &mdash; the highest-value, most technically interesting component</li>
+    <li><strong>Deploy the Vue build</strong> to GitHub Pages for immediate community feedback</li>
+    <li><strong>Begin Svelte 5 port</strong> as a community-driven v2.0 effort once Vue build stabilizes</li>
+  </ol>
+  <p style="margin-top: 24px; font-size: 1.1rem; color: var(--primary-dark);"><strong>This is a tool that the Power Platform community needs, wants, and will use&mdash;now available in the framework of their choice.</strong></p>
+</div>
+
+</div><!-- /.container -->
+
+</body>
+</html>

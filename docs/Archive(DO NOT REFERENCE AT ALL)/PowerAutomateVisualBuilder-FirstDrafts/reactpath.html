@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Platform Expression Builder: Feasibility Analysis &amp; Solution Design</title>
+<style>
+:root {
+  --primary: #0078d4;
+  --primary-dark: #005a9e;
+  --accent: #ff9800;
+  --text: #1a1a1a;
+  --text-secondary: #555;
+  --text-muted: #777;
+  --bg: #ffffff;
+  --bg-alt: #f6f8fa;
+  --border: #e1e4e8;
+  --code-bg: #f6f8fa;
+  --table-header-bg: #f0f4f8;
+  --success: #2e7d32;
+  --warning: #ed6c02;
+  --danger: #c62828;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --max-width: 960px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+}
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header / Hero */
+.hero {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #0078d4 100%);
+  color: white;
+  padding: 60px 0 50px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -50%; right: -20%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  position: relative;
+  letter-spacing: -0.5px;
+}
+.hero .subtitle {
+  font-size: 1.05rem;
+  opacity: 0.85;
+  font-weight: 400;
+  position: relative;
+}
+
+/* TLDR Box */
+.tldr {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+  border-left: 4px solid var(--accent);
+  padding: 24px 28px;
+  margin: 32px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  box-shadow: var(--shadow);
+}
+.tldr strong { color: #e65100; }
+.tldr p { margin: 0; font-size: 1.05rem; }
+
+/* Typography */
+h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin: 48px 0 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 32px 0 14px;
+}
+h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 24px 0 10px;
+}
+p { margin-bottom: 16px; }
+strong { font-weight: 600; color: var(--text); }
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+a:hover { border-bottom-color: var(--primary); }
+
+/* Lists */
+ol, ul { margin: 0 0 16px 24px; }
+li { margin-bottom: 6px; }
+ol li { padding-left: 4px; }
+
+/* Horizontal Rule */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0 28px;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+th {
+  background: var(--table-header-bg);
+  color: var(--primary-dark);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border);
+}
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:nth-child(even) { background: var(--bg-alt); }
+tr:last-child td { border-bottom: none; }
+td code { font-size: 0.85em; }
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #c7254e;
+}
+pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 20px 0 24px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Syntax highlighting colors */
+pre .keyword { color: #569cd6; }
+pre .string { color: #ce9178; }
+pre .function { color: #dcdcaa; }
+pre .comment { color: #6a9955; }
+pre .type { color: #4ec9b0; }
+pre .variable { color: #9cdcfe; }
+
+/* Images */
+figure {
+  margin: 28px 0;
+  text-align: center;
+}
+figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+figcaption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* Blockquote (expression examples) */
+blockquote {
+  background: var(--bg-alt);
+  border-left: 4px solid var(--primary);
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  overflow-x: auto;
+}
+blockquote code {
+  background: none;
+  color: var(--text);
+  font-size: inherit;
+}
+
+/* Citation markers */
+.sup {
+  font-size: 0.75em;
+  color: var(--primary);
+  vertical-align: super;
+  font-weight: 600;
+}
+
+/* Section badges */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.badge-success { background: #e8f5e9; color: var(--success); }
+.badge-warning { background: #fff3e0; color: var(--warning); }
+.badge-danger { background: #ffebee; color: var(--danger); }
+.badge-info { background: #e3f2fd; color: var(--primary-dark); }
+
+/* Recommendation box */
+.recommendation {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  border: 2px solid var(--success);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin: 32px 0;
+}
+.recommendation h3 {
+  color: var(--success);
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+.recommendation ul { margin-bottom: 0; }
+
+/* Call to action section */
+.cta {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+  border-radius: var(--radius-lg);
+  padding: 36px 40px;
+  margin: 40px 0;
+  text-align: center;
+}
+.cta h2 {
+  border: none;
+  margin-top: 0;
+  color: var(--primary-dark);
+}
+.cta ol {
+  text-align: left;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero { padding: 40px 0 35px; }
+  .hero h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+  table { font-size: 0.82rem; }
+  th, td { padding: 8px 10px; }
+  pre { padding: 14px 16px; font-size: 0.8rem; }
+  .container { padding: 0 16px; }
+}
+
+/* Print styles */
+@media print {
+  .hero { background: #0d47a1 !important; -webkit-print-color-adjust: exact; }
+  table { box-shadow: none; border: 1px solid var(--border); }
+  pre { background: #f6f8fa !important; color: #333 !important; border: 1px solid var(--border); }
+  a { color: var(--primary) !important; text-decoration: underline; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero Header -->
+<div class="hero">
+  <div class="container">
+    <h1>Power Platform Expression Builder</h1>
+    <p class="subtitle">Feasibility Analysis &amp; Solution Design &mdash; June 2026</p>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TL;DR -->
+<div class="tldr">
+  <p><strong>TL;DR:</strong> Both concepts&mdash;a visual trigger condition composer and a reusable Filter Array builder&mdash;are <strong>valid, high-impact, and technically feasible</strong>. The two modes share 90%+ of their underlying logic and should be delivered as a <strong>single unified tool</strong>. The recommended approach is a <strong>hybrid architecture</strong>: build a standalone web app first for maximum community reach, then package it as a Power Platform Toolbox (PPTB) tool for power users. This path maximizes adoption, minimizes maintenance overhead, and aligns with the open-source, long-term community mission.</p>
+</div>
+
+<hr>
+
+<h2>1. Problem Validation: Why This Tool Is Needed</h2>
+
+<h3>1.1 The Community Pain Point</h3>
+
+<p>Power Automate expressions are a <strong>gatekeeper skill</strong> that separates citizen developers from productive flow builders. While Microsoft touts the platform as "low-code," the reality is that any non-trivial flow eventually requires expressions&mdash;especially for trigger conditions and Filter Array actions. The community has documented this friction extensively across forums, blogs, and Stack Overflow threads. The trigger condition syntax, in particular, is a recurring source of confusion because it requires manually writing expressions like <code>@equals(triggerBody()?['Status'], 'Approved')</code> with no visual assistance whatsoever.</p>
+
+<p>Microsoft's own documentation acknowledges this gap by recommending a <strong>Filter Array workaround</strong>: users temporarily add a Filter Array action, build conditions visually, switch to advanced mode, copy the generated expression, paste it into the trigger condition, and delete the Filter Array action. This convoluted workflow is a tacit admission that the platform lacks a proper visual expression builder. The fact that an official Microsoft documentation page recommends creating and deleting a dummy action just to generate syntax speaks volumes about the user experience gap. This workaround is not discoverable to new users, breaks the mental model of flow building, and introduces unnecessary steps into what should be a single, fluid interaction.</p>
+
+<h3>1.2 Quantifying the Impact</h3>
+
+<table>
+  <thead>
+    <tr><th>Impact Dimension</th><th>Assessment</th><th>Evidence</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Frequency of Need</strong></td>
+      <td><span class="badge badge-danger">Very High</span></td>
+      <td>Every flow with a trigger condition or array filtering needs expressions; 140+ functions exist in the expression language</td>
+    </tr>
+    <tr>
+      <td><strong>Skill Barrier</strong></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Syntax is case-sensitive, requires <code>@</code> prefix, uses null-safe navigation (<code>?[]</code>), and nesting quickly becomes unreadable</td>
+    </tr>
+    <tr>
+      <td><strong>Error Cost</strong></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>A malformed trigger condition silently skips flow runs; debugging requires examining run history with no detailed feedback</td>
+    </tr>
+    <tr>
+      <td><strong>Community Demand</strong></td>
+      <td><span class="badge badge-success">Confirmed</span></td>
+      <td>Dedicated blog posts, YouTube tutorials, and forum threads specifically address "how to write trigger conditions"</td>
+    </tr>
+    <tr>
+      <td><strong>Existing Workarounds</strong></td>
+      <td><span class="badge badge-warning">Inadequate</span></td>
+      <td>The Filter Array workaround is clunky; third-party tools like jsontoexpression.workappholics.com exist but are narrowly scoped</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The expression language itself is powerful&mdash;derived from Azure Logic Apps with <strong>over 140 functions</strong> spanning strings, collections, logical comparison, conversion, math, date/time, workflow context, and URI parsing. However, this power is locked behind a syntax wall that citizen developers cannot easily climb. The proposed tool directly addresses this by providing a visual, condition-action-style interface that generates the correct expression syntax automatically, democratizing access to one of Power Automate's most important optimization features.</p>
+
+<h3>1.3 Why Two Modes, One Tool</h3>
+
+<p>The trigger condition composer and Filter Array builder are <strong>two sides of the same coin</strong>. Both generate Power Automate expressions using the identical function library (<code>equals</code>, <code>contains</code>, <code>greater</code>, <code>and</code>, <code>or</code>, <code>not</code>, etc.). The <strong>only material difference</strong> is the field reference syntax: trigger conditions use <code>triggerBody()?['FieldName']</code> while Filter Array conditions use <code>item()?['FieldName']</code>. This means a single query builder engine can serve both purposes with a simple mode toggle that swaps the field reference prefix. Building them as separate tools would duplicate 90%+ of the codebase, fragment the user experience, and increase maintenance burden for an open-source community project.</p>
+
+<hr>
+
+<h2>2. Solution Architecture Overview</h2>
+
+<figure>
+  <img src="architecture_diagram.png" alt="Architecture Diagram showing three-layer design: User Input Layer, Query Builder Engine, and Expression Generator with dual output modes">
+  <figcaption>Figure 1: Three-layer architecture designed for maximum reusability across deployment targets</figcaption>
+</figure>
+
+<p>The proposed tool follows a <strong>three-layer architecture</strong> designed for maximum reusability across deployment targets. At the top, the <strong>User Input Layer</strong> provides a familiar condition-building interface where users select fields, operators, and values through dropdown menus&mdash;no manual expression writing required. The middle layer, the <strong>Query Builder Engine</strong>, is powered by <code>react-awesome-query-builder</code> with Microsoft's Fluent UI theme, providing the drag-and-drop condition composition, nested grouping, and validation logic. The bottom layer, the <strong>Expression Generator</strong>, contains a custom export formatter that translates the query builder's internal representation into valid Power Automate expression syntax. An <strong>Output Mode Selector</strong> allows switching between Trigger Condition mode (<code>triggerBody()?</code> references) and Filter Array mode (<code>item()?</code> references), with both paths feeding into PPTB integration APIs for clipboard copy, file save, and theme synchronization.</p>
+
+<hr>
+
+<h2>3. Proposed Solution Path A: Deep PPTB Integration Tool</h2>
+
+<h3>3.1 Architecture Philosophy</h3>
+
+<p>Path A delivers the expression builder as a <strong>native Power Platform Toolbox (PPTB) tool</strong>&mdash;a React-based web application that runs inside PPTB's sandboxed iframe environment with full access to the ToolBox API and Dataverse API. This path prioritizes ecosystem integration, native look-and-feel through Fluent UI, and direct Dataverse connectivity for dynamic field discovery. The tool would be distributed through the PPTB marketplace as an npm package, discoverable and installable by any PPTB user with a single click.</p>
+
+<p>The PPTB platform provides an ideal hosting environment for this type of developer tooling. It uses a <strong>VS Code Extension Host-inspired architecture</strong> where each tool runs in an isolated iframe with structured API access via <code>postMessage</code>. The platform enforces per-tool Content Security Policies, manages authentication to Dataverse environments (including MFA), and provides a consistent Microsoft Fluent UI chrome that makes third-party tools feel native. For a tool that generates Power Automate expressions, being embedded in the same desktop application that admins and developers already use for Dataverse management creates a natural workflow integration.</p>
+
+<h3>3.2 Technical Stack</h3>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Framework</strong></td>
+      <td>React 18 + TypeScript + Vite</td>
+      <td>PPTB officially supports React samples; Vite provides fast HMR and optimized builds</td>
+    </tr>
+    <tr>
+      <td><strong>Query Builder</strong></td>
+      <td><code>@react-awesome-query-builder/fluent</code></td>
+      <td>Native Fluent UI support aligns with PPTB's Microsoft design system; highly configurable for custom export formats</td>
+    </tr>
+    <tr>
+      <td><strong>State Management</strong></td>
+      <td>React hooks + Context API</td>
+      <td>Sufficient for tool scope; avoids Redux overhead in iframe environment</td>
+    </tr>
+    <tr>
+      <td><strong>PPTB APIs</strong></td>
+      <td><code>toolboxAPI.utils.copyToClipboard</code>, <code>showNotification</code>, <code>getActiveConnection()</code></td>
+      <td>Clipboard for expression copy, notifications for user feedback, connections for field metadata</td>
+    </tr>
+    <tr>
+      <td><strong>Build Output</strong></td>
+      <td>Static <code>dist/</code> folder with <code>index.html</code> entry point</td>
+      <td>Required PPTB tool format; served from local filesystem</td>
+    </tr>
+    <tr>
+      <td><strong>Distribution</strong></td>
+      <td>npm package &rarr; PPTB marketplace submission</td>
+      <td>Standard PPTB publishing flow via <code>powerplatformtoolbox.com/submit-tool</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.3 Implementation Details</h3>
+
+<p>The core technical challenge is implementing a <strong>custom export formatter</strong> that translates <code>react-awesome-query-builder</code>'s internal query tree into Power Automate expression syntax. The library natively supports exporting to MongoDB, SQL, JsonLogic, SpEL, and ElasticSearch, and provides hooks for custom formatters through <code>config.settings.formatField</code>, <code>formatValue</code>, and <code>formatConj</code> functions. For Power Automate, the formatter must:</p>
+
+<ol>
+  <li><strong>Map operators</strong> to Power Automate functions: <code>==</code> &rarr; <code>equals()</code>, <code>contains</code> &rarr; <code>contains()</code>, <code>&gt;</code> &rarr; <code>greater()</code>, etc.</li>
+  <li><strong>Wrap field references</strong> with the appropriate context function: <code>triggerBody()?['field']</code> for trigger conditions or <code>item()?['field']</code> for Filter Array.</li>
+  <li><strong>Handle logical groups</strong> by generating <code>@and()</code> or <code>@or()</code> wrappers with proper nesting.</li>
+  <li><strong>Prefix with <code>@</code></strong> for trigger conditions; Filter Array expressions also require <code>@</code> prefix in advanced mode.</li>
+  <li><strong>Support function nesting</strong> for advanced scenarios like <code>@contains(toLower(triggerBody()?['Title']), 'urgent')</code>.</li>
+</ol>
+
+<p>The <code>react-awesome-query-builder</code> Fluent UI package provides all necessary widgets&mdash;dropdown selects for fields and operators, text inputs for values, date pickers for temporal conditions, and group containers for nested logic. The library also supports <strong>functions in both left-hand and right-hand sides</strong> of conditions, enabling advanced expressions like <code>formatDateTime(triggerBody()?['DueDate'], 'yyyy-MM-dd')</code> compared against <code>utcNow('yyyy-MM-dd')</code>. This capability is essential for date-based trigger conditions, which are among the most common and most error-prone expression types in the community.</p>
+
+<h3>3.4 PPTB-Specific Features</h3>
+
+<table>
+  <thead>
+    <tr><th>Feature</th><th>PPTB API Used</th><th>User Value</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>One-click copy</strong></td>
+      <td><code>toolboxAPI.utils.copyToClipboard(text)</code></td>
+      <td>Expression copied directly to clipboard; paste into Power Automate immediately</td>
+    </tr>
+    <tr>
+      <td><strong>Theme synchronization</strong></td>
+      <td><code>toolboxAPI.utils.getCurrentTheme()</code></td>
+      <td>Tool automatically matches PPTB light/dark mode</td>
+    </tr>
+    <tr>
+      <td><strong>Field metadata discovery</strong></td>
+      <td><code>toolboxAPI.connections.getActiveConnection()</code> + Dataverse API</td>
+      <td>Auto-populate field dropdowns from connected Dataverse environment</td>
+    </tr>
+    <tr>
+      <td><strong>Expression library</strong></td>
+      <td><code>toolboxAPI.settings</code> API</td>
+      <td>Save frequently-used expressions for reuse across sessions</td>
+    </tr>
+    <tr>
+      <td><strong>Notifications</strong></td>
+      <td><code>toolboxAPI.utils.showNotification(options)</code></td>
+      <td>Success/error feedback when copying or validating expressions</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>4. Proposed Solution Path B: Standalone Web + PPTB Adapter</h2>
+
+<h3>4.1 Architecture Philosophy</h3>
+
+<p>Path B takes a <strong>"web-first, wrap-later"</strong> approach. The core expression builder is developed as a standalone React web application that can be deployed to GitHub Pages (or any static host) and used directly in any browser&mdash;<strong>no PPTB installation required</strong>. A thin PPTB adapter wrapper is then created to package the same application as a PPTB tool, sharing 100% of the core code. This path prioritizes <strong>maximum community reach</strong>, <strong>instant accessibility</strong>, and <strong>progressive enhancement</strong> from web to desktop.</p>
+
+<p>The rationale for this approach is rooted in adoption dynamics. PPTB, while growing rapidly, is still a desktop application that users must download and install. A web-based tool removes all friction: anyone with a browser can open the URL, build an expression, and copy it to their clipboard. For citizen developers who may not even know PPTB exists, the web app becomes the <strong>entry point</strong> into the ecosystem. Power users who already use PPTB get the same functionality with added conveniences like theme sync and Dataverse field discovery through the adapter wrapper.</p>
+
+<h3>4.2 Technical Stack</h3>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Core Framework</strong></td><td>React 18 + TypeScript + Vite</td><td>Identical to Path A; shared codebase</td></tr>
+    <tr><td><strong>Query Builder</strong></td><td><code>@react-awesome-query-builder/fluent</code></td><td>Same component; works in any browser context</td></tr>
+    <tr><td><strong>Web Deployment</strong></td><td>GitHub Pages / Vercel / Netlify</td><td>Free, reliable static hosting for open-source projects</td></tr>
+    <tr><td><strong>PWA Support</strong></td><td>Vite PWA plugin</td><td>Offline capability, installable as desktop shortcut</td></tr>
+    <tr><td><strong>PPTB Adapter</strong></td><td>Thin iframe wrapper (~50 lines)</td><td>Loads the same built <code>dist/</code> output inside PPTB; adds API bridge</td></tr>
+    <tr><td><strong>Clipboard (Web)</strong></td><td>Navigator Clipboard API</td><td>Modern browsers support <code>navigator.clipboard.writeText()</code></td></tr>
+    <tr><td><strong>State Persistence</strong></td><td>localStorage / IndexedDB</td><td>Save expressions, recent fields, and user preferences</td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 The Adapter Pattern</h3>
+
+<p>The PPTB adapter is a minimal wrapper that demonstrates the elegance of this architecture. The core application is built as a <strong>self-contained static site</strong> that expects to receive configuration and API access through a well-defined JavaScript interface. When running standalone, it uses the browser's native APIs (Clipboard, localStorage, fetch). When running inside PPTB, the adapter injects the PPTB API implementations through the same interface:</p>
+
+<pre><code><span class="comment">// Core app uses this interface &mdash; implementation swapped at runtime</span>
+<span class="keyword">interface</span> <span class="type">IPlatformAdapter</span> {
+  <span class="function">copyToClipboard</span>(<span class="variable">text</span>: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+  <span class="function">getCurrentTheme</span>(): <span class="type">Promise</span>&lt;<span class="string">'light'</span> | <span class="string">'dark'</span>&gt;;
+  <span class="function">getDataverseFields</span>?(): <span class="type">Promise</span>&lt;<span class="type">Field</span>[]&gt;; <span class="comment">// Optional: only in PPTB</span>
+  <span class="function">saveExpression</span>(<span class="variable">name</span>: <span class="type">string</span>, <span class="variable">expr</span>: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+}
+
+<span class="comment">// Web implementation</span>
+<span class="keyword">const</span> <span class="variable">webAdapter</span>: <span class="type">IPlatformAdapter</span> = {
+  <span class="function">copyToClipboard</span>: (<span class="variable">text</span>) => <span class="variable">navigator</span>.<span class="variable">clipboard</span>.<span class="function">writeText</span>(<span class="variable">text</span>),
+  <span class="function">getCurrentTheme</span>: () => <span class="type">Promise</span>.<span class="function">resolve</span>(<span class="string">'light'</span>),
+  <span class="function">saveExpression</span>: (<span class="variable">name</span>, <span class="variable">expr</span>) => <span class="variable">localStorage</span>.<span class="function">setItem</span>(<span class="variable">name</span>, <span class="variable">expr</span>),
+};
+
+<span class="comment">// PPTB implementation (in adapter wrapper)</span>
+<span class="keyword">const</span> <span class="variable">pptbAdapter</span>: <span class="type">IPlatformAdapter</span> = {
+  <span class="function">copyToClipboard</span>: (<span class="variable">text</span>) => <span class="variable">window</span>.<span class="variable">toolboxAPI</span>.<span class="variable">utils</span>.<span class="function">copyToClipboard</span>(<span class="variable">text</span>),
+  <span class="function">getCurrentTheme</span>: () => <span class="variable">window</span>.<span class="variable">toolboxAPI</span>.<span class="variable">utils</span>.<span class="function">getCurrentTheme</span>(),
+  <span class="function">getDataverseFields</span>: () => <span class="function">fetchFieldsFromActiveConnection</span>(),
+  <span class="function">saveExpression</span>: (<span class="variable">name</span>, <span class="variable">expr</span>) => <span class="variable">window</span>.<span class="variable">toolboxAPI</span>.<span class="variable">settings</span>.<span class="function">set</span>(<span class="variable">name</span>, <span class="variable">expr</span>),
+};</code></pre>
+
+<p>This pattern means <strong>100% of the UI and expression logic is shared</strong> between web and PPTB deployments. Only the platform-specific API implementations differ, and those are thin adapters that can be maintained independently. For an open-source community project with limited maintainer bandwidth, this architectural decision dramatically reduces the long-term maintenance surface area.</p>
+
+<h3>4.4 Deployment &amp; Distribution</h3>
+
+<table>
+  <thead>
+    <tr><th>Channel</th><th>Method</th><th>Audience</th><th>Effort</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>GitHub Pages</strong></td><td>Auto-deploy via GitHub Actions on push to <code>main</code></td><td>Entire Power Platform community</td><td>One-time CI setup</td></tr>
+    <tr><td><strong>PPTB Marketplace</strong></td><td><code>npm publish</code> &rarr; submit at <code>powerplatformtoolbox.com/submit-tool</code></td><td>PPTB power users</td><td>Package.json + icon</td></tr>
+    <tr><td><strong>npm (direct)</strong></td><td><code>npm install @scope/expression-builder</code> for custom integrations</td><td>Developers embedding the component</td><td>Standard npm publish</td></tr>
+    <tr><td><strong>PWA Install</strong></td><td>Browser "Add to Home Screen" / "Install App" prompt</td><td>Mobile and desktop casual users</td><td>Vite PWA plugin configuration</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>5. Solution Path Comparison</h2>
+
+<figure>
+  <img src="solution_paths_comparison.png" alt="Solution Paths Comparison diagram showing Path A (Deep PPTB Integration) vs Path B (Standalone Web + Adapter) with the hybrid recommendation">
+  <figcaption>Figure 2: Path A vs Path B comparison with the recommended hybrid approach roadmap</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Dimension</th><th>Path A: Deep PPTB Integration</th><th>Path B: Standalone Web + Adapter</th><th><strong>Recommendation</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Initial Development Effort</strong></td><td>Medium (~4-6 weeks)</td><td>Medium (~4-6 weeks core + 1 week adapter)</td><td>Comparable; shared core reduces delta</td></tr>
+    <tr><td><strong>User Reach</strong></td><td>Limited to PPTB install base</td><td><strong>Unlimited</strong> &mdash; any browser</td><td>Path B wins on adoption</td></tr>
+    <tr><td><strong>Dataverse Integration</strong></td><td>Native &mdash; live field discovery via Dataverse API</td><td>Manual field entry (or CSV import)</td><td>Path A advantage for power users</td></tr>
+    <tr><td><strong>Look &amp; Feel</strong></td><td>Perfect Fluent UI chrome match with PPTB</td><td>Fluent UI standalone (still professional)</td><td>Path A slight edge</td></tr>
+    <tr><td><strong>Maintenance Burden</strong></td><td>Single target, PPTB API dependencies</td><td>Dual targets but 95% shared code</td><td>Path B's adapter pattern minimizes duplication</td></tr>
+    <tr><td><strong>Community Contribution</strong></td><td>Requires PPTB knowledge to contribute</td><td>Lower barrier &mdash; standard React web dev</td><td>Path B attracts more contributors</td></tr>
+    <tr><td><strong>Offline Capability</strong></td><td>Desktop app = always offline</td><td>PWA enables offline after first load</td><td>Comparable</td></tr>
+    <tr><td><strong>Clipboard Integration</strong></td><td>One-click via PPTB API</td><td>Two-click (copy button) or Ctrl+C</td><td>Path A marginally smoother</td></tr>
+    <tr><td><strong>Long-term Sustainability</strong></td><td>Tied to PPTB platform evolution</td><td>Independent; can outlive any single platform</td><td>Path B more resilient</td></tr>
+    <tr><td><strong>Open-source Alignment</strong></td><td>Good</td><td><strong>Excellent</strong> &mdash; web standards, no vendor lock-in</td><td>Path B better for community mission</td></tr>
+  </tbody>
+</table>
+
+<div class="recommendation">
+  <h3>The Verdict: Hybrid Approach</h3>
+  <p>The analysis points conclusively to a <strong>hybrid implementation strategy</strong> that combines the strengths of both paths while mitigating their weaknesses. The recommended roadmap is:</p>
+  <ul>
+    <li><strong>Phase 1 (Weeks 1-4):</strong> Build the core expression engine with <code>react-awesome-query-builder/fluent</code>, implementing the custom Power Automate export formatter and dual-mode output (Trigger Condition + Filter Array).</li>
+    <li><strong>Phase 2 (Weeks 5-8):</strong> Deploy as a standalone web app on GitHub Pages with PWA support. This captures the broadest possible audience and establishes the tool in the community.</li>
+    <li><strong>Phase 3 (Weeks 9-12):</strong> Create the thin PPTB adapter wrapper, publish to npm, and submit to the PPTB marketplace. Power users get native integration; the web app continues serving casual users.</li>
+  </ul>
+  <p>This phased approach <strong>de-risks development</strong> by validating the core engine with real users before investing in platform-specific integrations. It also creates a <strong>natural funnel</strong>: web users who adopt the tool and later discover PPTB will find a seamless upgrade path to the integrated version.</p>
+</div>
+
+<hr>
+
+<h2>6. Expression Syntax Deep Dive</h2>
+
+<h3>6.1 Trigger Conditions vs. Filter Array: The Critical Differences</h3>
+
+<figure>
+  <img src="expression_complexity_analysis.png" alt="Expression Complexity Analysis table showing supported operators, functions, and nesting levels for both Trigger Condition and Filter Array output modes">
+  <figcaption>Figure 3: Expression complexity coverage across all supported function categories</figcaption>
+</figure>
+
+<p>While trigger conditions and Filter Array expressions share the same function library, they differ in <strong>field reference syntax</strong> and <strong>execution context</strong>. Understanding these differences is essential for building a correct expression generator.</p>
+
+<table>
+  <thead>
+    <tr><th>Aspect</th><th>Trigger Conditions</th><th>Filter Array</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Field Reference</strong></td><td><code>triggerBody()?['FieldName']</code></td><td><code>item()?['FieldName']</code></td></tr>
+    <tr><td><strong>Expression Prefix</strong></td><td><code>@</code> required at start</td><td><code>@</code> required at start (advanced mode)</td></tr>
+    <tr><td><strong>Multiple Conditions</strong></td><td>Each row is ANDed by default; use <code>@or()</code> for OR</td><td>Use <code>@and()</code> or <code>@or()</code> explicitly</td></tr>
+    <tr><td><strong>Execution Timing</strong></td><td>Evaluated <strong>before</strong> flow starts (server-side)</td><td>Evaluated <strong>during</strong> flow run (client-side)</td></tr>
+    <tr><td><strong>Performance Impact</strong></td><td>Prevents unnecessary flow runs; saves API calls</td><td>Processes arrays in-memory; efficient vs. loops</td></tr>
+    <tr><td><strong>Error Handling</strong></td><td>Silent skip on malformed expression (hard to debug)</td><td>Visible error in flow run history</td></tr>
+    <tr><td><strong>Dynamic Content</strong></td><td><strong>Not allowed</strong> &mdash; must use raw expressions only</td><td><strong>Not allowed</strong> in advanced mode &mdash; raw expressions only</td></tr>
+  </tbody>
+</table>
+
+<h3>6.2 Supported Expression Functions</h3>
+
+<p>The tool should support <strong>all 140+ Power Automate expression functions</strong> organized into logical categories. The following table maps the most commonly used functions to their query builder equivalents:</p>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Functions</th><th>Query Builder Operator</th><th>Example Output</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Equality</strong></td><td><code>equals</code></td><td><code>==</code></td><td><code>@equals(triggerBody()?['Status'], 'Approved')</code></td></tr>
+    <tr><td><strong>Containment</strong></td><td><code>contains</code></td><td><code>contains</code></td><td><code>@contains(triggerBody()?['Title'], 'Urgent')</code></td></tr>
+    <tr><td><strong>Prefix/Suffix</strong></td><td><code>startsWith</code>, <code>endsWith</code></td><td><code>begins_with</code>, <code>ends_with</code></td><td><code>@startsWith(triggerBody()?['Email'], 'admin')</code></td></tr>
+    <tr><td><strong>Comparison</strong></td><td><code>greater</code>, <code>less</code>, <code>greaterOrEquals</code>, <code>lessOrEquals</code></td><td><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code></td><td><code>@greater(triggerBody()?['Amount'], 1000)</code></td></tr>
+    <tr><td><strong>String</strong></td><td><code>toLower</code>, <code>toUpper</code>, <code>trim</code>, <code>length</code></td><td>Function wrappers</td><td><code>@contains(toLower(...), 'value')</code></td></tr>
+    <tr><td><strong>Date/Time</strong></td><td><code>utcNow</code>, <code>formatDateTime</code>, <code>addDays</code></td><td>Function wrappers</td><td><code>@equals(formatDateTime(...), utcNow('yyyy-MM-dd'))</code></td></tr>
+    <tr><td><strong>Logical</strong></td><td><code>and</code>, <code>or</code>, <code>not</code></td><td>Group conjunctions</td><td><code>@and(A, @or(B, C))</code></td></tr>
+    <tr><td><strong>Null Check</strong></td><td><code>empty</code>, <code>coalesce</code></td><td><code>is_empty</code>, <code>is_null</code></td><td><code>@not(empty(triggerBody()?['Field']))</code></td></tr>
+  </tbody>
+</table>
+
+<h3>6.3 Nested Grouping Syntax</h3>
+
+<p>One of the most powerful and most error-prone aspects of Power Automate expressions is <strong>nested logical grouping</strong>. The tool must handle arbitrary nesting of <code>@and()</code> and <code>@or()</code> functions up to a configurable depth (recommended default: 10 levels). Consider this real-world example from a community forum:</p>
+
+<blockquote>
+@and(<br>
+&nbsp;&nbsp;contains(triggerBody()?['FilenameWithExtension'], '.xlsm'),<br>
+&nbsp;&nbsp;@or(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@and(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/ModerationStatus'], 'Approved'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/IsCheckedOut'], false)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@and(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/ModerationStatus'], 'Denied'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equals(triggerOutputs()?['body/IsCheckedOut'], false)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;)<br>
+)
+</blockquote>
+
+<p>This expression demonstrates <strong>three levels of nesting</strong>: an outer <code>@and()</code>, containing a <code>@contains()</code>, which contains an <code>@or()</code>, which contains two inner <code>@and()</code> groups. Writing this manually is error-prone due to bracket matching and comma placement. The visual query builder eliminates this entire class of errors by representing the logic as a tree of nested condition groups, with the export formatter responsible for generating syntactically correct, properly parenthesized output.</p>
+
+<hr>
+
+<h2>7. Power Platform Toolbox Integration Details</h2>
+
+<h3>7.1 Tool Manifest Structure</h3>
+
+<p>Every PPTB tool requires a <code>package.json</code> file with PPTB-specific fields. The expression builder tool's manifest would look like:</p>
+
+<pre><code>{
+  <span class="string">"name"</span>: <span class="string">"@powerplatform-community/expression-builder"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="string">"displayName"</span>: <span class="string">"Power Automate Expression Builder"</span>,
+  <span class="string">"description"</span>: <span class="string">"Visual condition composer for trigger conditions and Filter Array expressions"</span>,
+  <span class="string">"main"</span>: <span class="string">"index.html"</span>,
+  <span class="string">"icon"</span>: <span class="string">"icons/expression-builder.svg"</span>,
+  <span class="string">"license"</span>: <span class="string">"MIT"</span>,
+  <span class="string">"contributors"</span>: [
+    { <span class="string">"name"</span>: <span class="string">"Community Contributors"</span>, <span class="string">"url"</span>: <span class="string">"https://github.com/powerplatform-community/expression-builder"</span> }
+  ],
+  <span class="string">"configurations"</span>: {
+    <span class="string">"minAPIVersion"</span>: <span class="string">"1.2.0"</span>,
+    <span class="string">"categories"</span>: [<span class="string">"Development"</span>, <span class="string">"Power Automate"</span>],
+    <span class="string">"keywords"</span>: [<span class="string">"expressions"</span>, <span class="string">"trigger conditions"</span>, <span class="string">"filter array"</span>, <span class="string">"power automate"</span>]
+  },
+  <span class="string">"features"</span>: {
+    <span class="string">"clipboard"</span>: <span class="keyword">true</span>,
+    <span class="string">"notifications"</span>: <span class="keyword">true</span>,
+    <span class="string">"settings"</span>: <span class="keyword">true</span>
+  }
+}</code></pre>
+
+<p>The manifest declares the required PPTB API version (1.2.0 for clipboard and theme APIs), categorizes the tool for marketplace discovery, and requests only the permissions it needs. The <code>@pptb/types</code> package provides a CLI validator (<code>pptb-validate</code>) that checks the manifest against PPTB's review criteria before publishing, reducing the risk of marketplace submission rejection.</p>
+
+<h3>7.2 Publishing Workflow</h3>
+
+<p>The PPTB tool publishing process follows a well-documented pipeline:</p>
+
+<ol>
+  <li><strong>Developer publishes to npm</strong> &mdash; <code>npm publish</code> with the tool's built <code>dist/</code> folder</li>
+  <li><strong>Submit to PPTB registry</strong> &mdash; Complete the form at <code>powerplatformtoolbox.com/submit-tool</code></li>
+  <li><strong>Automated validation</strong> &mdash; PPTB checks package structure, manifest validity, and security policy compliance</li>
+  <li><strong>Manual review</strong> &mdash; The PPTB team reviews the tool for quality and appropriateness</li>
+  <li><strong>Approval and listing</strong> &mdash; Tool appears in the PPTB marketplace with install count tracking</li>
+  <li><strong>User installation</strong> &mdash; One-click install; PPTB downloads the pre-built archive and caches it locally</li>
+</ol>
+
+<p>Updates follow the same flow: publish a new version to npm, PPTB detects the update, and users see an update badge in their installed tools panel. The update process is atomic&mdash;if it fails, the previous version remains functional.</p>
+
+<hr>
+
+<h2>8. Implementation Roadmap</h2>
+
+<h3>8.1 Phase 1: Core Engine (Weeks 1-4)</h3>
+
+<p>The first phase focuses on building the expression generation engine that will be shared across both deployment targets. This is the highest-risk, highest-value component&mdash;everything else is packaging and integration.</p>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Technical Details</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W1</strong></td><td>Project scaffolding + Query builder integration</td><td>React 18 + Vite + TypeScript + <code>@react-awesome-query-builder/fluent</code>; basic layout and theming</td></tr>
+    <tr><td><strong>W2</strong></td><td>Field configuration system</td><td>Define field types (text, number, boolean, date, choice), operators per type, and value widgets</td></tr>
+    <tr><td><strong>W3</strong></td><td>Custom Power Automate export formatter</td><td>Implement <code>formatField</code>, <code>formatValue</code>, <code>formatOp</code>, <code>formatConj</code> hooks to generate <code>@function()</code> syntax</td></tr>
+    <tr><td><strong>W4</strong></td><td>Dual-mode output + validation</td><td>Trigger Condition mode (<code>triggerBody()?</code>) and Filter Array mode (<code>item()?</code>); expression validation and preview</td></tr>
+  </tbody>
+</table>
+
+<h3>8.2 Phase 2: Web Deployment (Weeks 5-8)</h3>
+
+<p>With the core engine validated, the second phase makes it accessible to the widest possible audience through web deployment.</p>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Technical Details</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W5</strong></td><td>Expression library management</td><td>localStorage-based save/load of frequently-used expressions; import/export as JSON</td></tr>
+    <tr><td><strong>W6</strong></td><td>PWA configuration + offline support</td><td>Vite PWA plugin; service worker for offline expression building</td></tr>
+    <tr><td><strong>W7</strong></td><td>GitHub Actions CI/CD</td><td>Automated build, test, and deploy to GitHub Pages on every push to <code>main</code></td></tr>
+    <tr><td><strong>W8</strong></td><td>Community documentation</td><td>README, usage examples, contributing guide, expression cookbook with common patterns</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3 Phase 3: PPTB Integration (Weeks 9-12)</h3>
+
+<p>The final phase packages the core engine as a PPTB tool for users who want native integration with their Power Platform environment.</p>
+
+<table>
+  <thead>
+    <tr><th>Week</th><th>Deliverable</th><th>Technical Details</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W9</strong></td><td>PPTB adapter wrapper</td><td>Thin iframe wrapper that injects <code>toolboxAPI</code> implementations into the core app's adapter interface</td></tr>
+    <tr><td><strong>W10</strong></td><td>Dataverse field discovery</td><td>Use <code>toolboxAPI.connections.getActiveConnection()</code> + Dataverse API to auto-populate field dropdowns from the connected environment</td></tr>
+    <tr><td><strong>W11</strong></td><td>PPTB-specific features</td><td>Theme sync via <code>getCurrentTheme()</code>, one-click copy via <code>copyToClipboard()</code>, expression persistence via Settings API</td></tr>
+    <tr><td><strong>W12</strong></td><td>Marketplace submission</td><td>npm publish, manifest validation with <code>pptb-validate</code>, submit via <code>powerplatformtoolbox.com/submit-tool</code></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>9. Risk Assessment &amp; Mitigation</h2>
+
+<table>
+  <thead>
+    <tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PPTB API changes break integration</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Adapter pattern isolates PPTB-specific code; core engine remains independent</td>
+    </tr>
+    <tr>
+      <td><strong>react-awesome-query-builder API changes</strong></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Pin to stable major version; monitor changelogs; vendor if necessary</td>
+    </tr>
+    <tr>
+      <td><strong>Power Automate expression syntax changes</strong></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Follow Azure Logic Apps documentation (source of truth); community will flag changes quickly</td>
+    </tr>
+    <tr>
+      <td><strong>Low community adoption</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Web-first approach maximizes reach; PWA reduces friction; GitHub SEO drives discovery</td>
+    </tr>
+    <tr>
+      <td><strong>Maintainer burnout (open source)</strong></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td><span class="badge badge-danger">High</span></td>
+      <td>Simple architecture, well-documented code, modular design makes contribution easy; hybrid approach splits effort across phases</td>
+    </tr>
+    <tr>
+      <td><strong>Complex nested expressions exceed UI limits</strong></td>
+      <td><span class="badge badge-success">Low</span></td>
+      <td><span class="badge badge-warning">Medium</span></td>
+      <td>Configurable nesting depth; "expert mode" for raw expression editing as fallback</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>10. Why This Tool Will Succeed</h2>
+
+<p>The proposed expression builder occupies a <strong>unique position</strong> in the Power Platform tooling landscape. Unlike general-purpose query builders, it targets a specific, well-defined pain point with a concrete output format. Unlike the existing Filter Array workaround, it provides a purpose-built interface without the overhead of creating and deleting dummy actions. And unlike proprietary commercial tools, it is <strong>open-source, free, and community-maintained</strong>&mdash;aligning perfectly with the ethos of projects like XrmToolBox and Power Platform Toolbox.</p>
+
+<p>The community demand is <strong>quantifiable and persistent</strong>: Microsoft Learn documentation dedicates an entire page to explaining trigger condition syntax with multiple examples. Blog posts from MVPs and community experts regularly explain "how to write trigger conditions" as if it were a skill worth teaching. Stack Overflow questions about Power Automate expressions consistently rank among the most-viewed in the platform's tags. The tool does not need to create demand&mdash;it needs to <strong>capture existing demand</strong> with a better user experience.</p>
+
+<p>The technical foundation is <strong>solid and future-proof</strong>: <code>react-awesome-query-builder</code> is a mature, actively maintained library with 3,000+ GitHub stars, TypeScript support, and a plugin architecture that supports custom export formats. PPTB is an emerging but well-architected platform with clear documentation, sample code, and a growing marketplace. Power Automate expressions are derived from Azure Logic Apps, which has been stable for years and shows no signs of syntax changes. The risk of technical obsolescence is minimal.</p>
+
+<p>The open-source model ensures <strong>long-term sustainability</strong>: by building a tool that the community can fork, extend, and maintain independently of any single contributor, the project gains the resilience needed to remain useful for years. The hybrid architecture&mdash;web-first with optional PPTB integration&mdash;further de-risks the project by avoiding vendor lock-in and ensuring the tool remains accessible regardless of platform evolution.</p>
+
+<hr>
+
+<!-- Call to Action -->
+<div class="cta">
+  <h2>11. Call to Action</h2>
+  <p>The research, architecture design, and implementation planning are complete. The path forward is clear: <strong>build the core expression engine first</strong>, validate it with the community as a web app, then package it for PPTB integration. The estimated effort is <strong>12 weeks for a single developer</strong> working part-time, or <strong>4-6 weeks for a focused full-time effort</strong>.</p>
+  <p style="margin-top: 20px; font-weight: 600;">The next concrete steps are:</p>
+  <ol style="margin-top: 12px;">
+    <li><strong>Create the GitHub repository</strong> under the <code>PowerPlatformToolBox</code> organization or a dedicated community namespace</li>
+    <li><strong>Set up the development environment</strong> using the PPTB React sample as a starting point</li>
+    <li><strong>Implement the custom export formatter</strong> &mdash; this is the highest-value, most technically interesting component</li>
+    <li><strong>Deploy the web app</strong> to GitHub Pages for immediate community feedback</li>
+    <li><strong>Iterate based on user feedback</strong> before investing in PPTB-specific integrations</li>
+  </ol>
+  <p style="margin-top: 24px; font-size: 1.1rem; color: var(--primary-dark);"><strong>This is a tool that the Power Platform community needs, wants, and will use. The question is not whether to build it, but how quickly we can get it into users' hands.</strong></p>
+</div>
+
+</div><!-- /.container -->
+
+</body>
+</html>

@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expression Builder Alternate UI Mocks</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f7;
+      --surface: #ffffff;
+      --surface-2: #fafafa;
+      --surface-3: #f3f2f1;
+      --text: #242424;
+      --text-2: #424242;
+      --text-3: #616161;
+      --stroke: #d1d1d1;
+      --stroke-2: #e0e0e0;
+      --brand: #0f6cbd;
+      --brand-hover: #115ea3;
+      --brand-soft: #ebf3fc;
+      --green: #0e700e;
+      --green-soft: #f1faf1;
+      --amber: #8a6100;
+      --amber-soft: #fff9e8;
+      --red: #bc2f32;
+      --red-soft: #fdf3f4;
+      --ink: #1b1a19;
+      --radius-sm: 3px;
+      --radius-md: 5px;
+      --radius-lg: 8px;
+      --shadow-4: 0 2px 4px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+      --shadow-8: 0 4px 9px rgba(0, 0, 0, 0.15), 0 0 2px rgba(0, 0, 0, 0.12);
+      --font: "Segoe UI", "Segoe UI Variable", sans-serif;
+      --mono: "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(15, 108, 189, 0.07), transparent 260px),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.42;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      min-height: 100dvh;
+    }
+
+    .hero {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px 24px 18px;
+    }
+
+    .hero-top {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      max-width: 840px;
+      color: var(--text);
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 650;
+      letter-spacing: 0;
+      line-height: 1.08;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin-top: 10px;
+      color: var(--text-2);
+      font-size: 15px;
+    }
+
+    .stack-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--stroke-2);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 0 9px;
+      white-space: nowrap;
+    }
+
+    .pill.brand {
+      border-color: rgba(15, 108, 189, 0.24);
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+
+    .pill.green {
+      border-color: rgba(14, 112, 14, 0.22);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .pill.amber {
+      border-color: rgba(138, 97, 0, 0.22);
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .pill.red {
+      border-color: rgba(188, 47, 50, 0.2);
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 1480px;
+      margin: 10px auto 0;
+      padding: 0 24px 24px;
+    }
+
+    .toc a {
+      display: grid;
+      gap: 6px;
+      min-height: 86px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text);
+      padding: 13px 14px;
+      text-decoration: none;
+      box-shadow: var(--shadow-4);
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    .toc a:hover {
+      border-color: rgba(15, 108, 189, 0.38);
+      box-shadow: var(--shadow-8);
+      transform: translateY(-1px);
+    }
+
+    .toc strong {
+      font-size: 13px;
+    }
+
+    .toc span {
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    .mock-set {
+      display: grid;
+      gap: 26px;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+
+    .option {
+      border: 1px solid var(--stroke-2);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow-8);
+      overflow: hidden;
+    }
+
+    .option-header {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      min-height: 74px;
+      border-bottom: 1px solid var(--stroke-2);
+      padding: 16px 18px;
+    }
+
+    .option-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-title h2 {
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .option-note {
+      margin-top: 5px;
+      color: var(--text-3);
+      font-size: 13px;
+    }
+
+    .mode-control {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      min-width: 244px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-lg);
+      background: var(--surface-3);
+      padding: 3px;
+    }
+
+    .mode-control button {
+      min-height: 32px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--text-2);
+      font-weight: 650;
+      transition: background 140ms ease, color 140ms ease, transform 100ms ease;
+    }
+
+    .mode-control button:active {
+      transform: translateY(1px);
+    }
+
+    .mode-control button[data-active="true"] {
+      background: var(--surface);
+      color: var(--brand);
+      box-shadow: var(--shadow-4);
+    }
+
+    .mock-frame {
+      min-height: 620px;
+      background: var(--surface-2);
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 650;
+      padding: 0 12px;
+      transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
+    }
+
+    .button:hover {
+      background: var(--surface-3);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #ffffff;
+    }
+
+    .button.primary:hover {
+      background: var(--brand-hover);
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-4);
+    }
+
+    .panel-head {
+      display: flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--stroke-2);
+      padding: 11px 12px;
+    }
+
+    .panel-head h3 {
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .subtle {
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    .code {
+      overflow: auto;
+      border-radius: var(--radius-lg);
+      background: var(--ink);
+      color: #f3f2f1;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.72;
+      padding: 14px;
+      white-space: pre;
+    }
+
+    .kw {
+      color: #9cdcfe;
+    }
+
+    .path {
+      color: #b5cea8;
+    }
+
+    .str {
+      color: #ce9178;
+    }
+
+    .field {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--text-3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .control {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      padding: 0 9px;
+    }
+
+    .control:focus {
+      border-color: var(--brand);
+      outline: none;
+      box-shadow: inset 0 -1px 0 var(--brand);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(14, 112, 14, 0.12);
+      animation: breathe 2.4s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.72;
+      }
+      50% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--surface-3);
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.82), transparent);
+      animation: shimmer 1.8s infinite;
+      transform: translateX(-100%);
+    }
+
+    @keyframes shimmer {
+      to {
+        transform: translateX(100%);
+      }
+    }
+
+    .glyph {
+      width: 16px;
+      height: 16px;
+      position: relative;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+
+    .glyph.copy::before,
+    .glyph.copy::after {
+      content: "";
+      position: absolute;
+      border: 1.6px solid currentColor;
+      border-radius: 2px;
+    }
+
+    .glyph.copy::before {
+      inset: 4px 2px 2px 5px;
+    }
+
+    .glyph.copy::after {
+      inset: 1px 5px 5px 2px;
+      background: currentColor;
+      opacity: 0.1;
+    }
+
+    .glyph.file::before {
+      content: "";
+      position: absolute;
+      inset: 2px 4px 2px 3px;
+      border: 1.6px solid currentColor;
+      border-radius: 2px;
+    }
+
+    .glyph.file::after {
+      content: "";
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      width: 5px;
+      height: 5px;
+      border-left: 1.6px solid currentColor;
+      border-bottom: 1.6px solid currentColor;
+      background: var(--surface);
+    }
+
+    .glyph.plus::before,
+    .glyph.plus::after {
+      content: "";
+      position: absolute;
+      background: currentColor;
+      border-radius: 2px;
+    }
+
+    .glyph.plus::before {
+      left: 3px;
+      right: 3px;
+      top: 7px;
+      height: 2px;
+    }
+
+    .glyph.plus::after {
+      top: 3px;
+      bottom: 3px;
+      left: 7px;
+      width: 2px;
+    }
+
+    /* Design A */
+    .design-a {
+      display: grid;
+      grid-template-columns: 64px 260px minmax(420px, 1fr) 360px;
+      gap: 12px;
+      min-height: 620px;
+      padding: 14px;
+      background:
+        linear-gradient(90deg, rgba(15, 108, 189, 0.06), transparent 42%),
+        #f8fafc;
+    }
+
+    .a-rail {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      justify-items: center;
+      gap: 12px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 10px 8px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-lg);
+      background: var(--brand);
+      color: #ffffff;
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
+    .rail-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rail-dot {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .rail-dot.active {
+      border-color: rgba(15, 108, 189, 0.32);
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+
+    .a-fields,
+    .a-preview {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .field-list {
+      display: grid;
+      gap: 7px;
+      padding: 12px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      padding: 7px 8px;
+    }
+
+    .field-row:hover {
+      border-color: var(--stroke-2);
+      background: var(--surface-2);
+    }
+
+    .a-canvas {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-width: 0;
+    }
+
+    .a-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid var(--stroke-2);
+      padding: 11px 12px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .a-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-bottom: 1px solid var(--stroke-2);
+      background: var(--stroke-2);
+      gap: 1px;
+    }
+
+    .metric {
+      min-width: 0;
+      background: var(--surface);
+      padding: 10px 12px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--text-3);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      overflow: hidden;
+      margin-top: 3px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rule-stack {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .rule {
+      display: grid;
+      grid-template-columns: minmax(130px, 1fr) minmax(110px, 0.8fr) minmax(130px, 1fr);
+      gap: 8px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+      padding: 10px;
+      animation: rise 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .rule:nth-child(2) {
+      animation-delay: 70ms;
+    }
+
+    .rule:nth-child(3) {
+      animation-delay: 140ms;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .a-preview-body {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      padding: 12px;
+    }
+
+    .diag {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 9px;
+    }
+
+    .diag .badge {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .diag.ok .badge {
+      background: var(--green);
+    }
+
+    .diag.warn .badge {
+      background: var(--amber);
+    }
+
+    /* Design B */
+    .design-b {
+      display: grid;
+      grid-template-columns: 260px minmax(420px, 1fr);
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      min-height: 620px;
+      padding: 14px;
+      background:
+        radial-gradient(circle at 76% 20%, rgba(14, 112, 14, 0.1), transparent 260px),
+        #f9fbf8;
+    }
+
+    .b-top {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .b-side {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+    }
+
+    .palette {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .palette-item {
+      display: grid;
+      gap: 3px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 10px;
+    }
+
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(var(--stroke-2) 1px, transparent 1px),
+        linear-gradient(90deg, var(--stroke-2) 1px, transparent 1px),
+        var(--surface);
+      background-size: 28px 28px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .flow-line {
+      position: absolute;
+      height: 2px;
+      background: rgba(14, 112, 14, 0.4);
+      transform-origin: left center;
+    }
+
+    .line-1 {
+      left: 212px;
+      top: 116px;
+      width: 150px;
+      transform: rotate(13deg);
+    }
+
+    .line-2 {
+      left: 376px;
+      top: 152px;
+      width: 138px;
+      transform: rotate(-18deg);
+    }
+
+    .flow-node {
+      position: absolute;
+      width: 178px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow-8);
+      padding: 11px;
+    }
+
+    .node-1 {
+      left: 34px;
+      top: 66px;
+    }
+
+    .node-2 {
+      left: 320px;
+      top: 112px;
+      border-color: rgba(14, 112, 14, 0.32);
+    }
+
+    .node-3 {
+      right: 38px;
+      top: 46px;
+    }
+
+    .node-4 {
+      right: 82px;
+      bottom: 60px;
+      border-color: rgba(138, 97, 0, 0.3);
+    }
+
+    .node-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .node-detail {
+      margin-top: 8px;
+      color: var(--text-3);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .b-dock {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 280px;
+      gap: 12px;
+    }
+
+    .dock-panel {
+      min-width: 0;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 12px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .json-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .json-cell {
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      padding: 8px;
+      min-width: 0;
+    }
+
+    .json-cell b {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .json-cell span {
+      display: block;
+      margin-top: 3px;
+      color: var(--text-3);
+      font-size: 11px;
+    }
+
+    /* Design C */
+    .design-c {
+      display: grid;
+      grid-template-columns: minmax(420px, 1.1fr) minmax(360px, 0.9fr);
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+      min-height: 620px;
+      padding: 14px;
+      background:
+        radial-gradient(circle at 22% 20%, rgba(188, 47, 50, 0.07), transparent 270px),
+        #fbfaf9;
+    }
+
+    .c-head {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 12px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .c-main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .recipe-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .recipe {
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 10px;
+      box-shadow: var(--shadow-4);
+    }
+
+    .recipe b {
+      display: block;
+      font-size: 12px;
+    }
+
+    .recipe span {
+      display: block;
+      margin-top: 3px;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    .review-editor {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      min-height: 300px;
+      overflow: hidden;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-8);
+    }
+
+    .line-nos {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      border-right: 1px solid var(--stroke-2);
+      background: var(--surface-3);
+      color: var(--text-3);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 14px 10px;
+      text-align: right;
+    }
+
+    .review-code {
+      overflow: auto;
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.72;
+      white-space: pre;
+    }
+
+    .highlight {
+      border-radius: 3px;
+      background: var(--amber-soft);
+      color: var(--amber);
+      padding: 1px 3px;
+    }
+
+    .c-side {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .score-panel {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid rgba(14, 112, 14, 0.22);
+      border-radius: var(--radius-lg);
+      background: var(--green-soft);
+      padding: 12px;
+    }
+
+    .score {
+      display: grid;
+      place-items: center;
+      width: 72px;
+      height: 72px;
+      border: 2px solid rgba(14, 112, 14, 0.3);
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .diagnostic-list {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 9px;
+      border: 1px solid var(--stroke-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      padding: 10px;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      margin-top: 3px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+
+    .timeline-dot.warn {
+      background: var(--amber);
+    }
+
+    .timeline-dot.ok {
+      background: var(--green);
+    }
+
+    .empty-box {
+      display: grid;
+      min-height: 74px;
+      place-items: center;
+      border: 1px dashed #8a8886;
+      border-radius: var(--radius-lg);
+      color: var(--text-3);
+      font-size: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      display: none;
+      max-width: min(360px, calc(100vw - 48px));
+      border: 1px solid rgba(14, 112, 14, 0.22);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-8);
+      padding: 12px 14px;
+    }
+
+    .toast[data-visible="true"] {
+      display: block;
+      animation: toast-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .design-a {
+        grid-template-columns: 58px minmax(300px, 1fr);
+      }
+
+      .a-fields,
+      .a-preview {
+        grid-column: 1 / -1;
+      }
+
+      .a-canvas {
+        grid-column: 2;
+      }
+
+      .design-b,
+      .design-c {
+        grid-template-columns: 1fr;
+      }
+
+      .b-top,
+      .b-dock,
+      .c-head {
+        grid-column: 1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero,
+      .toc,
+      .mock-set {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .hero-top,
+      .option-header,
+      .c-head,
+      .b-top,
+      .b-dock {
+        grid-template-columns: 1fr;
+      }
+
+      .stack-strip {
+        justify-content: flex-start;
+      }
+
+      .toc,
+      .recipe-strip,
+      .json-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-control {
+        width: 100%;
+      }
+
+      .mock-frame {
+        min-height: auto;
+      }
+
+      .design-a {
+        grid-template-columns: 1fr;
+      }
+
+      .a-rail {
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: none;
+        justify-items: stretch;
+      }
+
+      .rail-stack {
+        grid-auto-flow: column;
+        overflow: auto;
+      }
+
+      .a-canvas {
+        grid-column: 1;
+      }
+
+      .a-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .rule {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas {
+        min-height: 640px;
+      }
+
+      .flow-node {
+        position: relative;
+        left: auto;
+        right: auto;
+        top: auto;
+        bottom: auto;
+        width: auto;
+        margin: 14px;
+      }
+
+      .flow-line {
+        display: none;
+      }
+
+      .review-editor {
+        grid-template-columns: 38px 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Three alternate UI directions for the Power Automate Expression Builder</h1>
+          <p class="lead">Each option keeps the documented React web-first stack, Fluent UI v9 styling, @react-awesome-query-builder/fluent input model, pure TypeScript engine, engine diagnostics, app-owned JSON, and PlatformAdapter boundary.</p>
+        </div>
+        <div class="stack-strip" aria-label="Planned stack">
+          <span class="pill brand">React 18</span>
+          <span class="pill brand">TypeScript</span>
+          <span class="pill brand">Vite</span>
+          <span class="pill brand">Fluent UI v9</span>
+          <span class="pill">@react-awesome-query-builder/fluent</span>
+        </div>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="Design options">
+      <a href="#design-a">
+        <strong>A. Workbench Grid</strong>
+        <span>Closest to a production Fluent app shell with fast rule editing.</span>
+      </a>
+      <a href="#design-b">
+        <strong>B. Canvas Flow</strong>
+        <span>Visualizes nested logic as connected nodes while retaining RAQB controls.</span>
+      </a>
+      <a href="#design-c">
+        <strong>C. Review Studio</strong>
+        <span>Centers trust, diagnostics, and copy-ready output for cautious makers.</span>
+      </a>
+    </nav>
+
+    <main class="mock-set">
+      <section id="design-a" class="option" data-design="a">
+        <div class="option-header">
+          <div>
+            <div class="option-title">
+              <span class="pill brand">Design A</span>
+              <h2>Workbench Grid</h2>
+              <span class="pill green">Best for daily power users</span>
+            </div>
+            <p class="option-note">A dense Fluent workspace: field source, RAQB-style rule editing, live expression preview, and adapter status remain visible together.</p>
+          </div>
+          <div class="mode-control" role="tablist" aria-label="Design A mode">
+            <button type="button" data-mode-target="a" data-mode="trigger" data-active="true">Trigger Condition</button>
+            <button type="button" data-mode-target="a" data-mode="filter" data-active="false">Filter Array</button>
+          </div>
+        </div>
+
+        <div class="mock-frame design-a">
+          <aside class="a-rail" aria-label="Product rail">
+            <div class="mark">fx</div>
+            <div class="rail-stack">
+              <div class="rail-dot active">B</div>
+              <div class="rail-dot">F</div>
+              <div class="rail-dot">D</div>
+              <div class="rail-dot">J</div>
+            </div>
+            <span class="status-dot" aria-hidden="true"></span>
+          </aside>
+
+          <aside class="panel a-fields">
+            <div class="panel-head">
+              <h3>Field Source</h3>
+              <span class="pill">v1 JSON</span>
+            </div>
+            <div class="field-list">
+              <div class="field">
+                <label for="a-search">Search schema</label>
+                <input id="a-search" class="control" value="Status">
+              </div>
+              <div class="field-row">
+                <div>
+                  <b>Status</b>
+                  <div class="subtle">Approved, Rejected, Pending</div>
+                </div>
+                <span class="pill">choice</span>
+              </div>
+              <div class="field-row">
+                <div>
+                  <b>Title</b>
+                  <div class="subtle">Text from trigger body</div>
+                </div>
+                <span class="pill">string</span>
+              </div>
+              <div class="field-row">
+                <div>
+                  <b>Amount</b>
+                  <div class="subtle">Purchase amount</div>
+                </div>
+                <span class="pill">number</span>
+              </div>
+              <div class="field-row">
+                <div>
+                  <b>Email</b>
+                  <div class="subtle">Requester email</div>
+                </div>
+                <span class="pill">string</span>
+              </div>
+            </div>
+            <div class="panel-head">
+              <div>
+                <h3>Dataverse discovery</h3>
+                <div class="subtle">PPTB adapter can populate fields later.</div>
+              </div>
+              <span class="pill amber">web mode</span>
+            </div>
+          </aside>
+
+          <section class="panel a-canvas">
+            <div class="a-toolbar">
+              <div class="toolbar-group">
+                <button class="button primary"><span class="glyph plus" aria-hidden="true"></span>Add rule</button>
+                <button class="button">Add group</button>
+                <button class="button">Wrap function</button>
+              </div>
+              <div class="toolbar-group">
+                <span class="pill">max depth 10</span>
+                <span class="pill green">AST valid</span>
+              </div>
+            </div>
+            <div class="a-summary">
+              <div class="metric">
+                <b>Mode</b>
+                <span data-mode-label="a">Trigger Condition</span>
+              </div>
+              <div class="metric">
+                <b>Field reference</b>
+                <span data-ref-label="a">triggerBody()?['Field']</span>
+              </div>
+              <div class="metric">
+                <b>Save format</b>
+                <span>version, mode, fields, raqbTree, engineAst</span>
+              </div>
+            </div>
+            <div class="rule-stack">
+              <div class="rule">
+                <div class="field">
+                  <label for="a-field-1">Field</label>
+                  <select id="a-field-1" class="control"><option>Status</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-op-1">Operator</label>
+                  <select id="a-op-1" class="control"><option>equals</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-val-1">Value</label>
+                  <select id="a-val-1" class="control"><option>Approved</option></select>
+                </div>
+              </div>
+              <div class="rule">
+                <div class="field">
+                  <label for="a-field-2">Function</label>
+                  <select id="a-field-2" class="control"><option>toLower(Title)</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-op-2">Operator</label>
+                  <select id="a-op-2" class="control"><option>contains</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-val-2">Value</label>
+                  <input id="a-val-2" class="control" value="urgent">
+                </div>
+              </div>
+              <div class="rule">
+                <div class="field">
+                  <label for="a-field-3">Group</label>
+                  <select id="a-field-3" class="control"><option>or(Amount, Email)</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-op-3">Nested operator</label>
+                  <select id="a-op-3" class="control"><option>greater or not empty</option></select>
+                </div>
+                <div class="field">
+                  <label for="a-val-3">Value</label>
+                  <input id="a-val-3" class="control" value="1250">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel a-preview">
+            <div class="panel-head">
+              <h3>Generated expression</h3>
+              <button class="button primary" data-copy="a"><span class="glyph copy" aria-hidden="true"></span>Copy</button>
+            </div>
+            <div class="a-preview-body">
+              <div class="code" data-expression="a">@and(
+  equals(triggerBody()?['Status'], 'Approved'),
+  contains(toLower(triggerBody()?['Title']), 'urgent'),
+  or(
+    greater(triggerBody()?['Amount'], 1250),
+    not(empty(triggerBody()?['Email']))
+  )
+)</div>
+              <div class="diag ok">
+                <span class="badge">OK</span>
+                <div>
+                  <b>engine diagnostics clean</b>
+                  <div class="subtle">Root predicate returns boolean and has one leading @.</div>
+                </div>
+              </div>
+              <div class="diag warn">
+                <span class="badge">!</span>
+                <div>
+                  <b>Case-sensitive choice value</b>
+                  <div class="subtle">Status is compared exactly as entered.</div>
+                </div>
+              </div>
+              <div class="diag ok">
+                <span class="badge">API</span>
+                <div>
+                  <b>PlatformAdapter.copyToClipboard</b>
+                  <div class="subtle">No direct clipboard, localStorage, or toolbox API calls in UI.</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="design-b" class="option" data-design="b">
+        <div class="option-header">
+          <div>
+            <div class="option-title">
+              <span class="pill brand">Design B</span>
+              <h2>Canvas Flow</h2>
+              <span class="pill amber">Best for nested logic clarity</span>
+            </div>
+            <p class="option-note">A spatial builder that shows each rule as a node, then keeps the advanced mode output pinned in a dock.</p>
+          </div>
+          <div class="mode-control" role="tablist" aria-label="Design B mode">
+            <button type="button" data-mode-target="b" data-mode="trigger" data-active="true">Trigger Condition</button>
+            <button type="button" data-mode-target="b" data-mode="filter" data-active="false">Filter Array</button>
+          </div>
+        </div>
+
+        <div class="mock-frame design-b">
+          <div class="b-top">
+            <div>
+              <b>Power Automate Expression Builder</b>
+              <div class="subtle">Canvas-first RAQB adapter for React 18, TypeScript, Vite, and Fluent UI v9.</div>
+            </div>
+            <span class="pill green">web adapter</span>
+            <button class="button"><span class="glyph file" aria-hidden="true"></span>Export JSON</button>
+          </div>
+
+          <aside class="b-side">
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Rule Palette</h3>
+                <span class="pill">drag-ready</span>
+              </div>
+              <div class="palette">
+                <div class="palette-item">
+                  <b>equals(field, value)</b>
+                  <span class="subtle">Status equals Approved</span>
+                </div>
+                <div class="palette-item">
+                  <b>contains(toLower(field), value)</b>
+                  <span class="subtle">Title contains urgent</span>
+                </div>
+                <div class="palette-item">
+                  <b>greater(field, number)</b>
+                  <span class="subtle">Amount greater than 1250</span>
+                </div>
+                <div class="palette-item">
+                  <b>not(empty(field))</b>
+                  <span class="subtle">Email must exist</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Function Wrappers</h3>
+                <span class="pill">MVP</span>
+              </div>
+              <div class="palette">
+                <span class="pill">toLower</span>
+                <span class="pill">trim</span>
+                <span class="pill">formatDateTime</span>
+                <span class="pill">utcNow</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Metadata states</h3>
+                <span class="status-dot" aria-hidden="true"></span>
+              </div>
+              <div class="palette">
+                <div class="skeleton"></div>
+                <div class="skeleton" style="width: 72%;"></div>
+                <div class="empty-box">No Dataverse connection in standalone web mode</div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="canvas" aria-label="Flow canvas mock">
+            <div class="flow-line line-1"></div>
+            <div class="flow-line line-2"></div>
+            <article class="flow-node node-1">
+              <div class="node-title">
+                <span>Root AND</span>
+                <span class="pill green">valid</span>
+              </div>
+              <div class="node-detail">children: 3</div>
+            </article>
+            <article class="flow-node node-2">
+              <div class="node-title">
+                <span>Status</span>
+                <span class="pill">choice</span>
+              </div>
+              <div class="node-detail">equals('Approved')</div>
+            </article>
+            <article class="flow-node node-3">
+              <div class="node-title">
+                <span>Title</span>
+                <span class="pill">string</span>
+              </div>
+              <div class="node-detail">contains(toLower(...), 'urgent')</div>
+            </article>
+            <article class="flow-node node-4">
+              <div class="node-title">
+                <span>Nested OR</span>
+                <span class="pill amber">2 rules</span>
+              </div>
+              <div class="node-detail">Amount greater 1250 or Email not empty</div>
+            </article>
+          </section>
+
+          <div class="b-dock">
+            <div class="dock-panel">
+              <div class="panel-head" style="border: 0; padding: 0 0 10px;">
+                <h3>Advanced mode expression</h3>
+                <button class="button primary" data-copy="b"><span class="glyph copy" aria-hidden="true"></span>Copy</button>
+              </div>
+              <div class="code" data-expression="b">@and(
+  equals(triggerBody()?['Status'], 'Approved'),
+  contains(toLower(triggerBody()?['Title']), 'urgent'),
+  greater(triggerBody()?['Amount'], 1250)
+)</div>
+            </div>
+            <div class="dock-panel">
+              <h3>app-owned JSON</h3>
+              <div class="json-grid">
+                <div class="json-cell"><b>version</b><span>1</span></div>
+                <div class="json-cell"><b>mode</b><span data-mode-label="b">triggerCondition</span></div>
+                <div class="json-cell"><b>raqbTree</b><span>stored</span></div>
+                <div class="json-cell"><b>engineAst</b><span>stored</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="design-c" class="option" data-design="c">
+        <div class="option-header">
+          <div>
+            <div class="option-title">
+              <span class="pill brand">Design C</span>
+              <h2>Review Studio</h2>
+              <span class="pill green">Best for trust and validation</span>
+            </div>
+            <p class="option-note">A review-first layout for users who want to inspect generated syntax, warnings, and copy readiness before pasting into Power Automate.</p>
+          </div>
+          <div class="mode-control" role="tablist" aria-label="Design C mode">
+            <button type="button" data-mode-target="c" data-mode="trigger" data-active="true">Trigger Condition</button>
+            <button type="button" data-mode-target="c" data-mode="filter" data-active="false">Filter Array</button>
+          </div>
+        </div>
+
+        <div class="mock-frame design-c">
+          <div class="c-head">
+            <div>
+              <b>Generated expression review</b>
+              <div class="subtle">Mode-aware formatter output with exact field-reference context: <span data-ref-label="c">triggerBody()?['Field']</span>.</div>
+            </div>
+            <div class="toolbar-group">
+              <button class="button"><span class="glyph file" aria-hidden="true"></span>Import</button>
+              <button class="button"><span class="glyph file" aria-hidden="true"></span>Export</button>
+              <button class="button primary" data-copy="c"><span class="glyph copy" aria-hidden="true"></span>Copy</button>
+            </div>
+          </div>
+
+          <section class="c-main">
+            <div class="recipe-strip">
+              <article class="recipe">
+                <b>Choice gate</b>
+                <span>Status equals Approved</span>
+              </article>
+              <article class="recipe">
+                <b>Text search</b>
+                <span>contains toLower Title</span>
+              </article>
+              <article class="recipe">
+                <b>Null guard</b>
+                <span>not empty Email</span>
+              </article>
+            </div>
+
+            <div class="review-editor" aria-label="Review editor mock">
+              <div class="line-nos">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+                <span>6</span>
+                <span>7</span>
+              </div>
+              <div class="review-code" data-expression="c">@and(
+  equals(triggerBody()?['Status'], 'Approved'),
+  contains(toLower(triggerBody()?['Title']), 'urgent'),
+  not(empty(triggerBody()?['Email']))
+)</div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Rule editor</h3>
+                <span class="pill">RAQB Fluent surface</span>
+              </div>
+              <div class="rule-stack">
+                <div class="rule">
+                  <div class="field">
+                    <label for="c-field">Field</label>
+                    <select id="c-field" class="control"><option>Status</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="c-op">Operator</label>
+                    <select id="c-op" class="control"><option>equals</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="c-value">Value</label>
+                    <select id="c-value" class="control"><option>Approved</option></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="c-side">
+            <div class="score-panel">
+              <div class="score">92</div>
+              <div>
+                <b>Copy confidence</b>
+                <div class="subtle">Formatter snapshots match the active mode and generated predicate returns boolean.</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>engine diagnostics</h3>
+                <span class="pill green">2 clean</span>
+              </div>
+              <div class="diagnostic-list">
+                <div class="timeline">
+                  <div class="timeline-row">
+                    <span class="timeline-dot ok"></span>
+                    <div>
+                      <b>Root predicate valid</b>
+                      <div class="subtle">The expression can run in advanced mode.</div>
+                    </div>
+                  </div>
+                  <div class="timeline-row">
+                    <span class="timeline-dot warn"></span>
+                    <div>
+                      <b>Case-sensitive comparison</b>
+                      <div class="subtle">No automatic case normalization is applied.</div>
+                    </div>
+                  </div>
+                  <div class="timeline-row">
+                    <span class="timeline-dot ok"></span>
+                    <div>
+                      <b>Platform boundary clean</b>
+                      <div class="subtle">Copy uses PlatformAdapter.copyToClipboard.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Failure states</h3>
+                <span class="pill red">visible</span>
+              </div>
+              <div class="diagnostic-list">
+                <div class="empty-box">Empty import: no saved expression loaded</div>
+                <div class="pill red">Unsupported saved expression version: 2</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <b>Expression copied</b>
+    <div class="subtle">The request was routed through PlatformAdapter.copyToClipboard.</div>
+  </div>
+
+  <script>
+    const templates = {
+      trigger: {
+        label: "Trigger Condition",
+        modeValue: "triggerCondition",
+        ref: "triggerBody()?['Field']",
+        exprA: "@and(\\n  equals(triggerBody()?['Status'], 'Approved'),\\n  contains(toLower(triggerBody()?['Title']), 'urgent'),\\n  or(\\n    greater(triggerBody()?['Amount'], 1250),\\n    not(empty(triggerBody()?['Email']))\\n  )\\n)",
+        exprB: "@and(\\n  equals(triggerBody()?['Status'], 'Approved'),\\n  contains(toLower(triggerBody()?['Title']), 'urgent'),\\n  greater(triggerBody()?['Amount'], 1250)\\n)",
+        exprC: "@and(\\n  equals(triggerBody()?['Status'], 'Approved'),\\n  contains(toLower(triggerBody()?['Title']), 'urgent'),\\n  not(empty(triggerBody()?['Email']))\\n)"
+      },
+      filter: {
+        label: "Filter Array",
+        modeValue: "filterArray",
+        ref: "item()?['Field']",
+        exprA: "@and(\\n  equals(item()?['Status'], 'Approved'),\\n  contains(toLower(item()?['Title']), 'urgent'),\\n  or(\\n    greater(item()?['Amount'], 1250),\\n    not(empty(item()?['Email']))\\n  )\\n)",
+        exprB: "@and(\\n  equals(item()?['Status'], 'Approved'),\\n  contains(toLower(item()?['Title']), 'urgent'),\\n  greater(item()?['Amount'], 1250)\\n)",
+        exprC: "@and(\\n  equals(item()?['Status'], 'Approved'),\\n  contains(toLower(item()?['Title']), 'urgent'),\\n  not(empty(item()?['Email']))\\n)"
+      }
+    };
+
+    document.querySelectorAll("[data-mode-target]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const design = button.dataset.modeTarget;
+        const mode = button.dataset.mode;
+        const data = templates[mode];
+        document.querySelectorAll(`[data-mode-target="${design}"]`).forEach((item) => {
+          item.dataset.active = String(item === button);
+        });
+        document.querySelectorAll(`[data-mode-label="${design}"]`).forEach((item) => {
+          item.textContent = design === "b" ? data.modeValue : data.label;
+        });
+        document.querySelectorAll(`[data-ref-label="${design}"]`).forEach((item) => {
+          item.textContent = data.ref;
+        });
+        const expression = document.querySelector(`[data-expression="${design}"]`);
+        if (expression) {
+          expression.textContent = data[`expr${design.toUpperCase()}`];
+        }
+      });
+    });
+
+    const toast = document.getElementById("toast");
+    let toastTimer = 0;
+
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", () => {
+        toast.dataset.visible = "true";
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => {
+          toast.dataset.visible = "false";
+        }, 1800);
+      });
+    });
+  </script>
+</body>
+</html>

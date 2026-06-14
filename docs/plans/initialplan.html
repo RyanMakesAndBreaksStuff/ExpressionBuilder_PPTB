@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Power Automate Visual Builder Initial Implementation Plan</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f7f9fb;
+      --surface-strong: #eef4f8;
+      --text: #17212b;
+      --muted: #5b6773;
+      --border: #d9e1e8;
+      --primary: #0f6cbd;
+      --primary-dark: #084b83;
+      --success: #247a3b;
+      --warning: #9a5b00;
+      --danger: #b42318;
+      --code-bg: #f3f6f9;
+      --radius: 8px;
+      --shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    header,
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding-top: 44px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    main {
+      padding-top: 28px;
+      padding-bottom: 48px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 1.45rem;
+      margin-top: 34px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+
+    h4 {
+      font-size: 1rem;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    a {
+      color: var(--primary);
+      text-underline-offset: 2px;
+    }
+
+    code,
+    pre {
+      font-family: var(--font-mono);
+    }
+
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin: 10px 0 16px;
+    }
+
+    pre code {
+      border: 0;
+      padding: 0;
+      background: transparent;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-strong);
+      font-weight: 700;
+    }
+
+    .summary,
+    .gate,
+    .agent,
+    .milestone,
+    .warning {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin: 16px 0 20px;
+    }
+
+    .summary {
+      border-left: 5px solid var(--primary);
+    }
+
+    .gate {
+      border-left: 5px solid var(--warning);
+    }
+
+    .agent {
+      border-left: 5px solid var(--success);
+    }
+
+    .warning {
+      border-left: 5px solid var(--danger);
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-right: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .badge.primary {
+      color: var(--primary-dark);
+      border-color: #b9d8f5;
+      background: #edf6ff;
+    }
+
+    .badge.success {
+      color: var(--success);
+      border-color: #b8dfc1;
+      background: #eef8f1;
+    }
+
+    .badge.warning {
+      color: var(--warning);
+      border-color: #f1d19a;
+      background: #fff7e8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 14px 0 20px;
+    }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .checklist li::before {
+      content: "[ ]";
+      color: var(--primary-dark);
+      font-family: var(--font-mono);
+      margin-right: 8px;
+    }
+
+    .compact td,
+    .compact th {
+      padding: 8px 10px;
+    }
+
+    @media (max-width: 780px) {
+      header,
+      main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>React Web-First Expression Builder Implementation Plan</h1>
+    <p class="meta">Plan for implementing the recommended path from <a href="../reviews/3option.html">docs/reviews/3option.html</a>: one pure TypeScript engine, one React web app, and one platform adapter boundary.</p>
+  </header>
+
+  <main>
+    <section class="summary">
+      <p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: use <code>superpowers:subagent-driven-development</code> or equivalent task-by-task execution. This plan is intentionally split for multiple agents running in parallel after a short contract phase. Each agent has a disjoint ownership set and must not revert edits made by another worker.</p>
+      <p><strong>Goal:</strong> build an MVP Power Automate visual expression builder that supports Trigger Condition and Filter Array modes, generates correct advanced-mode expressions, runs as a standalone React web app, and can later run inside Power Platform Toolbox through a thin adapter.</p>
+      <p><strong>Architecture:</strong> the engine is a framework-free TypeScript package that receives a normalized AST and returns a Power Automate expression plus diagnostics. The React app uses <code>@react-awesome-query-builder/fluent</code> only as the input UI, then converts RAQB JSON into the engine AST. Web and PPTB capabilities are provided through a <code>PlatformAdapter</code> interface so app screens never call browser or PPTB APIs directly.</p>
+      <p><strong>Tech Stack:</strong> npm workspaces, React 18, TypeScript, Vite, Vitest, Testing Library, Playwright, Fluent UI, <code>@react-awesome-query-builder/fluent</code>, GitHub Actions, GitHub Pages, and a future PPTB static package.</p>
+    </section>
+
+    <h2>Elegant Boundary</h2>
+    <p><strong>Question asked:</strong> is there a more elegant way?</p>
+    <p><strong>Answer:</strong> yes, keep the first implementation smaller than the drafts imply. The elegant version is not a hybrid codebase with UI forks. It is one core expression engine, one production React UI, and one platform adapter contract. Vue and Svelte stay out of the initial implementation because they do not reduce the hardest risk: formatter correctness.</p>
+
+    <h2>Execution Model</h2>
+    <table class="compact">
+      <thead>
+        <tr>
+          <th>Wave</th>
+          <th>Parallelism</th>
+          <th>Purpose</th>
+          <th>Merge Gate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Wave 0</td>
+          <td>Sequential</td>
+          <td>Create workspace, shared types, and interface contracts that all agents will depend on.</td>
+          <td>TypeScript compiles with empty package shells.</td>
+        </tr>
+        <tr>
+          <td>Wave 1</td>
+          <td>Parallel</td>
+          <td>Engine, React UI, platform adapters, and tests work in separate file ownership areas.</td>
+          <td>Each lane passes its own unit tests and exports stable public APIs.</td>
+        </tr>
+        <tr>
+          <td>Wave 2</td>
+          <td>Parallel with review</td>
+          <td>Integration, CI, documentation, and Playwright smoke coverage.</td>
+          <td>Root build, typecheck, unit tests, and e2e smoke tests pass.</td>
+        </tr>
+        <tr>
+          <td>Wave 3</td>
+          <td>Sequential release hardening</td>
+          <td>Pin dependency versions, validate package outputs, and prepare initial demo deployment.</td>
+          <td>Static web build is ready for GitHub Pages and PPTB package shape is documented.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Wave 0: Shared Contracts</h2>
+    <section class="gate">
+      <p><span class="badge warning">Sequential</span><strong>Owner:</strong> lead integrator. This phase prevents merge conflicts by creating the files and contracts that later agents share.</p>
+      <h3>Create Files</h3>
+      <ul>
+        <li><code>package.json</code></li>
+        <li><code>package-lock.json</code> after install</li>
+        <li><code>tsconfig.base.json</code></li>
+        <li><code>vitest.config.ts</code></li>
+        <li><code>playwright.config.ts</code></li>
+        <li><code>apps/web/package.json</code></li>
+        <li><code>apps/web/tsconfig.json</code></li>
+        <li><code>apps/web/vite.config.ts</code></li>
+        <li><code>apps/pptb/package.json</code></li>
+        <li><code>apps/pptb/tsconfig.json</code></li>
+        <li><code>apps/pptb/vite.config.ts</code></li>
+        <li><code>packages/engine/package.json</code></li>
+        <li><code>packages/engine/tsconfig.json</code></li>
+        <li><code>packages/platform/package.json</code></li>
+        <li><code>packages/platform/tsconfig.json</code></li>
+      </ul>
+
+      <h3>Root Scripts</h3>
+      <pre><code>{
+  "scripts": {
+    "dev:web": "npm run dev -w @pavb/web",
+    "build": "npm run build -ws",
+    "build:web": "npm run build -w @pavb/web",
+    "build:pptb": "npm run build -w @pavb/pptb",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "preview": "npm run preview -w @pavb/web"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}</code></pre>
+
+      <h3>Core Interfaces</h3>
+      <p>Create these contracts before parallel work begins. Later agents may extend them only through additive changes.</p>
+      <pre><code>// packages/engine/src/types.ts
+export type ExpressionMode = "triggerCondition" | "filterArray";
+export type FieldType = "string" | "number" | "boolean" | "dateTime" | "choice";
+export type Conjunction = "and" | "or";
+
+export interface FieldDefinition {
+  name: string;
+  label: string;
+  type: FieldType;
+  choices?: string[];
+}
+
+export type ExpressionNode =
+  | GroupNode
+  | RuleNode
+  | FunctionCallNode
+  | FieldReferenceNode
+  | LiteralNode;
+
+export interface GroupNode {
+  kind: "group";
+  conjunction: Conjunction;
+  children: ExpressionNode[];
+}
+
+export interface RuleNode {
+  kind: "rule";
+  operator: string;
+  left: ExpressionNode;
+  right?: ExpressionNode;
+}
+
+export interface FunctionCallNode {
+  kind: "function";
+  name: string;
+  args: ExpressionNode[];
+}
+
+export interface FieldReferenceNode {
+  kind: "field";
+  fieldName: string;
+}
+
+export interface LiteralNode {
+  kind: "literal";
+  value: string | number | boolean | null;
+}
+
+export interface FormatDiagnostic {
+  code: string;
+  message: string;
+  severity: "error" | "warning";
+  path: string;
+}
+
+export interface FormatterOptions {
+  mode: ExpressionMode;
+  fields: FieldDefinition[];
+  maxDepth?: number;
+}
+
+export interface FormatResult {
+  expression: string;
+  diagnostics: FormatDiagnostic[];
+}</code></pre>
+
+      <pre><code>// packages/platform/src/PlatformAdapter.ts
+export type PlatformTheme = "light" | "dark" | "highContrast";
+export type NotificationLevel = "success" | "info" | "warning" | "error";
+
+export interface PlatformSettings {
+  get(key: string): Promise&lt;string | null&gt;;
+  set(key: string, value: string): Promise&lt;void&gt;;
+  remove(key: string): Promise&lt;void&gt;;
+}
+
+export interface PlatformAdapter {
+  copyToClipboard(text: string): Promise&lt;void&gt;;
+  notify(message: string, level: NotificationLevel): Promise&lt;void&gt;;
+  getTheme(): Promise&lt;PlatformTheme&gt;;
+  onThemeChanged(handler: (theme: PlatformTheme) =&gt; void): () =&gt; void;
+  settings: PlatformSettings;
+  getDataverseFields?(): Promise&lt;unknown[]&gt;;
+}</code></pre>
+
+      <h3>Wave 0 Steps</h3>
+      <ol class="checklist">
+        <li>Create the workspace package files and empty source directories.</li>
+        <li>Add the engine and platform interface files above.</li>
+        <li>Export public contracts from <code>packages/engine/src/index.ts</code> and <code>packages/platform/src/index.ts</code>.</li>
+        <li>Run <code>npm install</code>. Expected result: lock file created without dependency resolution errors.</li>
+        <li>Run <code>npm run typecheck</code>. Expected result: no TypeScript errors from package references.</li>
+        <li>Commit with message <code>chore: scaffold expression builder workspace</code>.</li>
+      </ol>
+    </section>
+
+    <h2>Wave 1: Parallel Agents</h2>
+    <p>After Wave 0, dispatch these agents at the same time. Each agent owns a separate write set. Workers are not alone in the codebase and must preserve other agents' changes.</p>
+
+    <section class="agent">
+      <h3><span class="badge success">Agent A</span> Engine Formatter And Diagnostics</h3>
+      <p><strong>Mission:</strong> implement the pure TypeScript expression engine. No React, DOM, browser, RAQB, or PPTB imports are allowed in this package.</p>
+      <p><strong>Owned files:</strong></p>
+      <ul>
+        <li><code>packages/engine/src/types.ts</code></li>
+        <li><code>packages/engine/src/operators.ts</code></li>
+        <li><code>packages/engine/src/functions.ts</code></li>
+        <li><code>packages/engine/src/fieldReferences.ts</code></li>
+        <li><code>packages/engine/src/literals.ts</code></li>
+        <li><code>packages/engine/src/diagnostics.ts</code></li>
+        <li><code>packages/engine/src/formatter.ts</code></li>
+        <li><code>packages/engine/src/index.ts</code></li>
+        <li><code>packages/engine/test/fixtures/simpleRules.ts</code></li>
+        <li><code>packages/engine/test/fixtures/nestedGroups.ts</code></li>
+        <li><code>packages/engine/test/fixtures/functionWrappers.ts</code></li>
+        <li><code>packages/engine/test/formatter.trigger.test.ts</code></li>
+        <li><code>packages/engine/test/formatter.filterArray.test.ts</code></li>
+        <li><code>packages/engine/test/literals.test.ts</code></li>
+        <li><code>packages/engine/test/diagnostics.test.ts</code></li>
+      </ul>
+
+      <h4>MVP Coverage</h4>
+      <ul>
+        <li>Equality: <code>equals</code> and <code>not(equals(...))</code>.</li>
+        <li>String checks: <code>contains</code>, <code>startsWith</code>, <code>endsWith</code>.</li>
+        <li>Comparisons: <code>greater</code>, <code>less</code>, <code>greaterOrEquals</code>, <code>lessOrEquals</code>.</li>
+        <li>Empty checks: <code>empty</code> and <code>not(empty(...))</code>.</li>
+        <li>Logic: nested <code>and</code>, <code>or</code>, and <code>not</code>.</li>
+        <li>Function wrappers: <code>toLower</code>, <code>toUpper</code>, <code>trim</code>, <code>formatDateTime</code>, <code>utcNow</code>, <code>addDays</code>.</li>
+      </ul>
+
+      <h4>Required Behaviors</h4>
+      <ul>
+        <li>Root expressions get exactly one leading <code>@</code>.</li>
+        <li><code>triggerCondition</code> fields render as <code>triggerBody()?['FieldName']</code>.</li>
+        <li><code>filterArray</code> fields render as <code>item()?['FieldName']</code>.</li>
+        <li>Strings escape single quotes as doubled single quotes, for example <code>Bob''s Request</code>.</li>
+        <li>Numbers, booleans, and <code>null</code> render without quotes.</li>
+        <li>Invalid ASTs return diagnostics instead of crashing, except documented programmer-error invariants.</li>
+        <li>Default max nesting depth is <code>10</code>.</li>
+      </ul>
+
+      <h4>Steps</h4>
+      <ol class="checklist">
+        <li>Write formatter tests for trigger mode using <code>@equals(triggerBody()?['Status'], 'Approved')</code>, <code>@contains(toLower(triggerBody()?['Title']), 'urgent')</code>, and <code>@not(empty(triggerBody()?['Email']))</code>.</li>
+        <li>Write formatter tests for Filter Array mode using the same ASTs and <code>item()?['FieldName']</code> references.</li>
+        <li>Write literal tests for strings, escaped strings, numbers, booleans, dates as strings, and null.</li>
+        <li>Write diagnostics tests for unsupported operator, missing right operand, unknown field, empty group, and max depth.</li>
+        <li>Implement literal formatting in <code>literals.ts</code>.</li>
+        <li>Implement field reference rendering in <code>fieldReferences.ts</code>.</li>
+        <li>Implement operator and function registries in <code>operators.ts</code> and <code>functions.ts</code>.</li>
+        <li>Implement recursive serialization in <code>formatter.ts</code>.</li>
+        <li>Run <code>npm test --workspace @pavb/engine</code>. Expected result: all engine tests pass.</li>
+        <li>Run <code>npm run build --workspace @pavb/engine</code>. Expected result: compiled JavaScript and declaration files emit.</li>
+        <li>Commit with message <code>feat(engine): add Power Automate formatter</code>.</li>
+      </ol>
+
+      <h4>Acceptance Criteria</h4>
+      <ul>
+        <li>Same AST can format both modes by changing only <code>FormatterOptions.mode</code>.</li>
+        <li>All MVP operators have exact output tests.</li>
+        <li><code>packages/engine</code> has zero React, RAQB, DOM, or PPTB imports.</li>
+        <li>Public exports come only from <code>packages/engine/src/index.ts</code>.</li>
+      </ul>
+    </section>
+
+    <section class="agent">
+      <h3><span class="badge success">Agent B</span> React Web App And RAQB Adapter</h3>
+      <p><strong>Mission:</strong> build the web-first React UI using Fluent RAQB as the visual input surface, then normalize RAQB state into the engine AST.</p>
+      <p><strong>Owned files:</strong></p>
+      <ul>
+        <li><code>apps/web/src/main.tsx</code></li>
+        <li><code>apps/web/src/App.tsx</code></li>
+        <li><code>apps/web/src/components/AppShell.tsx</code></li>
+        <li><code>apps/web/src/components/ModeSelector.tsx</code></li>
+        <li><code>apps/web/src/components/QueryBuilderCanvas.tsx</code></li>
+        <li><code>apps/web/src/components/ExpressionPreview.tsx</code></li>
+        <li><code>apps/web/src/components/ImportExportMenu.tsx</code></li>
+        <li><code>apps/web/src/components/CopyExpressionButton.tsx</code></li>
+        <li><code>apps/web/src/queryBuilder/raqbConfig.ts</code></li>
+        <li><code>apps/web/src/queryBuilder/raqbToAst.ts</code></li>
+        <li><code>apps/web/src/state/savedExpressionSchema.ts</code></li>
+        <li><code>apps/web/src/styles/theme.css</code></li>
+        <li><code>apps/web/src/queryBuilder/raqbToAst.test.ts</code></li>
+        <li><code>apps/web/src/state/savedExpressionSchema.test.ts</code></li>
+      </ul>
+
+      <h4>UI Requirements</h4>
+      <ul>
+        <li>The first screen is the usable builder, not a landing page.</li>
+        <li>Mode selector supports <code>Trigger Condition</code> and <code>Filter Array</code>.</li>
+        <li>Expression preview updates as the query tree changes.</li>
+        <li>Copy button calls <code>PlatformAdapter.copyToClipboard(expression)</code>.</li>
+        <li>Import and export use an app-owned JSON shape, not raw RAQB-only state.</li>
+        <li>Visible validation errors come from engine diagnostics.</li>
+      </ul>
+
+      <h4>Saved JSON Shape</h4>
+      <pre><code>{
+  "version": 1,
+  "mode": "triggerCondition",
+  "fields": [
+    { "name": "Status", "label": "Status", "type": "choice", "choices": ["Approved", "Rejected"] }
+  ],
+  "raqbTree": {},
+  "engineAst": {}
+}</code></pre>
+
+      <h4>Steps</h4>
+      <ol class="checklist">
+        <li>Write <code>raqbToAst.test.ts</code> for simple equality, nested <code>and</code>/<code>or</code>, empty check, and function wrapper conversion.</li>
+        <li>Write saved JSON schema tests for valid import, unsupported version, invalid mode, and missing RAQB tree.</li>
+        <li>Implement <code>raqbConfig.ts</code> with sample fields for text, number, boolean, dateTime, and choice.</li>
+        <li>Implement <code>raqbToAst.ts</code> so the engine never imports RAQB types directly.</li>
+        <li>Implement <code>AppShell.tsx</code> with toolbar, builder area, and preview pane.</li>
+        <li>Implement <code>ModeSelector.tsx</code> as a segmented control.</li>
+        <li>Implement <code>QueryBuilderCanvas.tsx</code> using <code>@react-awesome-query-builder/fluent</code>.</li>
+        <li>Implement <code>ExpressionPreview.tsx</code> to render expression text and diagnostics.</li>
+        <li>Implement <code>CopyExpressionButton.tsx</code> using only the adapter passed from app composition.</li>
+        <li>Implement <code>ImportExportMenu.tsx</code> with file import and JSON download.</li>
+        <li>Run <code>npm test --workspace @pavb/web</code>. Expected result: web unit tests pass.</li>
+        <li>Run <code>npm run dev:web</code> and inspect the app manually at the printed local URL.</li>
+        <li>Commit with message <code>feat(web): add React visual builder shell</code>.</li>
+      </ol>
+
+      <h4>Acceptance Criteria</h4>
+      <ul>
+        <li>React app renders the Fluent query builder, mode selector, expression preview, copy action, and import/export controls.</li>
+        <li>Switching modes changes only field reference context, not the logical AST.</li>
+        <li>Import/export round-trips a query without changing the generated expression.</li>
+        <li>No UI component directly imports <code>navigator.clipboard</code>, <code>localStorage</code>, or <code>window.toolboxAPI</code>.</li>
+      </ul>
+    </section>
+
+    <section class="agent">
+      <h3><span class="badge success">Agent C</span> Platform Adapters And PPTB Shell</h3>
+      <p><strong>Mission:</strong> implement the web and PPTB adapter boundary without duplicating the builder screens.</p>
+      <p><strong>Owned files:</strong></p>
+      <ul>
+        <li><code>packages/platform/src/PlatformAdapter.ts</code></li>
+        <li><code>packages/platform/src/webAdapter.ts</code></li>
+        <li><code>packages/platform/src/pptbAdapter.ts</code></li>
+        <li><code>packages/platform/src/index.ts</code></li>
+        <li><code>packages/platform/test/webAdapter.test.ts</code></li>
+        <li><code>packages/platform/test/pptbAdapter.test.ts</code></li>
+        <li><code>apps/pptb/src/main.tsx</code></li>
+        <li><code>apps/pptb/src/toolboxApi.d.ts</code></li>
+        <li><code>apps/pptb/package.json</code></li>
+      </ul>
+
+      <h4>Adapter Responsibilities</h4>
+      <ul>
+        <li><code>webAdapter</code> uses <code>navigator.clipboard.writeText</code>, <code>localStorage</code>, and <code>matchMedia("(prefers-color-scheme: dark)")</code>.</li>
+        <li><code>pptbAdapter</code> wraps <code>window.toolboxAPI.utils.copyToClipboard</code>, notification APIs, theme APIs, settings APIs, and optional connection APIs.</li>
+        <li>PPTB field discovery returns an empty array and an info notification when no active connection exists.</li>
+        <li>All adapter methods resolve promises and convert platform failures into predictable errors or notifications.</li>
+      </ul>
+
+      <h4>Steps</h4>
+      <ol class="checklist">
+        <li>Write <code>webAdapter.test.ts</code> with mocked clipboard, localStorage, and theme media query.</li>
+        <li>Write <code>pptbAdapter.test.ts</code> with a mocked <code>window.toolboxAPI</code>.</li>
+        <li>Implement <code>webAdapter.ts</code>.</li>
+        <li>Implement <code>pptbAdapter.ts</code> and <code>toolboxApi.d.ts</code>.</li>
+        <li>Wire <code>apps/web/src/main.tsx</code> to pass <code>webAdapter</code> into the shared app component in coordination with Agent B.</li>
+        <li>Wire <code>apps/pptb/src/main.tsx</code> to pass <code>pptbAdapter</code> into the same shared app component.</li>
+        <li>Add PPTB package metadata with <code>main: "index.html"</code>, minimum API version <code>1.2.0</code>, and clipboard, notifications, and settings feature declarations.</li>
+        <li>Run <code>npm test --workspace @pavb/platform</code>. Expected result: adapter tests pass.</li>
+        <li>Run <code>npm run build:pptb</code>. Expected result: static PPTB output is emitted.</li>
+        <li>Commit with message <code>feat(platform): add web and PPTB adapters</code>.</li>
+      </ol>
+
+      <h4>Acceptance Criteria</h4>
+      <ul>
+        <li>App code depends only on <code>PlatformAdapter</code>.</li>
+        <li>Web and PPTB boot paths render the same React app.</li>
+        <li>PPTB adapter gracefully degrades when Dataverse connection APIs are absent.</li>
+        <li>No PPTB API references appear outside <code>packages/platform/src/pptbAdapter.ts</code> and its type file.</li>
+      </ul>
+    </section>
+
+    <section class="agent">
+      <h3><span class="badge success">Agent D</span> Verification, E2E, And CI</h3>
+      <p><strong>Mission:</strong> add the automated checks that keep formatter correctness, UI wiring, and adapter boundaries from drifting.</p>
+      <p><strong>Owned files:</strong></p>
+      <ul>
+        <li><code>playwright.config.ts</code></li>
+        <li><code>tests/e2e/web-smoke.spec.ts</code></li>
+        <li><code>tests/e2e/pptb-smoke.spec.ts</code></li>
+        <li><code>tests/e2e/fixtures/sampleExpression.json</code></li>
+        <li><code>tests/e2e/fixtures/toolboxApiMock.ts</code></li>
+        <li><code>.github/workflows/ci.yml</code></li>
+        <li><code>.github/workflows/pages.yml</code></li>
+        <li><code>.eslintrc.cjs</code></li>
+      </ul>
+
+      <h4>E2E Coverage</h4>
+      <ul>
+        <li>Build one Trigger Condition expression and verify the preview contains <code>@equals(triggerBody()?['Status'], 'Approved')</code>.</li>
+        <li>Switch to Filter Array mode and verify the preview contains <code>@equals(item()?['Status'], 'Approved')</code>.</li>
+        <li>Export JSON, import it back, and verify the expression is unchanged.</li>
+        <li>Click Copy and verify the platform adapter receives the generated expression.</li>
+        <li>Mock PPTB APIs and verify clipboard, notification, theme, settings, and field discovery bridge calls.</li>
+      </ul>
+
+      <h4>Boundary Check Script</h4>
+      <p>Add a lint rule or test that fails if restricted platform APIs appear outside adapter files.</p>
+      <pre><code>Restricted direct API usage:
+- window.toolboxAPI outside packages/platform/src/pptbAdapter.ts
+- navigator.clipboard outside packages/platform/src/webAdapter.ts
+- localStorage outside packages/platform/src/webAdapter.ts</code></pre>
+
+      <h4>Steps</h4>
+      <ol class="checklist">
+        <li>Create Playwright config that starts <code>npm run dev:web</code> before tests.</li>
+        <li>Create <code>sampleExpression.json</code> matching the app import/export schema.</li>
+        <li>Create <code>web-smoke.spec.ts</code> for builder, mode switch, import/export, and copy.</li>
+        <li>Create <code>toolboxApiMock.ts</code> for PPTB API injection.</li>
+        <li>Create <code>pptb-smoke.spec.ts</code> for PPTB adapter bridging.</li>
+        <li>Create CI workflow that runs install, lint, typecheck, unit tests, web build, PPTB build, and e2e tests.</li>
+        <li>Create Pages workflow that deploys <code>apps/web/dist</code> from <code>main</code>.</li>
+        <li>Run <code>npm run lint</code>. Expected result: no lint errors.</li>
+        <li>Run <code>npm run typecheck</code>. Expected result: no TypeScript errors.</li>
+        <li>Run <code>npm test</code>. Expected result: all unit tests pass.</li>
+        <li>Run <code>npm run test:e2e</code>. Expected result: all Playwright tests pass.</li>
+        <li>Commit with message <code>test: add expression builder smoke coverage</code>.</li>
+      </ol>
+
+      <h4>Acceptance Criteria</h4>
+      <ul>
+        <li>CI covers all commands needed to trust the MVP.</li>
+        <li>E2E tests prove both modes, copy, import/export, persistence, and PPTB bridge behavior.</li>
+        <li>Boundary check catches accidental direct platform calls in UI components.</li>
+      </ul>
+    </section>
+
+    <section class="agent">
+      <h3><span class="badge success">Agent E</span> Documentation And Release Notes</h3>
+      <p><strong>Mission:</strong> document how to use, test, deploy, and extend the MVP without expanding scope beyond the React web-first path.</p>
+      <p><strong>Owned files:</strong></p>
+      <ul>
+        <li><code>README.md</code></li>
+        <li><code>docs/adapter-contract.md</code></li>
+        <li><code>docs/deployment.md</code></li>
+        <li><code>docs/expression-cookbook.md</code></li>
+        <li><code>docs/contributing.md</code></li>
+        <li><code>docs/architecture.md</code></li>
+      </ul>
+
+      <h4>Documentation Scope</h4>
+      <ul>
+        <li>Explain the three-package architecture and why the engine is framework-free.</li>
+        <li>Document the MVP operator set and explicitly defer broad 140+ function support.</li>
+        <li>Show examples for Trigger Condition and Filter Array modes.</li>
+        <li>Document the adapter contract and banned direct imports.</li>
+        <li>Document static web deployment and PPTB packaging steps.</li>
+      </ul>
+
+      <h4>Steps</h4>
+      <ol class="checklist">
+        <li>Write <code>README.md</code> with project purpose, quick start, scripts, and current MVP scope.</li>
+        <li>Write <code>docs/architecture.md</code> with package boundaries and data flow.</li>
+        <li>Write <code>docs/adapter-contract.md</code> with web behavior, PPTB behavior, fallback behavior, and forbidden direct API usage.</li>
+        <li>Write <code>docs/expression-cookbook.md</code> with exact examples for equality, contains, empty, nested groups, and both modes.</li>
+        <li>Write <code>docs/deployment.md</code> with GitHub Pages, static hosting, npm package shape, and PPTB marketplace checklist.</li>
+        <li>Write <code>docs/contributing.md</code> with testing commands and how to add an operator safely.</li>
+        <li>Run <code>npm run test</code> after docs examples are copied from fixtures. Expected result: examples still match formatter snapshots.</li>
+        <li>Commit with message <code>docs: document React expression builder MVP</code>.</li>
+      </ol>
+
+      <h4>Acceptance Criteria</h4>
+      <ul>
+        <li>Docs match implemented scripts and package names.</li>
+        <li>Every cookbook expression has a corresponding unit test fixture.</li>
+        <li>Docs avoid recommending Vue, Svelte, or PPTB-only implementation for MVP.</li>
+      </ul>
+    </section>
+
+    <h2>Wave 2: Integration Tasks</h2>
+    <section class="milestone">
+      <p><span class="badge primary">Integrator</span><strong>Owner:</strong> lead agent after Wave 1 branches land.</p>
+      <ol class="checklist">
+        <li>Pull or merge all agent outputs in this order: Wave 0, Agent A, Agent C, Agent B, Agent D, Agent E.</li>
+        <li>Resolve package naming to consistently use <code>@pavb/engine</code>, <code>@pavb/platform</code>, <code>@pavb/web</code>, and <code>@pavb/pptb</code>.</li>
+        <li>Verify <code>apps/web</code> imports engine only through <code>@pavb/engine</code> and platform only through <code>@pavb/platform</code>.</li>
+        <li>Verify <code>packages/engine</code> has no imports from <code>apps/</code>, <code>packages/platform</code>, React, RAQB, DOM, or PPTB.</li>
+        <li>Run <code>npm run lint</code>. Expected result: no lint errors.</li>
+        <li>Run <code>npm run typecheck</code>. Expected result: no TypeScript errors.</li>
+        <li>Run <code>npm test</code>. Expected result: all unit tests pass.</li>
+        <li>Run <code>npm run build:web</code>. Expected result: <code>apps/web/dist</code> exists.</li>
+        <li>Run <code>npm run build:pptb</code>. Expected result: <code>apps/pptb/dist</code> exists and includes <code>index.html</code>.</li>
+        <li>Run <code>npm run test:e2e</code>. Expected result: all Playwright tests pass.</li>
+        <li>Start <code>npm run dev:web</code> and manually smoke test builder, mode switching, copy, export, and import.</li>
+        <li>Commit with message <code>feat: integrate React expression builder MVP</code>.</li>
+      </ol>
+    </section>
+
+    <h2>Wave 3: Release Hardening</h2>
+    <section class="milestone">
+      <ol class="checklist">
+        <li>Pin <code>@react-awesome-query-builder/fluent</code> to the exact tested version. The review found current npm metadata resolving to <code>6.7.0-alpha.0</code>, so do not use a loose range until a stable version is validated.</li>
+        <li>Add a short dependency note to <code>docs/architecture.md</code> explaining the RAQB risk and the adapter isolation.</li>
+        <li>Run <code>npm audit --omit=dev</code>. Expected result: no high or critical production dependency issues, or documented exceptions.</li>
+        <li>Run <code>npm run build:web</code> and serve the static output with <code>npm run preview</code>. Expected result: app works from built assets.</li>
+        <li>Inspect <code>apps/pptb/dist</code> and verify no dev-only source files are required at runtime.</li>
+        <li>Create a release checklist in <code>docs/deployment.md</code> for GitHub Pages and PPTB submission.</li>
+        <li>Commit with message <code>chore: harden initial expression builder release</code>.</li>
+      </ol>
+    </section>
+
+    <h2>Risk Register</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Risk</th>
+          <th>Impact</th>
+          <th>Mitigation In This Plan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Expression generator produces subtly wrong Power Automate syntax.</td>
+          <td>High</td>
+          <td>Agent A owns exact formatter snapshots, diagnostics, and fixture-backed cookbook examples before UI polish.</td>
+        </tr>
+        <tr>
+          <td>RAQB Fluent package changes or alpha surface breaks integration.</td>
+          <td>Medium to high</td>
+          <td>Pin the package, isolate RAQB in <code>apps/web/src/queryBuilder</code>, and convert to engine AST immediately.</td>
+        </tr>
+        <tr>
+          <td>PPTB APIs drift or are unavailable in local development.</td>
+          <td>Medium</td>
+          <td>Keep all PPTB calls in <code>pptbAdapter.ts</code> and test against a mocked <code>window.toolboxAPI</code>.</td>
+        </tr>
+        <tr>
+          <td>Scope expands to broad function coverage before basic expressions are trusted.</td>
+          <td>High</td>
+          <td>MVP operator set is explicit; 140+ function coverage is deferred until snapshots are stable.</td>
+        </tr>
+        <tr>
+          <td>Parallel agents create overlapping edits.</td>
+          <td>Medium</td>
+          <td>Wave 0 creates contracts first; Wave 1 assigns disjoint ownership sets; integration happens after lane tests pass.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Done Definition</h2>
+    <ul>
+      <li><code>npm install</code> succeeds from the repo root.</li>
+      <li><code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm test</code>, <code>npm run build:web</code>, <code>npm run build:pptb</code>, and <code>npm run test:e2e</code> pass.</li>
+      <li>The web app can create, preview, copy, export, import, and re-preview a Trigger Condition expression.</li>
+      <li>The same logical query can switch to Filter Array mode and produce <code>item()?['FieldName']</code> references.</li>
+      <li>The engine package remains pure TypeScript with no UI or platform dependency.</li>
+      <li>The app package has no direct PPTB, clipboard, or localStorage calls outside adapter implementations.</li>
+      <li>Docs explain architecture, adapter contract, deployment, contribution flow, and the current MVP operator scope.</li>
+    </ul>
+
+    <h2>Source Inputs</h2>
+    <ul>
+      <li><a href="../reviews/3option.html">docs/reviews/3option.html</a></li>
+      <li><a href="../PowerAutomateVisualBuilder-FirstDrafts/reactpath.html">docs/PowerAutomateVisualBuilder-FirstDrafts/reactpath.html</a></li>
+      <li><a href="../PowerAutomateVisualBuilder-FirstDrafts/vue-sveltepath.html">docs/PowerAutomateVisualBuilder-FirstDrafts/vue-sveltepath.html</a></li>
+    </ul>
+  </main>
+</body>
+</html>
