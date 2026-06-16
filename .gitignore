@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 /.agents/skills
 /.vs
+/docs
+/test-results
 /tests/e2e
 /ui-ux/design
-/test-results
-/docs

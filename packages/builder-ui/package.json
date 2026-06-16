@@ -1,0 +1,30 @@
+{
+  "name": "@pavb/builder-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b && powershell -NoProfile -Command \"New-Item -ItemType Directory -Force dist/theme | Out-Null; Copy-Item src/theme/tokens.css dist/theme/tokens.css -Force\"",
+    "test": "vitest run",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@pavb/engine": "file:../engine",
+    "@pavb/platform": "file:../platform",
+    "@fluentui/react-components": "9.74.1",
+    "@fluentui/react-icons": "latest",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.15"
+  }
+}
