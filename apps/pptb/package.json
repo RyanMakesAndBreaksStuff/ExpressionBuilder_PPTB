@@ -1,0 +1,21 @@
+{
+  "name": "@ryanmakes/expresssionbuilder",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5174",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4174"
+  },
+  "dependencies": {
+    "@pavb/builder-ui": "file:../../packages/builder-ui",
+    "@pavb/platform": "file:../../packages/platform",
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.12",
+    "typescript": "~6.0.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {}
+}

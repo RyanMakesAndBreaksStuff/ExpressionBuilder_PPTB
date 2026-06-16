@@ -1,7 +1,10 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./packages/engine" },
+    { "path": "./packages/platform" },
+    { "path": "./packages/builder-ui" },
+    { "path": "./apps/web" },
+    { "path": "./apps/pptb" }
   ]
 }
