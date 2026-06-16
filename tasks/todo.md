@@ -588,3 +588,64 @@
 - The new file combines Diagnostics and Mode Context into one tabbed support pane, adds left and right dock collapse rails, and makes the builder column expand or contract by changing the grid dock widths.
 - The left dock now matches the right dock's full-height flex behavior, and the document panel can collapse into its header strip with a vertical slide using the same 220 ms timing model as the side docks.
 - Verification passed via a local Node + TypeScript check for required dock-behavior strings, Porcelain default state, ASCII-only content, and JSX transpilation.
+
+---
+
+# Focused Porcelain UI Refactor High-Level Plan
+
+## Checklist
+
+- [x] Review `tasks/lessons.md` before planning.
+- [x] Review the target visual artifact at `ui-ux/design/focused_7_2.html`.
+- [x] Inspect the current builder UI architecture, state seams, package boundaries, and verification commands.
+- [x] Use focused subagents for visual-contract and architecture exploration.
+- [x] Create the high-level handoff plan at `ui-ux/plan/refactorplan_1.md`.
+
+## Review
+
+- Saved `ui-ux/plan/refactorplan_1.md` as the high-level plan for the complete UI refactor.
+- Plan direction: preserve engine, platform adapter, app bootstraps, `QueryDocument`, and import/export compatibility while replacing the presentation shell with the focused Porcelain docked workbench.
+- Recommended detailed-plan decomposition: shell/header, tokens/base controls, left dock, condition canvas, document preview/import-export, support pane/accessibility, and final integration verification.
+
+---
+
+# Focused Porcelain UI Refactor Detailed Plan
+
+## Checklist
+
+- [x] Review `tasks/lessons.md` before planning.
+- [x] Review `ui-ux/plan/refactorplan_1.md` and `ui-ux/design/focused_7_2.html`.
+- [x] Inspect the current builder UI shell, component seams, tests, package scripts, and app bootstraps.
+- [x] Use focused subagents for current UI/test structure, production styling translation, and multi-agent decomposition.
+- [x] Create the detailed multi-agent implementation plan at `ui-ux/plan/fullplan.md`.
+- [x] Verify the plan exists, is ASCII-only, references the requested handoff inputs, and includes the required verification gates.
+
+## Review
+
+- Saved `ui-ux/plan/fullplan.md` as the detailed implementation plan for the Porcelain docked workbench refactor.
+- Plan structure uses one task per agent: boundary/contracts first, then parallel design-system, left-dock, condition-canvas, preview/import, and support-pane agents, then shell integration, then final verification.
+- Plan keeps regional agents away from `ExpressionBuilderShell.tsx` and `sharedBuilderUi.test.tsx` until the integration task to reduce merge conflicts.
+
+---
+
+# Focused Porcelain UI Refactor Execution
+
+## Checklist
+
+- [x] Review `tasks/lessons.md`, `ui-ux/plan/fullplan.md`, and the current builder-ui shell before editing.
+- [ ] Add the execution tracker and keep it updated through final verification.
+- [x] Complete Task 0: workbench contracts, pure state helpers, and focused tests.
+- [x] Complete Task 1: Porcelain tokens, shared controls, icons, and focused tests.
+- [x] Complete Task 2: left dock field toolbox and wrapper chips.
+- [x] Complete Task 3: condition canvas, recursive group cards, and inline rule rows.
+- [x] Complete Task 4: expression document panel and import/export surface.
+- [x] Complete Task 5: support pane, diagnostics, and mode context.
+- [x] Complete Task 6: shell integration and shared UI tests.
+- [x] Complete Task 7: lint, typecheck, unit tests, builds, e2e, boundary scan, and review notes.
+
+## Review
+
+- Task 0 complete: added workbench contracts and pure state helpers, then verified `npm test -w @pavb/builder-ui -- workbenchState.test.ts` and `npm run typecheck -w @pavb/builder-ui`.
+- Tasks 1-5 complete: added the Porcelain token layer, shared controls, left dock, condition canvas, preview/import surface, and support pane; verified focused workbench tests plus `npm run typecheck -w @pavb/builder-ui` and `npm run build -w @pavb/builder-ui`.
+- Task 6 complete: replaced the old three-pane shell with the new docked workbench, preserved `QueryDocument` as the source of truth, and updated the shared builder UI tests to the final integrated behavior.
+- Task 7 complete: verified thin app bootstraps, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:web`, `npm run build:pptb`, and the boundary scan; updated the Playwright smoke selectors for the new workbench labels and confirmed all three E2E specs passed, although the desktop shell wrapper did not return a clean exit after the passing Playwright output.

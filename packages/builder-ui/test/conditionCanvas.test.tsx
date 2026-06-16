@@ -1,0 +1,57 @@
+// @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
+import { cleanup, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { sampleDocument } from '../src/app/sampleData';
+import { ConditionCanvas } from '../src/workbench/ConditionCanvas';
+
+afterEach(() => cleanup());
+
+function renderCanvas(overrides = {}) {
+  const props = {
+    root: sampleDocument.root,
+    fields: sampleDocument.fields,
+    mode: sampleDocument.mode,
+    selectedRuleId: sampleDocument.selectedRuleId,
+    onSelectRule: vi.fn(),
+    onAddRule: vi.fn(),
+    onAddGroup: vi.fn(),
+    onChangeGroupConjunction: vi.fn(),
+    onUpdateRule: vi.fn(),
+    onDuplicateRule: vi.fn(),
+    onDeleteNode: vi.fn(),
+    ...overrides,
+  };
+
+  render(<ConditionCanvas {...props} />);
+  return props;
+}
+
+describe('ConditionCanvas', () => {
+  it('renders the root group as a condition builder canvas', () => {
+    renderCanvas();
+
+    expect(screen.getByRole('region', { name: 'Condition Builder' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'AND group root' })).toBeInTheDocument();
+  });
+
+  it('updates a rule value from an inline row', async () => {
+    const props = renderCanvas();
+
+    const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
+    const value = within(approverRow).getByLabelText('Value for Approver');
+    await userEvent.clear(value);
+    await userEvent.type(value, 'director');
+
+    expect(props.onUpdateRule).toHaveBeenLastCalledWith('rule-approver', { value: 'director' });
+  });
+
+  it('changes a nested group conjunction', async () => {
+    const props = renderCanvas();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Set group-routing conjunction to AND' }));
+
+    expect(props.onChangeGroupConjunction).toHaveBeenCalledWith('group-routing', 'and');
+  });
+});
