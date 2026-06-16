@@ -1,17 +1,32 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { FluentProvider } from '@fluentui/react-components';
-import type { ExpressionMode } from '@pavb/engine';
+import type { ExpressionMode, FieldDefinition } from '@pavb/engine';
 import type { PlatformAdapter, PlatformTheme } from '@pavb/platform';
-import { addGroup, addRule, deleteNode, duplicateRule, selectRule, updateRule } from '../composer/queryActions';
+import {
+  addGroup,
+  addRule,
+  changeGroupConjunction,
+  deleteNode,
+  duplicateRule,
+  selectRule,
+  updateRule,
+} from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
-import { ConditionMasterPane } from '../components/ConditionMasterPane';
-import { ExpressionCommandBar } from '../components/ExpressionCommandBar';
-import { FieldSourcePane } from '../components/FieldSourcePane';
-import { RuleInspectorPane } from '../components/RuleInspectorPane';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
 import { builderDarkTheme, builderLightTheme } from '../theme/fluentTheme';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
 import { sampleDocument } from './sampleData';
+import { ConditionCanvas } from '../workbench/ConditionCanvas';
+import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
+import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
+import { ImportExportPanel } from '../workbench/ImportExportPanel';
+import { SupportPane } from '../workbench/SupportPane';
+import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
+import {
+  getDefaultWorkbenchState,
+  toggleDock,
+  togglePreview,
+} from '../workbench/workbenchState';
 import '../theme/tokens.css';
 
 export interface ExpressionBuilderShellProps {
@@ -26,6 +41,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
+  const [workbench, setWorkbench] = useState(getDefaultWorkbenchState);
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
@@ -54,8 +70,12 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
     setImportDiagnostics([]);
   };
 
-  const copyExpression = () => {
-    void adapter.copyToClipboard(derived.expression);
+  const copyExpression = async () => {
+    await adapter.copyToClipboard(derived.expression);
+    setWorkbench((current) => ({ ...current, copyState: 'copied' }));
+    setTimeout(() => {
+      setWorkbench((current) => ({ ...current, copyState: 'idle' }));
+    }, 1200);
   };
 
   const exportDocument = () => {
@@ -78,71 +98,102 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
 
   const connectFields = async () => {
     const fields = await adapter.getDataverseFields();
-    if (fields.length === 0) {
+    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
       await adapter.notify('Using sample fields because no Dataverse connection is available.', 'info');
+      return;
     }
+
+    setDocument((current) => ({ ...current, fields }));
   };
 
   return (
     <FluentProvider theme={theme === 'dark' ? builderDarkTheme : builderLightTheme}>
       <div className="eb-root" data-theme={theme}>
-        <ExpressionCommandBar
+        <WorkbenchHeader
           mode={document.mode}
           theme={theme}
           onModeChange={updateMode}
           onExport={exportDocument}
           onImport={importDocument}
           onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-          onCopyExpression={copyExpression}
+          onCopyExpression={() => void copyExpression()}
         />
 
-        <div className="eb-layout">
-          <FieldSourcePane fields={document.fields} onConnect={() => void connectFields()} />
-          <ConditionMasterPane
-            root={document.root}
+        <main
+          className="eb-workspace"
+          style={
+            {
+              '--eb-left-dock-width': workbench.leftDockCollapsed ? '68px' : '286px',
+              '--eb-right-dock-width': workbench.rightDockCollapsed ? '68px' : '330px',
+            } as CSSProperties
+          }
+        >
+          <FieldToolboxPane
             fields={document.fields}
-            mode={document.mode}
-            selectedRuleId={selectedRule?.id}
-            expression={derived.expression}
-            diagnostics={derived.diagnostics}
-            onSelectRule={(ruleId) => setDocument((current) => selectRule(current, ruleId))}
-            onAddRule={() =>
-              setDocument((current) =>
-                addRule(current, current.root.id, {
-                  fieldId: current.fields[0]?.id ?? '',
-                  operator: 'equals',
-                  value: current.fields[0]?.choices?.[0] ?? '',
-                }),
-              )
-            }
-            onAddGroup={() => setDocument((current) => addGroup(current, current.root.id))}
-            onCopy={copyExpression}
+            activeTab={workbench.leftTab}
+            collapsed={workbench.leftDockCollapsed}
+            onTabChange={(leftTab) => setWorkbench((current) => ({ ...current, leftTab }))}
+            onToggleCollapsed={() => setWorkbench((current) => toggleDock(current, 'left'))}
+            onConnect={() => void connectFields()}
           />
-          <RuleInspectorPane
-            mode={document.mode}
-            fields={document.fields}
-            selectedRule={selectedRule}
-            diagnostics={diagnostics}
-            onUpdateRule={(ruleId, patch) => {
-              setDocument((current) => updateRule(current, ruleId, patch));
-              setImportDiagnostics([]);
-            }}
-            onDuplicateRule={(ruleId) => setDocument((current) => duplicateRule(current, ruleId))}
-            onDeleteRule={(ruleId) => setDocument((current) => deleteNode(current, ruleId))}
-          />
-        </div>
 
-        <div className="eb-import-export">
-          <label className="eb-label" htmlFor="saved-expression-json">
-            Saved expression JSON
-          </label>
-          <textarea
-            id="saved-expression-json"
-            className="eb-textarea"
-            value={savedJson}
-            onChange={(event) => setSavedJson(event.target.value)}
+          <div className="eb-center-col">
+            <ConditionCanvas
+              root={document.root}
+              fields={document.fields}
+              mode={document.mode}
+              selectedRuleId={selectedRule?.id}
+              onSelectRule={(ruleId) => {
+                setDocument((current) => selectRule(current, ruleId));
+                setImportDiagnostics([]);
+              }}
+              onAddRule={(groupId) =>
+                setDocument((current) =>
+                  addRule(current, groupId, {
+                    fieldId: current.fields[0]?.id ?? '',
+                    operator: 'equals',
+                    value: current.fields[0]?.choices?.[0] ?? '',
+                  }),
+                )
+              }
+              onAddGroup={(groupId) => setDocument((current) => addGroup(current, groupId))}
+              onChangeGroupConjunction={(groupId, conjunction) =>
+                setDocument((current) => changeGroupConjunction(current, groupId, conjunction))
+              }
+              onUpdateRule={(ruleId, patch) => {
+                setDocument((current) => updateRule(current, ruleId, patch));
+                setImportDiagnostics([]);
+              }}
+              onDuplicateRule={(ruleId) => setDocument((current) => duplicateRule(current, ruleId))}
+              onDeleteNode={(nodeId) => setDocument((current) => deleteNode(current, nodeId))}
+            />
+
+            <ExpressionDocumentPanel
+              expression={derived.expression}
+              collapsed={workbench.previewCollapsed}
+              copyState={workbench.copyState}
+              onToggleCollapsed={() => setWorkbench((current) => togglePreview(current))}
+              onCopy={() => void copyExpression()}
+            />
+
+            <ImportExportPanel
+              diagnostics={importDiagnostics}
+              savedJson={savedJson}
+              onChange={setSavedJson}
+              onImport={importDocument}
+              onExport={exportDocument}
+            />
+          </div>
+
+          <SupportPane
+            mode={document.mode}
+            diagnostics={diagnostics}
+            activeTab={workbench.rightTab}
+            collapsed={workbench.rightDockCollapsed}
+            onTabChange={(rightTab) => setWorkbench((current) => ({ ...current, rightTab }))}
+            onToggleCollapsed={() => setWorkbench((current) => toggleDock(current, 'right'))}
           />
-        </div>
+        </main>
       </div>
     </FluentProvider>
   );
@@ -150,4 +201,16 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
 
 function normalizeTheme(theme: PlatformTheme): 'light' | 'dark' {
   return theme === 'dark' || theme === 'highContrast' ? 'dark' : 'light';
+}
+
+function isFieldDefinitionArray(value: unknown[]): value is FieldDefinition[] {
+  return value.every(
+    (item) =>
+      typeof item === 'object' &&
+      item !== null &&
+      'id' in item &&
+      'label' in item &&
+      'type' in item &&
+      'path' in item,
+  );
 }
