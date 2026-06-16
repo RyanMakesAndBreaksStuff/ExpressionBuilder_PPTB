@@ -1,3 +1,19 @@
+# Build Fix 2
+
+## Checklist
+
+- [x] Reproduce the remaining build failure in the current environment.
+- [x] Confirm whether the failure is toolchain-only or app-code related.
+- [ ] Replace the Node 20-only Vite stack with a Node 18-compatible pairing.
+- [ ] Re-run `npm run build` and record the outcome.
+
+## Review
+
+- Local `npm run build` fails in `vite build` under Node `18.19.1`; TypeScript package builds complete first.
+- Vite 8 also pulls `rolldown`, which uses `node:util.styleText`; that API is unavailable in Node 18, so the current failure is toolchain-only.
+
+---
+
 # First UI Mock
 
 ## Checklist
@@ -175,16 +191,21 @@
 - [x] Add exact formatter tests for Trigger Condition, Filter array, nested groups, field paths, date ticks, and case-insensitive string checks.
 - [x] Add invalid predicate-root diagnostics for function, field, string literal, and number literal roots in both modes.
 - [x] Add operator type-gating tests for supported field/operator combinations and invalid empty checks.
-- [x] Run `npm test -w @pavb/engine`.
-- [x] Run `npm run build -w @pavb/engine`.
+- [x] Run `npm test -w @ryanmakes/eb_engine
+`.
+- [x] Run `npm run build -w @ryanmakes/eb_engine
+`.
 
 ## Review
 
 - Implemented the pure engine modules for canonical AST types, field references, literals, function metadata, operator gates, formatting, and diagnostics.
 - Added formatter, filter array, operator type-gating, and predicate-root tests under `packages/engine/test`.
-- Added the package-level `test` script required for `npm test -w @pavb/engine`.
-- Verification passed: `npm test -w @pavb/engine` with 4 files and 20 tests.
-- Verification passed: `npm run build -w @pavb/engine`.
+- Added the package-level `test` script required for `npm test -w @ryanmakes/eb_engine
+`.
+- Verification passed: `npm test -w @ryanmakes/eb_engine
+` with 4 files and 20 tests.
+- Verification passed: `npm run build -w @ryanmakes/eb_engine
+`.
 
 ---
 
@@ -200,7 +221,7 @@
 - [x] Implement immutable `QueryDocument` actions and exports.
 - [x] Add query action tests for add, update, delete, duplicate, move, select, and conjunction changes.
 - [x] Install missing dependencies from the plan.
-- [x] Run `npm test -w @pavb/builder-ui` and `npm run typecheck`.
+- [x] Run `npm test -w @ryanmakess/eb_builder-ui` and `npm run typecheck`.
 
 ## Review
 
@@ -210,7 +231,7 @@
 - Recorded the composer decision at `docs/work/composer-decision.md`.
 - Implemented pure immutable query actions in `packages/builder-ui/src/composer/queryActions.ts`.
 - Added query action tests in `packages/builder-ui/test/queryActions.test.ts`.
-- Verification passed: `npm test -w @pavb/builder-ui`, `npm run typecheck`, and `npm run lint`.
+- Verification passed: `npm test -w @ryanmakess/eb_builder-ui`, `npm run typecheck`, and `npm run lint`.
 
 ---
 
@@ -223,15 +244,15 @@
 - [x] Implement the browser adapter with isolated clipboard, storage, and theme APIs.
 - [x] Implement the Power Platform Toolbox adapter with defensive optional API support and sample-field fallback.
 - [x] Add platform adapter unit tests for clipboard, storage, theme changes, notifications, settings, and PPTB fallback.
-- [x] Run `npm test -w @pavb/platform`.
-- [x] Run `npm run build -w @pavb/platform`.
+- [x] Run `npm test -w @ryanmakes/eb_platformadapter`.
+- [x] Run `npm run build -w @ryanmakes/eb_platformadapter`.
 
 ## Review
 
 - Implemented the platform adapter contract, web adapter, PPTB adapter, and unit tests.
-- Added the package-level `test` script required for `npm test -w @pavb/platform`.
-- `npm test -w @pavb/platform` passed.
-- `npm run build -w @pavb/platform` passed.
+- Added the package-level `test` script required for `npm test -w @ryanmakes/eb_platformadapter`.
+- `npm test -w @ryanmakes/eb_platformadapter` passed.
+- `npm run build -w @ryanmakes/eb_platformadapter` passed.
 - Boundary search confirmed `navigator.clipboard`, `localStorage`, and `matchMedia` source usage is isolated to `packages/platform/src/webAdapter.ts`, and `toolboxAPI` source usage is isolated to `packages/platform/src/pptbAdapter.ts`.
 
 ---
@@ -246,20 +267,21 @@
 - [x] Build the Concept C shell, command bar, field pane, master condition pane, inspector, diagnostics, expression preview, and validation bar.
 - [x] Add import/export validation for `version`, `mode`, `fields`, and `root`.
 - [x] Add UI tests for mode keyboard switching, preview mode context, field search, inspector selection, value editing, case-insensitive fix, import/export drift, and aria-live diagnostics.
-- [x] Run `npm test -w @pavb/builder-ui`.
-- [x] Run `npm run build -w @pavb/builder-ui`.
+- [x] Run `npm test -w @ryanmakess/eb_builder-ui`.
+- [x] Run `npm run build -w @ryanmakess/eb_builder-ui`.
 
 ## Execution Notes
 
 - Ownership is limited to `packages/builder-ui/src/**`, `packages/builder-ui/test/**`, and this task tracker unless a compile error proves another edit is necessary.
-- State source of truth is `QueryDocument`; formatted expressions are derived through `@pavb/engine`.
+- State source of truth is `QueryDocument`; formatted expressions are derived through `@ryanmakes/eb_engine
+`.
 - Operator options are filtered from engine metadata by selected field type.
 
 ## Review
 
 - Implemented the shared builder shell and component set using the Concept C master-detail layout and Slate / Steel tokens.
 - Added state derivation from `QueryDocument` to engine AST, import/export validation, responsive CSS, and UI accessibility affordances.
-- Verification passed: `npm test -w @pavb/builder-ui` and `npm run build -w @pavb/builder-ui`.
+- Verification passed: `npm test -w @ryanmakess/eb_builder-ui` and `npm run build -w @ryanmakess/eb_builder-ui`.
 
 ---
 
@@ -406,7 +428,7 @@
 
 ---
 
-# UI/UX Alternative Concepts — Round 4 (design2_*)
+# UI/UX Alternative Concepts — Round 4 (design2\_\*)
 
 ## Checklist
 
@@ -443,7 +465,7 @@
 
 ---
 
-# UI/UX Alternative Concepts — Round 5 (design3_*)
+# UI/UX Alternative Concepts — Round 5 (design3\_\*)
 
 ## Checklist
 
@@ -491,7 +513,7 @@
 
 ---
 
-# UI/UX Alternative Concepts — Round 6 (focused_*)
+# UI/UX Alternative Concepts — Round 6 (focused\_\*)
 
 ## Checklist
 
@@ -645,7 +667,21 @@
 
 ## Review
 
-- Task 0 complete: added workbench contracts and pure state helpers, then verified `npm test -w @pavb/builder-ui -- workbenchState.test.ts` and `npm run typecheck -w @pavb/builder-ui`.
-- Tasks 1-5 complete: added the Porcelain token layer, shared controls, left dock, condition canvas, preview/import surface, and support pane; verified focused workbench tests plus `npm run typecheck -w @pavb/builder-ui` and `npm run build -w @pavb/builder-ui`.
+- Task 0 complete: added workbench contracts and pure state helpers, then verified `npm test -w @ryanmakess/eb_builder-ui -- workbenchState.test.ts` and `npm run typecheck -w @ryanmakess/eb_builder-ui`.
+- Tasks 1-5 complete: added the Porcelain token layer, shared controls, left dock, condition canvas, preview/import surface, and support pane; verified focused workbench tests plus `npm run typecheck -w @ryanmakess/eb_builder-ui` and `npm run build -w @ryanmakess/eb_builder-ui`.
 - Task 6 complete: replaced the old three-pane shell with the new docked workbench, preserved `QueryDocument` as the source of truth, and updated the shared builder UI tests to the final integrated behavior.
 - Task 7 complete: verified thin app bootstraps, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:web`, `npm run build:pptb`, and the boundary scan; updated the Playwright smoke selectors for the new workbench labels and confirmed all three E2E specs passed, although the desktop shell wrapper did not return a clean exit after the passing Playwright output.
+
+# Build Fix
+## Checklist
+
+- [x] Replace the Windows-only `packages/builder-ui` asset copy step with a portable build command.
+- [x] Declare the Node `20.19.0+` baseline in the root workspace and app entrypoint manifests.
+- [x] Re-run the build checks that are reachable in the current environment and record the remaining Node-floor blocker.
+
+## Review
+
+- Replaced the `powershell` theme-copy build suffix in `packages/builder-ui/package.json` with a Node-based file copy so `dist/theme/tokens.css` is emitted without shell-specific tooling.
+- Added `engines.node: >=20.19.0` to the root workspace plus `apps/web` and `apps/pptb` so the Vite 8 and `@vitejs/plugin-react` 6 requirement is explicit.
+- Updated `README.md` to call out the Node floor and switched routine command examples from `powershell` fences to shell-agnostic `bash` fences.
+- Verification confirmed the old repo-side failure was `powershell: Permission denied`; app builds still fail under local Node `18.19.1` because Vite 8 and `@vitejs/plugin-react` 6 require Node `20.19+`.

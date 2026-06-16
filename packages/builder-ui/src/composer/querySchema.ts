@@ -1,4 +1,4 @@
-import type { Conjunction, ExpressionMode, FieldDefinition } from '@pavb/engine';
+import type { Conjunction, ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 
 export interface QueryDocument {
   version: 1;

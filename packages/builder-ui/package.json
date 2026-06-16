@@ -1,5 +1,5 @@
 {
-  "name": "@pavb/builder-ui",
+  "name": "@ryanmakes/eb_builder-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,13 +12,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -b && powershell -NoProfile -Command \"New-Item -ItemType Directory -Force dist/theme | Out-Null; Copy-Item src/theme/tokens.css dist/theme/tokens.css -Force\"",
+    "build": "tsc -b && node -e \"require('fs').mkdirSync('dist/theme', { recursive: true }); require('fs').copyFileSync('src/theme/tokens.css', 'dist/theme/tokens.css');\"",
     "test": "vitest run",
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@pavb/engine": "file:../engine",
-    "@pavb/platform": "file:../platform",
+    "@ryanmakes/eb_engine": "file:../engine",
+    "@ryanmakes/eb_platformadapter": "file:../platform",
     "@fluentui/react-components": "9.74.1",
     "@fluentui/react-icons": "latest",
     "react": "^19.2.6",

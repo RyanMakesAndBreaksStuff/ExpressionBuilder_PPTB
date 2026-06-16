@@ -1,4 +1,4 @@
-import { formatExpression, type ExpressionMode, type FieldDefinition, type FormatDiagnostic } from '@pavb/engine';
+import { formatExpression, type ExpressionMode, type FieldDefinition, type FormatDiagnostic } from '@ryanmakes/eb_engine';
 import type { QueryRule, RulePatch } from '../composer/querySchema';
 import {
   coerceValueForField,

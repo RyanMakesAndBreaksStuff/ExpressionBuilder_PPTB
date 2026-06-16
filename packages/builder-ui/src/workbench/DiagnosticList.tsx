@@ -1,4 +1,4 @@
-import type { FormatDiagnostic } from '@pavb/engine';
+import type { FormatDiagnostic } from '@ryanmakes/eb_engine';
 
 interface DiagnosticListProps {
   diagnostics: Array<FormatDiagnostic | { severity: 'error' | 'warning'; message: string; code?: string }>;

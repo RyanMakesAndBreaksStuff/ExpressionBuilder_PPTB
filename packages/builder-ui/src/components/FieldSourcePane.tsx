@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { FieldDefinition } from '@pavb/engine';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { TypeGlyph } from './TypeGlyph';
 
 interface FieldSourcePaneProps {

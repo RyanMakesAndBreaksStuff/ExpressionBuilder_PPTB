@@ -3,7 +3,8 @@ import type {
   ExpressionMode,
   FieldDefinition,
   FormatDiagnostic,
-} from '@pavb/engine';
+} from '@ryanmakes/eb_engine';
+
 import type { QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
 
 export type LeftWorkbenchTab = 'dynamicContent' | 'wrappers';

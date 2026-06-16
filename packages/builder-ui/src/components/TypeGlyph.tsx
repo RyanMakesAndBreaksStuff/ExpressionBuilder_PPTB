@@ -1,4 +1,4 @@
-import type { FieldType } from '@pavb/engine';
+import type { FieldType } from '@ryanmakes/eb_engine';
 
 const labels: Record<FieldType, string> = {
   string: 'Ab',
