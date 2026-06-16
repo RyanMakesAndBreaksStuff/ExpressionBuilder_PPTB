@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# Power Automate Expression Builder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Power Automate Expression Builder is a React and TypeScript workspace for building Trigger Condition and Filter array advanced-mode predicates. It uses a pure expression engine, shared Fluent UI v9 builder UI, and thin host bootstraps for the browser and Power Platform Toolbox.
 
-Currently, two official plugins are available:
+## Package Boundaries
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+packages/engine: pure TypeScript expression formatting and diagnostics
+packages/platform: web and PPTB platform adapters
+packages/builder-ui: shared Fluent UI v9 Concept C composer
+apps/web: browser bootstrap only
+apps/pptb: Power Platform Toolbox bootstrap only
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Install dependencies from the repo root:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+npm install
 ```
+
+## Development
+
+Run the browser host:
+
+```powershell
+npm run dev:web
+```
+
+Run the Power Platform Toolbox host:
+
+```powershell
+npm run dev:pptb
+```
+
+## Verification
+
+Run the fast checks from the repo root:
+
+```powershell
+npm run lint
+npm run typecheck
+npm test
+```
+
+Run end-to-end smoke tests:
+
+```powershell
+npm run test:e2e
+```
+
+## Build
+
+Build both packages and apps:
+
+```powershell
+npm run build
+```
+
+Build individual static hosts:
+
+```powershell
+npm run build:web
+npm run build:pptb
+```
+
+Preview the browser build:
+
+```powershell
+npm run preview:web
+```
+
+## Docs
+
+- [Architecture](docs/architecture.md)
+- [Adapter contract](docs/adapter-contract.md)
+- [Expression cookbook](docs/expression-cookbook.md)
+- [Deployment](docs/deployment.md)
