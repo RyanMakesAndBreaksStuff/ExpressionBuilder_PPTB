@@ -1,4 +1,4 @@
-import type { Conjunction } from '@pavb/engine';
+import type { Conjunction } from '@ryanmakes/eb_engine';
 
 interface ConditionGroupHeaderProps {
   conjunction: Conjunction;

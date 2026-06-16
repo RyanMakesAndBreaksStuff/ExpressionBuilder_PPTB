@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react';
-import type { ExpressionMode } from '@pavb/engine';
+import type { ExpressionMode } from '@ryanmakes/eb_engine';
 
 interface ModeSegmentedControlProps {
   mode: ExpressionMode;

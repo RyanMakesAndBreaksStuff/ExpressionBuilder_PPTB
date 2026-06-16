@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { FluentProvider } from '@fluentui/react-components';
-import type { ExpressionMode, FieldDefinition } from '@pavb/engine';
-import type { PlatformAdapter, PlatformTheme } from '@pavb/platform';
+import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
+import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
 import {
   addGroup,
   addRule,

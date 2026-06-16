@@ -1,5 +1,5 @@
 import type { CSSProperties, KeyboardEvent } from 'react';
-import type { FieldDefinition } from '@pavb/engine';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import type { QueryRule } from '../composer/querySchema';
 import { TypeGlyph } from './TypeGlyph';
 

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
-import type { PlatformAdapter } from '@pavb/platform';
+import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 
 function createAdapter(): PlatformAdapter {
   return {

@@ -1,4 +1,4 @@
-import type { ExpressionMode, FieldDefinition, FormatDiagnostic } from '@pavb/engine';
+import type { ExpressionMode, FieldDefinition, FormatDiagnostic } from '@ryanmakes/eb_engine';
 import type { QueryGroup, QueryNode } from '../composer/querySchema';
 import { modeLabel } from '../app/builderState';
 import { ConditionGroupHeader } from './ConditionGroupHeader';

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { FieldDefinition } from '@pavb/engine';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { QueryRule } from '../composer/querySchema';
 import type { RuleRowEditorProps } from './types';

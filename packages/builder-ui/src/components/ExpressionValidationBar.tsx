@@ -1,4 +1,4 @@
-import type { FormatDiagnostic } from '@pavb/engine';
+import type { FormatDiagnostic } from '@ryanmakes/eb_engine';
 import { ExpressionPreview } from './ExpressionPreview';
 
 interface ExpressionValidationBarProps {

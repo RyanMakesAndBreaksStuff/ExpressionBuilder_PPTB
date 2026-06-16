@@ -14,9 +14,11 @@ apps/pptb: Power Platform Toolbox bootstrap only
 
 ## Setup
 
+This workspace requires Node `20.19.0` or newer. The current Vite 8 and `@vitejs/plugin-react` 6 toolchain will not build on Node 18.
+
 Install dependencies from the repo root:
 
-```powershell
+```bash
 npm install
 ```
 
@@ -24,13 +26,13 @@ npm install
 
 Run the browser host:
 
-```powershell
+```bash
 npm run dev:web
 ```
 
 Run the Power Platform Toolbox host:
 
-```powershell
+```bash
 npm run dev:pptb
 ```
 
@@ -38,7 +40,7 @@ npm run dev:pptb
 
 Run the fast checks from the repo root:
 
-```powershell
+```bash
 npm run lint
 npm run typecheck
 npm test
@@ -46,7 +48,7 @@ npm test
 
 Run end-to-end smoke tests:
 
-```powershell
+```bash
 npm run test:e2e
 ```
 
@@ -54,20 +56,20 @@ npm run test:e2e
 
 Build both packages and apps:
 
-```powershell
+```bash
 npm run build
 ```
 
 Build individual static hosts:
 
-```powershell
+```bash
 npm run build:web
 npm run build:pptb
 ```
 
 Preview the browser build:
 
-```powershell
+```bash
 npm run preview:web
 ```
 

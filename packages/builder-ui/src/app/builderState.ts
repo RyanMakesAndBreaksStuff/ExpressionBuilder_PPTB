@@ -8,7 +8,7 @@ import {
   type FormatDiagnostic,
   type FormatResult,
   type LiteralNode,
-} from '@pavb/engine';
+} from '@ryanmakes/eb_engine';
 import type { QueryDocument, QueryGroup, QueryNode, QueryRule } from '../composer/querySchema';
 
 export interface DerivedBuilderState {

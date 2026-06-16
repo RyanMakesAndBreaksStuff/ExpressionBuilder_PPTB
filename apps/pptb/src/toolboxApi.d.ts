@@ -1,4 +1,4 @@
-import type { PptbToolboxApi } from '@pavb/platform';
+import type { PptbToolboxApi } from '@ryanmakes/eb_platformadapter';
 
 declare global {
   interface Window {

@@ -1,4 +1,4 @@
-import type { ExpressionMode } from '@pavb/engine';
+import type { ExpressionMode } from '@ryanmakes/eb_engine';
 import type { DockSide, ModeContext, WorkbenchState } from './types';
 
 export function getDefaultWorkbenchState(): WorkbenchState {

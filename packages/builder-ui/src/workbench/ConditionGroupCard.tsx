@@ -1,4 +1,4 @@
-import type { FieldDefinition } from '@pavb/engine';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import type { QueryGroup } from '../composer/querySchema';
 import { RuleRowEditor } from './RuleRowEditor';
 

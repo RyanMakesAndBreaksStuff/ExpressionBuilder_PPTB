@@ -1,4 +1,4 @@
-import type { Conjunction } from '@pavb/engine';
+import type { Conjunction } from '@ryanmakes/eb_engine';
 import type { QueryDocument, QueryGroup, QueryNode, QueryRule, RulePatch } from './querySchema';
 
 type VisitResult = {
