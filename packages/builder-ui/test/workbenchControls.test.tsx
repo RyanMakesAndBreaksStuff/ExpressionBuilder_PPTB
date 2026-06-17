@@ -24,6 +24,17 @@ describe('workbench shared controls', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps collapsed dock toggle names accessible without visible label text', () => {
+    render(
+      <DockPane title="Support Pane" side="right" collapsed={true} onToggleCollapsed={vi.fn()}>
+        <p>Support content</p>
+      </DockPane>,
+    );
+
+    expect(screen.getByRole('button', { name: /expand support pane/i })).toBeInTheDocument();
+    expect(screen.queryByText(/expand support pane/i)).not.toBeInTheDocument();
+  });
+
   it('renders real tabs with aria-selected state', async () => {
     const onChange = vi.fn();
 

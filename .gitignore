@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-types
+**/dist-types
 dist-ssr
 *.local
 
@@ -28,3 +30,4 @@ dist-ssr
 /test-results
 /tests/e2e
 /ui-ux
+/package-lock.json

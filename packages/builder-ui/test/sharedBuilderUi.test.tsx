@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
+import { sampleDocument } from '../src/app/sampleData';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 
 function createAdapter(): PlatformAdapter {
@@ -31,9 +32,32 @@ afterEach(() => {
 });
 
 describe('shared builder UI', () => {
+  it('does not render demo chrome copy in the production shell', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+
+    for (const text of [/left pane/i, /right pane/i, /document panel/i, /docked tool/i]) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+    }
+
+    expect(screen.getByRole('heading', { name: /condition builder/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /expression preview/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /dynamic content/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /wrappers/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /diagnostics/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /mode context/i })).toBeInTheDocument();
+  });
+
+  it('does not default production state to sample data', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+
+    expect(screen.queryByDisplayValue('Approved')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('finance')).not.toBeInTheDocument();
+    expect(screen.queryByText(/approver/i)).not.toBeInTheDocument();
+  });
+
   it('keyboard can switch the mode selector and update field reference context', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const triggerMode = screen.getByRole('radio', { name: 'Trigger condition' });
     triggerMode.focus();
@@ -47,7 +71,7 @@ describe('shared builder UI', () => {
 
   it('search filters fields by label', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     await user.type(screen.getByLabelText('Search dynamic content'), 'due');
 
@@ -58,7 +82,7 @@ describe('shared builder UI', () => {
 
   it('changing a value updates the generated expression', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
     const valueInput = within(approverRow).getByLabelText('Value for Approver');
@@ -70,7 +94,7 @@ describe('shared builder UI', () => {
 
   it('case-insensitive fix wraps both sides in toLower()', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
     await user.click(within(approverRow).getByRole('button', { name: 'Wrap both sides in toLower()' }));
@@ -81,7 +105,7 @@ describe('shared builder UI', () => {
 
   it('import and export round-trip without expression drift', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const expressionBefore = screen.getByLabelText('Generated expression').textContent;
     await user.click(screen.getByRole('button', { name: 'Export' }));
@@ -111,7 +135,7 @@ describe('shared builder UI', () => {
 
   it('preview collapse preserves the generated expression after re-expand', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const expressionBefore = screen.getByLabelText('Generated expression').textContent;
     await user.click(screen.getByRole('button', { name: 'Collapse expression preview' }));
@@ -121,16 +145,12 @@ describe('shared builder UI', () => {
     expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
   });
 
-  it('diagnostics use aria-live and invalid imports are announced', async () => {
-    const user = userEvent.setup();
+  it('keeps import, export, and copy commands in the header without the saved JSON panel', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
-    const json = screen.getByLabelText('Saved expression JSON');
-    fireEvent.change(json, { target: { value: '{"version":2}' } });
-    await user.click(screen.getByRole('button', { name: 'Import saved expression' }));
-
-    const diagnostics = screen.getByRole('status', { name: 'warnings/errors' });
-    expect(diagnostics).toHaveAttribute('aria-live', 'polite');
-    expect(diagnostics).toHaveTextContent('Import failed');
+    expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /copy expression/i })).toBeInTheDocument();
+    expect(screen.queryByText(/saved expression json/i)).not.toBeInTheDocument();
   });
 });

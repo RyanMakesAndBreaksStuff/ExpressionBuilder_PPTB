@@ -20,7 +20,7 @@
     "@ryanmakes/eb_engine": "file:../engine",
     "@ryanmakes/eb_platformadapter": "file:../platform",
     "@fluentui/react-components": "9.74.1",
-    "@fluentui/react-icons": "latest",
+    "@fluentui/react-icons": "^2.0.330",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
