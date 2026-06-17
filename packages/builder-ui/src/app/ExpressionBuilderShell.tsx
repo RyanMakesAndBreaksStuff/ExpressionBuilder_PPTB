@@ -13,7 +13,7 @@ import {
 } from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
-import { createPorcelainFluentTheme } from '../theme/workbenchTokens';
+import { createPorcelainFluentTheme, porcelainTokens } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
 import { emptyStarterDocument } from './sampleData';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
@@ -107,7 +107,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
 
   return (
     <FluentProvider theme={createPorcelainFluentTheme(theme)}>
-      <div className="eb-root" data-theme={theme}>
+      <div className="eb-root" data-theme={theme} style={porcelainTokens[theme].cssVariables as CSSProperties}>
         <WorkbenchHeader
           mode={document.mode}
           theme={theme}

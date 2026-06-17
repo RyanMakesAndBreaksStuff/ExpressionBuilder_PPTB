@@ -6,3 +6,4 @@
 - When a finalized UI design is token-driven, record tokens as the implementation source of truth and keep CSS as token-consuming layout plumbing.
 - When prototype screenshots include scaffolding labels, remove demo-only copy from production chrome while preserving accessible labels where needed.
 - When command actions are part of a sticky header contract, do not relocate import, export, or copy into footer-like panels.
+- When the user supplies exact theme token values, wire those values through the runtime token source and add exact-value tests instead of leaving truthy palette checks.
