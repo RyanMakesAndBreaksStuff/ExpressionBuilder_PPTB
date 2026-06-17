@@ -14,6 +14,22 @@
 
 ---
 
+# Porcelain Theme Palette Reference
+
+## Checklist
+
+- [x] Review the existing Porcelain token sources in `packages/builder-ui/src/theme/tokens.css` and `packages/builder-ui/src/theme/workbenchTokens.ts`.
+- [x] Create `ui-ux/theme/porcelain.html` as a standalone light/dark palette reference for reuse in other projects.
+- [x] Verify the new HTML file exists and includes the full Porcelain token set for both modes.
+
+## Review
+
+- Source of truth is the current builder UI token layer, not an invented export-only palette.
+- Artifact target: `ui-ux/theme/porcelain.html`.
+- Verification confirmed the HTML exists and contains 39 light base tokens, 39 dark base tokens, 51 semantic aliases, and 8 Fluent bridge tokens with matching light/dark key coverage.
+
+---
+
 # First UI Mock
 
 ## Checklist
