@@ -14,6 +14,47 @@
 
 ---
 
+# Builder UI Package Fix
+
+## Checklist
+
+- [x] Reproduce the `tokens.css` resolution failure from the current build/package flow.
+- [x] Add regression coverage for app build sequencing and the live Porcelain Fluent theme exports.
+- [x] Fix the app build path so `@ryanmakes/eb_builder-ui` always emits `dist/theme/tokens.css` before app bundling.
+- [x] Make `packages/builder-ui/src/theme/fluentTheme.ts` mirror the active Porcelain palette source.
+- [x] Re-run targeted verification and record the outcome.
+
+## Review
+
+- Regression evidence before the fix: both app `build` scripts skipped `@ryanmakes/eb_builder-ui`, so they could hand Vite a stale package dist missing `dist/theme/tokens.css`.
+- Added a root Vitest check for app build sequencing and extended the builder-ui token test to require `fluentTheme.ts` to match the active Porcelain theme factory.
+- Updated `apps/web` and `apps/pptb` to build `@ryanmakes/eb_builder-ui` before their local TypeScript/Vite steps, and collapsed `fluentTheme.ts` into a thin alias over `createPorcelainFluentTheme(...)`.
+- Verification passed: `npm run test -- test/workspaceBuildScripts.test.ts packages/builder-ui/test/workbenchTokens.test.ts`.
+- Verification passed: `npm run build:web` and `npm run build:pptb` after sandbox escalation; the earlier in-sandbox failure was Vite/esbuild access to config files, not a repo regression.
+
+---
+
+# Theme Preview Workflow Fix
+
+## Checklist
+
+- [x] Reproduce the missing `preview:web` rebuild contract with a failing regression test.
+- [x] Make the runtime theme source-of-truth explicit in code comments.
+- [x] Update the web preview workflow to rebuild before serving.
+- [x] Clarify the PPTB workflow as build-first documentation.
+- [x] Re-run targeted verification and record the outcome.
+
+## Review
+
+- Added a failing root script regression for `preview:web` before changing scripts, then updated the root script to run `build:web` before the app preview command.
+- Documented `packages/builder-ui/src/theme/workbenchTokens.ts` as the runtime theme source and left `fluentTheme.ts` as compatibility-only exports.
+- Updated `README.md` and `docs/deployment.md` so web preview and PPTB packaging both point at the build-first workflow instead of implying live source pickup.
+- Verification passed: `npm run test -- test/workspaceBuildScripts.test.ts packages/builder-ui/test/workbenchTokens.test.ts`.
+- Verification passed: `npm run build:web` and `npm run build:pptb`.
+- Verification passed: a short-lived `npm run preview:web` session showed the nested `build:web` step running before `vite preview`; the preview server came up on `http://127.0.0.1:4174/` because port `4173` was already in use.
+
+---
+
 # Porcelain Theme Palette Reference
 
 ## Checklist

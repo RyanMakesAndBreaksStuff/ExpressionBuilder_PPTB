@@ -24,7 +24,7 @@
   "scripts": {
     "validate": "npx pptb/validate",
     "dev": "vite --host 127.0.0.1 --port 5174",
-    "build": "tsc -b && vite build",
+    "build": "npm run build -w @ryanmakes/eb_builder-ui && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4174"
   },
   "dependencies": {
