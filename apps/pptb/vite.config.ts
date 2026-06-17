@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Strips type="module" and crossorigin; moves scripts before </body>.
@@ -14,8 +14,8 @@ function fixHtmlForPPTB(): Plugin {
         scripts.push(match)
         return ''
       })
-      const fixedScripts = scripts.map(s =>
-        s.replace(/\s*type="module"/g, '').replace(/\s*crossorigin/g, '')
+      const fixedScripts = scripts.map((script) =>
+        script.replace(/\s*type="module"/g, '').replace(/\s*crossorigin/g, '')
       )
       cleaned = cleaned.replace('</body>', `${fixedScripts.join('\n')}\n</body>`)
       return cleaned
@@ -24,10 +24,10 @@ function fixHtmlForPPTB(): Plugin {
 }
 
 export default defineConfig({
-   plugins: [react(), fixHtmlForPPTB()],
-   base: './',
-   publicDir: 'public',
-    build: {
+  plugins: [react(), fixHtmlForPPTB()],
+  base: './',
+  publicDir: 'public',
+  build: {
     rollupOptions: {
       output: {
         format: 'iife',
@@ -36,6 +36,4 @@ export default defineConfig({
       }
     }
   }
-} as any);
-
-
+});

@@ -685,3 +685,73 @@
 - Added `engines.node: >=20.19.0` to the root workspace plus `apps/web` and `apps/pptb` so the Vite 8 and `@vitejs/plugin-react` 6 requirement is explicit.
 - Updated `README.md` to call out the Node floor and switched routine command examples from `powershell` fences to shell-agnostic `bash` fences.
 - Verification confirmed the old repo-side failure was `powershell: Permission denied`; app builds still fail under local Node `18.19.1` because Vite 8 and `@vitejs/plugin-react` 6 require Node `20.19+`.
+
+---
+
+# Focused Porcelain Recovery Fix Draft Execution
+
+## Checklist
+
+- [x] Review `tasks/lessons.md`, `ui-ux/plan/fixdraft.md`, and the required subagent workflow.
+- [x] Dispatch fresh workers for Tasks 1-5 with one task per worker.
+- [x] Review returned worker summaries for write-scope deviations and integration notes.
+- [x] Complete Task 1: token source and CSS token consumption.
+- [x] Complete Task 3: dock collapse controls.
+- [x] Complete Task 2: header command ownership.
+- [x] Complete Task 4: production copy cleanup.
+- [x] Complete Task 5: default data cleanup.
+- [x] Run Task 6 integration verification.
+- [x] Record worker verification evidence and current remaining verification gap.
+
+## Review
+
+- Task 1 returned `DONE_WITH_CONCERNS`: created `packages/builder-ui/src/theme/workbenchTokens.ts`, updated `packages/builder-ui/src/theme/tokens.css`, and added `packages/builder-ui/test/workbenchTokens.test.ts`.
+- Task 1 verification: `npm run test -w @ryanmakes/eb_builder-ui -- test/workbenchTokens.test.ts` passed, `npm run test --workspace @ryanmakes/eb_builder-ui` passed with 9 files and 37 tests, and `npm run typecheck --workspace @ryanmakes/eb_builder-ui` passed.
+- Task 3 returned `DONE_WITH_CONCERNS`: updated icon-only dock controls in `packages/builder-ui/src/workbench/controls/ActionButton.tsx` and `packages/builder-ui/src/workbench/controls/DockPane.tsx`, with regression coverage in `packages/builder-ui/test/workbenchControls.test.tsx`.
+- Task 3 verification: `npm run test --workspace @ryanmakes/eb_builder-ui` passed with 8 files and 36 tests.
+- Task 2 returned `DONE_WITH_CONCERNS`: removed the permanent default `ImportExportPanel` render from `packages/builder-ui/src/app/ExpressionBuilderShell.tsx` and added header regression coverage in `packages/builder-ui/test/sharedBuilderUi.test.tsx`.
+- Task 2 verification: targeted `npm run test --workspace @ryanmakes/eb_builder-ui -- test/sharedBuilderUi.test.tsx` passed with 1 file and 11 tests; full package test was blocked at that moment by Task 1's not-yet-integrated token module.
+- Task 4 returned `DONE_WITH_CONCERNS`: removed visible demo scaffolding labels from the dock chrome and added copy regression coverage in `packages/builder-ui/test/sharedBuilderUi.test.tsx`.
+- Task 4 verification: `npm run test -w @ryanmakes/eb_builder-ui` passed with 8 files and 36 tests.
+- Task 5 returned `DONE_WITH_CONCERNS`: changed the normal shell default to `emptyStarterDocument`, kept `sampleDocument` explicit, and added default-data regression coverage in `packages/builder-ui/test/sharedBuilderUi.test.tsx`.
+- Task 5 verification: targeted `npx vitest run test/sharedBuilderUi.test.tsx` passed with 1 file and 11 tests; full package test was blocked at that moment by Task 1's not-yet-integrated token module.
+- Plan command correction: `@expression-builder/builder-ui` is not a workspace in this repo; the actual package name is `@ryanmakes/eb_builder-ui`.
+- Plan path correction: the implemented shell and sample data live under `packages/builder-ui/src/app/`, controls live under `packages/builder-ui/src/workbench/controls/`, and nearest tests live under `packages/builder-ui/test/`.
+- Task 6 changed `packages/builder-ui/src/theme/workbenchTokens.ts` to remove an unused lint binding and changed `packages/builder-ui/src/app/ExpressionBuilderShell.tsx` to consume `createPorcelainFluentTheme(theme)`.
+- Task 6 verification: `npm run typecheck` passed, `npm run test` passed with 11 files and 44 tests, `npm run test -w @ryanmakes/eb_builder-ui` passed with 9 files and 37 tests, `npm run build:web` passed after sandbox escalation, and `npm run build:pptb` passed after sandbox escalation.
+- Task 6 UI/text regression evidence: package tests cover the header Import, Export, theme toggle, and Copy expression commands; absence of visible `Saved expression JSON`, `Left pane`, `Right pane`, `Document panel`, `docked tool`, and visible collapsed `Expand Support Pane`; and preservation of production labels such as `Condition Builder` and `Expression Preview`.
+- Task 6 remaining concerns: `npm run lint` still fails only on out-of-scope `apps/pptb/vite.config.ts:39` for `@typescript-eslint/no-explicit-any`; `npm run test:e2e` runs after sandbox escalation but fails two existing smoke specs while the boundary spec passes.
+- E2E details: `web-smoke.spec.ts` still expects default sample expression text `triggerBody()?['Status']` but the focused recovery plan now defaults to `@and()` with no sample data; `pptb-smoke.spec.ts` does not find the `Condition Builder` region on port 5174 within 5000 ms.
+
+---
+
+# Audit Suggestions Cleanup
+
+## Checklist
+
+- [x] Confirm the remaining root-starter references are limited to historical notes before deleting the unused starter surface.
+- [x] Confirm `apps/web/dist-types` and `apps/pptb/dist-types` are still tracked before untracking them.
+- [x] Remove duplicate app toolchain dependencies and pin the floating `@fluentui/react-icons` version.
+- [x] Deduplicate the app TypeScript compiler options into `apps/tsconfig.shared.json`.
+- [x] Fix the PPTB Vite config typing so `npm run lint` can pass without the `as any` escape hatch.
+- [x] Update ignore rules and docs to match the cleaned workspace layout.
+- [x] Regenerate the root lockfile from the updated manifests.
+- [x] Untrack generated `dist-types` output from both app workspaces.
+- [x] Delete the unused root starter files and assets.
+- [x] Re-run repo verification and record the outcome.
+
+## Review
+
+- Pre-change scan confirmed only historical notes still mention the root Vite starter files; no live app or package code depends on `src/App.tsx`, `src/main.tsx`, `vite.config.ts`, `tsconfig.app.json`, or `tsconfig.node.json`.
+- Pre-change scan confirmed both `apps/web/dist-types/*` and `apps/pptb/dist-types/*` were still tracked in git.
+- App manifests now keep only runtime dependencies while the root workspace continues to own Vite, TypeScript, and `@vitejs/plugin-react`.
+- `packages/builder-ui/package.json` now pins `@fluentui/react-icons` to `^2.0.330` instead of floating on `latest`.
+- `apps/tsconfig.shared.json` now owns the path-independent app compiler options, while each app tsconfig keeps its own `rootDir`, `outDir`, and `tsBuildInfoFile` so TypeScript still resolves paths per workspace.
+- `apps/pptb/vite.config.ts` now imports `Plugin` from `vite`, drops the `as any` cast, and keeps the existing PPTB HTML transformation behavior.
+- `.gitignore` and `eslint.config.js` now ignore generated `dist-types` output so app declaration artifacts no longer belong in version control.
+- `README.md` now describes the actual root-owned toolchain and current Node floor instead of the stale Vite 8 / Node 20 note.
+- `npm install` completed from the repo root and refreshed `package-lock.json` against the cleaned manifests without introducing new direct dependencies.
+- `git rm --cached -r apps/web/dist-types apps/pptb/dist-types` removed the generated app declaration output from version control while leaving the on-disk artifacts available for local builds.
+- Deleted the unused root starter surface: `src/`, `public/`, `vite.config.ts`, `tsconfig.app.json`, and `tsconfig.node.json`.
+- Verification results: `npm run lint`, `npm run typecheck`, and `npm test` passed in-sandbox; `npm run build:web` and `npm run build:pptb` passed after sandbox escalation because Vite config loading hit sandbox access boundaries rather than repo code errors.
+- Post-change scan confirmed `git ls-files -- 'apps/*/dist-types/*'` is empty, and the only remaining references to the removed root starter files live in historical notes under `tasks/todo.md`.

@@ -1,5 +1,17 @@
 import type { QueryDocument } from '../composer/querySchema';
 
+export const emptyStarterDocument: QueryDocument = {
+  version: 1,
+  mode: 'triggerCondition',
+  fields: [],
+  root: {
+    id: 'root',
+    kind: 'group',
+    conjunction: 'and',
+    children: [],
+  },
+};
+
 export const sampleFields: QueryDocument['fields'] = [
   {
     id: 'Status',

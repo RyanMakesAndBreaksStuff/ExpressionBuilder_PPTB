@@ -18,7 +18,7 @@ export function ActionButton({
   variant = 'subtle',
   ...props
 }: ActionButtonProps) {
-  const iconOnly = children === undefined && icon !== undefined;
+  const iconOnly = variant === 'icon' || (children === undefined && icon !== undefined);
   const accessibleLabel = props['aria-label'] ?? label;
 
   if (iconOnly && !accessibleLabel) {
@@ -26,11 +26,12 @@ export function ActionButton({
   }
 
   const classes = ['eb-action-btn', `eb-action-${variant}`, className].filter(Boolean).join(' ');
+  const visibleChildren = variant === 'icon' ? null : children;
 
   return (
     <button type={type} className={classes} aria-label={accessibleLabel} {...props}>
       {icon ? <span className="eb-action-icon" aria-hidden="true">{icon}</span> : null}
-      {children ? <span>{children}</span> : null}
+      {visibleChildren ? <span>{visibleChildren}</span> : null}
     </button>
   );
 }

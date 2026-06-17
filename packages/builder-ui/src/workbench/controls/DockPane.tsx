@@ -11,8 +11,9 @@ interface DockPaneProps {
   onToggleCollapsed: () => void;
 }
 
-export function DockPane({ title, side, collapsed, children, tabs, meta, onToggleCollapsed }: DockPaneProps) {
+export function DockPane({ title, side, collapsed, children, tabs, onToggleCollapsed }: DockPaneProps) {
   const toggleLabel = `${collapsed ? 'Expand' : 'Collapse'} ${title}`;
+  const toggleGlyph = side === 'left' ? (collapsed ? '>' : '<') : collapsed ? '<' : '>';
 
   return (
     <aside
@@ -23,11 +24,7 @@ export function DockPane({ title, side, collapsed, children, tabs, meta, onToggl
       data-side={side}
     >
       <div className="eb-pane-chrome">
-        <span className="eb-pane-title">{title}</span>
-        {collapsed ? <span className="eb-collapsed-rail-label">{title}</span> : <span className="eb-dock-meta">{meta}</span>}
-        <ActionButton variant="icon" label={toggleLabel} onClick={onToggleCollapsed}>
-          {toggleLabel}
-        </ActionButton>
+        <ActionButton variant="icon" label={toggleLabel} title={toggleLabel} icon={<span>{toggleGlyph}</span>} onClick={onToggleCollapsed} />
       </div>
       {!collapsed ? tabs : null}
       {!collapsed ? <div className="eb-pane-body">{children}</div> : null}

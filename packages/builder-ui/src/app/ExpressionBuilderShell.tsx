@@ -13,13 +13,12 @@ import {
 } from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
-import { builderDarkTheme, builderLightTheme } from '../theme/fluentTheme';
+import { createPorcelainFluentTheme } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
-import { sampleDocument } from './sampleData';
+import { emptyStarterDocument } from './sampleData';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
-import { ImportExportPanel } from '../workbench/ImportExportPanel';
 import { SupportPane } from '../workbench/SupportPane';
 import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
 import {
@@ -34,7 +33,7 @@ export interface ExpressionBuilderShellProps {
   initialDocument?: QueryDocument;
 }
 
-export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocument }: ExpressionBuilderShellProps) {
+export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarterDocument }: ExpressionBuilderShellProps) {
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [savedJson, setSavedJson] = useState(() => serializeSavedExpression(initialDocument));
@@ -107,7 +106,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
   };
 
   return (
-    <FluentProvider theme={theme === 'dark' ? builderDarkTheme : builderLightTheme}>
+    <FluentProvider theme={createPorcelainFluentTheme(theme)}>
       <div className="eb-root" data-theme={theme}>
         <WorkbenchHeader
           mode={document.mode}
@@ -174,14 +173,6 @@ export function ExpressionBuilderShell({ adapter, initialDocument = sampleDocume
               copyState={workbench.copyState}
               onToggleCollapsed={() => setWorkbench((current) => togglePreview(current))}
               onCopy={() => void copyExpression()}
-            />
-
-            <ImportExportPanel
-              diagnostics={importDiagnostics}
-              savedJson={savedJson}
-              onChange={setSavedJson}
-              onImport={importDocument}
-              onExport={exportDocument}
             />
           </div>
 

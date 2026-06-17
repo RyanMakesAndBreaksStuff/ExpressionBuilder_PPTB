@@ -14,13 +14,15 @@ apps/pptb: Power Platform Toolbox bootstrap only
 
 ## Setup
 
-This workspace requires Node `20.19.0` or newer. The current Vite 8 and `@vitejs/plugin-react` 6 toolchain will not build on Node 18.
+This workspace requires Node `18.18.0` or newer, matching the workspace `engines` fields and the root-owned Vite 5 / `@vitejs/plugin-react` 4 toolchain.
 
 Install dependencies from the repo root:
 
 ```bash
 npm install
 ```
+
+The app workspaces inherit Vite, TypeScript, and the React plugin from the repo root. Do not add duplicate toolchain entries to `apps/web` or `apps/pptb` unless the workspace layout changes.
 
 ## Development
 
