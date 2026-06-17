@@ -26,6 +26,8 @@ The app workspaces inherit Vite, TypeScript, and the React plugin from the repo 
 
 ## Development
 
+Theme edits belong in `packages/builder-ui/src/theme/workbenchTokens.ts`. `fluentTheme.ts` only mirrors that runtime source for compatibility exports.
+
 Run the browser host:
 
 ```bash
@@ -36,6 +38,12 @@ Run the Power Platform Toolbox host:
 
 ```bash
 npm run dev:pptb
+```
+
+When loading the Power Platform Toolbox package, rebuild first so the emitted `dist` artifacts include the latest builder-ui theme changes:
+
+```bash
+npm run build:pptb
 ```
 
 ## Verification
@@ -74,6 +82,8 @@ Preview the browser build:
 ```bash
 npm run preview:web
 ```
+
+`preview:web` rebuilds the web host before serving `apps/web/dist`, so it reflects the current workspace package output instead of stale preview assets.
 
 ## Docs
 

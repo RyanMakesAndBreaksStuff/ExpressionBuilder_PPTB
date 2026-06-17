@@ -2,6 +2,7 @@ import { webDarkTheme, webLightTheme, type Theme } from '@fluentui/react-compone
 
 export type PorcelainThemeMode = 'light' | 'dark';
 
+// Runtime theme source of truth. Edit this file when changing builder theme values.
 type PorcelainTokenSet = Partial<Theme> & {
   mode: PorcelainThemeMode;
   label: string;

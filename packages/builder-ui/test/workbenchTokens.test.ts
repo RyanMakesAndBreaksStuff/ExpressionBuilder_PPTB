@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { builderDarkTheme, builderLightTheme } from '../src/theme/fluentTheme';
 import { createPorcelainFluentTheme, porcelainTokens } from '../src/theme/workbenchTokens';
 
 describe('workbench porcelain tokens', () => {
@@ -21,5 +22,10 @@ describe('workbench porcelain tokens', () => {
     expect(createPorcelainFluentTheme('light')).toMatchObject({
       colorBrandBackground: porcelainTokens.light.colorBrandBackground,
     });
+  });
+
+  it('keeps fluentTheme exports aligned with the live porcelain palette', () => {
+    expect(builderLightTheme).toMatchObject(createPorcelainFluentTheme('light'));
+    expect(builderDarkTheme).toMatchObject(createPorcelainFluentTheme('dark'));
   });
 });
