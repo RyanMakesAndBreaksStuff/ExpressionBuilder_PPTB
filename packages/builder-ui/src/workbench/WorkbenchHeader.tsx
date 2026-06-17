@@ -19,8 +19,8 @@ export function WorkbenchHeader({
           <PanelIcon />
         </div>
         <div>
-          <h1>Focused Merge</h1>
-          <p>Porcelain docked workbench</p>
+          <h1>Expression Builder</h1>
+          <p>Generate Triggers and Array Filters For Power Automate Flows</p>
         </div>
       </div>
 
