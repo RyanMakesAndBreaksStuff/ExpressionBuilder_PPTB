@@ -25,4 +25,23 @@ describe('workspace build scripts', () => {
 
     expect(rootManifest.scripts?.['preview:web']).toContain('npm run build:web');
   });
+
+  it('uses the PPTB validator binary exposed by @pptb/types', () => {
+    const pptbManifest = readManifest('apps/pptb/package.json');
+
+    expect(pptbManifest.scripts?.validate).toBe('pptb-validate');
+  });
+
+  it('keeps the PPTB HTML rewrite build-only so Vite dev remains testable', () => {
+    const viteConfig = readFileSync(resolve(process.cwd(), 'apps/pptb/vite.config.ts'), 'utf8');
+
+    expect(viteConfig).toContain("apply: 'build'");
+  });
+
+  it('keeps PPTB HTML free of remote font URLs so CSP font-src self is respected', () => {
+    const html = readFileSync(resolve(process.cwd(), 'apps/pptb/index.html'), 'utf8');
+
+    expect(html).not.toContain('fonts.googleapis.com');
+    expect(html).not.toContain('fonts.gstatic.com');
+  });
 });

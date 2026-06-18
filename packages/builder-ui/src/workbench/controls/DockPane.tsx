@@ -32,11 +32,7 @@ export function DockPane({ title, side, collapsed, children, tabs, meta, onToggl
         <span className="eb-pane-title">
           {title}
         </span>
-        {collapsed ? (
-          <span className="eb-collapsed-rail-label">{title}</span>
-        ) : (
-          <span className="eb-dock-meta">{meta}</span>
-        )}
+        {!collapsed ? <span className="eb-dock-meta">{meta}</span> : null}
         <button
           type="button"
           className="eb-icon-btn"
