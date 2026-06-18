@@ -1,11 +1,11 @@
 import type { FieldType } from '@ryanmakes/eb_engine';
 
 const labels: Record<FieldType, string> = {
-  string: 'Ab',
-  number: '12',
-  boolean: 'T',
-  dateTime: 'Dt',
-  choice: 'Ch',
+  string: 'Aa',
+  number: '#',
+  boolean: 'B',
+  dateTime: 'D',
+  choice: 'C',
 };
 
 export interface TypeGlyphProps {

@@ -1,7 +1,7 @@
 import { ExpressionPreview } from '../components/ExpressionPreview';
 import type { ExpressionDocumentPanelProps } from './types';
 import { ActionButton } from './controls/ActionButton';
-import { CopyIcon } from './icons/BuilderIcons';
+import { ChevronDownIcon, ChevronUpIcon, CopyIcon, CodeIcon } from './icons/BuilderIcons';
 
 export function ExpressionDocumentPanel({
   collapsed,
@@ -13,24 +13,32 @@ export function ExpressionDocumentPanel({
   return (
     <section className={`eb-preview-card ${collapsed ? 'eb-preview-collapsed' : ''}`} role="region" aria-label="Expression Preview" aria-expanded={!collapsed}>
       <div className="eb-preview-header">
-        <h2>Expression Preview</h2>
-        <ActionButton onClick={onToggleCollapsed}>
-          {collapsed ? 'Expand expression preview' : 'Collapse expression preview'}
-        </ActionButton>
+        <h2>
+          <CodeIcon />
+          Expression Preview
+        </h2>
+        <span className="eb-dock-meta"></span>
+        <button
+          type="button"
+          className="eb-icon-btn"
+          title={collapsed ? 'Expand expression preview' : 'Collapse expression preview'}
+          aria-label={collapsed ? 'Expand expression preview' : 'Collapse expression preview'}
+          onClick={onToggleCollapsed}
+        >
+          {collapsed ? <ChevronUpIcon /> : <ChevronDownIcon />}
+        </button>
       </div>
       {!collapsed ? (
         <div className="eb-preview-body">
+          <ExpressionPreview expression={expression} />
           <div className="eb-copy-row">
             <ActionButton onClick={onCopy} icon={<CopyIcon />}>
-              Copy preview expression
+              Copy
             </ActionButton>
-            {copyState === 'copied' ? (
-              <span className="eb-copy-state" role="status" aria-label="copy status">
-                Expression copied
-              </span>
-            ) : null}
+            <span className={`eb-copy-state ${copyState === 'copied' ? 'on' : ''}`} role="status" aria-label="copy status">
+              Expression copied
+            </span>
           </div>
-          <ExpressionPreview expression={expression} />
         </div>
       ) : null}
     </section>

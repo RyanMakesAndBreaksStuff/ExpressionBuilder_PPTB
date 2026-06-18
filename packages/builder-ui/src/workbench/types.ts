@@ -5,6 +5,7 @@ import type {
   FormatDiagnostic,
 } from '@ryanmakes/eb_engine';
 
+import type { PaletteId } from '../theme/workbenchTokens';
 import type { QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
 
 export type LeftWorkbenchTab = 'dynamicContent' | 'wrappers';
@@ -29,11 +30,11 @@ export interface ModeContext {
 
 export interface WorkbenchHeaderProps {
   mode: ExpressionMode;
-  theme: 'light' | 'dark';
+  paletteId: PaletteId;
   onModeChange: (mode: ExpressionMode) => void;
   onImport: () => void;
   onExport: () => void;
-  onToggleTheme: () => void;
+  onPaletteChange: (paletteId: PaletteId) => void;
   onCopyExpression: () => void;
 }
 

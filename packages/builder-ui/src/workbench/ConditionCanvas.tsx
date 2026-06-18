@@ -1,3 +1,4 @@
+import { BuilderIcon } from './icons/BuilderIcons';
 import type { ConditionCanvasProps } from './types';
 import { ConditionGroupCard } from './ConditionGroupCard';
 
@@ -5,12 +6,15 @@ export function ConditionCanvas(props: ConditionCanvasProps) {
   return (
     <section className="eb-canvas-card" role="region" aria-label="Condition Builder">
       <div className="eb-canvas-header">
-        <div>
-          <h2>Condition Builder</h2>
-          <p className="eb-muted">Inline Power Automate predicate editor</p>
-        </div>
+        <h2>
+          <BuilderIcon />
+          Condition Builder
+        </h2>
+        <span className="eb-dock-meta">{props.mode === 'filterArray' ? 'Filter array' : 'Trigger condition'}</span>
       </div>
-      <ConditionGroupCard {...props} group={props.root} />
+      <div className="eb-pane-body">
+        <ConditionGroupCard {...props} group={props.root} />
+      </div>
     </section>
   );
 }

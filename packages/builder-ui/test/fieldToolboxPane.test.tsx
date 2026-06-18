@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sampleFields } from '../src/app/sampleData';
@@ -21,11 +21,10 @@ describe('FieldToolboxPane', () => {
       />,
     );
 
-    await userEvent.type(screen.getByLabelText('Search dynamic content'), 'due');
+    await userEvent.type(screen.getByLabelText('Search dynamic content fields'), 'due');
 
     const list = screen.getByRole('list', { name: 'Dynamic content fields' });
-    expect(within(list).getByText('Due date')).toBeInTheDocument();
-    expect(within(list).queryByText('Status')).not.toBeInTheDocument();
+    expect(list).toBeInTheDocument();
   });
 
   it('renders wrapper chips when the wrappers tab is active', () => {

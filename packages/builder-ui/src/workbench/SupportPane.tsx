@@ -14,10 +14,10 @@ export function SupportPane({
 }: SupportPaneProps) {
   return (
     <DockPane
-      title="Support Pane"
+      title="Details"
       side="right"
       collapsed={collapsed}
-      meta="Right pane"
+      meta=""
       tabs={
         <TabStrip
           label="Support tabs"

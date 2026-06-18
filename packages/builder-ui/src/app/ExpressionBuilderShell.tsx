@@ -13,7 +13,12 @@ import {
 } from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
-import { createPorcelainFluentTheme, porcelainTokens } from '../theme/workbenchTokens';
+import {
+  createPorcelainFluentTheme,
+  porcelainTokens,
+  type PaletteId,
+  type PorcelainThemeMode,
+} from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
 import { emptyStarterDocument } from './sampleData';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
@@ -35,7 +40,7 @@ export interface ExpressionBuilderShellProps {
 
 export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarterDocument }: ExpressionBuilderShellProps) {
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [paletteId, setPaletteId] = useState<PaletteId>('porcelainDark');
   const [savedJson, setSavedJson] = useState(() => serializeSavedExpression(initialDocument));
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
@@ -44,18 +49,19 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
+  const theme = porcelainTokens[paletteId].mode;
 
   useEffect(() => {
     let active = true;
 
     adapter.getTheme().then((platformTheme) => {
       if (active) {
-        setTheme(normalizeTheme(platformTheme));
+        setPaletteId(normalizePalette(platformTheme));
       }
     });
 
     const unsubscribe = adapter.onThemeChanged((platformTheme) => {
-      setTheme(normalizeTheme(platformTheme));
+      setPaletteId(normalizePalette(platformTheme));
     });
 
     return () => {
@@ -105,16 +111,18 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
     setDocument((current) => ({ ...current, fields }));
   };
 
+  const paletteVars = porcelainTokens[paletteId].cssVariables;
+
   return (
-    <FluentProvider theme={createPorcelainFluentTheme(theme)}>
-      <div className="eb-root" data-theme={theme} style={porcelainTokens[theme].cssVariables as CSSProperties}>
+    <FluentProvider theme={createPorcelainFluentTheme(paletteId)}>
+      <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <WorkbenchHeader
           mode={document.mode}
-          theme={theme}
+          paletteId={paletteId}
           onModeChange={updateMode}
           onExport={exportDocument}
           onImport={importDocument}
-          onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          onPaletteChange={setPaletteId}
           onCopyExpression={() => void copyExpression()}
         />
 
@@ -190,8 +198,9 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
   );
 }
 
-function normalizeTheme(theme: PlatformTheme): 'light' | 'dark' {
-  return theme === 'dark' || theme === 'highContrast' ? 'dark' : 'light';
+function normalizePalette(platformTheme: PlatformTheme): PaletteId {
+  const mode: PorcelainThemeMode = platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
+  return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
 }
 
 function isFieldDefinitionArray(value: unknown[]): value is FieldDefinition[] {

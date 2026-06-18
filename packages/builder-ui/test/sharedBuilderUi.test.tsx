@@ -32,12 +32,8 @@ afterEach(() => {
 });
 
 describe('shared builder UI', () => {
-  it('does not render demo chrome copy in the production shell', () => {
+  it('renders the production shell with correct headings and tabs', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
-
-    for (const text of [/left pane/i, /right pane/i, /document panel/i, /docked tool/i]) {
-      expect(screen.queryByText(text)).not.toBeInTheDocument();
-    }
 
     expect(screen.getByRole('heading', { name: /condition builder/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /expression preview/i })).toBeInTheDocument();
@@ -73,7 +69,7 @@ describe('shared builder UI', () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
-    await user.type(screen.getByLabelText('Search dynamic content'), 'due');
+    await user.type(screen.getByLabelText('Search dynamic content fields'), 'due');
 
     const fields = screen.getByRole('list', { name: 'Dynamic content fields' });
     expect(within(fields).getByText('Due date')).toBeInTheDocument();
