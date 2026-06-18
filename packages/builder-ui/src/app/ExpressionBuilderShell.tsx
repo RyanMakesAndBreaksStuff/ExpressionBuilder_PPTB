@@ -122,7 +122,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
           onModeChange={updateMode}
           onExport={exportDocument}
           onImport={importDocument}
-          onPaletteChange={setPaletteId}
+          onToggleTheme={() => setPaletteId((current) => (current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark'))}
           onCopyExpression={() => void copyExpression()}
         />
 

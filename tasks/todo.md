@@ -51,6 +51,24 @@
 
 ---
 
+# Focused Workbench Cleanup And PPTB Adapter
+
+## Checklist
+
+- [ ] Remove the palette bench and keep a single sun/moon light/dark toggle.
+- [ ] Keep Porcelain / Porcelain Dark as the only runtime theme pair and default to Porcelain Dark.
+- [ ] Remove duplicated collapsed rail title text and stale palette review copy.
+- [ ] Wire overflow surfaces so side panes, canvas, preview, and cards scroll when content exceeds their container.
+- [ ] Round component corners back toward the focused design target.
+- [ ] Align PPTB adapter support with the documented `toolboxAPI` shape and add coverage proving the PPTB host wiring is testable.
+- [ ] Re-run focused tests and record the outcome.
+
+## Review
+
+- Pending.
+
+---
+
 # Theme Preview Workflow Fix
 
 ## Checklist

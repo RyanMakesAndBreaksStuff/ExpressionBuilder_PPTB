@@ -11,15 +11,40 @@ interface PptbClipboardApi {
   copy?: (text: string) => MaybePromise<void>;
 }
 
+interface PptbNotificationOptions {
+  title: string;
+  body: string;
+  type?: NotificationLevel;
+  duration?: number;
+}
+
 interface PptbSettingsApi {
   get?: (key: string) => MaybePromise<string | null | undefined>;
   set?: (key: string, value: string) => MaybePromise<void>;
   remove?: (key: string) => MaybePromise<void>;
 }
 
+interface PptbUtilsApi {
+  copyToClipboard?: (text: string) => MaybePromise<void>;
+  showNotification?: (options: PptbNotificationOptions) => MaybePromise<void>;
+  getCurrentTheme?: () => MaybePromise<string | null | undefined>;
+}
+
+interface PptbEventPayload {
+  event: string;
+  data?: unknown;
+}
+
+interface PptbEventsApi {
+  on?: (handler: (details: unknown, payload: PptbEventPayload) => void) => MaybePromise<void>;
+  off?: (handler: (details: unknown, payload: PptbEventPayload) => void) => MaybePromise<void>;
+}
+
 export interface PptbToolboxApi {
   clipboard?: PptbClipboardApi;
+  utils?: PptbUtilsApi;
   settings?: PptbSettingsApi;
+  events?: PptbEventsApi;
   copyToClipboard?: (text: string) => MaybePromise<void>;
   notify?: (message: string, level: NotificationLevel) => MaybePromise<void>;
   showNotification?: (
@@ -76,6 +101,11 @@ export function createPptbAdapter(
 
   const adapter: PlatformAdapter = {
     async copyToClipboard(text) {
+      if (api?.utils?.copyToClipboard) {
+        await api.utils.copyToClipboard(text);
+        return;
+      }
+
       if (api?.copyToClipboard) {
         await api.copyToClipboard(text);
         return;
@@ -92,6 +122,15 @@ export function createPptbAdapter(
     },
 
     async notify(message, level) {
+      if (api?.utils?.showNotification) {
+        await api.utils.showNotification({
+          title: levelLabel(level),
+          body: message,
+          type: level,
+        });
+        return;
+      }
+
       if (api?.notify) {
         await api.notify(message, level);
         return;
@@ -103,6 +142,10 @@ export function createPptbAdapter(
     },
 
     async getTheme() {
+      if (api?.utils?.getCurrentTheme) {
+        return normalizeTheme(await api.utils.getCurrentTheme());
+      }
+
       if (api?.getTheme) {
         return normalizeTheme(await api.getTheme());
       }
@@ -114,6 +157,19 @@ export function createPptbAdapter(
       const wrappedHandler = (theme: string) => {
         handler(normalizeTheme(theme));
       };
+
+      if (api?.events?.on) {
+        const eventHandler = (_details: unknown, payload: PptbEventPayload) => {
+          if (payload.event === 'settings:updated' && isThemePayload(payload.data)) {
+            handler(normalizeTheme(payload.data.theme));
+          }
+        };
+
+        void api.events.on(eventHandler);
+        return () => {
+          void api.events?.off?.(eventHandler);
+        };
+      }
 
       const unsubscribe =
         api?.onThemeChanged?.(wrappedHandler) ??
@@ -173,4 +229,17 @@ export function createPptbAdapter(
   };
 
   return adapter;
+}
+
+function levelLabel(level: NotificationLevel): string {
+  return level.charAt(0).toUpperCase() + level.slice(1);
+}
+
+function isThemePayload(value: unknown): value is { theme: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'theme' in value &&
+    typeof value.theme === 'string'
+  );
 }

@@ -115,18 +115,19 @@ describe('shared builder UI', () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
-    await user.click(screen.getByRole('button', { name: 'Collapse Docked Toolbox' }));
+    await user.click(screen.getByRole('button', { name: 'Collapse Toolbox' }));
 
-    expect(screen.getByRole('complementary', { name: 'Docked Toolbox' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('complementary', { name: 'Toolbox' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getAllByText('Toolbox')).toHaveLength(1);
   });
 
   it('right dock collapse exposes aria-expanded false', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
-    await user.click(screen.getByRole('button', { name: 'Collapse Support Pane' }));
+    await user.click(screen.getByRole('button', { name: 'Collapse Details' }));
 
-    expect(screen.getByRole('complementary', { name: 'Support Pane' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('complementary', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('preview collapse preserves the generated expression after re-expand', async () => {
@@ -148,5 +149,20 @@ describe('shared builder UI', () => {
     expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /copy expression/i })).toBeInTheDocument();
     expect(screen.queryByText(/saved expression json/i)).not.toBeInTheDocument();
+  });
+
+  it('removes the palette bench and keeps a working icon theme toggle', async () => {
+    const user = userEvent.setup();
+    const adapter = createAdapter();
+    vi.mocked(adapter.getTheme).mockResolvedValue('dark');
+    render(<ExpressionBuilderShell adapter={adapter} />);
+
+    expect(screen.queryByText('Atlas')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sandstone')).not.toBeInTheDocument();
+
+    const toggle = await screen.findByRole('button', { name: 'Switch to light theme' });
+    await user.click(toggle);
+
+    expect(screen.getByRole('button', { name: 'Switch to dark theme' })).toBeInTheDocument();
   });
 });

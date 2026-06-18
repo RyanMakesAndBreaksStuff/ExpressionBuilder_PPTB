@@ -25,4 +25,10 @@ describe('workspace build scripts', () => {
 
     expect(rootManifest.scripts?.['preview:web']).toContain('npm run build:web');
   });
+
+  it('uses the PPTB validator binary exposed by @pptb/types', () => {
+    const pptbManifest = readManifest('apps/pptb/package.json');
+
+    expect(pptbManifest.scripts?.validate).toBe('pptb-validate');
+  });
 });
