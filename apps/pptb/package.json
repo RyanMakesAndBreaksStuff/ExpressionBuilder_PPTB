@@ -22,7 +22,7 @@
   ],
   "license": "BSD-3-Clause",
   "scripts": {
-    "validate": "npx pptb/validate",
+    "validate": "pptb-validate",
     "dev": "npm exec vite -- --host 127.0.0.1 --port 5174",
     "build": "npm run build -w @ryanmakes/eb_builder-ui && tsc -b && npm exec vite -- build",
     "preview": "npm exec vite -- preview --host 127.0.0.1 --port 4174"
