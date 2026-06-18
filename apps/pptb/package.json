@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=24.17.0 <25"
   },
    "displayName": "Expression Builder For Power Platform Toolbox",
   "description": "Power Automte Trigger And Array Filter Builder",
@@ -23,9 +23,9 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "validate": "npx pptb/validate",
-    "dev": "vite --host 127.0.0.1 --port 5174",
-    "build": "npm run build -w @ryanmakes/eb_builder-ui && tsc -b && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4174"
+    "dev": "npm exec vite -- --host 127.0.0.1 --port 5174",
+    "build": "npm run build -w @ryanmakes/eb_builder-ui && tsc -b && npm exec vite -- build",
+    "preview": "npm exec vite -- preview --host 127.0.0.1 --port 4174"
   },
   "dependencies": {
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",

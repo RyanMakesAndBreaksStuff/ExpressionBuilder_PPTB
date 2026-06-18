@@ -1,3 +1,20 @@
+# Node 24 Alignment And Tooling Repair
+
+## Checklist
+
+- [ ] Add the repo-local Node version hint and update the workspace engine contract to Node `24.17.0`.
+- [ ] Upgrade the root React Vite plugin to the Vite 8-compatible major.
+- [ ] Align the WSL `nvm` default to Node `24.17.0` and remove the misleading custom `system` alias if it remains.
+- [ ] Restore dependencies from the repo root and regenerate `package-lock.json`.
+- [ ] Re-run `npm ls vite @vitejs/plugin-react react react-dom --depth=0`, `npm run typecheck`, and `npm run build`.
+- [ ] Record the verification outcome and any remaining issues.
+
+## Review
+
+- Pending.
+
+---
+
 # Build Fix 2
 
 ## Checklist

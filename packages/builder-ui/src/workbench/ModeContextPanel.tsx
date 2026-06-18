@@ -10,18 +10,20 @@ export function ModeContextPanel({ mode }: ModeContextPanelProps) {
 
   return (
     <section className="eb-mode-context">
-      <div>
-        <h3>Field reference</h3>
-        <code>{context.expression}</code>
-      </div>
-      <p>{context.note}</p>
-      <div>
-        <h3>Dock behavior</h3>
-        <p>Both side panes collapse into rails so the center builder can expand without changing document structure.</p>
-      </div>
-      <div>
-        <h3>Palette review</h3>
-        <p>Porcelain keeps warm surfaces, soft borders, and high-contrast code preview states in both themes.</p>
+      <div className="eb-context-list">
+        <div className="eb-context-block">
+          <div className="eb-context-label">Field reference</div>
+          <span className="eb-context-code">{context.expression}</span>
+          <div className="eb-context-note">{context.note}</div>
+        </div>
+        <div className="eb-context-block">
+          <div className="eb-context-label">Dock behavior</div>
+          <div className="eb-context-note">Both side panels collapse into narrow rails, and the center builder expands or contracts immediately with that dock state instead of leaving dead space behind.</div>
+        </div>
+        <div className="eb-context-block">
+          <div className="eb-context-label">Palette review</div>
+          <div className="eb-context-note">Porcelain is the settled default. The remaining paired light and dark palettes stay available for final comparison only.</div>
+        </div>
       </div>
     </section>
   );

@@ -31,3 +31,9 @@ dist-ssr
 /tests/e2e
 /ui-ux
 /package-lock.json
+/.claude/skills
+/icons
+/.lean-ctx.toml
+/.nvmrc
+/icon-concepts-batch2.html
+/icon-concepts.html

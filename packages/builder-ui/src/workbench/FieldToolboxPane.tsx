@@ -28,10 +28,10 @@ export function FieldToolboxPane({
 
   return (
     <DockPane
-      title="Docked Toolbox"
+      title="Toolbox"
       side="left"
       collapsed={collapsed}
-      meta="Left pane"
+      meta=""
       tabs={
         <TabStrip
           label="Toolbox tabs"
@@ -48,30 +48,28 @@ export function FieldToolboxPane({
       {activeTab === 'dynamicContent' ? (
         <div className="eb-toolbox-stack">
           <div className="eb-toolbox-actions">
-            <button type="button" className="eb-action-btn eb-action-subtle" onClick={onConnect}>
+            <button type="button" className="eb-text-btn" onClick={onConnect}>
               Connect
             </button>
             <span className="eb-muted">No Dataverse connection</span>
           </div>
-          <label className="eb-label" htmlFor="dynamic-content-search">
-            Search dynamic content
-          </label>
           <input
-            id="dynamic-content-search"
-            className="eb-input"
+            className="eb-search-box"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search fields..."
+            aria-label="Search dynamic content fields"
           />
           <ul className="eb-field-list" role="list" aria-label="Dynamic content fields">
             {filteredFields.map((field) => (
               <li key={field.id}>
-                <div className="eb-field-row">
+                <div className="eb-field-row" tabIndex={0}>
                   <TypeGlyph type={field.type} />
                   <span className="eb-field-main">
                     <span className="eb-field-title">{field.label}</span>
                     <span className="eb-field-detail">{field.path.join('.')} · {field.type}</span>
                   </span>
+                  <span className="eb-field-type-badge">{field.type}</span>
                 </div>
               </li>
             ))}

@@ -1,15 +1,15 @@
 {
   "name": "@ryanmakes/expresssionbuilder_main",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=24.17.0 <25"
   },
   "scripts": {
     "dev:web": "npm run dev -w @ryanmakes/eb_web",
     "dev:pptb": "npm run dev -w @ryanmakes/expresssionbuilder_pptb",
-    "build": "tsc -b && npm run build -ws",
+    "build": "tsc -b && npm run build --workspaces",
     "build:web": "npm run build -w @ryanmakes/eb_web",
     "build:pptb": "npm run build -w @ryanmakes/expresssionbuilder_pptb",
     "preview:web": "npm run build:web && npm run preview -w @ryanmakes/eb_web",
@@ -37,7 +37,7 @@
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -46,7 +46,7 @@
     "playwright": "^1.60.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^5.4.19",
+    "vite": "^8.0.16",
     "vitest": "^4.1.8"
   },
   "allowScripts": {

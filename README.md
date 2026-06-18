@@ -14,7 +14,13 @@ apps/pptb: Power Platform Toolbox bootstrap only
 
 ## Setup
 
-This workspace requires Node `18.18.0` or newer, matching the workspace `engines` fields and the root-owned Vite 5 / `@vitejs/plugin-react` 4 toolchain.
+This workspace requires Node `24.17.0` on the active `24.x` LTS line, matching the workspace `engines` fields and the root-owned Vite 8 / `@vitejs/plugin-react` 6 toolchain.
+
+If you use `nvm`, the repo root includes `.nvmrc`:
+
+```bash
+nvm use
+```
 
 Install dependencies from the repo root:
 

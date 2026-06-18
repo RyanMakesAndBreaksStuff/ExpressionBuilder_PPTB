@@ -1,13 +1,13 @@
-import { useEffect, useRef } from 'react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { QueryRule } from '../composer/querySchema';
 import type { RuleRowEditorProps } from './types';
+import { DuplicateIcon, GripIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 
 export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdate, rule, selected }: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
-  const valueLabel = getRuleValueLabel(rule, field);
+  const hasError = !rule.value && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
 
   if (!field) {
     return null;
@@ -15,183 +15,161 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
 
   return (
     <div
-      className={`eb-rule-row-editor ${selected ? 'is-selected' : ''}`}
+      className={`eb-rule-row-editor ${selected ? 'is-selected' : ''} ${hasError ? 'is-error' : ''}`}
       role="group"
-      aria-label={`${fieldLabel} ${rule.operator} ${valueLabel}`}
+      aria-label={`${fieldLabel} ${rule.operator} ${String(rule.value ?? '')}`}
       onClick={() => onSelect(rule.id)}
       onFocusCapture={() => onSelect(rule.id)}
     >
-      <div className="eb-rule-row-grid">
-        <div>
-          <label className="eb-label" htmlFor={`field-${rule.id}`}>
-            Field for {fieldLabel}
-          </label>
+      <span className="eb-drag-dots">
+        <GripIcon />
+      </span>
+      <span className={`eb-type ${field.type}`}>{getTypeLabel(field.type)}</span>
+      <select
+        className="eb-select"
+        value={rule.fieldId}
+        onChange={(event) => {
+          const nextField = findField(fields, event.target.value);
+          if (!nextField) return;
+          onUpdate(rule.id, {
+            fieldId: nextField.id,
+            operator: getSafeOperator(nextField, rule.operator),
+            value: getDefaultValue(nextField),
+            caseInsensitive: false,
+          });
+        }}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Field for ${fieldLabel}`}
+        title="Select field"
+      >
+        {fields.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+      <select
+        className="eb-select"
+        value={rule.operator}
+        onChange={(event) => onUpdate(rule.id, { operator: event.target.value })}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Operator for ${fieldLabel}`}
+        title="Select operator"
+      >
+        {getOperatorsForField(field).map((operator) => (
+          <option key={operator} value={operator}>
+            {operator}
+          </option>
+        ))}
+      </select>
+      <div className="eb-value-wrap">
+        {field.choices?.length ? (
           <select
-            id={`field-${rule.id}`}
             className="eb-select"
-            value={rule.fieldId}
-            onChange={(event) => {
-              const nextField = findField(fields, event.target.value);
-              if (!nextField) {
-                return;
-              }
-
-              onUpdate(rule.id, {
-                fieldId: nextField.id,
-                operator: getSafeOperator(nextField, rule.operator),
-                value: getDefaultValue(nextField),
-                caseInsensitive: false,
-              });
-            }}
+            value={String(rule.value ?? '')}
+            onChange={(event) => onUpdate(rule.id, { value: event.target.value })}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Value for ${fieldLabel}`}
           >
-            {fields.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
+            {field.choices.map((choice) => (
+              <option key={choice} value={choice}>
+                {choice}
               </option>
             ))}
           </select>
-        </div>
-
-        <div>
-          <label className="eb-label" htmlFor={`operator-${rule.id}`}>
-            Operator for {fieldLabel}
-          </label>
+        ) : field.type === 'boolean' ? (
           <select
-            id={`operator-${rule.id}`}
             className="eb-select"
-            value={rule.operator}
-            onChange={(event) => onUpdate(rule.id, { operator: event.target.value })}
+            value={String(rule.value ?? false)}
+            onChange={(event) => onUpdate(rule.id, { value: event.target.value === 'true' })}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Value for ${fieldLabel}`}
           >
-            {getOperatorsForField(field).map((operator) => (
-              <option key={operator} value={operator}>
-                {operator}
-              </option>
-            ))}
+            <option value="true">true</option>
+            <option value="false">false</option>
           </select>
-        </div>
-
-        <ValueEditor rule={rule} field={field} onUpdate={(patch) => onUpdate(rule.id, patch)} />
+        ) : (
+          <input
+            className="eb-input"
+            type={field.type === 'number' ? 'number' : 'text'}
+            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
+            onChange={(event) => onUpdate(rule.id, { value: coerceValueForField(event.target.value, field) })}
+            onClick={(e) => e.stopPropagation()}
+            placeholder={hasError ? 'Enter a value' : 'Value'}
+            aria-label={`Value for ${fieldLabel}`}
+          />
+        )}
+        {rule.caseInsensitive ? (
+          <span className="eb-wrap-chip">
+            <WrapIcon />
+            toLower
+          </span>
+        ) : null}
       </div>
-
+      <div className="eb-rule-tools">
+        <button
+          type="button"
+          className="eb-icon-btn"
+          title="Duplicate rule"
+          aria-label="Duplicate rule"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate(rule.id);
+          }}
+        >
+          <DuplicateIcon />
+        </button>
+        <button
+          type="button"
+          className="eb-icon-btn"
+          title="Delete rule"
+          aria-label="Delete rule"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(rule.id);
+          }}
+        >
+          <TrashIcon />
+        </button>
+      </div>
       <div className="eb-rule-row-actions">
         <button
           type="button"
           className="eb-action-btn eb-action-subtle"
-          onClick={() => onUpdate(rule.id, { caseInsensitive: true })}
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate(rule.id, { caseInsensitive: true });
+          }}
           disabled={field.type !== 'string'}
+          aria-label="Wrap both sides in toLower()"
         >
           Wrap both sides in toLower()
         </button>
-        <button type="button" className="eb-action-btn eb-action-subtle" aria-label={`Duplicate ${fieldLabel} rule`} onClick={() => onDuplicate(rule.id)}>
-          Duplicate
-        </button>
-        <button type="button" className="eb-action-btn eb-action-subtle" aria-label={`Delete ${fieldLabel} rule`} onClick={() => onDelete(rule.id)}>
-          Delete
-        </button>
       </div>
     </div>
   );
 }
 
-interface ValueEditorProps {
-  rule: QueryRule;
-  field: FieldDefinition;
-  onUpdate: (patch: Partial<QueryRule>) => void;
-}
-
-function ValueEditor({ rule, field, onUpdate }: ValueEditorProps) {
-  const id = `value-${rule.id}`;
-  const fieldLabel = field.label;
-  const inputRef = useRef<HTMLInputElement>(null);
-  const normalizedValue = rule.value === undefined || rule.value === null ? '' : String(rule.value);
-
-  useEffect(() => {
-    if (inputRef.current && inputRef.current !== document.activeElement) {
-      inputRef.current.value = normalizedValue;
-    }
-  }, [normalizedValue]);
-
-  if (rule.operator === 'empty' || rule.operator === 'notEmpty') {
-    return (
-      <div>
-        <span className="eb-label">Value for {fieldLabel}</span>
-        <div className="eb-muted">This operator does not need a value.</div>
-      </div>
-    );
+function getTypeLabel(type: FieldDefinition['type']): string {
+  switch (type) {
+    case 'choice': return 'C';
+    case 'string': return 'Aa';
+    case 'number': return '#';
+    case 'dateTime': return 'D';
+    case 'boolean': return 'B';
+    default: return '?';
   }
-
-  if (field.choices?.length) {
-    return (
-      <div>
-        <label className="eb-label" htmlFor={id}>
-          Value for {fieldLabel}
-        </label>
-        <select id={id} className="eb-select" value={String(rule.value ?? '')} onChange={(event) => onUpdate({ value: event.target.value })}>
-          {field.choices.map((choice) => (
-            <option key={choice} value={choice}>
-              {choice}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  if (field.type === 'boolean') {
-    return (
-      <div>
-        <label className="eb-label" htmlFor={id}>
-          Value for {fieldLabel}
-        </label>
-        <select id={id} className="eb-select" value={String(rule.value ?? false)} onChange={(event) => onUpdate({ value: event.target.value === 'true' })}>
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <label className="eb-label" htmlFor={id}>
-        Value for {fieldLabel}
-      </label>
-      <input
-        id={id}
-        ref={inputRef}
-        className="eb-input"
-        type={field.type === 'number' ? 'number' : 'text'}
-        defaultValue={normalizedValue}
-        onChange={(event) => onUpdate({ value: coerceValueForField(event.target.value, field) })}
-      />
-    </div>
-  );
 }
 
 function getDefaultValue(field: FieldDefinition): QueryRule['value'] {
   if (field.choices?.length) {
     return field.choices[0];
   }
-
   if (field.type === 'number') {
     return 0;
   }
-
   if (field.type === 'boolean') {
     return false;
   }
-
   return '';
-}
-
-function getRuleValueLabel(rule: QueryRule, field?: FieldDefinition): string {
-  if (rule.operator === 'empty' || rule.operator === 'notEmpty') {
-    return 'no value';
-  }
-
-  if (rule.value === undefined || rule.value === null || rule.value === '') {
-    return field?.choices?.[0] ?? 'value';
-  }
-
-  return String(rule.value);
 }
