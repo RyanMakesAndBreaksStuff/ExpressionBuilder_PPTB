@@ -3,6 +3,50 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPptbAdapter, type PptbToolboxApi } from '../src/pptbAdapter';
 
 describe('createPptbAdapter', () => {
+  it('uses documented PPTB utils, settings, and events APIs', async () => {
+    let eventHandler: ((details: unknown, payload: { event: string; data?: unknown }) => void) | undefined;
+    const api: PptbToolboxApi = {
+      utils: {
+        copyToClipboard: vi.fn().mockResolvedValue(undefined),
+        showNotification: vi.fn().mockResolvedValue(undefined),
+        getCurrentTheme: vi.fn().mockResolvedValue('dark'),
+      },
+      settings: {
+        get: vi.fn().mockResolvedValue('stored'),
+        set: vi.fn().mockResolvedValue(undefined),
+      },
+      events: {
+        on: vi.fn((handler) => {
+          eventHandler = handler;
+        }),
+        off: vi.fn(),
+      },
+    };
+    const adapter = createPptbAdapter(api);
+    const observedTheme = vi.fn();
+
+    await adapter.copyToClipboard('@equals(true, true)');
+    await adapter.notify('Saved', 'success');
+    await expect(adapter.getTheme()).resolves.toBe('dark');
+    const unsubscribe = adapter.onThemeChanged(observedTheme);
+    eventHandler?.(undefined, { event: 'settings:updated', data: { theme: 'light' } });
+    unsubscribe();
+    await expect(adapter.settings.get('draft')).resolves.toBe('stored');
+    await adapter.settings.set('draft', 'value');
+    await adapter.settings.remove('draft');
+
+    expect(api.utils?.copyToClipboard).toHaveBeenCalledWith('@equals(true, true)');
+    expect(api.utils?.showNotification).toHaveBeenCalledWith({
+      title: 'Success',
+      body: 'Saved',
+      type: 'success',
+    });
+    expect(observedTheme).toHaveBeenCalledWith('light');
+    expect(api.events?.off).toHaveBeenCalledWith(eventHandler);
+    expect(api.settings?.get).toHaveBeenCalledWith('draft');
+    expect(api.settings?.set).toHaveBeenCalledWith('draft', 'value');
+  });
+
   it('uses common PPTB clipboard, notification, theme, and settings methods', async () => {
     let themeHandler: ((theme: string) => void) | undefined;
     const unsubscribe = vi.fn();

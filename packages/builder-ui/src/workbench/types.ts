@@ -34,7 +34,7 @@ export interface WorkbenchHeaderProps {
   onModeChange: (mode: ExpressionMode) => void;
   onImport: () => void;
   onExport: () => void;
-  onPaletteChange: (paletteId: PaletteId) => void;
+  onToggleTheme: () => void;
   onCopyExpression: () => void;
 }
 
