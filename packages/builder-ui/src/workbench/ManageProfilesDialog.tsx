@@ -1,0 +1,128 @@
+import { useEffect, useState } from 'react';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
+  Input,
+  Text,
+  makeStyles,
+  tokens,
+} from '@fluentui/react-components';
+import { DeleteRegular } from '@fluentui/react-icons';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
+import type { PlatformSettings } from '@ryanmakes/eb_platformadapter';
+import {
+  deleteProfile,
+  listProfiles,
+  loadProfile,
+  saveProfile,
+} from '../importExport/fieldProfiles';
+
+export interface ManageProfilesDialogProps {
+  open: boolean;
+  settings: PlatformSettings;
+  currentFields: FieldDefinition[];
+  onDismiss: () => void;
+  onLoad: (name: string, fields: FieldDefinition[]) => void;
+}
+
+const useStyles = makeStyles({
+  body: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+    minWidth: '360px',
+  },
+  row: { display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS },
+  list: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS },
+  saveRow: { display: 'flex', gap: tokens.spacingHorizontalS },
+  grow: { flexGrow: 1 },
+});
+
+export function ManageProfilesDialog({
+  open,
+  settings,
+  currentFields,
+  onDismiss,
+  onLoad,
+}: ManageProfilesDialogProps) {
+  const styles = useStyles();
+  const [names, setNames] = useState<string[]>([]);
+  const [newName, setNewName] = useState('');
+
+  const refresh = () => {
+    void listProfiles(settings).then(setNames);
+  };
+
+  useEffect(() => {
+    if (open) refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={(_, d) => (!d.open ? onDismiss() : undefined)}>
+      <DialogSurface>
+        <DialogBody>
+          <DialogTitle>Field profiles</DialogTitle>
+          <DialogContent className={styles.body}>
+            <div className={styles.saveRow}>
+              <Input
+                className={styles.grow}
+                value={newName}
+                placeholder="New profile name"
+                onChange={(_, d) => setNewName(d.value)}
+              />
+              <Button
+                appearance="primary"
+                disabled={!newName.trim() || currentFields.length === 0}
+                onClick={async () => {
+                  await saveProfile(settings, { name: newName.trim(), fields: currentFields });
+                  setNewName('');
+                  refresh();
+                }}
+              >
+                Save current
+              </Button>
+            </div>
+            <div className={styles.list}>
+              {names.length === 0 ? <Text size={200}>No saved profiles.</Text> : null}
+              {names.map((name) => (
+                <div key={name} className={styles.row}>
+                  <Text className={styles.grow}>{name}</Text>
+                  <Button
+                    size="small"
+                    onClick={async () => {
+                      const profile = await loadProfile(settings, name);
+                      if (profile) onLoad(profile.name, profile.fields);
+                    }}
+                  >
+                    Load
+                  </Button>
+                  <Button
+                    size="small"
+                    appearance="subtle"
+                    icon={<DeleteRegular />}
+                    aria-label={`Delete ${name}`}
+                    onClick={async () => {
+                      await deleteProfile(settings, name);
+                      refresh();
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button appearance="secondary" onClick={onDismiss}>
+              Close
+            </Button>
+          </DialogActions>
+        </DialogBody>
+      </DialogSurface>
+    </Dialog>
+  );
+}

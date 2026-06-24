@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sampleDocument } from '../src/app/sampleData';
@@ -41,8 +41,9 @@ describe('ConditionCanvas', () => {
 
     const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
     const value = within(approverRow).getByLabelText('Value for Approver');
-    await userEvent.clear(value);
-    await userEvent.type(value, 'director');
+    // The input is controlled (value driven by rule.value from props). fireEvent.change
+    // directly triggers the onChange handler without a re-render loop.
+    fireEvent.change(value, { target: { value: 'director' } });
 
     expect(props.onUpdateRule).toHaveBeenLastCalledWith('rule-approver', { value: 'director' });
   });
