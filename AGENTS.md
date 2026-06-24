@@ -81,3 +81,10 @@ Go fix failing CI tests without being told how
 
 **Minimat Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+<!-- lean-ctx-compression -->
+OUTPUT STYLE: concise
+- Bullet points over paragraphs
+- Skip filler words and hedging ("I think", "probably", "it seems")
+- 1-sentence explanations max, then code/action
+- No repeating what the user said
+<!-- /lean-ctx-compression -->

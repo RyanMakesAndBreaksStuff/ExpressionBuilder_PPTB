@@ -2,7 +2,17 @@ import type {
   NotificationLevel,
   PlatformAdapter,
   PlatformTheme,
+  TableRef,
+  RelatedTableRef,
+  DiscoverFieldsOptions,
+  DiscoverFieldsResult,
 } from './PlatformAdapter';
+import type {
+  DataverseApi,
+  DataverseEntityMetadata,
+  DataverseRelationshipMetadata,
+} from './dataverseApi';
+import { mapDataverseAttributes, type DataverseAttributeMetadata } from './dataverseMetadata';
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -76,6 +86,22 @@ function getWindowToolboxApi(): PptbToolboxApi | undefined {
   return (window as PptbWindow).toolboxAPI;
 }
 
+function getWindowDataverseApi(): DataverseApi | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  return (window as Window & { dataverseAPI?: DataverseApi }).dataverseAPI;
+}
+
+function entityToTableRef(entity: DataverseEntityMetadata): TableRef {
+  return {
+    logicalName: entity.LogicalName,
+    displayName: entity.DisplayName?.UserLocalizedLabel?.Label?.trim() || entity.LogicalName,
+    entitySetName: entity.EntitySetName,
+    isSystem: entity.IsCustomEntity === false || entity.IsManaged === true,
+  };
+}
+
 function normalizeTheme(theme: string | null | undefined): PlatformTheme {
   const normalized = theme?.toLowerCase();
 
@@ -96,8 +122,10 @@ function normalizeTheme(theme: string | null | undefined): PlatformTheme {
 
 export function createPptbAdapter(
   toolboxApi: PptbToolboxApi | undefined = getWindowToolboxApi(),
+  dataverseApi: DataverseApi | undefined = getWindowDataverseApi(),
 ): PlatformAdapter {
   const api = toolboxApi;
+  const dv = dataverseApi;
 
   const adapter: PlatformAdapter = {
     async copyToClipboard(text) {
@@ -210,20 +238,93 @@ export function createPptbAdapter(
       },
     },
 
+    async getTables() {
+      if (!dv?.getAllEntitiesMetadata) {
+        return [];
+      }
+      const entities = await dv.getAllEntitiesMetadata();
+      return Array.isArray(entities) ? entities.map(entityToTableRef) : [];
+    },
+
+    async discoverFields(options: DiscoverFieldsOptions = {}): Promise<DiscoverFieldsResult> {
+      const table = options.table;
+      if (!dv?.getEntityRelatedMetadata || !table) {
+        await adapter.notify(
+          'Using sample fields because no Dataverse connection is available.',
+          'info',
+        );
+        return { fields: [] };
+      }
+
+      const raw = (await dv.getEntityRelatedMetadata(
+        table,
+        'Attributes',
+        '$expand=OptionSet',
+      )) as { value?: DataverseAttributeMetadata[] } | DataverseAttributeMetadata[] | undefined;
+
+      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      const fields = mapDataverseAttributes(attrs);
+
+      return {
+        fields,
+        table: { logicalName: table, displayName: table },
+        fetchedAt: Date.now(),
+      };
+    },
+
+    async getRelatedTables(table: string): Promise<RelatedTableRef[]> {
+      if (!dv?.getEntityRelatedMetadata) return [];
+      const raw = (await dv.getEntityRelatedMetadata(table, 'ManyToOneRelationships')) as
+        | { value?: DataverseRelationshipMetadata[] }
+        | DataverseRelationshipMetadata[]
+        | undefined;
+      const rels = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      return rels
+        .filter((r) => r.ReferencingEntityNavigationPropertyName && r.ReferencedEntity)
+        .map((r) => ({
+          navigationProperty: r.ReferencingEntityNavigationPropertyName as string,
+          table: r.ReferencedEntity as string,
+          displayName: r.ReferencedEntity as string,
+          relationshipType: 'ManyToOne' as const,
+        }));
+    },
+
+    async discoverRelatedFields(table: string, navigationProperty: string): Promise<DiscoverFieldsResult> {
+      const related = (await adapter.getRelatedTables?.(table))?.find(
+        (r) => r.navigationProperty === navigationProperty,
+      );
+      if (!related || !dv?.getEntityRelatedMetadata) return { fields: [] };
+      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes', '$expand=OptionSet')) as
+        | { value?: DataverseAttributeMetadata[] }
+        | DataverseAttributeMetadata[]
+        | undefined;
+      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      const fields = mapDataverseAttributes(attrs, [navigationProperty]).map((f) => ({
+        ...f,
+        group: related.displayName,
+      }));
+      return { fields, fetchedAt: Date.now() };
+    },
+
+    /** @deprecated shim over discoverFields */
     async getDataverseFields() {
-      const fields = api?.getDataverseFields
+      if (dv?.getEntityRelatedMetadata) {
+        const result = await adapter.discoverFields?.({});
+        return result?.fields ?? [];
+      }
+
+      const legacy = api?.getDataverseFields
         ? await api.getDataverseFields()
         : await api?.listDataverseFields?.();
 
-      if (Array.isArray(fields)) {
-        return fields;
+      if (Array.isArray(legacy)) {
+        return legacy;
       }
 
       await adapter.notify(
         'Using sample fields because no Dataverse connection is available.',
         'info',
       );
-
       return [];
     },
   };

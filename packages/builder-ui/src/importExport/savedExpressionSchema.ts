@@ -28,8 +28,8 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     return { ok: false, errors: ['Import failed: saved expression must be an object.'] };
   }
 
-  if (value.version !== 1) {
-    errors.push('Import failed: version must be 1.');
+  if (value.version !== 1 && value.version !== 2) {
+    errors.push('Import failed: version must be 1 or 2.');
   }
 
   if (typeof value.mode !== 'string' || !modes.has(value.mode as ExpressionMode)) {
@@ -48,7 +48,19 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     return { ok: false, errors };
   }
 
-  return { ok: true, document: value as unknown as QueryDocument };
+  return { ok: true, document: upgradeDocument(value as unknown as QueryDocument) };
+}
+
+/** v1 to v2 upcaster. Idempotent: a v2 doc with a source is returned unchanged. */
+export function upgradeDocument(document: QueryDocument): QueryDocument {
+  if (document.version === 2 && document.source) {
+    return document;
+  }
+  return {
+    ...document,
+    version: 2,
+    source: document.source ?? { kind: 'unknown' },
+  };
 }
 
 function validateField(value: unknown, path: string, errors: string[]): value is FieldDefinition {
@@ -77,6 +89,16 @@ function validateField(value: unknown, path: string, errors: string[]): value is
     if (!Array.isArray(value.choices) || value.choices.some((choice) => typeof choice !== 'string')) {
       errors.push(`Import failed: ${path}.choices must be strings.`);
     }
+  }
+
+  if ('source' in value && value.source !== undefined && typeof value.source !== 'string') {
+    errors.push(`Import failed: ${path}.source must be a string.`);
+  }
+  if ('logicalName' in value && value.logicalName !== undefined && typeof value.logicalName !== 'string') {
+    errors.push(`Import failed: ${path}.logicalName must be a string.`);
+  }
+  if ('group' in value && value.group !== undefined && typeof value.group !== 'string') {
+    errors.push(`Import failed: ${path}.group must be a string.`);
   }
 
   return true;

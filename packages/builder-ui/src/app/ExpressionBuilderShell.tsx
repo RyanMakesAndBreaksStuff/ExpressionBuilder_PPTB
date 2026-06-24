@@ -20,7 +20,8 @@ import {
   type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
-import { emptyStarterDocument } from './sampleData';
+import { emptyStarterDocument, sampleFields } from './sampleData';
+import { applySource, discoverThroughAdapter } from './sourceState';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
@@ -46,6 +47,8 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
   const [workbench, setWorkbench] = useState(getDefaultWorkbenchState);
+  type OpenDialog = 'none' | 'tablePicker' | 'import' | 'addField' | 'profiles' | 'remap' | 'switch' | 'drift';
+  const [dialog, setDialog] = useState<OpenDialog>('none');
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
@@ -101,14 +104,28 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
     setImportDiagnostics([]);
   };
 
-  const connectFields = async () => {
-    const fields = await adapter.getDataverseFields();
-    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
-      await adapter.notify('Using sample fields because no Dataverse connection is available.', 'info');
+  const connectFields = async (table?: string, includeRelated?: boolean) => {
+    const result = await discoverThroughAdapter(adapter, table, includeRelated);
+    if (!isFieldDefinitionArray(result.fields) || result.fields.length === 0) {
+      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
     }
+    setDocument((current) =>
+      applySource(
+        current,
+        {
+          kind: 'dataverse',
+          label: result.table?.displayName ?? 'Dataverse',
+          tableLogicalName: result.table?.logicalName ?? table,
+          includeRelated,
+        },
+        result.fields,
+      ),
+    );
+  };
 
-    setDocument((current) => ({ ...current, fields }));
+  const loadSampleFields = () => {
+    setDocument((current) => applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields));
   };
 
   const paletteVars = porcelainTokens[paletteId].cssVariables;
@@ -137,11 +154,17 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
         >
           <FieldToolboxPane
             fields={document.fields}
+            source={document.source ?? { kind: 'unknown' }}
             activeTab={workbench.leftTab}
             collapsed={workbench.leftDockCollapsed}
             onTabChange={(leftTab) => setWorkbench((current) => ({ ...current, leftTab }))}
             onToggleCollapsed={() => setWorkbench((current) => toggleDock(current, 'left'))}
-            onConnect={() => void connectFields()}
+            onSwitchTable={() => setDialog('tablePicker')}
+            onImport={() => setDialog('import')}
+            onAddField={() => setDialog('addField')}
+            onLoadSamples={loadSampleFields}
+            onManageProfiles={() => setDialog('profiles')}
+            onRefresh={() => void connectFields(document.source?.tableLogicalName, document.source?.includeRelated)}
           />
 
           <div className="eb-center-col">

@@ -1,5 +1,7 @@
 export type {
   QueryDocument,
+  DataSourceDescriptor,
+  DataSourceKind,
   QueryGroup,
   QueryNode,
   QueryRule,

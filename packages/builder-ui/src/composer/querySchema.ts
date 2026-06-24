@@ -1,11 +1,28 @@
 import type { Conjunction, ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 
+export type DataSourceKind =
+  | 'dataverse'
+  | 'import'
+  | 'profile'
+  | 'sample'
+  | 'unknown';
+
+/** Describes where the document's active fields came from. Additive, optional. */
+export interface DataSourceDescriptor {
+  kind: DataSourceKind;
+  label?: string;
+  tableLogicalName?: string;
+  includeRelated?: boolean;
+  fetchedAt?: number;
+}
+
 export interface QueryDocument {
-  version: 1;
+  version: 1 | 2;
   mode: ExpressionMode;
   fields: FieldDefinition[];
   root: QueryGroup;
   selectedRuleId?: string;
+  source?: DataSourceDescriptor;
 }
 
 export type QueryNode = QueryGroup | QueryRule;

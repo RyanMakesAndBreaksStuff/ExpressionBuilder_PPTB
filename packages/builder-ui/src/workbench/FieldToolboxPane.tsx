@@ -4,12 +4,20 @@ import type { FieldToolboxPaneProps } from './types';
 import { DockPane } from './controls/DockPane';
 import { TabStrip } from './controls/TabStrip';
 import { WrapperChips } from './WrapperChips';
+import { SourceChip } from './SourceChip';
+import { GetStartedPanel } from './GetStartedPanel';
 
 export function FieldToolboxPane({
   activeTab,
   collapsed,
   fields,
-  onConnect,
+  source,
+  onSwitchTable,
+  onImport,
+  onAddField,
+  onLoadSamples,
+  onManageProfiles,
+  onRefresh,
   onTabChange,
   onToggleCollapsed,
 }: FieldToolboxPaneProps) {
@@ -47,33 +55,47 @@ export function FieldToolboxPane({
     >
       {activeTab === 'dynamicContent' ? (
         <div className="eb-toolbox-stack">
-          <div className="eb-toolbox-actions">
-            <button type="button" className="eb-text-btn" onClick={onConnect}>
-              Connect
-            </button>
-            <span className="eb-muted">No Dataverse connection</span>
-          </div>
-          <input
-            className="eb-search-box"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search fields..."
-            aria-label="Search dynamic content fields"
+          <SourceChip
+            source={source}
+            onSwitchTable={onSwitchTable}
+            onImport={onImport}
+            onAddField={onAddField}
+            onLoadSamples={onLoadSamples}
+            onManageProfiles={onManageProfiles}
+            onRefresh={onRefresh}
           />
-          <ul className="eb-field-list" role="list" aria-label="Dynamic content fields">
-            {filteredFields.map((field) => (
-              <li key={field.id}>
-                <div className="eb-field-row" tabIndex={0}>
-                  <TypeGlyph type={field.type} />
-                  <span className="eb-field-main">
-                    <span className="eb-field-title">{field.label}</span>
-                    <span className="eb-field-detail">{field.path.join('.')} · {field.type}</span>
-                  </span>
-                  <span className="eb-field-type-badge">{field.type}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {fields.length === 0 ? (
+            <GetStartedPanel
+              onSwitchTable={onSwitchTable}
+              onImport={onImport}
+              onAddField={onAddField}
+              onLoadSamples={onLoadSamples}
+            />
+          ) : (
+            <>
+              <input
+                className="eb-search-box"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search fields..."
+                aria-label="Search dynamic content fields"
+              />
+              <ul className="eb-field-list" role="list" aria-label="Dynamic content fields">
+                {filteredFields.map((field) => (
+                  <li key={field.id}>
+                    <div className="eb-field-row" tabIndex={0}>
+                      <TypeGlyph type={field.type} />
+                      <span className="eb-field-main">
+                        <span className="eb-field-title">{field.label}</span>
+                        <span className="eb-field-detail">{field.path.join('.')} · {field.type}</span>
+                      </span>
+                      <span className="eb-field-type-badge">{field.type}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       ) : (
         <WrapperChips />

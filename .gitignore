@@ -27,6 +27,7 @@ dist-ssr
 /.agents/skills
 /.vs
 /docs
+! /docs/source-data/*
 /test-results
 /tests/e2e
 /ui-ux
