@@ -21,10 +21,14 @@ import {
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
 import { emptyStarterDocument, sampleFields } from './sampleData';
-import { applySource, discoverThroughAdapter } from './sourceState';
+import { applySource, discoverCached, discoverThroughAdapter } from './sourceState';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
+import { ImportSchemaDialog } from '../workbench/ImportSchemaDialog';
+import { AddFieldForm } from '../workbench/AddFieldForm';
+import { ManageProfilesDialog } from '../workbench/ManageProfilesDialog';
+import { TablePickerDialog } from '../workbench/TablePickerDialog';
 import { SupportPane } from '../workbench/SupportPane';
 import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
 import {
@@ -39,7 +43,10 @@ export interface ExpressionBuilderShellProps {
   initialDocument?: QueryDocument;
 }
 
-export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarterDocument }: ExpressionBuilderShellProps) {
+export function ExpressionBuilderShell({
+  adapter,
+  initialDocument = emptyStarterDocument,
+}: ExpressionBuilderShellProps) {
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [paletteId, setPaletteId] = useState<PaletteId>('porcelainDark');
   const [savedJson, setSavedJson] = useState(() => serializeSavedExpression(initialDocument));
@@ -49,6 +56,10 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
   const [workbench, setWorkbench] = useState(getDefaultWorkbenchState);
   type OpenDialog = 'none' | 'tablePicker' | 'import' | 'addField' | 'profiles' | 'remap' | 'switch' | 'drift';
   const [dialog, setDialog] = useState<OpenDialog>('none');
+  const [relatedSections, setRelatedSections] = useState<
+    Array<{ navigationProperty: string; displayName: string }>
+  >([]);
+
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
@@ -57,7 +68,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
   useEffect(() => {
     let active = true;
 
-    adapter.getTheme().then((platformTheme) => {
+    void adapter.getTheme().then((platformTheme) => {
       if (active) {
         setPaletteId(normalizePalette(platformTheme));
       }
@@ -93,19 +104,50 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
 
   const importDocument = () => {
     const result = parseSavedExpression(savedJson);
-
     if (!result.ok) {
       setImportDiagnostics(result.errors.map((message) => ({ severity: 'error', message })));
       return;
     }
-
     setDocument(result.document);
     setSavedJson(serializeSavedExpression(result.document));
     setImportDiagnostics([]);
   };
 
+  /** Discover fields (cache-first). On success wires related sections for the table. */
+  const connectFieldsCached = async (
+    table: string,
+    tableLabel: string,
+    includeRelated: boolean,
+    refresh = false,
+  ) => {
+    const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, refresh);
+    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
+      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
+      return;
+    }
+    setDocument((current) =>
+      applySource(
+        current,
+        { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
+        fields,
+      ),
+    );
+    if (adapter.getRelatedTables) {
+      void adapter.getRelatedTables(table).then((rels) =>
+        setRelatedSections(
+          rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
+        ),
+      );
+    }
+  };
+
+  /** Legacy path used when no table is known (backward compat). */
   const connectFields = async (table?: string, includeRelated?: boolean) => {
-    const result = await discoverThroughAdapter(adapter, table, includeRelated);
+    if (table) {
+      await connectFieldsCached(table, table, includeRelated ?? false);
+      return;
+    }
+    const result = await discoverThroughAdapter(adapter, undefined, includeRelated);
     if (!isFieldDefinitionArray(result.fields) || result.fields.length === 0) {
       await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
@@ -116,7 +158,7 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
         {
           kind: 'dataverse',
           label: result.table?.displayName ?? 'Dataverse',
-          tableLogicalName: result.table?.logicalName ?? table,
+          tableLogicalName: result.table?.logicalName,
           includeRelated,
         },
         result.fields,
@@ -124,8 +166,26 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
     );
   };
 
+  const handleExpandRelated = (navigationProperty: string) => {
+    const table = document.source?.tableLogicalName;
+    if (!table || !adapter.discoverRelatedFields) return;
+    void adapter.discoverRelatedFields(table, navigationProperty).then((result) => {
+      if (result.fields.length === 0) return;
+      setDocument((current) => ({
+        ...current,
+        fields: [
+          ...current.fields.filter((f) => !result.fields.some((nf) => nf.id === f.id)),
+          ...result.fields,
+        ],
+      }));
+    });
+  };
+
   const loadSampleFields = () => {
-    setDocument((current) => applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields));
+    setDocument((current) =>
+      applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
+    );
+    setRelatedSections([]);
   };
 
   const paletteVars = porcelainTokens[paletteId].cssVariables;
@@ -139,7 +199,11 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
           onModeChange={updateMode}
           onExport={exportDocument}
           onImport={importDocument}
-          onToggleTheme={() => setPaletteId((current) => (current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark'))}
+          onToggleTheme={() =>
+            setPaletteId((current) =>
+              current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark',
+            )
+          }
           onCopyExpression={() => void copyExpression()}
         />
 
@@ -164,7 +228,18 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
             onAddField={() => setDialog('addField')}
             onLoadSamples={loadSampleFields}
             onManageProfiles={() => setDialog('profiles')}
-            onRefresh={() => void connectFields(document.source?.tableLogicalName, document.source?.includeRelated)}
+            onRefresh={() => {
+              const table = document.source?.tableLogicalName;
+              const label = document.source?.label ?? table ?? 'Dataverse';
+              const includeRelated = document.source?.includeRelated ?? false;
+              if (table) {
+                void connectFieldsCached(table, label, includeRelated, true);
+              } else {
+                void connectFields();
+              }
+            }}
+            relatedSections={relatedSections}
+            onExpandRelated={handleExpandRelated}
           />
 
           <div className="eb-center-col">
@@ -217,12 +292,63 @@ export function ExpressionBuilderShell({ adapter, initialDocument = emptyStarter
           />
         </main>
       </div>
+
+      <ImportSchemaDialog
+        open={dialog === 'import'}
+        onDismiss={() => setDialog('none')}
+        onImport={(fields, label) => {
+          setDocument((current) => applySource(current, { kind: 'import', label }, fields));
+          setRelatedSections([]);
+          setDialog('none');
+        }}
+      />
+
+      <AddFieldForm
+        open={dialog === 'addField'}
+        existing={document.fields}
+        onDismiss={() => setDialog('none')}
+        onAdd={(field) => {
+          setDocument((current) => ({
+            ...current,
+            version: 2,
+            fields: [...current.fields, field],
+            source:
+              current.source?.kind && current.source.kind !== 'unknown'
+                ? current.source
+                : { kind: 'import', label: 'Manual fields' },
+          }));
+          setDialog('none');
+        }}
+      />
+
+      <ManageProfilesDialog
+        open={dialog === 'profiles'}
+        settings={adapter.settings}
+        currentFields={document.fields}
+        onDismiss={() => setDialog('none')}
+        onLoad={(name, fields) => {
+          setDocument((current) => applySource(current, { kind: 'profile', label: name }, fields));
+          setRelatedSections([]);
+          setDialog('none');
+        }}
+      />
+
+      <TablePickerDialog
+        open={dialog === 'tablePicker'}
+        loadTables={() => adapter.getTables?.() ?? Promise.resolve([])}
+        onDismiss={() => setDialog('none')}
+        onConfirm={(table, includeRelated) => {
+          setDialog('none');
+          void connectFieldsCached(table.logicalName, table.displayName, includeRelated, false);
+        }}
+      />
     </FluentProvider>
   );
 }
 
 function normalizePalette(platformTheme: PlatformTheme): PaletteId {
-  const mode: PorcelainThemeMode = platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
+  const mode: PorcelainThemeMode =
+    platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
   return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
 }
 

@@ -97,5 +97,3 @@ export interface RuleRowEditorProps {
   onDuplicate: (ruleId: string) => void;
   onDelete: (ruleId: string) => void;
 }
-g) => void;
-}
