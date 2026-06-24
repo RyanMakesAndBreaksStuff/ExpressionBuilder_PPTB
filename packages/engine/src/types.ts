@@ -4,6 +4,9 @@ export type ValueType = FieldType | 'null' | 'unknown';
 export type PredicateType = 'boolean';
 export type Conjunction = 'and' | 'or';
 
+/** Where a field's schema originated. Additive provenance - never affects expression semantics. */
+export type FieldSourceKind = 'dataverse' | 'user' | 'json' | 'csv' | 'jsonSchema' | 'sample';
+
 export interface FieldDefinition {
   id: string;
   label: string;
@@ -11,6 +14,10 @@ export interface FieldDefinition {
   path: string[];
   choices?: string[];
   nullable?: boolean;
+  source?: FieldSourceKind;
+  logicalName?: string;
+  group?: string;
+  orphaned?: boolean;
 }
 
 export type ExpressionNode =

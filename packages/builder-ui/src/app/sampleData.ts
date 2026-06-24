@@ -19,14 +19,15 @@ export const sampleFields: QueryDocument['fields'] = [
     type: 'choice',
     path: ['Status'],
     choices: ['Approved', 'Rejected', 'Pending'],
+    source: 'sample',
   },
-  { id: 'Approver', label: 'Approver', type: 'string', path: ['Approver'], nullable: true },
-  { id: 'Amount', label: 'Amount', type: 'number', path: ['Amount'] },
-  { id: 'Region', label: 'Region', type: 'choice', path: ['Region'], choices: ['EMEA', 'APAC', 'AMER'] },
-  { id: 'DueDate', label: 'Due date', type: 'dateTime', path: ['DueDate'] },
-  { id: 'Submitted', label: 'Submitted', type: 'boolean', path: ['Submitted'] },
-  { id: 'RequestId', label: 'Request ID', type: 'string', path: ['RequestId'] },
-  { id: 'Department', label: 'Department', type: 'string', path: ['Department'] },
+  { id: 'Approver', label: 'Approver', type: 'string', path: ['Approver'], nullable: true, source: 'sample' },
+  { id: 'Amount', label: 'Amount', type: 'number', path: ['Amount'], source: 'sample' },
+  { id: 'Region', label: 'Region', type: 'choice', path: ['Region'], choices: ['EMEA', 'APAC', 'AMER'], source: 'sample' },
+  { id: 'DueDate', label: 'Due date', type: 'dateTime', path: ['DueDate'], source: 'sample' },
+  { id: 'Submitted', label: 'Submitted', type: 'boolean', path: ['Submitted'], source: 'sample' },
+  { id: 'RequestId', label: 'Request ID', type: 'string', path: ['RequestId'], source: 'sample' },
+  { id: 'Department', label: 'Department', type: 'string', path: ['Department'], source: 'sample' },
 ];
 
 export const sampleDocument: QueryDocument = {
@@ -75,5 +76,7 @@ export const sampleDocument: QueryDocument = {
         ],
       },
     ],
+  },
+};
   },
 };

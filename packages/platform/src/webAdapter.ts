@@ -47,6 +47,18 @@ export function createWebAdapter(): PlatformAdapter {
       },
     },
 
+    async listDataSources() {
+      return [];
+    },
+
+    async getTables() {
+      return [];
+    },
+
+    async discoverFields() {
+      return { fields: [] };
+    },
+
     async getDataverseFields() {
       return [];
     },

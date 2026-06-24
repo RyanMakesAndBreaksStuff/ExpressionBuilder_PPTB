@@ -6,7 +6,7 @@ import type {
 } from '@ryanmakes/eb_engine';
 
 import type { PaletteId } from '../theme/workbenchTokens';
-import type { QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
+import type { DataSourceDescriptor, QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
 
 export type LeftWorkbenchTab = 'dynamicContent' | 'wrappers';
 export type RightWorkbenchTab = 'diagnostics' | 'modeContext';
@@ -40,11 +40,21 @@ export interface WorkbenchHeaderProps {
 
 export interface FieldToolboxPaneProps {
   fields: FieldDefinition[];
+  source: DataSourceDescriptor;
   activeTab: LeftWorkbenchTab;
   collapsed: boolean;
   onTabChange: (tab: LeftWorkbenchTab) => void;
   onToggleCollapsed: () => void;
-  onConnect: () => void;
+  onSwitchTable: () => void;
+  onImport: () => void;
+  onAddField: () => void;
+  onLoadSamples: () => void;
+  onManageProfiles: () => void;
+  onRefresh: () => void;
+  /** Related navigation sections available for the active dataverse table (T14). */
+  relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
+  /** Called once when a related section is first expanded; resolves and appends its fields. */
+  onExpandRelated?: (navigationProperty: string) => void;
 }
 
 export interface ConditionCanvasProps {
@@ -86,4 +96,6 @@ export interface RuleRowEditorProps {
   onUpdate: (ruleId: string, patch: RulePatch) => void;
   onDuplicate: (ruleId: string) => void;
   onDelete: (ruleId: string) => void;
+}
+g) => void;
 }

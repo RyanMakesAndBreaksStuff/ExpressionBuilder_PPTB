@@ -3,6 +3,7 @@ export type {
   ExpressionNode,
   ExpressionMode,
   FieldDefinition,
+  FieldSourceKind,
   FieldReferenceNode,
   FieldType,
   FormatDiagnostic,

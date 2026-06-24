@@ -63,6 +63,16 @@ describe('createWebAdapter', () => {
 
     expect(log).toHaveBeenCalledWith('[success] Saved');
   });
+
+  it('exposes empty discovery results without throwing', async () => {
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn() } });
+    stubLocalStorage();
+    stubMatchMedia(false);
+    const adapter = createWebAdapter();
+    expect(await adapter.listDataSources?.()).toEqual([]);
+    expect(await adapter.getTables?.()).toEqual([]);
+    expect(await adapter.discoverFields?.()).toEqual({ fields: [] });
+  });
 });
 
 function stubLocalStorage() {
