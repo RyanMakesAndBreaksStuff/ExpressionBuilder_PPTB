@@ -23,8 +23,8 @@ export interface QueryRule {
   fieldId: string;
   operator: string;
   value?: string | number | boolean | null;
-  valueFunction?: 'toLower' | 'toUpper' | 'trim' | 'coalesce' | 'addDays' | 'utcNow';
-  caseInsensitive?: boolean;
+  /** Ordered function wrappers applied to BOTH operands (e.g. ['trim','toLower']). */
+  wrappers?: string[];
 }
 
 export type RulePatch = Partial<Omit<QueryRule, 'id' | 'kind'>>;
