@@ -10,6 +10,7 @@ export interface FieldDefinition {
   type: FieldType;
   path: string[];
   choices?: string[];
+  options?: Array<{ label: string; value: number }>;
   nullable?: boolean;
 }
 
