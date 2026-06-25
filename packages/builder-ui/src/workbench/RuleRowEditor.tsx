@@ -4,13 +4,53 @@ import type { QueryRule } from '../composer/querySchema';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, GripIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 
-export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdate, rule, selected }: RuleRowEditorProps) {
+export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdate, onRequestRemap, rule, selected }: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
   const hasError = !rule.value && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
 
   if (!field) {
-    return null;
+    return (
+      <div
+        className={`eb-rule-row-editor is-orphan${selected ? ' is-selected' : ''}`}
+        role="group"
+        aria-label={`Unknown field ${rule.fieldId}`}
+        onClick={() => onSelect(rule.id)}
+      >
+        <span className="eb-orphan-badge" title="This field is not in the active source" aria-label="Unknown field">
+          ⚠ Unknown field
+        </span>
+        <span className="eb-field-title">{rule.fieldId}</span>
+        <span className="eb-muted">{rule.operator} {String(rule.value ?? '')}</span>
+        <div className="eb-rule-tools">
+          {onRequestRemap ? (
+            <button
+              type="button"
+              className="eb-text-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(rule.id);
+                onRequestRemap(rule.id);
+              }}
+            >
+              Remap…
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="eb-icon-btn"
+            aria-label="Remove rule"
+            title="Remove rule"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(rule.id);
+            }}
+          >
+            <TrashIcon />
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -140,7 +180,7 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
             e.stopPropagation();
             onUpdate(rule.id, { caseInsensitive: true });
           }}
-          disabled={field.type !== 'string'}
+          disabled={field.type !== 'string' && field.type !== 'choice'}
           aria-label="Wrap both sides in toLower()"
         >
           Wrap both sides in toLower()

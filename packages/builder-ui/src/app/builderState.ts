@@ -9,7 +9,7 @@ import {
   type FormatResult,
   type LiteralNode,
 } from '@ryanmakes/eb_engine';
-import type { QueryDocument, QueryGroup, QueryNode, QueryRule } from '../composer/querySchema';
+import type { QueryDocument, QueryGroup, QueryNode, QueryRule, RulePatch } from '../composer/querySchema';
 
 export interface DerivedBuilderState {
   expression: string;
@@ -169,4 +169,28 @@ function defaultValueForField(field?: FieldDefinition): LiteralNode['value'] {
 
 function needsValue(operator: string): boolean {
   return operator !== 'empty' && operator !== 'notEmpty';
+}
+
+// ── Remap helpers (T17) ─────────────────────────────────────────────────────
+
+/**
+ * Compute the patch to remap an orphaned rule onto `target`.
+ * Keeps the operator when the target type still supports it; otherwise resets to
+ * the target's first safe operator and picks a sensible default value.
+ */
+export function remapRulePatch(target: FieldDefinition, currentOperator: string): RulePatch {
+  const operator = getSafeOperator(target, currentOperator);
+  return {
+    fieldId: target.id,
+    operator,
+    // Reset value only when the operator changed (cross-type) to avoid carrying an incompatible literal.
+    value: operator === currentOperator ? undefined : defaultValueForRemap(target),
+  };
+}
+
+function defaultValueForRemap(field: FieldDefinition): string | number | boolean {
+  if (field.choices?.length) return field.choices[0];
+  if (field.type === 'number') return 0;
+  if (field.type === 'boolean') return false;
+  return '';
 }

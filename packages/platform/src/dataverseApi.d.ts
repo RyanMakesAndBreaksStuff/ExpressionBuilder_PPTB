@@ -31,12 +31,17 @@ export interface DataverseExecuteRequest {
  * helpers except `getCSDLDocument` (v1.0.20). Auth/headers are the host's concern.
  */
 export interface DataverseApi {
-  getAllEntitiesMetadata?: () => Promise<DataverseEntityMetadata[]>;
+  getAllEntitiesMetadata?: (
+    entityProperties?: string[],
+    connectionTarget?: 'primary' | 'secondary',
+  ) => Promise<{ value: DataverseEntityMetadata[] } | DataverseEntityMetadata[]>;
   getEntityMetadata?: (logicalName: string) => Promise<DataverseEntityMetadata>;
   getEntityRelatedMetadata?: (
     logicalName: string,
     relatedPath: string,
-    query?: string,
+    /** OData $select property names — NOT a query string. The host maps over this. */
+    relatedProperties?: string[],
+    connectionTarget?: 'primary' | 'secondary',
   ) => Promise<unknown>;
   getAttributeODataType?: (logicalName: string, attribute: string) => Promise<string>;
   getCSDLDocument?: () => Promise<string>;

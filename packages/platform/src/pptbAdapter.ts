@@ -242,8 +242,15 @@ export function createPptbAdapter(
       if (!dv?.getAllEntitiesMetadata) {
         return [];
       }
-      const entities = await dv.getAllEntitiesMetadata();
-      return Array.isArray(entities) ? entities.map(entityToTableRef) : [];
+      const raw = await dv.getAllEntitiesMetadata([
+        'LogicalName',
+        'DisplayName',
+        'EntitySetName',
+        'IsCustomEntity',
+        'IsManaged',
+      ]);
+      const entities = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      return entities.map(entityToTableRef);
     },
 
     async discoverFields(options: DiscoverFieldsOptions = {}): Promise<DiscoverFieldsResult> {
@@ -256,11 +263,10 @@ export function createPptbAdapter(
         return { fields: [] };
       }
 
-      const raw = (await dv.getEntityRelatedMetadata(
-        table,
-        'Attributes',
-        '$expand=OptionSet',
-      )) as { value?: DataverseAttributeMetadata[] } | DataverseAttributeMetadata[] | undefined;
+      const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
+        | { value?: DataverseAttributeMetadata[] }
+        | DataverseAttributeMetadata[]
+        | undefined;
 
       const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
       const fields = mapDataverseAttributes(attrs);
@@ -294,7 +300,7 @@ export function createPptbAdapter(
         (r) => r.navigationProperty === navigationProperty,
       );
       if (!related || !dv?.getEntityRelatedMetadata) return { fields: [] };
-      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes', '$expand=OptionSet')) as
+      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
         | { value?: DataverseAttributeMetadata[] }
         | DataverseAttributeMetadata[]
         | undefined;

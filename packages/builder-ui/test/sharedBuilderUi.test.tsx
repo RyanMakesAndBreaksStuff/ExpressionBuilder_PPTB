@@ -19,7 +19,10 @@ function createAdapter(): PlatformAdapter {
       };
     }),
     settings: {
-      get: vi.fn(async () => null),
+      // Report the first-run onboarding as already seen so its modal Dialog does not
+      // auto-open and trap focus mid-test (it would steal focus from the mode radios
+      // and break keyboard-navigation assertions). Other keys still resolve to null.
+      get: vi.fn(async (key: string) => (key === 'eb.onboarding.seen.v1' ? '1' : null)),
       set: vi.fn(async () => undefined),
       remove: vi.fn(async () => undefined),
     },

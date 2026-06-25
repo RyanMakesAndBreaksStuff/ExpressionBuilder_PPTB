@@ -55,6 +55,10 @@ export interface FieldToolboxPaneProps {
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
   /** Called once when a related section is first expanded; resolves and appends its fields. */
   onExpandRelated?: (navigationProperty: string) => void;
+  /** ID of the currently selected rule, used to target wrapper chip application. */
+  selectedRuleId?: string;
+  /** Called when the user clicks a wrapper chip in the Wrappers tab. */
+  onApplyWrapper?: (ruleId: string, wrapperId: string) => void;
 }
 
 export interface ConditionCanvasProps {
@@ -69,6 +73,8 @@ export interface ConditionCanvasProps {
   onUpdateRule: (ruleId: string, patch: RulePatch) => void;
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
+  onRequestRemap?: (ruleId: string) => void;
 }
 
 export interface ExpressionDocumentPanelProps {
@@ -96,4 +102,6 @@ export interface RuleRowEditorProps {
   onUpdate: (ruleId: string, patch: RulePatch) => void;
   onDuplicate: (ruleId: string) => void;
   onDelete: (ruleId: string) => void;
+  /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
+  onRequestRemap?: (ruleId: string) => void;
 }

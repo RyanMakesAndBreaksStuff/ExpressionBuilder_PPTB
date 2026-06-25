@@ -15,6 +15,7 @@ interface ConditionGroupCardProps {
   onUpdateRule: (ruleId: string, patch: Partial<import('../composer/querySchema').QueryRule>) => void;
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  onRequestRemap?: (ruleId: string) => void;
 }
 
 export function ConditionGroupCard({
@@ -28,6 +29,7 @@ export function ConditionGroupCard({
   onDuplicateRule,
   onSelectRule,
   onUpdateRule,
+  onRequestRemap,
 }: ConditionGroupCardProps) {
   const isAnd = group.conjunction === 'and';
   const ruleCount = countRules(group);
@@ -84,6 +86,7 @@ export function ConditionGroupCard({
               onUpdateRule={onUpdateRule}
               onDuplicateRule={onDuplicateRule}
               onDeleteNode={onDeleteNode}
+              onRequestRemap={onRequestRemap}
             />
           ) : (
             <RuleRowEditor
@@ -95,6 +98,7 @@ export function ConditionGroupCard({
               onUpdate={onUpdateRule}
               onDuplicate={onDuplicateRule}
               onDelete={onDeleteNode}
+              onRequestRemap={onRequestRemap}
             />
           ),
         )}

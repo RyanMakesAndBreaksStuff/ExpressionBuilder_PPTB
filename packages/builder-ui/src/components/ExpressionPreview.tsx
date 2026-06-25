@@ -11,14 +11,14 @@ function SyntaxPart({ part }: { part: string }) {
   if (/^\d+$/.test(part) || /^\d+\.\d+$/.test(part)) {
     return <span className="num">{part}</span>;
   }
-  if (/^[(),@\[\]?]$/.test(part)) {
+  if (/^[(),@\]?]$/.test(part)) {
     return <span className="sym">{part}</span>;
   }
   return <span>{part}</span>;
 }
 
 function tokenizeExpression(expression: string): string[] {
-  return expression.split(/(\b(?:and|or|not|equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|item|triggerBody|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection)\b|'[^']*'|\d+(?:\.\d+)?|[(),@\[\]?])/g).filter(Boolean);
+  return expression.split(/(\b(?:and|or|not|equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|item|triggerBody|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection)\b|'[^']*'|\d+(?:\.\d+)?|[(),@\]?])/g).filter(Boolean);
 }
 
 interface ExpressionPreviewProps {

@@ -1,6 +1,7 @@
 .eb-root {
-  --eb-font: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --eb-mono: "JetBrains Mono", "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  /* Native Fluent typography: Segoe UI system stack (matches workbenchTokens fontFamilyBase). */
+  --eb-font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", sans-serif;
+  --eb-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   --t-caption2: 11px;
   --t-caption1: 12px;
   --t-body1: 14px;
@@ -626,6 +627,41 @@
   background: linear-gradient(0deg, var(--danger-soft), var(--danger-soft)), rgba(14, 19, 28, 0.28);
 }
 
+.eb-rule-row-editor.is-orphan {
+  border-color: rgba(255, 200, 60, 0.35);
+  background: linear-gradient(0deg, var(--warn-soft, rgba(255, 200, 60, 0.08)), var(--warn-soft, rgba(255, 200, 60, 0.08))), rgba(14, 19, 28, 0.28);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+}
+
+.eb-orphan-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c8871a;
+  background: rgba(255, 200, 60, 0.15);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.eb-rule-row-editor.is-orphan .eb-field-title {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eb-rule-row-editor.is-orphan .eb-muted {
+  color: var(--text-subtle, rgba(255, 255, 255, 0.4));
+  font-size: 12px;
+}
+
 .eb-rule-row-grid {
   display: contents;
 }
@@ -1208,10 +1244,54 @@
   font-size: 0.76rem;
 }
 
+/* Toolbox stack: fills pane body height, pins SourceChip + search, scrolls the rest */
 .eb-toolbox-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scrollable field/accordion area below the pinned search box */
+.eb-toolbox-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Accordion label — stacks table name over relation name */
+.eb-accordion-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.eb-accordion-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--fg1, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eb-accordion-subtitle {
+  font-size: 0.70rem;
+  font-weight: 500;
+  color: var(--fg3, var(--text3));
+  font-family: var(--eb-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Clip content inside accordion panels to prevent field rows from bleeding */
+.eb-accordion-panel-content {
+  overflow: hidden;
 }
 
 .eb-toolbox-actions {

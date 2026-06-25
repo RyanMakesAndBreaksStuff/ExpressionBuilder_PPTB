@@ -34,6 +34,15 @@ describe('PPTB adapter discovery', () => {
     expect(tables?.[1].isSystem).toBe(false);
   });
 
+  it('getTables unwraps the { value: [...] } response shape', async () => {
+    const adapter = createPptbAdapter(
+      undefined,
+      mockDv({ getAllEntitiesMetadata: vi.fn().mockResolvedValue({ value: entities }) }),
+    );
+    const tables = await adapter.getTables?.();
+    expect(tables?.map((t) => t.displayName)).toEqual(['Account', 'Widget']);
+  });
+
   it('discoverFields maps attributes incl. choice labels', async () => {
     const adapter = createPptbAdapter(undefined, mockDv());
     const result = await adapter.discoverFields?.({ table: 'account' });

@@ -36,8 +36,9 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     errors.push('Import failed: mode must be triggerCondition or filterArray.');
   }
 
-  if (!Array.isArray(value.fields) || value.fields.length === 0) {
-    errors.push('Import failed: fields must be a non-empty array.');
+  // Fields may be empty: the honest empty state (T9) is a valid document that must round-trip.
+  if (!Array.isArray(value.fields)) {
+    errors.push('Import failed: fields must be an array.');
   } else {
     value.fields.forEach((field, index) => validateField(field, `fields[${index}]`, errors));
   }
