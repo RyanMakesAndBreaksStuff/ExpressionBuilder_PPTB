@@ -20,7 +20,7 @@
   --r-panel: 20px;
   --duration-fast: 160ms;
   --duration-med: 220ms;
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -140,13 +140,16 @@
   width: 8px;
   height: 8px;
 }
+
 .eb-root ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .eb-root ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 999px;
 }
+
 .eb-root ::-webkit-scrollbar-thumb:hover {
   background: var(--text3);
 }
@@ -380,6 +383,11 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Left pane must not scroll at body level — scrolling happens inside eb-toolbox-scroll */
+.eb-dock-pane[data-side="left"] .eb-pane-body {
+  overflow: hidden;
 }
 
 /* Center Column */
@@ -726,11 +734,17 @@
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .eb-field-detail {
   font-size: 0.76rem;
   color: var(--text3);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .eb-field-type-badge {
@@ -925,6 +939,34 @@
 .eb-action-subtle {
   background: transparent;
   border-color: transparent;
+}
+
+/* Ghost — faint by default in light mode, fully visible on hover/focus */
+.eb-action-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Header ghost buttons: always white-on-glass regardless of theme */
+.eb-workbench-header .eb-action-ghost {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.eb-workbench-header .eb-action-ghost:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* In light mode ghost buttons are at 20% opacity (barely visible) and reveal on hover */
+.eb-root[data-theme="light"] .eb-action-ghost {
+  opacity: 0.2;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.eb-root[data-theme="light"] .eb-action-ghost:hover,
+.eb-root[data-theme="light"] .eb-action-ghost:focus-visible {
+  opacity: 1;
 }
 
 .eb-action-icon {
@@ -1346,9 +1388,11 @@
   .eb-workspace {
     grid-template-columns: 250px minmax(0, 1fr) 290px;
   }
+
   .eb-rule-row-editor {
     grid-template-columns: 18px 24px minmax(0, 1fr) minmax(0, 1fr);
   }
+
   .eb-value-wrap,
   .eb-rule-tools {
     grid-column: 3 / -1;
@@ -1360,13 +1404,16 @@
     grid-template-columns: 1fr;
     overflow-y: auto;
   }
+
   .eb-dock-pane,
   .eb-canvas-card {
     min-height: 220px;
   }
+
   .eb-preview-card {
     flex-basis: auto;
   }
+
   .eb-center-col {
     order: -1;
   }
@@ -1377,12 +1424,14 @@
     padding: 12px;
     gap: 12px;
   }
+
   .eb-workbench-header {
     padding: 14px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .eb-root,
   .eb-root * {
     transition-duration: 1ms !important;

@@ -1,4 +1,6 @@
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
+import { Button } from '@fluentui/react-components';
+import { DeleteRegular } from '@fluentui/react-icons';
 import { countRules } from '../app/builderState';
 import type { QueryGroup } from '../composer/querySchema';
 import { RuleRowEditor } from './RuleRowEditor';
@@ -68,6 +70,15 @@ export function ConditionGroupCard({
           <button type="button" className="eb-text-btn" onClick={() => onAddGroup(group.id)}>
             + Group
           </button>
+          {!isRoot && (
+            <Button
+              appearance="subtle"
+              size="small"
+              icon={<DeleteRegular />}
+              aria-label={`Delete group ${group.id}`}
+              onClick={() => onDeleteNode(group.id)}
+            />
+          )}
         </div>
       </div>
 
