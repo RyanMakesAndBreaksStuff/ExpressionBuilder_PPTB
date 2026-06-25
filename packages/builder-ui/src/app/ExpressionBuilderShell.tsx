@@ -6,6 +6,7 @@ import {
   addGroup,
   addRule,
   changeGroupConjunction,
+  clearDocument,
   deleteNode,
   duplicateRule,
   selectRule,
@@ -364,6 +365,7 @@ export function ExpressionBuilderShell({
               }}
               onDuplicateRule={(ruleId) => setDocument((current) => duplicateRule(current, ruleId))}
               onDeleteNode={(nodeId) => setDocument((current) => deleteNode(current, nodeId))}
+              onClear={() => setDocument((current) => clearDocument(current))}
             />
 
             <ExpressionDocumentPanel

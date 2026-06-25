@@ -237,11 +237,15 @@ export function FieldToolboxPane({
           )}
         </div>
       ) : (
-        <WrapperChips
-          onApply={(wrapperId) => {
-            if (selectedRuleId) onApplyWrapper?.(selectedRuleId, wrapperId);
-          }}
-        />
+        <div className="eb-toolbox-stack">
+          <div className="eb-toolbox-scroll">
+            <WrapperChips
+              onApply={(wrapperId) => {
+                if (selectedRuleId) onApplyWrapper?.(selectedRuleId, wrapperId);
+              }}
+            />
+          </div>
+        </div>
       )}
     </DockPane>
   );

@@ -73,6 +73,8 @@ export interface ConditionCanvasProps {
   onUpdateRule: (ruleId: string, patch: RulePatch) => void;
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  /** Wipes all children from the root group, resetting the canvas to empty. */
+  onClear: () => void;
   /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
   onRequestRemap?: (ruleId: string) => void;
 }

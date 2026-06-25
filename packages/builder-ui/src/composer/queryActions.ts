@@ -302,6 +302,15 @@ export const moveNode = (
   return root === removal.node ? document : { ...document, root };
 };
 
+export const clearDocument = (document: QueryDocument): QueryDocument => {
+  if (document.root.children.length === 0) return document;
+  return {
+    ...document,
+    root: { ...document.root, children: [] },
+    selectedRuleId: undefined,
+  };
+};
+
 export const changeGroupConjunction = (
   document: QueryDocument,
   groupId: string,
