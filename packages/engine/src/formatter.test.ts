@@ -33,3 +33,21 @@ describe('formatExpression — numeric choice', () => {
     expect(result.diagnostics.find((d) => d.code === 'TYPE_MISMATCH')).toBeUndefined();
   });
 });
+
+describe('formatExpression — no legacy caseInsensitive', () => {
+  it('does not auto-wrap string comparisons unless wrapped explicitly', () => {
+    const nameField: FieldDefinition = { id: 'name', label: 'Name', type: 'string', path: ['name'] };
+    const ast = group([
+      {
+        kind: 'rule',
+        operator: 'equals',
+        left: { kind: 'field', fieldId: 'name' },
+        right: { kind: 'literal', value: 'bob', valueType: 'string' },
+      },
+    ]);
+
+    const result = formatExpression(ast, { mode: 'triggerCondition', fields: [nameField] });
+
+    expect(result.expression).not.toContain('toLower');
+  });
+});

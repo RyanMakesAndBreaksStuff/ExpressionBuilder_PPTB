@@ -102,20 +102,19 @@ describe('trigger condition formatter', () => {
     );
   });
 
-  it('wraps case-insensitive string comparisons with toLower and coalesce', () => {
+  it('does not auto-wrap string comparisons with toLower', () => {
     const result = formatExpression(
       {
         kind: 'rule',
         operator: 'contains',
         left: { kind: 'field', fieldId: 'Title' },
         right: { kind: 'literal', value: 'urgent', valueType: 'string' },
-        caseInsensitive: true,
       },
       triggerOptions,
     );
 
     expect(result.expression).toBe(
-      "@contains(toLower(coalesce(triggerBody()?['Title'], '')), toLower('urgent'))",
+      "@contains(triggerBody()?['Title'], 'urgent')",
     );
   });
 });

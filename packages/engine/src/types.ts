@@ -32,7 +32,6 @@ export interface RuleNode {
   operator: string;
   left: ExpressionNode;
   right?: ExpressionNode;
-  caseInsensitive?: boolean;
 }
 
 export interface FunctionCallNode {
