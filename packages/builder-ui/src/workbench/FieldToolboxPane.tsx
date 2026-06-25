@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Accordion,
   AccordionHeader,
@@ -6,7 +6,10 @@ import {
   AccordionPanel,
   Spinner,
   Text,
+  makeStyles,
+  tokens,
 } from '@fluentui/react-components';
+import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { TypeGlyph } from '../components/TypeGlyph';
 import type { FieldToolboxPaneProps } from './types';
 import { DockPane } from './controls/DockPane';
@@ -15,6 +18,43 @@ import { WrapperChips } from './WrapperChips';
 import { SourceChip } from './SourceChip';
 import { GetStartedPanel } from './GetStartedPanel';
 
+const PRIMARY_ITEM_VALUE = '__primary__';
+
+// ── Module-scope styles (Fluent2: makeStyles outside component) ──────────────
+const useStyles = makeStyles({
+  emptyText: {
+    color: tokens.colorNeutralForeground3,
+  },
+});
+
+// ── Extracted component (React best-practices: structure-single-responsibility)
+interface FieldListProps {
+  items: FieldDefinition[];
+  ariaLabel: string;
+}
+
+function FieldList({ items, ariaLabel }: FieldListProps) {
+  return (
+    <ul className="eb-field-list" role="list" aria-label={ariaLabel}>
+      {items.map((field) => (
+        <li key={field.id}>
+          <div className="eb-field-row" tabIndex={0}>
+            <TypeGlyph type={field.type} />
+            <span className="eb-field-main">
+              <span className="eb-field-title">{field.label}</span>
+              <span className="eb-field-detail">
+                {field.path.join('.')} &middot; {field.type}
+              </span>
+            </span>
+            <span className="eb-field-type-badge">{field.type}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export function FieldToolboxPane({
   activeTab,
   collapsed,
@@ -30,15 +70,18 @@ export function FieldToolboxPane({
   onToggleCollapsed,
   relatedSections,
   onExpandRelated,
+  selectedRuleId,
+  onApplyWrapper,
 }: FieldToolboxPaneProps) {
+  const styles = useStyles();
   const [search, setSearch] = useState('');
   /** Track which navigation properties have already triggered a discovery fetch. */
-  const expandedNavs = useRef(new Set<string>());
+  const [expandedNavs, setExpandedNavs] = useState(() => new Set<string>());
 
   // Split fields into primary (no group) and related (has group)
   const primaryFields = useMemo(() => fields.filter((f) => !f.group), [fields]);
   const fieldsByGroup = useMemo(() => {
-    const map = new Map<string, typeof fields>();
+    const map = new Map<string, FieldDefinition[]>();
     for (const f of fields) {
       if (!f.group) continue;
       const bucket = map.get(f.group) ?? [];
@@ -48,23 +91,31 @@ export function FieldToolboxPane({
     return map;
   }, [fields]);
 
+  // Computed once per render, used by both primary filter and related section filters
+  const needle = search.trim().toLowerCase();
+
   const filteredPrimary = useMemo(() => {
-    const needle = search.trim().toLowerCase();
     if (!needle) return primaryFields;
     return primaryFields.filter((field) => {
       const haystack = [field.label, field.id, field.type, field.path.join('.')].join(' ').toLowerCase();
       return haystack.includes(needle);
     });
-  }, [primaryFields, search]);
+  }, [primaryFields, needle]);
 
-  const handleAccordionToggle = (navigationProperty: string) => {
-    if (!expandedNavs.current.has(navigationProperty) && onExpandRelated) {
-      expandedNavs.current.add(navigationProperty);
-      onExpandRelated(navigationProperty);
-    }
-  };
+  const handleAccordionToggle = useCallback(
+    (navigationProperty: string) => {
+      if (!expandedNavs.has(navigationProperty) && onExpandRelated) {
+        setExpandedNavs((prev) => new Set(prev).add(navigationProperty));
+        onExpandRelated(navigationProperty);
+      }
+    },
+    [expandedNavs, onExpandRelated],
+  );
 
   const hasContent = fields.length > 0 || (relatedSections && relatedSections.length > 0);
+
+  // Label for the primary table accordion header
+  const primaryLabel = source.label ?? source.tableLogicalName ?? 'Fields';
 
   return (
     <DockPane
@@ -113,37 +164,37 @@ export function FieldToolboxPane({
                 aria-label="Search dynamic content fields"
               />
 
-              {/* Primary fields (no group) */}
-              {filteredPrimary.length > 0 ? (
-                <ul className="eb-field-list" role="list" aria-label="Dynamic content fields">
-                  {filteredPrimary.map((field) => (
-                    <li key={field.id}>
-                      <div className="eb-field-row" tabIndex={0}>
-                        <TypeGlyph type={field.type} />
-                        <span className="eb-field-main">
-                          <span className="eb-field-title">{field.label}</span>
-                          <span className="eb-field-detail">
-                            {field.path.join('.')} · {field.type}
-                          </span>
-                        </span>
-                        <span className="eb-field-type-badge">{field.type}</span>
+              {/* Scrollable area — primary + related accordions */}
+              <div className="eb-toolbox-scroll">
+                <Accordion
+                  collapsible
+                  multiple
+                  defaultOpenItems={[PRIMARY_ITEM_VALUE]}
+                >
+                  {/* Primary table — accordion, open by default */}
+                  <AccordionItem value={PRIMARY_ITEM_VALUE}>
+                    <AccordionHeader>
+                      <span className="eb-accordion-label">
+                        <span className="eb-accordion-title">{primaryLabel}</span>
+                      </span>
+                    </AccordionHeader>
+                    <AccordionPanel>
+                      <div className="eb-accordion-panel-content">
+                        {filteredPrimary.length > 0 ? (
+                          <FieldList items={filteredPrimary} ariaLabel="Dynamic content fields" />
+                        ) : needle ? (
+                          <Text size={200} className={styles.emptyText}>
+                            No primary fields match.
+                          </Text>
+                        ) : null}
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : search.trim() ? (
-                <Text size={200} style={{ padding: '8px', color: 'var(--eb-text-muted)' }}>
-                  No primary fields match.
-                </Text>
-              ) : null}
+                    </AccordionPanel>
+                  </AccordionItem>
 
-              {/* Related sections — lazy-loaded accordion */}
-              {relatedSections && relatedSections.length > 0 ? (
-                <Accordion collapsible multiple>
-                  {relatedSections.map((section) => {
+                  {/* Related sections — lazy-loaded */}
+                  {relatedSections?.map((section) => {
                     const sectionFields = fieldsByGroup.get(section.displayName) ?? [];
-                    const isLoaded = expandedNavs.current.has(section.navigationProperty);
-                    const needle = search.trim().toLowerCase();
+                    const isLoaded = expandedNavs.has(section.navigationProperty);
                     const visibleFields = needle
                       ? sectionFields.filter((f) =>
                           [f.label, f.id, f.type].join(' ').toLowerCase().includes(needle),
@@ -158,46 +209,39 @@ export function FieldToolboxPane({
                         <AccordionHeader
                           onClick={() => handleAccordionToggle(section.navigationProperty)}
                         >
-                          {section.displayName}
+                          <span className="eb-accordion-label">
+                            <span className="eb-accordion-title">{section.displayName}</span>
+                            <span className="eb-accordion-subtitle">{section.navigationProperty}</span>
+                          </span>
                         </AccordionHeader>
                         <AccordionPanel>
-                          {!isLoaded && sectionFields.length === 0 ? (
-                            <Spinner size="extra-tiny" label="Loading…" />
-                          ) : visibleFields.length === 0 ? (
-                            <Text size={100}>No fields.</Text>
-                          ) : (
-                            <ul
-                              className="eb-field-list"
-                              role="list"
-                              aria-label={section.displayName + ' fields'}
-                            >
-                              {visibleFields.map((field) => (
-                                <li key={field.id}>
-                                  <div className="eb-field-row" tabIndex={0}>
-                                    <TypeGlyph type={field.type} />
-                                    <span className="eb-field-main">
-                                      <span className="eb-field-title">{field.label}</span>
-                                      <span className="eb-field-detail">
-                                        {field.path.join('.')} · {field.type}
-                                      </span>
-                                    </span>
-                                    <span className="eb-field-type-badge">{field.type}</span>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                          <div className="eb-accordion-panel-content">
+                            {!isLoaded && sectionFields.length === 0 ? (
+                              <Spinner size="extra-tiny" label="Loading..." />
+                            ) : visibleFields.length === 0 ? (
+                              <Text size={100}>No fields.</Text>
+                            ) : (
+                              <FieldList
+                                items={visibleFields}
+                                ariaLabel={section.displayName + ' fields'}
+                              />
+                            )}
+                          </div>
                         </AccordionPanel>
                       </AccordionItem>
                     );
                   })}
                 </Accordion>
-              ) : null}
+              </div>
             </>
           )}
         </div>
       ) : (
-        <WrapperChips />
+        <WrapperChips
+          onApply={(wrapperId) => {
+            if (selectedRuleId) onApplyWrapper?.(selectedRuleId, wrapperId);
+          }}
+        />
       )}
     </DockPane>
   );

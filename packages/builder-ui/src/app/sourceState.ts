@@ -10,6 +10,7 @@ import type {
   QueryGroup,
   QueryNode,
 } from '../composer/querySchema';
+import { deleteNode } from '../composer/queryActions';
 import { readCache, writeCache } from '../importExport/metadataCache';
 
 /** The runtime view of the active source: the descriptor plus its resolved fields. */
@@ -103,6 +104,35 @@ export function resolveOrphans(root: QueryGroup, fields: FieldDefinition[]): Set
     }
   }
   return orphans;
+}
+
+// ── Switch confirmation (T18) ────────────────────────────────────────────────
+
+export interface SourceSwitchDiff {
+  /** fieldIds referenced by rules that won't exist in the incoming field set. */
+  orphanedFieldIds: string[];
+  /** rule ids that reference an orphaned field. */
+  affectedRuleIds: string[];
+}
+
+/** Compute what would break if `document` switched to `nextFields`. */
+export function diffSourceSwitch(document: QueryDocument, nextFields: FieldDefinition[]): SourceSwitchDiff {
+  const orphans = resolveOrphans(document.root, nextFields);
+  const affectedRuleIds: string[] = [];
+  const walk = (node: QueryNode) => {
+    if (node.kind === 'rule') {
+      if (orphans.has(node.fieldId)) affectedRuleIds.push(node.id);
+      return;
+    }
+    node.children.forEach(walk);
+  };
+  walk(document.root);
+  return { orphanedFieldIds: [...orphans], affectedRuleIds };
+}
+
+/** Remove every rule whose id is in `ruleIds`. */
+export function removeRules(document: QueryDocument, ruleIds: string[]): QueryDocument {
+  return ruleIds.reduce((doc, ruleId) => deleteNode(doc, ruleId), document);
 }
 
 // ── Add field helpers (T11) ──────────────────────────────────────────────────

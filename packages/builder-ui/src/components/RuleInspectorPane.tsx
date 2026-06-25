@@ -110,13 +110,34 @@ export function RuleInspectorPane({
                   type="button"
                   className="eb-btn"
                   onClick={() => updateSelectedRule({ caseInsensitive: true })}
-                  disabled={field.type !== 'string'}
+                  disabled={field.type !== 'string' && field.type !== 'choice'}
                 >
                   Wrap both sides in toLower()
                 </button>
-                <span className="eb-pill">toLower()</span>
-                <span className="eb-pill">trim()</span>
-                <span className="eb-pill">coalesce()</span>
+                <button
+                  type="button"
+                  className="eb-pill"
+                  title="Wrap value in toLower()"
+                  onClick={() => updateSelectedRule({ valueFunction: 'toLower' })}
+                >
+                  toLower()
+                </button>
+                <button
+                  type="button"
+                  className="eb-pill"
+                  title="Wrap value in trim()"
+                  onClick={() => updateSelectedRule({ valueFunction: 'trim' })}
+                >
+                  trim()
+                </button>
+                <button
+                  type="button"
+                  className="eb-pill"
+                  title="Wrap value in coalesce()"
+                  onClick={() => updateSelectedRule({ valueFunction: 'coalesce' })}
+                >
+                  coalesce()
+                </button>
               </div>
             </div>
 

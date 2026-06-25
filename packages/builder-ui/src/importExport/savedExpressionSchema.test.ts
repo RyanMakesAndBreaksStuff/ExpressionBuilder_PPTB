@@ -44,6 +44,21 @@ describe('saved expression v1 to v2 migration', () => {
     expect(upgradeDocument(doc)).toEqual(doc);
   });
 
+  it('round-trips an empty (no-fields) document — honest empty state', () => {
+    const empty: QueryDocument = {
+      version: 2,
+      mode: 'triggerCondition',
+      fields: [],
+      root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
+      source: { kind: 'unknown' },
+    };
+    const reparsed = parseSavedExpression(serializeSavedExpression(empty));
+    expect(reparsed.ok).toBe(true);
+    if (reparsed.ok) {
+      expect(reparsed.document).toEqual(empty);
+    }
+  });
+
   it('rejects version 3', () => {
     const result = parseSavedExpression(v1Fixture.replace('"version":1', '"version":3'));
     expect(result.ok).toBe(false);

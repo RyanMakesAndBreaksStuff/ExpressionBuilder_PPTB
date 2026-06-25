@@ -13,6 +13,7 @@ import {
 } from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
+import { diffFields, type FieldDrift } from '../importExport/metadataCache';
 import {
   createPorcelainFluentTheme,
   porcelainTokens,
@@ -20,8 +21,9 @@ import {
   type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule } from './builderState';
+import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
-import { applySource, discoverCached, discoverThroughAdapter } from './sourceState';
+import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
@@ -29,6 +31,10 @@ import { ImportSchemaDialog } from '../workbench/ImportSchemaDialog';
 import { AddFieldForm } from '../workbench/AddFieldForm';
 import { ManageProfilesDialog } from '../workbench/ManageProfilesDialog';
 import { TablePickerDialog } from '../workbench/TablePickerDialog';
+import { RemapFieldDialog } from '../workbench/RemapFieldDialog';
+import { SwitchSourceDialog } from '../workbench/SwitchSourceDialog';
+import { SourceUpdatedDialog } from '../workbench/SourceUpdatedDialog';
+import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
 import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
 import {
@@ -59,6 +65,20 @@ export function ExpressionBuilderShell({
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
   >([]);
+
+  // Pending state for the switch-source confirmation dialog (T18).
+  type PendingSwitch = {
+    table: string;
+    tableLabel: string;
+    includeRelated: boolean;
+    fields: FieldDefinition[];
+    diff: import('./sourceState').SourceSwitchDiff;
+  };
+  const [pendingSwitch, setPendingSwitch] = useState<PendingSwitch | null>(null);
+
+  // Pending state for the drift summary dialog (T19).
+  type PendingDrift = { drift: FieldDrift; removedInUse: string[] };
+  const [pendingDrift, setPendingDrift] = useState<PendingDrift | null>(null);
 
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
@@ -113,7 +133,7 @@ export function ExpressionBuilderShell({
     setImportDiagnostics([]);
   };
 
-  /** Discover fields (cache-first). On success wires related sections for the table. */
+  /** Discover fields (cache-first). On refresh, diffs and shows the drift dialog (T19). */
   const connectFieldsCached = async (
     table: string,
     tableLabel: string,
@@ -125,13 +145,26 @@ export function ExpressionBuilderShell({
       await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
     }
-    setDocument((current) =>
-      applySource(
+
+    // T19: On refresh, diff the old vs new field set and surface a drift summary.
+    setDocument((current) => {
+      if (refresh && current.source?.kind === 'dataverse') {
+        const drift = diffFields(current.fields, fields);
+        const hasDrift = drift.added.length > 0 || drift.removed.length > 0 || drift.changed.length > 0;
+        if (hasDrift) {
+          const usedIds = referencedFieldIds(current.root);
+          const removedInUse = drift.removed.filter((f) => usedIds.has(f.id)).map((f) => f.id);
+          setPendingDrift({ drift, removedInUse });
+          setDialog('drift');
+        }
+      }
+      return applySource(
         current,
         { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
         fields,
-      ),
-    );
+      );
+    });
+
     if (adapter.getRelatedTables) {
       void adapter.getRelatedTables(table).then((rels) =>
         setRelatedSections(
@@ -188,6 +221,54 @@ export function ExpressionBuilderShell({
     setRelatedSections([]);
   };
 
+  /**
+   * T18: Intercept table confirmation. Discovers fields first; if existing rules would
+   * become orphans, shows SwitchSourceDialog before applying. Otherwise applies directly.
+   */
+  const handleTableConfirm = async (table: string, tableLabel: string, includeRelated: boolean) => {
+    const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, false);
+    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
+      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
+      return;
+    }
+    // Check against current document for rule collisions.
+    const diff = diffSourceSwitch(document, fields);
+    if (diff.affectedRuleIds.length > 0) {
+      setPendingSwitch({ table, tableLabel, includeRelated, fields, diff });
+      setDialog('switch');
+      return;
+    }
+    // No affected rules — apply directly.
+    applyTableSwitch(table, tableLabel, includeRelated, fields);
+  };
+
+  /** Apply a confirmed table switch, with optional rule removal. */
+  const applyTableSwitch = (
+    table: string,
+    tableLabel: string,
+    includeRelated: boolean,
+    fields: FieldDefinition[],
+    removeAffected?: string[],
+  ) => {
+    setDocument((current) => {
+      const base = applySource(
+        current,
+        { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
+        fields,
+      );
+      return removeAffected?.length ? removeRules(base, removeAffected) : base;
+    });
+    if (adapter.getRelatedTables) {
+      void adapter.getRelatedTables(table).then((rels) =>
+        setRelatedSections(
+          rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
+        ),
+      );
+    } else {
+      setRelatedSections([]);
+    }
+  };
+
   const paletteVars = porcelainTokens[paletteId].cssVariables;
 
   return (
@@ -240,6 +321,14 @@ export function ExpressionBuilderShell({
             }}
             relatedSections={relatedSections}
             onExpandRelated={handleExpandRelated}
+            selectedRuleId={selectedRule?.id}
+            onApplyWrapper={(ruleId, wrapperId) => {
+              setDocument((current) =>
+                updateRule(current, ruleId, {
+                  valueFunction: wrapperId as import('../composer/querySchema').QueryRule['valueFunction'],
+                }),
+              );
+            }}
           />
 
           <div className="eb-center-col">
@@ -248,6 +337,10 @@ export function ExpressionBuilderShell({
               fields={document.fields}
               mode={document.mode}
               selectedRuleId={selectedRule?.id}
+              onRequestRemap={(ruleId) => {
+                setDocument((current) => selectRule(current, ruleId));
+                setDialog('remap');
+              }}
               onSelectRule={(ruleId) => {
                 setDocument((current) => selectRule(current, ruleId));
                 setImportDiagnostics([]);
@@ -339,9 +432,55 @@ export function ExpressionBuilderShell({
         onDismiss={() => setDialog('none')}
         onConfirm={(table, includeRelated) => {
           setDialog('none');
-          void connectFieldsCached(table.logicalName, table.displayName, includeRelated, false);
+          void handleTableConfirm(table.logicalName, table.displayName, includeRelated);
         }}
       />
+
+      <SourceUpdatedDialog
+        open={dialog === 'drift'}
+        drift={pendingDrift?.drift ?? { added: [], removed: [], changed: [] }}
+        removedInUse={pendingDrift?.removedInUse ?? []}
+        onClose={() => {
+          setDialog('none');
+          setPendingDrift(null);
+        }}
+      />
+
+      <SwitchSourceDialog
+        open={dialog === 'switch'}
+        diff={pendingSwitch?.diff ?? { orphanedFieldIds: [], affectedRuleIds: [] }}
+        targetLabel={pendingSwitch?.tableLabel ?? ''}
+        onDismiss={() => {
+          setDialog('none');
+          setPendingSwitch(null);
+        }}
+        onConfirm={(mode) => {
+          if (pendingSwitch) {
+            applyTableSwitch(
+              pendingSwitch.table,
+              pendingSwitch.tableLabel,
+              pendingSwitch.includeRelated,
+              pendingSwitch.fields,
+              mode === 'remove' ? pendingSwitch.diff.affectedRuleIds : undefined,
+            );
+          }
+          setDialog('none');
+          setPendingSwitch(null);
+        }}
+      />
+
+      <RemapFieldDialog
+        open={dialog === 'remap'}
+        rule={selectedRule ?? null}
+        fields={document.fields}
+        onDismiss={() => setDialog('none')}
+        onRemap={(ruleId, patch) => {
+          setDocument((current) => updateRule(current, ruleId, patch));
+          setDialog('none');
+        }}
+      />
+
+      <OnboardingPanel settings={adapter.settings} />
     </FluentProvider>
   );
 }
@@ -352,14 +491,3 @@ function normalizePalette(platformTheme: PlatformTheme): PaletteId {
   return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
 }
 
-function isFieldDefinitionArray(value: unknown[]): value is FieldDefinition[] {
-  return value.every(
-    (item) =>
-      typeof item === 'object' &&
-      item !== null &&
-      'id' in item &&
-      'label' in item &&
-      'type' in item &&
-      'path' in item,
-  );
-}
