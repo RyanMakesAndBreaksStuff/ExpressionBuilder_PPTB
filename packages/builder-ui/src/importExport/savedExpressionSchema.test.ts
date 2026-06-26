@@ -63,4 +63,21 @@ describe('savedExpressionSchema — new fields', () => {
     const result = parseSavedExpression(json);
     expect(result.ok).toBe(false);
   });
+
+  it('rejects malformed wrappers', () => {
+    const json = JSON.stringify({
+      version: 2,
+      mode: 'triggerCondition',
+      fields: [{ id: 'name', label: 'Name', type: 'string', path: ['name'] }],
+      root: {
+        id: 'root',
+        kind: 'group',
+        conjunction: 'and',
+        children: [{ id: 'rule-1', kind: 'rule', fieldId: 'name', operator: 'equals', value: 'x', wrappers: [123] }],
+      },
+    });
+
+    const result = parseSavedExpression(json);
+    expect(result.ok).toBe(false);
+  });
 });
