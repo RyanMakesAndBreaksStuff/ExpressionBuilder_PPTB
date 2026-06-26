@@ -1,11 +1,20 @@
-import type { Conjunction, ExpressionMode, FieldDefinition } from '@pavb/engine';
+import type { Conjunction, ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
+
+export interface DataSourceDescriptor {
+  kind: 'dataverse' | 'sample' | 'import' | 'profile' | 'unknown';
+  label?: string;
+  tableLogicalName?: string;
+  includeRelated?: boolean;
+  fetchedAt?: number;
+}
 
 export interface QueryDocument {
-  version: 1;
+  version: 1 | 2;
   mode: ExpressionMode;
   fields: FieldDefinition[];
   root: QueryGroup;
   selectedRuleId?: string;
+  source?: DataSourceDescriptor;
 }
 
 export type QueryNode = QueryGroup | QueryRule;

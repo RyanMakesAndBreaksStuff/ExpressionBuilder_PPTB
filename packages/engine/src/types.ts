@@ -3,6 +3,7 @@ export type FieldType = 'string' | 'number' | 'boolean' | 'dateTime' | 'choice';
 export type ValueType = FieldType | 'null' | 'unknown';
 export type PredicateType = 'boolean';
 export type Conjunction = 'and' | 'or';
+export type FieldSourceKind = 'dataverse';
 
 export interface FieldDefinition {
   id: string;
@@ -12,6 +13,10 @@ export interface FieldDefinition {
   choices?: string[];
   options?: Array<{ label: string; value: number }>;
   nullable?: boolean;
+  source?: FieldSourceKind;
+  logicalName?: string;
+  group?: string;
+  orphaned?: boolean;
 }
 
 export type ExpressionNode =
