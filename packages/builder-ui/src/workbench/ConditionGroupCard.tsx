@@ -18,6 +18,7 @@ interface ConditionGroupCardProps {
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
   onRequestRemap?: (ruleId: string) => void;
+  selectedWrappers?: string[];
 }
 
 export function ConditionGroupCard({
@@ -32,6 +33,7 @@ export function ConditionGroupCard({
   onSelectRule,
   onUpdateRule,
   onRequestRemap,
+  selectedWrappers,
 }: ConditionGroupCardProps) {
   const isAnd = group.conjunction === 'and';
   const ruleCount = countRules(group);
@@ -98,6 +100,7 @@ export function ConditionGroupCard({
               onDuplicateRule={onDuplicateRule}
               onDeleteNode={onDeleteNode}
               onRequestRemap={onRequestRemap}
+              selectedWrappers={selectedWrappers}
             />
           ) : (
             <RuleRowEditor
@@ -110,6 +113,7 @@ export function ConditionGroupCard({
               onDuplicate={onDuplicateRule}
               onDelete={onDeleteNode}
               onRequestRemap={onRequestRemap}
+              selectedWrappers={selectedWrappers}
             />
           ),
         )}
