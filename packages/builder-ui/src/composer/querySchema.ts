@@ -1,7 +1,9 @@
 import type { Conjunction, ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 
+export type DataSourceKind = 'dataverse' | 'sample' | 'import' | 'profile' | 'unknown';
+
 export interface DataSourceDescriptor {
-  kind: 'dataverse' | 'sample' | 'import' | 'profile' | 'unknown';
+  kind: DataSourceKind;
   label?: string;
   tableLogicalName?: string;
   includeRelated?: boolean;

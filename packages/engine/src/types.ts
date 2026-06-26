@@ -3,7 +3,7 @@ export type FieldType = 'string' | 'number' | 'boolean' | 'dateTime' | 'choice';
 export type ValueType = FieldType | 'null' | 'unknown';
 export type PredicateType = 'boolean';
 export type Conjunction = 'and' | 'or';
-export type FieldSourceKind = 'dataverse';
+export type FieldSourceKind = 'dataverse' | 'sample' | 'csv' | 'json' | 'jsonSchema' | 'user';
 
 export interface FieldDefinition {
   id: string;
