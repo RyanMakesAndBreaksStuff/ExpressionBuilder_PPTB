@@ -10,7 +10,7 @@ import {
   type FunctionCallNode,
   type LiteralNode,
 } from '@ryanmakes/eb_engine';
-import type { QueryDocument, QueryGroup, QueryNode, QueryRule } from '../composer/querySchema';
+import type { QueryDocument, QueryGroup, QueryNode, QueryRule, RulePatch } from '../composer/querySchema';
 
 export interface DerivedBuilderState {
   expression: string;
@@ -131,6 +131,14 @@ export function getOperatorsForField(field?: FieldDefinition): readonly string[]
 
 export function getSafeOperator(field: FieldDefinition, operator: string): string {
   return isOperatorSupported(field.type, operator) ? operator : OPERATORS_BY_FIELD_TYPE[field.type][0];
+}
+
+export function remapRulePatch(target: FieldDefinition, currentOperator: string): RulePatch {
+  return {
+    fieldId: target.id,
+    operator: getSafeOperator(target, currentOperator),
+    value: getDefaultValue(target),
+  };
 }
 
 export function countRules(node: QueryNode): number {
