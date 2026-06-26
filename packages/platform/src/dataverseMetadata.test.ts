@@ -74,3 +74,25 @@ describe('mapDataverseAttribute', () => {
     expect(field?.type).toBe('number');
   });
 });
+
+describe('mapDataverseAttribute — choice options', () => {
+  it('captures numeric option values alongside labels', () => {
+    const field = mapDataverseAttribute({
+      LogicalName: 'statuscode',
+      AttributeType: 'Status',
+      OptionSet: {
+        Options: [
+          { Value: 1, Label: { UserLocalizedLabel: { Label: 'Active' } } },
+          { Value: 2, Label: { UserLocalizedLabel: { Label: 'Inactive' } } },
+        ],
+      },
+    });
+
+    expect(field?.type).toBe('choice');
+    expect(field?.options).toEqual([
+      { label: 'Active', value: 1 },
+      { label: 'Inactive', value: 2 },
+    ]);
+    expect(field?.choices).toEqual(['Active', 'Inactive']);
+  });
+});

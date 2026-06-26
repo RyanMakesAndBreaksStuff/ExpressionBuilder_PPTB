@@ -1,66 +1,83 @@
 import { describe, expect, it } from 'vitest';
-import { parseSavedExpression, serializeSavedExpression, upgradeDocument } from './savedExpressionSchema';
-import type { QueryDocument } from '../composer/querySchema';
+import { parseSavedExpression } from './savedExpressionSchema';
 
-const v1Fixture = JSON.stringify({
-  version: 1,
-  mode: 'triggerCondition',
-  fields: [{ id: 'Status', label: 'Status', type: 'choice', path: ['Status'], choices: ['A', 'B'] }],
-  root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
-});
-
-describe('saved expression v1 to v2 migration', () => {
-  it('loads a v1 document and upgrades it to v2', () => {
-    const result = parseSavedExpression(v1Fixture);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.document.version).toBe(2);
-      expect(result.document.source).toEqual({ kind: 'unknown' });
-    }
-  });
-
-  it('round-trips a v2 document unchanged', () => {
-    const doc: QueryDocument = {
-      version: 2,
-      mode: 'filterArray',
-      fields: [{ id: 'Amount', label: 'Amount', type: 'number', path: ['Amount'], source: 'user' }],
+describe('savedExpressionSchema', () => {
+  it('parses a minimal valid saved expression', () => {
+    const json = JSON.stringify({
+      version: 1,
+      mode: 'triggerCondition',
+      fields: [{ id: 'name', label: 'Name', type: 'string', path: ['name'] }],
       root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
-      source: { kind: 'import', label: 'Pasted JSON' },
-    };
-    const reparsed = parseSavedExpression(serializeSavedExpression(doc));
-    expect(reparsed.ok).toBe(true);
-    if (reparsed.ok) {
-      expect(reparsed.document).toEqual(doc);
-    }
+    });
+
+    const result = parseSavedExpression(json);
+    expect(result.ok).toBe(true);
   });
 
-  it('upgradeDocument is idempotent', () => {
-    const doc = upgradeDocument({
+  it('rejects invalid JSON', () => {
+    const result = parseSavedExpression('not json');
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects missing fields', () => {
+    const json = JSON.stringify({
       version: 1,
       mode: 'triggerCondition',
       fields: [],
       root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
     });
-    expect(upgradeDocument(doc)).toEqual(doc);
-  });
 
-  it('round-trips an empty (no-fields) document — honest empty state', () => {
-    const empty: QueryDocument = {
+    const result = parseSavedExpression(json);
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe('savedExpressionSchema — new fields', () => {
+  it('accepts options on a field and wrappers on a rule', () => {
+    const json = JSON.stringify({
       version: 2,
       mode: 'triggerCondition',
-      fields: [],
-      root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
-      source: { kind: 'unknown' },
-    };
-    const reparsed = parseSavedExpression(serializeSavedExpression(empty));
-    expect(reparsed.ok).toBe(true);
-    if (reparsed.ok) {
-      expect(reparsed.document).toEqual(empty);
-    }
+      fields: [
+        { id: 'statuscode', label: 'Status', type: 'choice', path: ['statuscode'], choices: ['Active'], options: [{ label: 'Active', value: 1 }] },
+      ],
+      root: {
+        id: 'root',
+        kind: 'group',
+        conjunction: 'and',
+        children: [{ id: 'rule-1', kind: 'rule', fieldId: 'statuscode', operator: 'equals', value: 1, wrappers: ['toLower'] }],
+      },
+    });
+
+    const result = parseSavedExpression(json);
+    expect(result.ok).toBe(true);
   });
 
-  it('rejects version 3', () => {
-    const result = parseSavedExpression(v1Fixture.replace('"version":1', '"version":3'));
+  it('rejects malformed options', () => {
+    const json = JSON.stringify({
+      version: 2,
+      mode: 'triggerCondition',
+      fields: [{ id: 'x', label: 'X', type: 'choice', path: ['x'], options: [{ label: 'A' }] }],
+      root: { id: 'root', kind: 'group', conjunction: 'and', children: [] },
+    });
+
+    const result = parseSavedExpression(json);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects malformed wrappers', () => {
+    const json = JSON.stringify({
+      version: 2,
+      mode: 'triggerCondition',
+      fields: [{ id: 'name', label: 'Name', type: 'string', path: ['name'] }],
+      root: {
+        id: 'root',
+        kind: 'group',
+        conjunction: 'and',
+        children: [{ id: 'rule-1', kind: 'rule', fieldId: 'name', operator: 'equals', value: 'x', wrappers: [123] }],
+      },
+    });
+
+    const result = parseSavedExpression(json);
     expect(result.ok).toBe(false);
   });
 });

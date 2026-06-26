@@ -54,6 +54,17 @@ function choicesOf(attr: DataverseAttributeMetadata): string[] | undefined {
   );
 }
 
+function optionsOf(attr: DataverseAttributeMetadata): Array<{ label: string; value: number }> | undefined {
+  const options = attr.OptionSet?.Options;
+  if (!options?.length) {
+    return undefined;
+  }
+  return options.map((option) => ({
+    label: option.Label?.UserLocalizedLabel?.Label?.trim() || String(option.Value),
+    value: option.Value,
+  }));
+}
+
 function isRequired(attr: DataverseAttributeMetadata): boolean {
   const level = attr.RequiredLevel?.Value;
   return level === 'SystemRequired' || level === 'ApplicationRequired';
@@ -114,9 +125,10 @@ export function mapDataverseAttribute(
   };
 
   if (type === 'choice') {
-    const choices = choicesOf(attr);
-    if (choices) {
-      field.choices = choices;
+    const options = optionsOf(attr);
+    if (options) {
+      field.options = options;
+      field.choices = options.map((option) => option.label);
     }
     // MultiSelectPicklist holds zero-or-more values; treat as nullable regardless of RequiredLevel.
     if (dvType === 'MultiSelectPicklist') {
