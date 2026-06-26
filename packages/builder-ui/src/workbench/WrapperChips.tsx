@@ -41,7 +41,6 @@ export function WrapperChips({ selected, onToggle, onClearSelection }: WrapperCh
         className="eb-text-btn"
         onClick={onClearSelection}
         disabled={selected.length === 0}
-        aria-label="Clear wrapper selection"
       >
         Clear selection
       </button>
