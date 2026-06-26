@@ -1,4 +1,4 @@
-import type { ExpressionMode, FieldDefinition, FieldType } from '@ryanmakes/eb_engine';
+import type { ExpressionMode, FieldDefinition, FieldType } from '@pavb/engine';
 import type { QueryDocument, QueryNode } from '../composer/querySchema';
 
 export type SavedExpressionParseResult =
@@ -36,9 +36,8 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     errors.push('Import failed: mode must be triggerCondition or filterArray.');
   }
 
-  // Fields may be empty: the honest empty state (T9) is a valid document that must round-trip.
-  if (!Array.isArray(value.fields)) {
-    errors.push('Import failed: fields must be an array.');
+  if (!Array.isArray(value.fields) || value.fields.length === 0) {
+    errors.push('Import failed: fields must be a non-empty array.');
   } else {
     value.fields.forEach((field, index) => validateField(field, `fields[${index}]`, errors));
   }
@@ -49,19 +48,7 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     return { ok: false, errors };
   }
 
-  return { ok: true, document: upgradeDocument(value as unknown as QueryDocument) };
-}
-
-/** v1 to v2 upcaster. Idempotent: a v2 doc with a source is returned unchanged. */
-export function upgradeDocument(document: QueryDocument): QueryDocument {
-  if (document.version === 2 && document.source) {
-    return document;
-  }
-  return {
-    ...document,
-    version: 2,
-    source: document.source ?? { kind: 'unknown' },
-  };
+  return { ok: true, document: value as unknown as QueryDocument };
 }
 
 function validateField(value: unknown, path: string, errors: string[]): value is FieldDefinition {
@@ -92,14 +79,15 @@ function validateField(value: unknown, path: string, errors: string[]): value is
     }
   }
 
-  if ('source' in value && value.source !== undefined && typeof value.source !== 'string') {
-    errors.push(`Import failed: ${path}.source must be a string.`);
-  }
-  if ('logicalName' in value && value.logicalName !== undefined && typeof value.logicalName !== 'string') {
-    errors.push(`Import failed: ${path}.logicalName must be a string.`);
-  }
-  if ('group' in value && value.group !== undefined && typeof value.group !== 'string') {
-    errors.push(`Import failed: ${path}.group must be a string.`);
+  if ('options' in value && value.options !== undefined) {
+    if (
+      !Array.isArray(value.options) ||
+      value.options.some(
+        (option) => !isRecord(option) || typeof option.label !== 'string' || typeof option.value !== 'number',
+      )
+    ) {
+      errors.push(`Import failed: ${path}.options must be {label, value} pairs.`);
+    }
   }
 
   return true;
@@ -152,6 +140,12 @@ function validateRule(value: Record<string, unknown>, path: string, errors: stri
 
   if (typeof value.operator !== 'string' || value.operator.length === 0) {
     errors.push(`Import failed: ${path}.operator is required.`);
+  }
+
+  if ('wrappers' in value && value.wrappers !== undefined) {
+    if (!Array.isArray(value.wrappers) || value.wrappers.some((wrapper) => typeof wrapper !== 'string')) {
+      errors.push(`Import failed: ${path}.wrappers must be an array of strings.`);
+    }
   }
 
   return true;
