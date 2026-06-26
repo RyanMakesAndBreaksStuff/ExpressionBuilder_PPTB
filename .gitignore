@@ -38,3 +38,7 @@ dist-ssr
 /.nvmrc
 /icon-concepts-batch2.html
 /icon-concepts.html
+! \docs\superpowers\plans\2026-06-25-expression-builder-enhancements.md
+/.claude
+AGENTS.md.bak
+LEAN-CTX.md
