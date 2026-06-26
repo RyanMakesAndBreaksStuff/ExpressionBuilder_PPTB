@@ -1,4 +1,4 @@
-import type { ExpressionMode, FieldDefinition, FieldType } from '@pavb/engine';
+import type { ExpressionMode, FieldDefinition, FieldType } from '@ryanmakes/eb_engine';
 import type { QueryDocument, QueryNode } from '../composer/querySchema';
 
 export type SavedExpressionParseResult =
