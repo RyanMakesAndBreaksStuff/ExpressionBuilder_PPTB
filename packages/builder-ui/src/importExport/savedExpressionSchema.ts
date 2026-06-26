@@ -28,8 +28,8 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     return { ok: false, errors: ['Import failed: saved expression must be an object.'] };
   }
 
-  if (value.version !== 1) {
-    errors.push('Import failed: version must be 1.');
+  if (value.version !== 1 && value.version !== 2) {
+    errors.push('Import failed: version must be 1 or 2.');
   }
 
   if (typeof value.mode !== 'string' || !modes.has(value.mode as ExpressionMode)) {
@@ -76,6 +76,17 @@ function validateField(value: unknown, path: string, errors: string[]): value is
   if ('choices' in value && value.choices !== undefined) {
     if (!Array.isArray(value.choices) || value.choices.some((choice) => typeof choice !== 'string')) {
       errors.push(`Import failed: ${path}.choices must be strings.`);
+    }
+  }
+
+  if ('options' in value && value.options !== undefined) {
+    if (
+      !Array.isArray(value.options) ||
+      value.options.some(
+        (option) => !isRecord(option) || typeof option.label !== 'string' || typeof option.value !== 'number',
+      )
+    ) {
+      errors.push(`Import failed: ${path}.options must be {label, value} pairs.`);
     }
   }
 
@@ -129,6 +140,12 @@ function validateRule(value: Record<string, unknown>, path: string, errors: stri
 
   if (typeof value.operator !== 'string' || value.operator.length === 0) {
     errors.push(`Import failed: ${path}.operator is required.`);
+  }
+
+  if ('wrappers' in value && value.wrappers !== undefined) {
+    if (!Array.isArray(value.wrappers) || value.wrappers.some((wrapper) => typeof wrapper !== 'string')) {
+      errors.push(`Import failed: ${path}.wrappers must be an array of strings.`);
+    }
   }
 
   return true;
