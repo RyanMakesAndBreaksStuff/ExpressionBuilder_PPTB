@@ -225,7 +225,7 @@ function wrapNullableStringField(expression: string): string {
 
 function isCompatibleType(fieldType: FieldDefinition['type'], valueType: ValueType | PredicateType): boolean {
   if (fieldType === 'choice') {
-    return valueType === 'choice' || valueType === 'string';
+    return valueType === 'choice' || valueType === 'string' || valueType === 'number';
   }
 
   return fieldType === valueType;
