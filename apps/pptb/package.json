@@ -1,14 +1,15 @@
 {
-  "name": "@ryanmakes/expresssionbuilder_pptb",
+  "name": "@ryanmakes/expressionbuilder_pptb",
   "private": true,
   "version": "1.0.0",
   "engines": {
     "node": ">=24.17.0 <25"
   },
    "displayName": "Expression Builder For Power Platform Toolbox",
-  "description": "Power Automte Trigger And Array Filter Builder",
+  "description": "Power Automate Trigger And Array Filter Builder",
   "author": "Ryan Rettinger",
   "main": "index.html",
+  "icon": "icons/icon.svg",
    "keywords": [
     "power-automate",
     "power-platform",
@@ -21,19 +22,22 @@
     }
   ],
   "license": "BSD-3-Clause",
+  "configurations": {
+    "repository": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB",
+    "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/README.md"
+  },
   "scripts": {
     "validate": "pptb-validate",
     "dev": "npm exec vite -- --host 127.0.0.1 --port 5174",
-    "build": "npm run build -w @ryanmakes/eb_builder-ui && tsc -b && npm exec vite -- build",
-    "preview": "npm exec vite -- preview --host 127.0.0.1 --port 4174"
+    "build": "tsc -b && npm exec vite -- build",
+    "preview": "npm exec vite -- preview --host 127.0.0.1 --port 4174",
+    "prepublishOnly": "npm run build"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@pptb/types": "^1.2.2",
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
     "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
-  },
-  "devDependencies": {
-    "@pptb/types": "^1.2.2"
-}
+  }
 }
