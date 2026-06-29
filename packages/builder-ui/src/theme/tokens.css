@@ -827,6 +827,19 @@
   color: var(--text);
 }
 
+.eb-wrap-chip.is-selected {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.eb-wrap-chip.is-selected:hover {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+}
+
 .eb-wrap-chip svg {
   width: 14px;
   height: 14px;
