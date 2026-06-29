@@ -5,41 +5,56 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sampleFields } from '../src/app/sampleData';
 import { FieldToolboxPane } from '../src/workbench/FieldToolboxPane';
+import type { DataSourceDescriptor } from '../src/composer/querySchema';
+
+const source: DataSourceDescriptor = { kind: 'sample', label: 'Sample fields' };
 
 afterEach(() => cleanup());
 
-describe('FieldToolboxPane', () => {
-  it('filters dynamic content rows by visible label', async () => {
-    render(
-      <FieldToolboxPane
-        fields={sampleFields}
-        activeTab="dynamicContent"
-        collapsed={false}
-        onTabChange={vi.fn()}
-        onToggleCollapsed={vi.fn()}
-        onConnect={vi.fn()}
-      />,
-    );
+function baseProps() {
+  return {
+    fields: sampleFields,
+    source,
+    collapsed: false,
+    onTabChange: vi.fn(),
+    onToggleCollapsed: vi.fn(),
+    onSwitchTable: vi.fn(),
+    onImport: vi.fn(),
+    onAddField: vi.fn(),
+    onLoadSamples: vi.fn(),
+    onManageProfiles: vi.fn(),
+    onRefresh: vi.fn(),
+  };
+}
 
-    await userEvent.type(screen.getByLabelText('Search dynamic content fields'), 'due');
+describe('FieldToolboxPane', () => {
+  it('creates a rule when a field row is double-clicked', async () => {
+    const onCreateRuleFromField = vi.fn();
+    render(
+      <FieldToolboxPane {...baseProps()} activeTab="dynamicContent" onCreateRuleFromField={onCreateRuleFromField} />,
+    );
 
     const list = screen.getByRole('list', { name: 'Dynamic content fields' });
-    expect(list).toBeInTheDocument();
+    const firstRow = list.querySelector('.eb-field-row') as HTMLElement;
+    await userEvent.dblClick(firstRow);
+
+    expect(onCreateRuleFromField).toHaveBeenCalledTimes(1);
+    expect(onCreateRuleFromField.mock.calls[0][0].id).toBe(sampleFields[0].id);
   });
 
-  it('renders wrapper chips when the wrappers tab is active', () => {
+  it('toggles wrapper selection from the wrappers tab', async () => {
+    const onToggleWrapper = vi.fn();
     render(
       <FieldToolboxPane
-        fields={sampleFields}
+        {...baseProps()}
         activeTab="wrappers"
-        collapsed={false}
-        onTabChange={vi.fn()}
-        onToggleCollapsed={vi.fn()}
-        onConnect={vi.fn()}
+        selectedWrappers={[]}
+        onToggleWrapper={onToggleWrapper}
+        onClearWrapperSelection={vi.fn()}
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Use toLower wrapper' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Use addDays wrapper' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Select toLower/ }));
+    expect(onToggleWrapper).toHaveBeenCalledWith('toLower');
   });
 });

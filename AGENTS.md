@@ -88,3 +88,10 @@ OUTPUT STYLE: concise
 - 1-sentence explanations max, then code/action
 - No repeating what the user said
 <!-- /lean-ctx-compression -->
+
+<!-- lean-ctx -->
+## lean-ctx
+
+lean-ctx is active — the MCP tools replace native equivalents.
+Full rules: LEAN-CTX.md (open on demand — do not auto-load).
+<!-- /lean-ctx -->

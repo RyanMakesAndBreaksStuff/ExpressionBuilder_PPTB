@@ -2,6 +2,6 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    exclude: ['**/node_modules/**', '**/dist/**', '**/dist-types/**', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/dist-types/**', 'tests/e2e/**', '.claude/worktrees/**'],
   },
 });

@@ -2,7 +2,7 @@ import { diagnostic } from './diagnostics';
 import { formatFieldReference } from './fieldReferences';
 import { inferFunctionReturnType, isTicksCall } from './functions';
 import { formatLiteral } from './literals';
-import { isDateComparison, isOperatorSupported, isStringComparison, needsRightOperand } from './operators';
+import { isDateComparison, isOperatorSupported, needsRightOperand } from './operators';
 import type {
   ExpressionNode,
   FieldDefinition,
@@ -196,13 +196,6 @@ function formatOperandsForOperator(
     };
   }
 
-  if (node.caseInsensitive && leftField?.type === 'string' && isStringComparison(node.operator)) {
-    return {
-      left: `toLower(${wrapNullableStringField(left.expression)})`,
-      right: `toLower(${right.expression})`,
-    };
-  }
-
   return { left: left.expression, right: right.expression };
 }
 
@@ -217,10 +210,6 @@ function operatorFunction(operator: string): string {
 
 function wrapTicks(expression: string): string {
   return expression.startsWith('ticks(') ? expression : `ticks(${expression})`;
-}
-
-function wrapNullableStringField(expression: string): string {
-  return `coalesce(${expression}, '')`;
 }
 
 function isCompatibleType(fieldType: FieldDefinition['type'], valueType: ValueType | PredicateType): boolean {

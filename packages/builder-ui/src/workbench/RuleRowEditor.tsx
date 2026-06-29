@@ -1,13 +1,41 @@
+import { useMemo, useState } from 'react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
-import { coerceValueForField, findField, getOperatorsForField, getSafeOperator } from '../app/builderState';
-import type { QueryRule } from '../composer/querySchema';
+import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, GripIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 
-export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdate, onRequestRemap, rule, selected }: RuleRowEditorProps) {
+export function RuleRowEditor({
+  fields,
+  onDelete,
+  onDuplicate,
+  onSelect,
+  onUpdate,
+  onRequestRemap,
+  rule,
+  selected,
+  selectedWrappers = [],
+}: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
   const hasError = !rule.value && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
+  const [rawValue, setRawValue] = useState(false);
+  const appliedWraps = rule.wrappers ?? [];
+
+  // Group fields: ungrouped (primary) first, then one bucket per related table.
+  const { primary, grouped } = useMemo(() => {
+    const primaryFields: FieldDefinition[] = [];
+    const groups = new Map<string, FieldDefinition[]>();
+    for (const item of fields) {
+      if (item.group) {
+        const bucket = groups.get(item.group) ?? [];
+        bucket.push(item);
+        groups.set(item.group, bucket);
+      } else {
+        primaryFields.push(item);
+      }
+    }
+    return { primary: primaryFields, grouped: [...groups.entries()] };
+  }, [fields]);
 
   if (!field) {
     return (
@@ -75,17 +103,25 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
             fieldId: nextField.id,
             operator: getSafeOperator(nextField, rule.operator),
             value: getDefaultValue(nextField),
-            caseInsensitive: false,
           });
         }}
         onClick={(e) => e.stopPropagation()}
         aria-label={`Field for ${fieldLabel}`}
         title="Select field"
       >
-        {fields.map((item) => (
+        {primary.map((item) => (
           <option key={item.id} value={item.id}>
             {item.label}
           </option>
+        ))}
+        {grouped.map(([groupName, groupFields]) => (
+          <optgroup key={groupName} label={groupName}>
+            {groupFields.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
       <select
@@ -103,7 +139,31 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
         ))}
       </select>
       <div className="eb-value-wrap">
-        {field.choices?.length ? (
+        {field.options?.length && !rawValue ? (
+          <select
+            className="eb-select"
+            value={String(rule.value ?? field.options[0].value)}
+            onChange={(event) => onUpdate(rule.id, { value: Number(event.target.value) })}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Value for ${fieldLabel}`}
+          >
+            {field.options.map((option) => (
+              <option key={option.value} value={String(option.value)}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : field.options?.length && rawValue ? (
+          <input
+            className="eb-input"
+            type="number"
+            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
+            onChange={(event) => onUpdate(rule.id, { value: event.target.value === '' ? null : Number(event.target.value) })}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Raw value"
+            aria-label={`Raw value for ${fieldLabel}`}
+          />
+        ) : field.choices?.length ? (
           <select
             className="eb-select"
             value={String(rule.value ?? '')}
@@ -139,10 +199,25 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
             aria-label={`Value for ${fieldLabel}`}
           />
         )}
-        {rule.caseInsensitive ? (
-          <span className="eb-wrap-chip">
+        {field.options?.length ? (
+          <button
+            type="button"
+            className="eb-icon-btn"
+            aria-label="Toggle raw value"
+            title="Toggle raw value"
+            aria-pressed={rawValue}
+            onClick={(e) => {
+              e.stopPropagation();
+              setRawValue((current) => !current);
+            }}
+          >
+            #
+          </button>
+        ) : null}
+        {appliedWraps.length ? (
+          <span className="eb-wrap-chip" aria-label={`Applied wraps: ${appliedWraps.join(', ')}`}>
             <WrapIcon />
-            toLower
+            {appliedWraps.join(' · ')}
           </span>
         ) : null}
       </div>
@@ -178,13 +253,26 @@ export function RuleRowEditor({ fields, onDelete, onDuplicate, onSelect, onUpdat
           className="eb-action-btn eb-action-subtle"
           onClick={(e) => {
             e.stopPropagation();
-            onUpdate(rule.id, { caseInsensitive: true });
+            onUpdate(rule.id, { wrappers: selectedWrappers });
           }}
-          disabled={field.type !== 'string' && field.type !== 'choice'}
-          aria-label="Wrap both sides in toLower()"
+          disabled={selectedWrappers.length === 0}
+          aria-label="Apply Wrap"
         >
-          Wrap both sides in toLower()
+          Apply Wrap
         </button>
+        {appliedWraps.length ? (
+          <button
+            type="button"
+            className="eb-action-btn eb-action-subtle"
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdate(rule.id, { wrappers: [] });
+            }}
+            aria-label="Clear wraps"
+          >
+            Clear wraps
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -199,17 +287,4 @@ function getTypeLabel(type: FieldDefinition['type']): string {
     case 'boolean': return 'B';
     default: return '?';
   }
-}
-
-function getDefaultValue(field: FieldDefinition): QueryRule['value'] {
-  if (field.choices?.length) {
-    return field.choices[0];
-  }
-  if (field.type === 'number') {
-    return 0;
-  }
-  if (field.type === 'boolean') {
-    return false;
-  }
-  return '';
 }
