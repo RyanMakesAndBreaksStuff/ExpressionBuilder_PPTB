@@ -21,7 +21,7 @@ import {
   type PaletteId,
   type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
-import { deriveBuilderState, findFirstRule, findRule } from './builderState';
+import { deriveBuilderState, findFirstRule, findParentGroupId, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
 import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
@@ -66,6 +66,7 @@ export function ExpressionBuilderShell({
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
   >([]);
+  const [selectedWrappers, setSelectedWrappers] = useState<string[]>([]);
 
   // Pending state for the switch-source confirmation dialog (T18).
   type PendingSwitch = {
@@ -215,6 +216,22 @@ export function ExpressionBuilderShell({
     });
   };
 
+  const createRuleFromField = (field: FieldDefinition) => {
+    setDocument((current) => {
+      const targetGroupId = findParentGroupId(current.root, current.selectedRuleId) ?? current.root.id;
+      return addRule(current, targetGroupId, {
+        fieldId: field.id,
+        operator: getSafeOperator(field, 'equals'),
+        value: getDefaultValue(field),
+      });
+    });
+  };
+
+  const toggleWrapper = (wrapperId: string) =>
+    setSelectedWrappers((current) =>
+      current.includes(wrapperId) ? current.filter((id) => id !== wrapperId) : [...current, wrapperId],
+    );
+
   const loadSampleFields = () => {
     setDocument((current) =>
       applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
@@ -322,14 +339,10 @@ export function ExpressionBuilderShell({
             }}
             relatedSections={relatedSections}
             onExpandRelated={handleExpandRelated}
-            selectedRuleId={selectedRule?.id}
-            onApplyWrapper={(ruleId, wrapperId) => {
-              setDocument((current) =>
-                updateRule(current, ruleId, {
-                  valueFunction: wrapperId as import('../composer/querySchema').QueryRule['valueFunction'],
-                }),
-              );
-            }}
+            onCreateRuleFromField={createRuleFromField}
+            selectedWrappers={selectedWrappers}
+            onToggleWrapper={toggleWrapper}
+            onClearWrapperSelection={() => setSelectedWrappers([])}
           />
 
           <div className="eb-center-col">
@@ -338,6 +351,7 @@ export function ExpressionBuilderShell({
               fields={document.fields}
               mode={document.mode}
               selectedRuleId={selectedRule?.id}
+              selectedWrappers={selectedWrappers}
               onRequestRemap={(ruleId) => {
                 setDocument((current) => selectRule(current, ruleId));
                 setDialog('remap');
@@ -351,7 +365,7 @@ export function ExpressionBuilderShell({
                   addRule(current, groupId, {
                     fieldId: current.fields[0]?.id ?? '',
                     operator: 'equals',
-                    value: current.fields[0]?.choices?.[0] ?? '',
+                    value: getDefaultValue(current.fields[0]),
                   }),
                 )
               }

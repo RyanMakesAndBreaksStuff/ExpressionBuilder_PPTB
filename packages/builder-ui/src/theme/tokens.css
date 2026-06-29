@@ -396,8 +396,10 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  overflow: auto;
-  scrollbar-gutter: stable;
+  /* Must NOT scroll here: a scrolling center column unconstrains the canvas/preview
+     cards so their inner bodies stop scrolling. Per-container scroll lives in
+     .eb-pane-body and .eb-preview-body. Full-page scroll engages below 900px. */
+  overflow: hidden;
 }
 
 /* Canvas Card */

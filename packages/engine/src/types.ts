@@ -3,9 +3,7 @@ export type FieldType = 'string' | 'number' | 'boolean' | 'dateTime' | 'choice';
 export type ValueType = FieldType | 'null' | 'unknown';
 export type PredicateType = 'boolean';
 export type Conjunction = 'and' | 'or';
-
-/** Where a field's schema originated. Additive provenance - never affects expression semantics. */
-export type FieldSourceKind = 'dataverse' | 'user' | 'json' | 'csv' | 'jsonSchema' | 'sample';
+export type FieldSourceKind = 'dataverse' | 'sample' | 'csv' | 'json' | 'jsonSchema' | 'user';
 
 export interface FieldDefinition {
   id: string;
@@ -39,7 +37,6 @@ export interface RuleNode {
   operator: string;
   left: ExpressionNode;
   right?: ExpressionNode;
-  caseInsensitive?: boolean;
 }
 
 export interface FunctionCallNode {

@@ -55,10 +55,14 @@ export interface FieldToolboxPaneProps {
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
   /** Called once when a related section is first expanded; resolves and appends its fields. */
   onExpandRelated?: (navigationProperty: string) => void;
-  /** ID of the currently selected rule, used to target wrapper chip application. */
-  selectedRuleId?: string;
-  /** Called when the user clicks a wrapper chip in the Wrappers tab. */
-  onApplyWrapper?: (ruleId: string, wrapperId: string) => void;
+  /** Called when the user double-clicks a field row in the toolbox. */
+  onCreateRuleFromField?: (field: FieldDefinition) => void;
+  /** Currently selected wrapper ids (palette state). */
+  selectedWrappers?: string[];
+  /** Toggle a wrapper in the palette selection. */
+  onToggleWrapper?: (wrapperId: string) => void;
+  /** Clear the entire palette selection. */
+  onClearWrapperSelection?: () => void;
 }
 
 export interface ConditionCanvasProps {
@@ -66,6 +70,8 @@ export interface ConditionCanvasProps {
   fields: FieldDefinition[];
   mode: ExpressionMode;
   selectedRuleId?: string;
+  /** Wrapper ids currently selected in the palette; applied when a rule's "Apply Wrap" is clicked. */
+  selectedWrappers?: string[];
   onSelectRule: (ruleId: string) => void;
   onAddRule: (groupId: string) => void;
   onAddGroup: (groupId: string) => void;
@@ -106,4 +112,6 @@ export interface RuleRowEditorProps {
   onDelete: (ruleId: string) => void;
   /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
   onRequestRemap?: (ruleId: string) => void;
+  /** Wrapper ids currently selected in the palette. */
+  selectedWrappers?: string[];
 }

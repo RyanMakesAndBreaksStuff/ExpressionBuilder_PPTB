@@ -91,14 +91,21 @@ describe('shared builder UI', () => {
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("'director'");
   });
 
-  it('case-insensitive fix wraps both sides in toLower()', async () => {
+  it('applies a selected toLower wrapper to both sides of a rule', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
-    await user.click(within(approverRow).getByRole('button', { name: 'Wrap both sides in toLower()' }));
+    await user.click(approverRow);
 
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent('toLower(coalesce(');
+    // Select the toLower wrapper in the Wrappers tab.
+    await user.click(screen.getByRole('tab', { name: /wrappers/i }));
+    await user.click(screen.getByRole('button', { name: /Select toLower/ }));
+
+    // Apply it from the rule row.
+    await user.click(within(approverRow).getByRole('button', { name: 'Apply Wrap' }));
+
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent('toLower(');
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("toLower('finance')");
   });
 

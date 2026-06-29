@@ -31,14 +31,20 @@ const useStyles = makeStyles({
 interface FieldListProps {
   items: FieldDefinition[];
   ariaLabel: string;
+  onCreateRuleFromField?: (field: FieldDefinition) => void;
 }
 
-function FieldList({ items, ariaLabel }: FieldListProps) {
+function FieldList({ items, ariaLabel, onCreateRuleFromField }: FieldListProps) {
   return (
     <ul className="eb-field-list" role="list" aria-label={ariaLabel}>
       {items.map((field) => (
         <li key={field.id}>
-          <div className="eb-field-row" tabIndex={0}>
+          <div
+            className="eb-field-row"
+            tabIndex={0}
+            onDoubleClick={() => onCreateRuleFromField?.(field)}
+            title="Double-click to add a rule"
+          >
             <TypeGlyph type={field.type} />
             <span className="eb-field-main">
               <span className="eb-field-title">{field.label}</span>
@@ -70,8 +76,10 @@ export function FieldToolboxPane({
   onToggleCollapsed,
   relatedSections,
   onExpandRelated,
-  selectedRuleId,
-  onApplyWrapper,
+  onCreateRuleFromField,
+  selectedWrappers,
+  onToggleWrapper,
+  onClearWrapperSelection,
 }: FieldToolboxPaneProps) {
   const styles = useStyles();
   const [search, setSearch] = useState('');
@@ -181,7 +189,7 @@ export function FieldToolboxPane({
                     <AccordionPanel>
                       <div className="eb-accordion-panel-content">
                         {filteredPrimary.length > 0 ? (
-                          <FieldList items={filteredPrimary} ariaLabel="Dynamic content fields" />
+                          <FieldList items={filteredPrimary} ariaLabel="Dynamic content fields" onCreateRuleFromField={onCreateRuleFromField} />
                         ) : needle ? (
                           <Text size={200} className={styles.emptyText}>
                             No primary fields match.
@@ -224,6 +232,7 @@ export function FieldToolboxPane({
                               <FieldList
                                 items={visibleFields}
                                 ariaLabel={section.displayName + ' fields'}
+                                onCreateRuleFromField={onCreateRuleFromField}
                               />
                             )}
                           </div>
@@ -240,9 +249,9 @@ export function FieldToolboxPane({
         <div className="eb-toolbox-stack">
           <div className="eb-toolbox-scroll">
             <WrapperChips
-              onApply={(wrapperId) => {
-                if (selectedRuleId) onApplyWrapper?.(selectedRuleId, wrapperId);
-              }}
+              selected={selectedWrappers ?? []}
+              onToggle={(wrapperId) => onToggleWrapper?.(wrapperId)}
+              onClearSelection={() => onClearWrapperSelection?.()}
             />
           </div>
         </div>

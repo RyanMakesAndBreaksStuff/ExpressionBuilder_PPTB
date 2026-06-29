@@ -7,6 +7,7 @@ import {
   type FieldDefinition,
   type FormatDiagnostic,
   type FormatResult,
+  type FunctionCallNode,
   type LiteralNode,
 } from '@ryanmakes/eb_engine';
 import type { QueryDocument, QueryGroup, QueryNode, QueryRule, RulePatch } from '../composer/querySchema';
@@ -45,18 +46,27 @@ export function queryNodeToAst(node: QueryNode, fields: FieldDefinition[]): Expr
   }
 
   const field = findField(fields, node.fieldId);
-  const right = needsValue(node.operator) ? literalForRule(node, field) : undefined;
+  const wrappers = node.wrappers ?? [];
+  const left = applyWrappers({ kind: 'field', fieldId: node.fieldId }, wrappers);
+  const right = needsValue(node.operator) ? applyWrappers(literalForRule(node, field), wrappers) : undefined;
 
   return {
     kind: 'rule',
     operator: node.operator,
-    caseInsensitive: node.caseInsensitive,
-    left: {
-      kind: 'field',
-      fieldId: node.fieldId,
-    },
+    left,
     right,
   };
+}
+
+function applyWrappers(operand: ExpressionNode, wrappers: string[]): ExpressionNode {
+  return wrappers.reduce<ExpressionNode>((acc, name) => wrapOne(acc, name), operand);
+}
+
+function wrapOne(arg: ExpressionNode, name: string): FunctionCallNode {
+  if (name === 'coalesce') {
+    return { kind: 'function', name, args: [arg, { kind: 'literal', value: '', valueType: 'string' }] };
+  }
+  return { kind: 'function', name, args: [arg] };
 }
 
 export function findField(fields: FieldDefinition[], fieldId: string): FieldDefinition | undefined {
@@ -76,6 +86,24 @@ export function findRule(root: QueryNode, ruleId?: string): QueryRule | undefine
     const match = findRule(child, ruleId);
     if (match) {
       return match;
+    }
+  }
+
+  return undefined;
+}
+
+export function findParentGroupId(node: QueryNode, ruleId?: string): string | undefined {
+  if (!ruleId || node.kind === 'rule') {
+    return undefined;
+  }
+
+  for (const child of node.children) {
+    if (child.id === ruleId) {
+      return node.id;
+    }
+    const nested = findParentGroupId(child, ruleId);
+    if (nested) {
+      return nested;
     }
   }
 
@@ -103,6 +131,14 @@ export function getOperatorsForField(field?: FieldDefinition): readonly string[]
 
 export function getSafeOperator(field: FieldDefinition, operator: string): string {
   return isOperatorSupported(field.type, operator) ? operator : OPERATORS_BY_FIELD_TYPE[field.type][0];
+}
+
+export function remapRulePatch(target: FieldDefinition, currentOperator: string): RulePatch {
+  return {
+    fieldId: target.id,
+    operator: getSafeOperator(target, currentOperator),
+    value: getDefaultValue(target),
+  };
 }
 
 export function countRules(node: QueryNode): number {
@@ -141,56 +177,43 @@ export function modeLabel(mode: ExpressionMode): string {
   return mode === 'triggerCondition' ? 'Trigger condition' : 'Filter array';
 }
 
+export function getDefaultValue(field?: FieldDefinition): QueryRule['value'] {
+  if (field?.options?.length) {
+    return field.options[0].value;
+  }
+  if (field?.choices?.length) {
+    return field.choices[0];
+  }
+  if (field?.type === 'number') {
+    return 0;
+  }
+  if (field?.type === 'boolean') {
+    return false;
+  }
+  return '';
+}
+
 function literalForRule(rule: QueryRule, field?: FieldDefinition): LiteralNode {
   const value: LiteralNode['value'] = rule.value === undefined ? defaultValueForField(field) : rule.value;
 
   return {
     kind: 'literal',
     value,
-    valueType: value === null ? 'null' : literalValueType(field),
+    valueType: valueTypeForLiteral(value, field),
   };
 }
 
+function valueTypeForLiteral(value: LiteralNode['value'], field?: FieldDefinition): LiteralNode['valueType'] {
+  if (value === null) return 'null';
+  if (typeof value === 'number') return 'number';
+  if (typeof value === 'boolean') return 'boolean';
+  return literalValueType(field);
+}
+
 function defaultValueForField(field?: FieldDefinition): LiteralNode['value'] {
-  if (!field) {
-    return '';
-  }
-
-  if (field.type === 'number') {
-    return 0;
-  }
-
-  if (field.type === 'boolean') {
-    return false;
-  }
-
-  return field.choices?.[0] ?? '';
+  return getDefaultValue(field) ?? '';
 }
 
 function needsValue(operator: string): boolean {
   return operator !== 'empty' && operator !== 'notEmpty';
-}
-
-// ── Remap helpers (T17) ─────────────────────────────────────────────────────
-
-/**
- * Compute the patch to remap an orphaned rule onto `target`.
- * Keeps the operator when the target type still supports it; otherwise resets to
- * the target's first safe operator and picks a sensible default value.
- */
-export function remapRulePatch(target: FieldDefinition, currentOperator: string): RulePatch {
-  const operator = getSafeOperator(target, currentOperator);
-  return {
-    fieldId: target.id,
-    operator,
-    // Reset value only when the operator changed (cross-type) to avoid carrying an incompatible literal.
-    value: operator === currentOperator ? undefined : defaultValueForRemap(target),
-  };
-}
-
-function defaultValueForRemap(field: FieldDefinition): string | number | boolean {
-  if (field.choices?.length) return field.choices[0];
-  if (field.type === 'number') return 0;
-  if (field.type === 'boolean') return false;
-  return '';
 }
