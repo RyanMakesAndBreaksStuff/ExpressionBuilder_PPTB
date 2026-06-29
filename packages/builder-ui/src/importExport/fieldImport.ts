@@ -85,6 +85,22 @@ export function parseFieldImport(source: string): FieldImportResult {
       ) {
         field.choices = raw.choices as string[];
       }
+      if (
+        Array.isArray(raw.options) &&
+        raw.options.every(
+          (o) => isRecord(o) && typeof o.label === 'string' && typeof o.value === 'number',
+        )
+      ) {
+        field.options = (raw.options as Array<{ label: string; value: number }>).map((o) => ({
+          label: o.label,
+          value: o.value,
+        }));
+        // Enum choice fields show labels but emit int values; derive choices for
+        // any consumer that reads the string list when none was supplied.
+        if (!field.choices) {
+          field.choices = field.options.map((o) => o.label);
+        }
+      }
       if (typeof raw.nullable === 'boolean') field.nullable = raw.nullable;
       fields.push(field);
     }
