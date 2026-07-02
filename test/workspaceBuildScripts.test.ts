@@ -12,12 +12,19 @@ function readManifest(relativePath: string): PackageManifest {
 }
 
 describe('workspace build scripts', () => {
-  it('builds builder-ui before bundling either app so the emitted CSS asset exists', () => {
-    const webManifest = readManifest('apps/web/package.json');
-    const pptbManifest = readManifest('apps/pptb/package.json');
+  it('aliases builder-ui to its TypeScript source so app builds bundle fresh CSS in a single pass', () => {
+    // Apps resolve the workspace packages from src (via Vite resolve.alias), so a
+    // CSS/component edit in builder-ui is bundled without a prior builder-ui build.
+    // This replaced the fragile "build builder-ui first to copy tokens.css into dist"
+    // step, which lagged one build behind. Guard the alias, not the old prebuild.
+    const webVite = readFileSync(resolve(process.cwd(), 'apps/web/vite.config.ts'), 'utf8');
+    const pptbVite = readFileSync(resolve(process.cwd(), 'apps/pptb/vite.config.ts'), 'utf8');
+    const aliasTarget = 'packages/builder-ui/src/index.ts';
 
-    expect(webManifest.scripts?.build).toContain('npm run build -w @ryanmakes/eb_builder-ui');
-    expect(pptbManifest.scripts?.build).toContain('npm run build -w @ryanmakes/eb_builder-ui');
+    for (const config of [webVite, pptbVite]) {
+      expect(config).toContain('@ryanmakes/eb_builder-ui');
+      expect(config).toContain(aliasTarget);
+    }
   });
 
   it('rebuilds the web host before serving preview output', () => {
