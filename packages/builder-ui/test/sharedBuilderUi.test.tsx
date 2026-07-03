@@ -79,6 +79,27 @@ describe('shared builder UI', () => {
     expect(within(fields).queryByText('Status')).not.toBeInTheDocument();
   });
 
+  it('double-clicking a field after focusing a nested group adds the rule there, not root', async () => {
+    const user = userEvent.setup();
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+
+    // Focus the existing nested "group-routing" group by clicking its toolbar.
+    const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
+    await user.click(within(routingGroup).getByText('Match any of the following'));
+
+    // Double-click a field that isn't already in any rule.
+    const fieldList = screen.getByRole('list', { name: 'Dynamic content fields' });
+    await user.dblClick(within(fieldList).getByText('Due date'));
+
+    // The new rule lands inside the focused nested group, not appended to root.
+    // (Query by the rule row's group role/aria-label, not text, since every
+    // other row's field dropdown also renders a "Due date" <option>.)
+    const canvas = screen.getByRole('region', { name: 'Condition Builder' });
+    const dueDateRows = within(canvas).getAllByRole('group', { name: /^Due date/ });
+    expect(dueDateRows).toHaveLength(1);
+    expect(routingGroup).toContainElement(dueDateRows[0]);
+  });
+
   it('changing a value updates the generated expression', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);

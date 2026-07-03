@@ -9,6 +9,7 @@ import {
   clearDocument,
   deleteNode,
   duplicateRule,
+  focusGroup,
   selectRule,
   updateRule,
 } from '../composer/queryActions';
@@ -21,7 +22,7 @@ import {
   type PaletteId,
   type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
-import { deriveBuilderState, findFirstRule, findParentGroupId, findRule, getDefaultValue, getSafeOperator } from './builderState';
+import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
 import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
@@ -238,7 +239,7 @@ export function ExpressionBuilderShell({
 
   const createRuleFromField = (field: FieldDefinition) => {
     setDocument((current) => {
-      const targetGroupId = findParentGroupId(current.root, current.selectedRuleId) ?? current.root.id;
+      const targetGroupId = current.activeGroupId ?? current.root.id;
       return addRule(current, targetGroupId, {
         fieldId: field.id,
         operator: getSafeOperator(field, 'equals'),
@@ -372,6 +373,8 @@ export function ExpressionBuilderShell({
               fields={document.fields}
               mode={document.mode}
               selectedRuleId={selectedRule?.id}
+              activeGroupId={document.activeGroupId ?? document.root.id}
+              onFocusGroup={(groupId) => setDocument((current) => focusGroup(current, groupId))}
               selectedWrappers={selectedWrappers}
               onRequestRemap={(ruleId) => {
                 setDocument((current) => selectRule(current, ruleId));

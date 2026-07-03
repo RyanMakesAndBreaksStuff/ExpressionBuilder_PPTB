@@ -10,9 +10,11 @@ interface ConditionGroupCardProps {
   group: QueryGroup;
   fields: FieldDefinition[];
   selectedRuleId?: string;
+  activeGroupId?: string;
   onSelectRule: (ruleId: string) => void;
   onAddRule: (groupId: string) => void;
   onAddGroup: (groupId: string) => void;
+  onFocusGroup: (groupId: string) => void;
   onChangeGroupConjunction: (groupId: string, conjunction: 'and' | 'or') => void;
   onUpdateRule: (ruleId: string, patch: Partial<import('../composer/querySchema').QueryRule>) => void;
   onDuplicateRule: (ruleId: string) => void;
@@ -25,8 +27,10 @@ export function ConditionGroupCard({
   fields,
   group,
   selectedRuleId,
+  activeGroupId,
   onAddGroup,
   onAddRule,
+  onFocusGroup,
   onChangeGroupConjunction,
   onDeleteNode,
   onDuplicateRule,
@@ -38,10 +42,15 @@ export function ConditionGroupCard({
   const isAnd = group.conjunction === 'and';
   const ruleCount = countRules(group);
   const isRoot = group.id === 'root';
+  const isFocused = group.id === activeGroupId;
 
   return (
-    <section className={`eb-group-card ${!isRoot ? 'nested' : ''}`} role="group" aria-label={`${group.conjunction.toUpperCase()} group ${group.id}`}>
-      <div className="eb-group-toolbar">
+    <section
+      className={`eb-group-card ${!isRoot ? 'nested' : ''} ${isFocused ? 'is-focused' : ''}`}
+      role="group"
+      aria-label={`${group.conjunction.toUpperCase()} group ${group.id}`}
+    >
+      <div className="eb-group-toolbar" onClick={() => onFocusGroup(group.id)}>
         <span className="eb-drag-dots">
           <GripIcon />
         </span>
@@ -92,9 +101,11 @@ export function ConditionGroupCard({
               group={child}
               fields={fields}
               selectedRuleId={selectedRuleId}
+              activeGroupId={activeGroupId}
               onSelectRule={onSelectRule}
               onAddRule={onAddRule}
               onAddGroup={onAddGroup}
+              onFocusGroup={onFocusGroup}
               onChangeGroupConjunction={onChangeGroupConjunction}
               onUpdateRule={onUpdateRule}
               onDuplicateRule={onDuplicateRule}

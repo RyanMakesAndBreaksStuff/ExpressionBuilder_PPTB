@@ -14,9 +14,11 @@ function renderCanvas(overrides = {}) {
     fields: sampleDocument.fields,
     mode: sampleDocument.mode,
     selectedRuleId: sampleDocument.selectedRuleId,
+    activeGroupId: 'root',
     onSelectRule: vi.fn(),
     onAddRule: vi.fn(),
     onAddGroup: vi.fn(),
+    onFocusGroup: vi.fn(),
     onChangeGroupConjunction: vi.fn(),
     onUpdateRule: vi.fn(),
     onDuplicateRule: vi.fn(),
@@ -54,5 +56,16 @@ describe('ConditionCanvas', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Set group-routing conjunction to AND' }));
 
     expect(props.onChangeGroupConjunction).toHaveBeenCalledWith('group-routing', 'and');
+  });
+
+  it('focuses a group when its toolbar is clicked, and shows the active group as focused', () => {
+    const props = renderCanvas();
+
+    const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
+    fireEvent.click(within(routingGroup).getByText('Match any of the following'));
+
+    expect(props.onFocusGroup).toHaveBeenCalledWith('group-routing');
+    expect(screen.getByRole('group', { name: 'AND group root' })).toHaveClass('is-focused');
+    expect(routingGroup).not.toHaveClass('is-focused');
   });
 });
