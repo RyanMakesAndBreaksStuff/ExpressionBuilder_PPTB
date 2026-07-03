@@ -51,6 +51,8 @@ export interface FieldToolboxPaneProps {
   onLoadSamples: () => void;
   onManageProfiles: () => void;
   onRefresh: () => void;
+  /** Whether the host can connect to a live table (Dataverse). Web builds cannot. */
+  canConnectTable?: boolean;
   /** Related navigation sections available for the active dataverse table (T14). */
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
   /** Called once when a related section is first expanded; resolves and appends its fields. */

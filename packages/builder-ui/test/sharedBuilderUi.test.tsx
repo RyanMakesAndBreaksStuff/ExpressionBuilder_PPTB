@@ -111,14 +111,41 @@ describe('shared builder UI', () => {
 
   it('import and export round-trip without expression drift', async () => {
     const user = userEvent.setup();
-    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+    const adapter = createAdapter();
+    render(<ExpressionBuilderShell adapter={adapter} initialDocument={sampleDocument} />);
 
     const expressionBefore = screen.getByLabelText('Generated expression').textContent;
+
+    // Export copies the saved-expression JSON to the clipboard (T-import-export-fix).
     await user.click(screen.getByRole('button', { name: 'Export' }));
+    expect(adapter.copyToClipboard).toHaveBeenCalledTimes(1);
+    const exportedJson = vi.mocked(adapter.copyToClipboard).mock.calls[0][0];
+
+    // Import opens a paste dialog; paste the exported JSON back in and confirm.
     await user.click(screen.getByRole('button', { name: 'Import' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByLabelText('Saved expression JSON to import'));
+    await user.paste(exportedJson);
+    await user.click(within(dialog).getByRole('button', { name: 'Import' }));
 
     expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
     expect(screen.queryByText(/Import failed/i)).not.toBeInTheDocument();
+  });
+
+  it('hides the "Connect a table" entry points in the web build', async () => {
+    const user = userEvent.setup();
+    render(<ExpressionBuilderShell adapter={createAdapter()} platform="web" />);
+
+    expect(screen.queryByRole('button', { name: 'Connect a table' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Data source menu' }));
+    expect(screen.queryByRole('menuitem', { name: /switch table/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps the "Connect a table" entry points in the pptb build (default)', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+
+    expect(screen.getByRole('button', { name: 'Connect a table' })).toBeInTheDocument();
   });
 
   it('left dock collapse exposes aria-expanded false', async () => {

@@ -30,6 +30,8 @@ export interface SourceChipProps {
   onLoadSamples: () => void;
   onManageProfiles: () => void;
   onRefresh: () => void;
+  /** Whether the host can connect to a live table (Dataverse). Web builds cannot. */
+  canConnectTable?: boolean;
 }
 
 type ConnectionState = 'connected' | 'none' | 'stale';
@@ -73,6 +75,7 @@ export function SourceChip({
   onLoadSamples,
   onManageProfiles,
   onRefresh,
+  canConnectTable = true,
 }: SourceChipProps) {
   const styles = useStyles();
   const state = connectionStateOf(source);
@@ -111,9 +114,11 @@ export function SourceChip({
         </MenuTrigger>
         <MenuPopover>
           <MenuList>
-            <MenuItem icon={<DatabaseRegular />} onClick={onSwitchTable}>
-              Switch table…
-            </MenuItem>
+            {canConnectTable ? (
+              <MenuItem icon={<DatabaseRegular />} onClick={onSwitchTable}>
+                Switch table…
+              </MenuItem>
+            ) : null}
             <MenuItem icon={<ArrowImportRegular />} onClick={onImport}>
               Import schema…
             </MenuItem>
