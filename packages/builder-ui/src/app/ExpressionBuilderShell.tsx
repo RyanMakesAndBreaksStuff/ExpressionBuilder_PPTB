@@ -29,6 +29,7 @@ import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
 import { ImportSchemaDialog } from '../workbench/ImportSchemaDialog';
+import { ImportExpressionDialog } from '../workbench/ImportExpressionDialog';
 import { AddFieldForm } from '../workbench/AddFieldForm';
 import { ManageProfilesDialog } from '../workbench/ManageProfilesDialog';
 import { TablePickerDialog } from '../workbench/TablePickerDialog';
@@ -48,20 +49,37 @@ import '../theme/tokens.css';
 export interface ExpressionBuilderShellProps {
   adapter: PlatformAdapter;
   initialDocument?: QueryDocument;
+  /**
+   * Which build is hosting the shell. Table connections require a live Dataverse
+   * connection, which the standalone web build does not have — defaults to 'pptb'
+   * (full-featured) so existing hosts and tests keep current behavior unless they
+   * opt into 'web'.
+   */
+  platform?: 'web' | 'pptb';
 }
 
 export function ExpressionBuilderShell({
   adapter,
   initialDocument = emptyStarterDocument,
+  platform = 'pptb',
 }: ExpressionBuilderShellProps) {
+  const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [paletteId, setPaletteId] = useState<PaletteId>('porcelainDark');
-  const [savedJson, setSavedJson] = useState(() => serializeSavedExpression(initialDocument));
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
   const [workbench, setWorkbench] = useState(getDefaultWorkbenchState);
-  type OpenDialog = 'none' | 'tablePicker' | 'import' | 'addField' | 'profiles' | 'remap' | 'switch' | 'drift';
+  type OpenDialog =
+    | 'none'
+    | 'tablePicker'
+    | 'import'
+    | 'importExpression'
+    | 'addField'
+    | 'profiles'
+    | 'remap'
+    | 'switch'
+    | 'drift';
   const [dialog, setDialog] = useState<OpenDialog>('none');
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
@@ -119,20 +137,22 @@ export function ExpressionBuilderShell({
     }, 1200);
   };
 
-  const exportDocument = () => {
-    setSavedJson(serializeSavedExpression(document));
-    setImportDiagnostics([]);
+  /** Copies the current document as saved-expression JSON to the clipboard. */
+  const exportDocument = async () => {
+    await adapter.copyToClipboard(serializeSavedExpression(document));
+    await adapter.notify('Expression JSON copied to clipboard.', 'success');
   };
 
-  const importDocument = () => {
-    const result = parseSavedExpression(savedJson);
+  /** Parses pasted saved-expression JSON (from the import dialog) and applies it. */
+  const importDocument = (source: string) => {
+    const result = parseSavedExpression(source);
     if (!result.ok) {
       setImportDiagnostics(result.errors.map((message) => ({ severity: 'error', message })));
       return;
     }
     setDocument(result.document);
-    setSavedJson(serializeSavedExpression(result.document));
     setImportDiagnostics([]);
+    setDialog('none');
   };
 
   /** Discover fields (cache-first). On refresh, diffs and shows the drift dialog (T19). */
@@ -296,8 +316,8 @@ export function ExpressionBuilderShell({
           mode={document.mode}
           paletteId={paletteId}
           onModeChange={updateMode}
-          onExport={exportDocument}
-          onImport={importDocument}
+          onExport={() => void exportDocument()}
+          onImport={() => setDialog('importExpression')}
           onToggleTheme={() =>
             setPaletteId((current) =>
               current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark',
@@ -326,6 +346,7 @@ export function ExpressionBuilderShell({
             onImport={() => setDialog('import')}
             onAddField={() => setDialog('addField')}
             onLoadSamples={loadSampleFields}
+            canConnectTable={canConnectTable}
             onManageProfiles={() => setDialog('profiles')}
             onRefresh={() => {
               const table = document.source?.tableLogicalName;
@@ -410,6 +431,12 @@ export function ExpressionBuilderShell({
           setRelatedSections([]);
           setDialog('none');
         }}
+      />
+
+      <ImportExpressionDialog
+        open={dialog === 'importExpression'}
+        onDismiss={() => setDialog('none')}
+        onImport={importDocument}
       />
 
       <AddFieldForm

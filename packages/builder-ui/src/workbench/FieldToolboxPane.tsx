@@ -72,6 +72,7 @@ export function FieldToolboxPane({
   onLoadSamples,
   onManageProfiles,
   onRefresh,
+  canConnectTable = true,
   onTabChange,
   onToggleCollapsed,
   relatedSections,
@@ -154,6 +155,7 @@ export function FieldToolboxPane({
             onLoadSamples={onLoadSamples}
             onManageProfiles={onManageProfiles}
             onRefresh={onRefresh}
+            canConnectTable={canConnectTable}
           />
           {!hasContent ? (
             <GetStartedPanel
@@ -161,6 +163,7 @@ export function FieldToolboxPane({
               onImport={onImport}
               onAddField={onAddField}
               onLoadSamples={onLoadSamples}
+              canConnectTable={canConnectTable}
             />
           ) : (
             <>

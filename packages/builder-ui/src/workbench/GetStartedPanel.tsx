@@ -11,6 +11,8 @@ export interface GetStartedPanelProps {
   onImport: () => void;
   onAddField: () => void;
   onLoadSamples: () => void;
+  /** Whether the host can connect to a live table (Dataverse). Web builds cannot. */
+  canConnectTable?: boolean;
 }
 
 const useStyles = makeStyles({
@@ -32,7 +34,13 @@ const useStyles = makeStyles({
   hint: { color: tokens.colorNeutralForeground3 },
 });
 
-export function GetStartedPanel({ onSwitchTable, onImport, onAddField, onLoadSamples }: GetStartedPanelProps) {
+export function GetStartedPanel({
+  onSwitchTable,
+  onImport,
+  onAddField,
+  onLoadSamples,
+  canConnectTable = true,
+}: GetStartedPanelProps) {
   const styles = useStyles();
   return (
     <div className={styles.root} role="region" aria-label="Get started choosing a data source">
@@ -41,9 +49,11 @@ export function GetStartedPanel({ onSwitchTable, onImport, onAddField, onLoadSam
         Choose where your fields come from to start building.
       </Text>
       <div className={styles.actions}>
-        <Button appearance="primary" icon={<DatabaseRegular />} onClick={onSwitchTable}>
-          Connect a table
-        </Button>
+        {canConnectTable ? (
+          <Button appearance="primary" icon={<DatabaseRegular />} onClick={onSwitchTable}>
+            Connect a table
+          </Button>
+        ) : null}
         <Button icon={<ArrowImportRegular />} onClick={onImport}>
           Import a schema
         </Button>
