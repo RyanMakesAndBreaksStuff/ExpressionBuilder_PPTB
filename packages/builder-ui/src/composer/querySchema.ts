@@ -16,6 +16,8 @@ export interface QueryDocument {
   fields: FieldDefinition[];
   root: QueryGroup;
   selectedRuleId?: string;
+  /** Group that new rules/groups/fields are added to. Falls back to root.id when unset. */
+  activeGroupId?: string;
   source?: DataSourceDescriptor;
 }
 

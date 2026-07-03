@@ -72,11 +72,15 @@ export interface ConditionCanvasProps {
   fields: FieldDefinition[];
   mode: ExpressionMode;
   selectedRuleId?: string;
+  /** Group that new rules/groups/fields are added to; shown with a focus outline. */
+  activeGroupId?: string;
   /** Wrapper ids currently selected in the palette; applied when a rule's "Apply Wrap" is clicked. */
   selectedWrappers?: string[];
   onSelectRule: (ruleId: string) => void;
   onAddRule: (groupId: string) => void;
   onAddGroup: (groupId: string) => void;
+  /** Marks a group (empty or not) as the active target for new rules/groups/fields. */
+  onFocusGroup: (groupId: string) => void;
   onChangeGroupConjunction: (groupId: string, conjunction: Conjunction) => void;
   onUpdateRule: (ruleId: string, patch: RulePatch) => void;
   onDuplicateRule: (ruleId: string) => void;

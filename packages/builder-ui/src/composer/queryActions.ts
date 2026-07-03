@@ -71,6 +71,24 @@ const findRule = (node: QueryNode, ruleId: string): QueryRule | undefined => {
   return undefined;
 };
 
+const findParentGroupId = (node: QueryNode, ruleId: string): string | undefined => {
+  if (node.kind === 'rule') {
+    return undefined;
+  }
+
+  for (const child of node.children) {
+    if (child.id === ruleId) {
+      return node.id;
+    }
+    const nested = findParentGroupId(child, ruleId);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return undefined;
+};
+
 const addChildToGroup = (
   group: QueryGroup,
   parentGroupId: string,
@@ -212,7 +230,9 @@ export const addRule = (
   const newRule = { ...defaultRule(nextId(document, 'rule')), ...rule, kind: 'rule' as const };
   const root = addChildToGroup(document.root, parentGroupId, newRule);
 
-  return root === document.root ? document : { ...document, root, selectedRuleId: newRule.id };
+  return root === document.root
+    ? document
+    : { ...document, root, selectedRuleId: newRule.id, activeGroupId: parentGroupId };
 };
 
 export const addGroup = (
@@ -223,7 +243,7 @@ export const addGroup = (
   const newGroup = { ...defaultGroup(nextId(document, 'group')), ...group, kind: 'group' as const };
   const root = addChildToGroup(document.root, parentGroupId, newGroup);
 
-  return root === document.root ? document : { ...document, root };
+  return root === document.root ? document : { ...document, root, activeGroupId: newGroup.id };
 };
 
 export const updateRule = (
@@ -260,8 +280,12 @@ export const deleteNode = (document: QueryDocument, nodeId: string): QueryDocume
     document.selectedRuleId && containsNode(result.node, document.selectedRuleId)
       ? document.selectedRuleId
       : undefined;
+  const activeGroupId =
+    document.activeGroupId && containsNode(result.node, document.activeGroupId)
+      ? document.activeGroupId
+      : undefined;
 
-  return { ...document, root: result.node as QueryGroup, selectedRuleId };
+  return { ...document, root: result.node as QueryGroup, selectedRuleId, activeGroupId };
 };
 
 export const selectRule = (document: QueryDocument, ruleId?: string): QueryDocument => {
@@ -269,7 +293,17 @@ export const selectRule = (document: QueryDocument, ruleId?: string): QueryDocum
     return { ...document, selectedRuleId: undefined };
   }
 
-  return findRule(document.root, ruleId) ? { ...document, selectedRuleId: ruleId } : document;
+  if (!findRule(document.root, ruleId)) {
+    return document;
+  }
+
+  const activeGroupId = findParentGroupId(document.root, ruleId) ?? document.activeGroupId;
+  return { ...document, selectedRuleId: ruleId, activeGroupId };
+};
+
+/** Focuses a group as the target for new rules/groups/fields (T-focus-group). */
+export const focusGroup = (document: QueryDocument, groupId: string): QueryDocument => {
+  return containsNode(document.root, groupId) ? { ...document, activeGroupId: groupId } : document;
 };
 
 export const moveNode = (
@@ -308,6 +342,7 @@ export const clearDocument = (document: QueryDocument): QueryDocument => {
     ...document,
     root: { ...document.root, children: [] },
     selectedRuleId: undefined,
+    activeGroupId: undefined,
   };
 };
 
