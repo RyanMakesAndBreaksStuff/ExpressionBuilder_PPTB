@@ -1,18 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Left bracket -->
-  <path d="M30 20 Q20 20 20 30 L20 45 Q20 50 15 50" />
-  <path d="M30 80 Q20 80 20 70 L20 55 Q20 50 15 50" />
-  <!-- Right bracket -->
-  <path d="M70 20 Q80 20 80 30 L80 45 Q80 50 85 50" />
-  <path d="M70 80 Q80 80 80 70 L80 55 Q80 50 85 50" />
-  <!-- Content: function symbol -->
-  <path d="M42 42 Q38 42 38 46 L38 50 Q38 54 34 54" stroke-width="2" />
-  <path d="M36 47 L42 47" stroke-width="2" />
-  <!-- Variable x -->
-  <path d="M48 48 L52 52 M52 48 L48 52" stroke-width="2.5" />
-  <path d="M56 48 L60 52 M60 48 L56 52" stroke-width="2.5" />
-  <!-- Dot operator -->
-  <circle cx="64" cy="50" r="2" fill="currentColor" stroke="none" />
-  <!-- Output arrow -->
-  <path d="M85 50 L92 50 M88 47 L92 50 L88 53" stroke-width="2" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="v1-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="v1-grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <!-- Background ring -->
+  <circle cx="50" cy="50" r="46" fill="none" stroke="#F0F9FF" stroke-width="2"/>
+  <!-- Root node -->
+  <circle cx="50" cy="22" r="8" fill="url(#v1-grad)" opacity="0.9"/>
+  <!-- Level 2 nodes -->
+  <circle cx="30" cy="44" r="6" fill="url(#v1-grad)" opacity="0.8"/>
+  <circle cx="70" cy="44" r="6" fill="url(#v1-grad)" opacity="0.8"/>
+  <!-- Level 3 nodes -->
+  <circle cx="20" cy="68" r="5" fill="url(#v1-grad2)" opacity="0.85"/>
+  <circle cx="40" cy="68" r="5" fill="url(#v1-grad2)" opacity="0.85"/>
+  <circle cx="60" cy="68" r="5" fill="url(#v1-grad2)" opacity="0.85"/>
+  <circle cx="80" cy="68" r="5" fill="url(#v1-grad2)" opacity="0.85"/>
+  <!-- Leaf nodes -->
+  <circle cx="15" cy="86" r="3.5" fill="#0EA5E9"/>
+  <circle cx="25" cy="86" r="3.5" fill="#0EA5E9"/>
+  <circle cx="35" cy="86" r="3.5" fill="#F59E0B"/>
+  <circle cx="45" cy="86" r="3.5" fill="#F59E0B"/>
+  <circle cx="55" cy="86" r="3.5" fill="#F59E0B"/>
+  <circle cx="65" cy="86" r="3.5" fill="#F59E0B"/>
+  <circle cx="75" cy="86" r="3.5" fill="#0EA5E9"/>
+  <circle cx="85" cy="86" r="3.5" fill="#0EA5E9"/>
+  <!-- Connecting lines -->
+  <path d="M50 30 L30 38 M50 30 L70 38" stroke="url(#v1-grad)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <path d="M30 50 L20 63 M30 50 L40 63 M70 50 L60 63 M70 50 L80 63" stroke="url(#v1-grad)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M20 73 L15 83 M20 73 L25 83 M40 73 L35 83 M40 73 L45 83 M60 73 L55 83 M60 73 L65 83 M80 73 L75 83 M80 73 L85 83" stroke="url(#v1-grad2)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <!-- Inner glow ring -->
+  <circle cx="50" cy="50" r="46" fill="none" stroke="url(#v1-grad)" stroke-width="0.5" opacity="0.3"/>
 </svg>

@@ -263,7 +263,7 @@ export function createPptbAdapter(
         return { fields: [] };
       }
 
-      const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
+      const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes', '$expand=OptionSet')) as
         | { value?: DataverseAttributeMetadata[] }
         | DataverseAttributeMetadata[]
         | undefined;
@@ -300,7 +300,7 @@ export function createPptbAdapter(
         (r) => r.navigationProperty === navigationProperty,
       );
       if (!related || !dv?.getEntityRelatedMetadata) return { fields: [] };
-      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
+      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes', '$expand=OptionSet')) as
         | { value?: DataverseAttributeMetadata[] }
         | DataverseAttributeMetadata[]
         | undefined;

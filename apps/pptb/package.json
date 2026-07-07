@@ -5,18 +5,18 @@
   "engines": {
     "node": ">=24.17.0 <25"
   },
-   "displayName": "Expression Builder For Power Platform Toolbox",
+  "displayName": "Expression Builder For Power Platform Toolbox",
   "description": "Power Automate Trigger And Array Filter Builder",
   "author": "Ryan Rettinger",
   "main": "index.html",
   "icon": "icons/icon.svg",
-   "keywords": [
+  "keywords": [
     "power-automate",
     "power-platform",
     "power-platform-toolbox",
     "cloud-flows"
   ],
-    "contributors": [
+  "contributors": [
     {
       "name": "Ryan Rettinger"
     }
@@ -34,7 +34,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@pptb/types": "^1.2.2",
+    "@pptb/types": "^1.2.3",
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
     "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
     "react": "^19.2.6",

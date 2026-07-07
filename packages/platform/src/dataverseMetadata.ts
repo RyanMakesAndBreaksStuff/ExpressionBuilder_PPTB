@@ -44,16 +44,6 @@ function labelOf(attr: DataverseAttributeMetadata): string {
   return attr.DisplayName?.UserLocalizedLabel?.Label?.trim() || attr.LogicalName;
 }
 
-function choicesOf(attr: DataverseAttributeMetadata): string[] | undefined {
-  const options = attr.OptionSet?.Options;
-  if (!options?.length) {
-    return undefined;
-  }
-  return options.map(
-    (option) => option.Label?.UserLocalizedLabel?.Label?.trim() || String(option.Value),
-  );
-}
-
 function optionsOf(attr: DataverseAttributeMetadata): Array<{ label: string; value: number }> | undefined {
   const options = attr.OptionSet?.Options;
   if (!options?.length) {
