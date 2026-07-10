@@ -19,9 +19,5 @@ export function needsRightOperand(operator: string): boolean {
 }
 
 export function isDateComparison(operator: string): boolean {
-  return ['equals', 'notEquals', 'greater', 'less', 'greaterOrEquals', 'lessOrEquals'].includes(operator);
-}
-
-export function isStringComparison(operator: string): boolean {
-  return ['equals', 'notEquals', 'contains', 'startsWith', 'endsWith'].includes(operator);
+  return OPERATORS_BY_FIELD_TYPE.dateTime.includes(operator);
 }

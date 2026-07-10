@@ -143,11 +143,15 @@ describe('shared builder UI', () => {
     const exportedJson = vi.mocked(adapter.copyToClipboard).mock.calls[0][0];
 
     // Import opens a paste dialog; paste the exported JSON back in and confirm.
+    // Note: clicking Export first leaves Fluent's dialog surface aria-hidden under
+    // jsdom (its inert manager relies on real focus/motion events jsdom lacks), so
+    // query the surface and its Import button with { hidden: true }. The dialog is
+    // fully accessible in the real browser.
     await user.click(screen.getByRole('button', { name: 'Import' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', { hidden: true });
     await user.click(within(dialog).getByLabelText('Saved expression JSON to import'));
     await user.paste(exportedJson);
-    await user.click(within(dialog).getByRole('button', { name: 'Import' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Import', hidden: true }));
 
     expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
     expect(screen.queryByText(/Import failed/i)).not.toBeInTheDocument();

@@ -7,20 +7,30 @@ const entities = [
   { LogicalName: 'new_widget', DisplayName: { UserLocalizedLabel: { Label: 'Widget' } }, IsCustomEntity: true },
 ];
 
+// Base attributes come back WITHOUT OptionSet — the host's getEntityRelatedMetadata
+// 3rd arg is $select-only and cannot pull the OptionSet navigation property. The
+// adapter must fetch it separately via path navigation (enrichOptionSets).
 const attributes = [
   { LogicalName: 'name', AttributeType: 'String', DisplayName: { UserLocalizedLabel: { Label: 'Name' } } },
   {
     LogicalName: 'statuscode',
     AttributeType: 'Status',
     DisplayName: { UserLocalizedLabel: { Label: 'Status' } },
-    OptionSet: { Options: [{ Value: 1, Label: { UserLocalizedLabel: { Label: 'Active' } } }] },
   },
 ];
+
+const statusOptionSet = { Options: [{ Value: 1, Label: { UserLocalizedLabel: { Label: 'Active' } } }] };
+
+// Serves relationships/attributes for the base path, and the OptionSet entity for the
+// deep cast+navigation path so the two-phase enrich flow is exercised end to end.
+const relatedMetadata = vi.fn((_entity: string, path: string) =>
+  Promise.resolve(path.endsWith('/OptionSet') ? statusOptionSet : { value: attributes }),
+);
 
 function mockDv(over: Partial<DataverseApi> = {}): DataverseApi {
   return {
     getAllEntitiesMetadata: vi.fn().mockResolvedValue(entities),
-    getEntityRelatedMetadata: vi.fn().mockResolvedValue({ value: attributes }),
+    getEntityRelatedMetadata: relatedMetadata,
     ...over,
   };
 }
@@ -43,12 +53,21 @@ describe('PPTB adapter discovery', () => {
     expect(tables?.map((t) => t.displayName)).toEqual(['Account', 'Widget']);
   });
 
-  it('discoverFields maps attributes incl. choice labels', async () => {
-    const adapter = createPptbAdapter(undefined, mockDv());
+  it('discoverFields maps attributes and loads choice labels via OptionSet navigation', async () => {
+    const dv = mockDv();
+    const adapter = createPptbAdapter(undefined, dv);
     const result = await adapter.discoverFields?.({ table: 'account' });
     expect(result?.fields.map((f) => f.type)).toEqual(['string', 'choice']);
-    expect(result?.fields[1].choices).toEqual(['Active']);
     expect(result?.fields[0].source).toBe('dataverse');
+    // Choice labels arrive only through the second-phase path navigation. The host's
+    // 3rd arg is $select-only (`['OptionSet']` → 0x80060888), so options MUST come from
+    // a cast+/OptionSet fetch. This assertion fails if that navigation is dropped.
+    expect(result?.fields[1].choices).toEqual(['Active']);
+    expect(dv.getEntityRelatedMetadata).toHaveBeenCalledWith('account', 'Attributes');
+    expect(dv.getEntityRelatedMetadata).toHaveBeenCalledWith(
+      'account',
+      "Attributes(LogicalName='statuscode')/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet",
+    );
   });
 
   it('degrades to empty + notify when bridge missing', async () => {
@@ -70,5 +89,8 @@ describe('PPTB adapter related discovery', () => {
     const result = await adapter.discoverRelatedFields?.('account', 'ownerid');
     expect(result?.fields[0].path).toEqual(['ownerid', 'fullname']);
     expect(result?.fields[0].group).toBe('systemuser');
+    // Related attributes use the same base 'Attributes' fetch; choice options (if any)
+    // load via the same second-phase OptionSet navigation as primary fields.
+    expect(getEntityRelatedMetadata).toHaveBeenCalledWith('systemuser', 'Attributes');
   });
 });

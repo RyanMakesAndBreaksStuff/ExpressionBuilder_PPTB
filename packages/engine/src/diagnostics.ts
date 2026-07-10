@@ -8,7 +8,3 @@ export function diagnostic(
 ): FormatDiagnostic {
   return { code, message, path, severity };
 }
-
-export function hasError(diagnostics: FormatDiagnostic[]): boolean {
-  return diagnostics.some((item) => item.severity === 'error');
-}
