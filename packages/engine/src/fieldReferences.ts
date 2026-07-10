@@ -6,8 +6,8 @@ function quotePathSegment(segment: string): string {
 
 export function formatFieldReference(field: FieldDefinition, mode: ExpressionMode): string {
   const root = mode === 'triggerCondition' ? 'triggerBody()' : 'item()';
-  return field.path.reduce((expression, segment, index) => {
-    const accessor = index === 0 ? '?' : '?';
+  return field.path.reduce((expression, segment) => {
+    const accessor = '?';
     return `${expression}${accessor}['${quotePathSegment(segment)}']`;
   }, root);
 }

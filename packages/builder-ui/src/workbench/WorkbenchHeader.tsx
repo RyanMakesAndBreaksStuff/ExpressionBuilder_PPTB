@@ -41,10 +41,10 @@ export function WorkbenchHeader({
           icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           onClick={onToggleTheme}
         />
-        <ActionButton variant="ghost" onClick={onImport} icon={<ExportIcon />}>
+        <ActionButton variant="ghost" onClick={onImport} icon={<ImportIcon />}>
           Import
         </ActionButton>
-        <ActionButton variant="ghost" onClick={onExport} icon={<ImportIcon />}>
+        <ActionButton variant="ghost" onClick={onExport} icon={<ExportIcon />}>
           Export
         </ActionButton>
         <ActionButton variant="primary" onClick={onCopyExpression} icon={<CopyIcon />}>
