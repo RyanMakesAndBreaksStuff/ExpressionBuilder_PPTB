@@ -17,7 +17,8 @@ export function RuleRowEditor({
 }: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
-  const hasError = !rule.value && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
+  const valueMissing = rule.value === undefined || rule.value === null || rule.value === '';
+  const hasError = valueMissing && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
   const [rawValue, setRawValue] = useState(false);
   const appliedWraps = rule.wrappers ?? [];
 

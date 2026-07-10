@@ -42,3 +42,6 @@ dist-ssr
 /.claude
 AGENTS.md.bak
 LEAN-CTX.md
+/.codex
+/LEAN-CTX.md.bak
+/tasks/todo.md
