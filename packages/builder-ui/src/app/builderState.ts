@@ -73,57 +73,9 @@ export function findField(fields: FieldDefinition[], fieldId: string): FieldDefi
   return fields.find((field) => field.id === fieldId);
 }
 
-export function findRule(root: QueryNode, ruleId?: string): QueryRule | undefined {
-  if (!ruleId) {
-    return findFirstRule(root);
-  }
-
-  if (root.kind === 'rule') {
-    return root.id === ruleId ? root : undefined;
-  }
-
-  for (const child of root.children) {
-    const match = findRule(child, ruleId);
-    if (match) {
-      return match;
-    }
-  }
-
-  return undefined;
-}
-
-export function findParentGroupId(node: QueryNode, ruleId?: string): string | undefined {
-  if (!ruleId || node.kind === 'rule') {
-    return undefined;
-  }
-
-  for (const child of node.children) {
-    if (child.id === ruleId) {
-      return node.id;
-    }
-    const nested = findParentGroupId(child, ruleId);
-    if (nested) {
-      return nested;
-    }
-  }
-
-  return undefined;
-}
-
-export function findFirstRule(node: QueryNode): QueryRule | undefined {
-  if (node.kind === 'rule') {
-    return node;
-  }
-
-  for (const child of node.children) {
-    const match = findFirstRule(child);
-    if (match) {
-      return match;
-    }
-  }
-
-  return undefined;
-}
+// Tree-walk helpers live in the composer data layer (single source of truth).
+// Re-exported here so app-layer consumers keep importing from builderState.
+export { findRule, findParentGroupId, findFirstRule } from '../composer/queryActions';
 
 export function getOperatorsForField(field?: FieldDefinition): readonly string[] {
   return field ? OPERATORS_BY_FIELD_TYPE[field.type] : [];

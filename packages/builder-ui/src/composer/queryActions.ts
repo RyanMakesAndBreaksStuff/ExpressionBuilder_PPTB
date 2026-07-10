@@ -55,7 +55,26 @@ const containsNode = (node: QueryNode, nodeId: string): boolean => {
   return node.kind === 'group' && node.children.some((child) => containsNode(child, nodeId));
 };
 
-const findRule = (node: QueryNode, ruleId: string): QueryRule | undefined => {
+export const findFirstRule = (node: QueryNode): QueryRule | undefined => {
+  if (node.kind === 'rule') {
+    return node;
+  }
+
+  for (const child of node.children) {
+    const match = findFirstRule(child);
+    if (match) {
+      return match;
+    }
+  }
+
+  return undefined;
+};
+
+export const findRule = (node: QueryNode, ruleId?: string): QueryRule | undefined => {
+  if (!ruleId) {
+    return findFirstRule(node);
+  }
+
   if (node.kind === 'rule') {
     return node.id === ruleId ? node : undefined;
   }
@@ -71,8 +90,8 @@ const findRule = (node: QueryNode, ruleId: string): QueryRule | undefined => {
   return undefined;
 };
 
-const findParentGroupId = (node: QueryNode, ruleId: string): string | undefined => {
-  if (node.kind === 'rule') {
+export const findParentGroupId = (node: QueryNode, ruleId?: string): string | undefined => {
+  if (!ruleId || node.kind === 'rule') {
     return undefined;
   }
 
