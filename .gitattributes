@@ -1,0 +1,25 @@
+# Normalize line endings to LF in the repo, checkout native per-OS.
+# Prevents the CRLF churn that produced equal-count insert/delete diffs on docs.
+* text=auto eol=lf
+
+# Explicit text types
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
+*.svg  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Binary — never touch
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff  binary
+*.woff2 binary

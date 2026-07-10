@@ -16,6 +16,22 @@ import { mapDataverseAttributes, type DataverseAttributeMetadata } from './datav
 
 type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * Cast segment per Dataverse choice attribute type. OptionSet is a navigation
+ * property that lives on these DERIVED AttributeMetadata subtypes, not on the base
+ * type — so it can only be reached by casting into the subtype and navigating to
+ * OptionSet. The host's getEntityRelatedMetadata 3rd arg maps to OData $select, which
+ * CANNOT pull a navigation property (proven: `['OptionSet']` → host error 0x80060888
+ * "Could not find a property named 'OptionSet' on type ...AttributeMetadata"). So we
+ * fetch each choice column's OptionSet with a separate path-navigation call instead.
+ */
+const OPTIONSET_CAST_BY_TYPE: Record<string, string> = {
+  Picklist: 'PicklistAttributeMetadata',
+  State: 'StateAttributeMetadata',
+  Status: 'StatusAttributeMetadata',
+  MultiSelectPicklist: 'MultiSelectPicklistAttributeMetadata',
+};
+
 interface PptbClipboardApi {
   writeText?: (text: string) => MaybePromise<void>;
   copy?: (text: string) => MaybePromise<void>;
@@ -263,12 +279,19 @@ export function createPptbAdapter(
         return { fields: [] };
       }
 
-      const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
-        | { value?: DataverseAttributeMetadata[] }
-        | DataverseAttributeMetadata[]
-        | undefined;
+      let attrs: DataverseAttributeMetadata[];
+      try {
+        const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
+          | { value?: DataverseAttributeMetadata[] }
+          | DataverseAttributeMetadata[]
+          | undefined;
+        attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      } catch {
+        await adapter.notify(`Could not load fields for ${table}.`, 'error');
+        return { fields: [] };
+      }
 
-      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      await enrichOptionSets(dv, table, attrs);
       const fields = mapDataverseAttributes(attrs);
 
       return {
@@ -300,11 +323,17 @@ export function createPptbAdapter(
         (r) => r.navigationProperty === navigationProperty,
       );
       if (!related || !dv?.getEntityRelatedMetadata) return { fields: [] };
-      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
-        | { value?: DataverseAttributeMetadata[] }
-        | DataverseAttributeMetadata[]
-        | undefined;
-      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      let attrs: DataverseAttributeMetadata[];
+      try {
+        const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
+          | { value?: DataverseAttributeMetadata[] }
+          | DataverseAttributeMetadata[]
+          | undefined;
+        attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
+      } catch {
+        return { fields: [] };
+      }
+      await enrichOptionSets(dv, related.table, attrs);
       const fields = mapDataverseAttributes(attrs, [navigationProperty]).map((f) => ({
         ...f,
         group: related.displayName,
@@ -336,6 +365,47 @@ export function createPptbAdapter(
   };
 
   return adapter;
+}
+
+/**
+ * Best-effort: inline each choice column's OptionSet.Options via a separate
+ * path-navigation fetch. The host's getEntityRelatedMetadata 3rd arg is $select-only
+ * (cannot pull the OptionSet navigation property), so we navigate straight to it:
+ *   EntityDefinitions(LogicalName='<table>')/Attributes(LogicalName='<attr>')
+ *     /Microsoft.Dynamics.CRM.<Cast>/OptionSet
+ * The host validates only the base path segment ('Attributes'), so the deeper cast +
+ * /OptionSet navigation passes. Any per-attribute failure is swallowed — the column
+ * still maps as a choice, just without a labeled picker, rather than crashing discovery.
+ */
+async function enrichOptionSets(
+  dv: DataverseApi,
+  table: string,
+  attrs: DataverseAttributeMetadata[],
+): Promise<void> {
+  const fetch = dv.getEntityRelatedMetadata;
+  if (!fetch) return;
+
+  await Promise.all(
+    attrs.map(async (attr) => {
+      // ponytail: inline type read vs exporting attrTypeOf — single call site.
+      const dvType = attr.AttributeTypeName?.Value?.replace(/Type$/, '') ?? attr.AttributeType;
+      const cast = dvType ? OPTIONSET_CAST_BY_TYPE[dvType] : undefined;
+      if (!cast || attr.OptionSet?.Options?.length) return;
+
+      try {
+        const raw = (await fetch(
+          table,
+          `Attributes(LogicalName='${attr.LogicalName}')/Microsoft.Dynamics.CRM.${cast}/OptionSet`,
+        )) as { value?: { Options?: unknown } } | { Options?: unknown } | undefined;
+        const optionSet = raw && 'value' in raw ? raw.value : raw;
+        if (optionSet && typeof optionSet === 'object' && 'Options' in optionSet) {
+          attr.OptionSet = optionSet as DataverseAttributeMetadata['OptionSet'];
+        }
+      } catch {
+        // Best-effort: leave attr without options.
+      }
+    }),
+  );
 }
 
 function levelLabel(level: NotificationLevel): string {
