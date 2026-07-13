@@ -35,6 +35,7 @@ const useStyles = makeStyles({
 export function AddFieldForm({ open, existing, onDismiss, onAdd }: AddFieldFormProps) {
   const styles = useStyles();
   const [label, setLabel] = useState('');
+  const [labelTouched, setLabelTouched] = useState(false);
   const [type, setType] = useState<FieldType>('string');
   const [choicesText, setChoicesText] = useState('');
   const [nullable, setNullable] = useState(false);
@@ -42,6 +43,7 @@ export function AddFieldForm({ open, existing, onDismiss, onAdd }: AddFieldFormP
 
   const reset = () => {
     setLabel('');
+    setLabelTouched(false);
     setType('string');
     setChoicesText('');
     setNullable(false);
@@ -63,6 +65,8 @@ export function AddFieldForm({ open, existing, onDismiss, onAdd }: AddFieldFormP
     : candidate === null
       ? 'Field id is empty or already exists.'
       : undefined;
+  // ponytail: only show the "Label is required" message after first blur/submit
+  const visibleError = labelTouched ? invalidReason : candidate === null && label.trim() ? invalidReason : undefined;
 
   const handleDismiss = () => {
     reset();
@@ -78,10 +82,14 @@ export function AddFieldForm({ open, existing, onDismiss, onAdd }: AddFieldFormP
             <Field
               label="Label"
               required
-              validationMessage={invalidReason}
-              validationState={invalidReason ? 'error' : 'none'}
+              validationMessage={visibleError}
+              validationState={visibleError ? 'error' : 'none'}
             >
-              <Input value={label} onChange={(_, d) => setLabel(d.value)} />
+              <Input
+                value={label}
+                onChange={(_, d) => setLabel(d.value)}
+                onBlur={() => setLabelTouched(true)}
+              />
             </Field>
             <Field label="Type">
               <Dropdown

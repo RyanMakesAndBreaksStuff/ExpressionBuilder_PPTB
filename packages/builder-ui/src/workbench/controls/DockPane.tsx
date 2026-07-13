@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, GripIcon } from '../icons/BuilderIcons';
+import { useId, type ReactNode } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '../icons/BuilderIcons';
 
 interface DockPaneProps {
   title: string;
@@ -13,6 +13,7 @@ interface DockPaneProps {
 
 export function DockPane({ title, side, collapsed, children, tabs, meta, onToggleCollapsed }: DockPaneProps) {
   const toggleLabel = `${collapsed ? 'Expand' : 'Collapse'} ${title}`;
+  const bodyId = useId();
   const ToggleIcon = side === 'left'
     ? (collapsed ? ChevronRightIcon : ChevronLeftIcon)
     : (collapsed ? ChevronLeftIcon : ChevronRightIcon);
@@ -22,13 +23,9 @@ export function DockPane({ title, side, collapsed, children, tabs, meta, onToggl
       className={`eb-dock-pane ${collapsed ? 'eb-dock-collapsed' : ''}`}
       role="complementary"
       aria-label={title}
-      aria-expanded={!collapsed}
       data-side={side}
     >
       <div className="eb-pane-chrome">
-        <span className="eb-drag-dots">
-          <GripIcon />
-        </span>
         <span className="eb-pane-title">
           {title}
         </span>
@@ -38,13 +35,15 @@ export function DockPane({ title, side, collapsed, children, tabs, meta, onToggl
           className="eb-icon-btn"
           aria-label={toggleLabel}
           title={toggleLabel}
+          aria-expanded={!collapsed}
+          aria-controls={bodyId}
           onClick={onToggleCollapsed}
         >
           <ToggleIcon />
         </button>
       </div>
       {!collapsed ? tabs : null}
-      {!collapsed ? <div className="eb-pane-body">{children}</div> : null}
+      {!collapsed ? <div className="eb-pane-body" id={bodyId}>{children}</div> : null}
     </aside>
   );
 }

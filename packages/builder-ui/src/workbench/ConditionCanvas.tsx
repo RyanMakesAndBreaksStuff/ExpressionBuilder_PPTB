@@ -35,6 +35,7 @@ export function ConditionCanvas(props: ConditionCanvasProps) {
         <ConditionGroupCard
           {...props}
           group={props.root}
+          isRoot
           onRequestRemap={props.onRequestRemap}
         />
       </div>

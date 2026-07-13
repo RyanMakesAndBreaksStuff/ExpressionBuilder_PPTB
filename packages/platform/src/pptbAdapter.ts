@@ -296,7 +296,8 @@ export function createPptbAdapter(
 
       return {
         fields,
-        table: { logicalName: table, displayName: table },
+        // ponytail: omit table when only logicalName is known; caller falls back to a generic label
+        // rather than displaying the logical name. Add real DisplayName lookup if a friendlier chip is needed.
         fetchedAt: Date.now(),
       };
     },
@@ -377,23 +378,32 @@ export function createPptbAdapter(
  * /OptionSet navigation passes. Any per-attribute failure is swallowed — the column
  * still maps as a choice, just without a labeled picker, rather than crashing discovery.
  */
+// ponytail: fixed pool size vs a queue dependency — one call site, throughput never varies at runtime.
+const OPTIONSET_FETCH_CONCURRENCY = 4;
+
 async function enrichOptionSets(
   dv: DataverseApi,
   table: string,
   attrs: DataverseAttributeMetadata[],
 ): Promise<void> {
-  const fetch = dv.getEntityRelatedMetadata;
-  if (!fetch) return;
+  const fetchMetadata = dv.getEntityRelatedMetadata;
+  if (!fetchMetadata) return;
 
-  await Promise.all(
-    attrs.map(async (attr) => {
-      // ponytail: inline type read vs exporting attrTypeOf — single call site.
+  const pending = attrs.filter((attr) => {
+    const dvType = attr.AttributeTypeName?.Value?.replace(/Type$/, '') ?? attr.AttributeType;
+    const cast = dvType ? OPTIONSET_CAST_BY_TYPE[dvType] : undefined;
+    return cast && !attr.OptionSet?.Options?.length;
+  });
+
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < pending.length) {
+      const attr = pending[cursor++];
       const dvType = attr.AttributeTypeName?.Value?.replace(/Type$/, '') ?? attr.AttributeType;
-      const cast = dvType ? OPTIONSET_CAST_BY_TYPE[dvType] : undefined;
-      if (!cast || attr.OptionSet?.Options?.length) return;
+      const cast = OPTIONSET_CAST_BY_TYPE[dvType as string];
 
       try {
-        const raw = (await fetch(
+        const raw = (await fetchMetadata(
           table,
           `Attributes(LogicalName='${attr.LogicalName}')/Microsoft.Dynamics.CRM.${cast}/OptionSet`,
         )) as { value?: { Options?: unknown } } | { Options?: unknown } | undefined;
@@ -404,7 +414,11 @@ async function enrichOptionSets(
       } catch {
         // Best-effort: leave attr without options.
       }
-    }),
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(OPTIONSET_FETCH_CONCURRENCY, pending.length) }, worker),
   );
 }
 

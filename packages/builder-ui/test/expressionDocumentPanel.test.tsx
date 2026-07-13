@@ -35,7 +35,7 @@ describe('ExpressionDocumentPanel', () => {
       />,
     );
 
-    expect(screen.getByRole('region', { name: 'Expression Preview' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Expand expression preview' })).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(screen.getByRole('button', { name: 'Expand expression preview' }));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });

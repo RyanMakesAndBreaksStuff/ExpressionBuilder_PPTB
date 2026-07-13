@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { FluentProvider } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -47,6 +47,8 @@ import {
 } from '../workbench/workbenchState';
 import '../theme/tokens.css';
 
+const PALETTE_SETTING_KEY = 'eb.workbench.palette';
+
 export interface ExpressionBuilderShellProps {
   adapter: PlatformAdapter;
   initialDocument?: QueryDocument;
@@ -67,6 +69,10 @@ export function ExpressionBuilderShell({
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [paletteId, setPaletteId] = useState<PaletteId>('porcelainDark');
+  // Tracks whether the user has explicitly picked a palette this session.
+  // When true, host theme events no longer overwrite the choice.
+  // ponytail: session flag + persisted setting; skip a per-user "auto/light/dark" tri-state until asked
+  const [paletteOverride, setPaletteOverride] = useState(false);
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
@@ -109,14 +115,30 @@ export function ExpressionBuilderShell({
   useEffect(() => {
     let active = true;
 
-    void adapter.getTheme().then((platformTheme) => {
-      if (active) {
-        setPaletteId(normalizePalette(platformTheme));
-      }
-    });
+    // Prefer persisted palette; fall back to host theme.
+    void adapter.settings
+      .get(PALETTE_SETTING_KEY)
+      .then((stored) => {
+        if (!active) return;
+        if (stored === 'porcelainDark' || stored === 'porcelainLight') {
+          setPaletteId(stored);
+          setPaletteOverride(true);
+          return;
+        }
+        void adapter.getTheme().then((platformTheme) => {
+          if (active) setPaletteId(normalizePalette(platformTheme));
+        });
+      })
+      .catch(() => {
+        // Settings read failed — fall back to host theme silently.
+        void adapter.getTheme().then((platformTheme) => {
+          if (active) setPaletteId(normalizePalette(platformTheme));
+        });
+      });
 
     const unsubscribe = adapter.onThemeChanged((platformTheme) => {
-      setPaletteId(normalizePalette(platformTheme));
+      // Host events only apply while the user has NOT locked a palette this session.
+      setPaletteId((current) => (paletteOverrideRef.current ? current : normalizePalette(platformTheme)));
     });
 
     return () => {
@@ -125,17 +147,30 @@ export function ExpressionBuilderShell({
     };
   }, [adapter]);
 
+  // Mirror override state into a ref so the theme listener always reads current value.
+  const paletteOverrideRef = useRef(paletteOverride);
+  useEffect(() => {
+    paletteOverrideRef.current = paletteOverride;
+  }, [paletteOverride]);
+
   const updateMode = (mode: ExpressionMode) => {
     setDocument((current) => ({ ...current, mode }));
     setImportDiagnostics([]);
   };
 
   const copyExpression = async () => {
-    await adapter.copyToClipboard(derived.expression);
-    setWorkbench((current) => ({ ...current, copyState: 'copied' }));
-    setTimeout(() => {
-      setWorkbench((current) => ({ ...current, copyState: 'idle' }));
-    }, 1200);
+    try {
+      await adapter.copyToClipboard(derived.expression);
+      setWorkbench((current) => ({ ...current, copyState: 'copied' }));
+      setTimeout(() => {
+        setWorkbench((current) => ({ ...current, copyState: 'idle' }));
+      }, 1200);
+    } catch (err) {
+      await adapter.notify(
+        `Could not copy expression: ${err instanceof Error ? err.message : 'clipboard unavailable'}`,
+        'error',
+      );
+    }
   };
 
   /** Copies the current document as saved-expression JSON to the clipboard. */
@@ -170,30 +205,37 @@ export function ExpressionBuilderShell({
     }
 
     // T19: On refresh, diff the old vs new field set and surface a drift summary.
-    setDocument((current) => {
-      if (refresh && current.source?.kind === 'dataverse') {
-        const drift = diffFields(current.fields, fields);
-        const hasDrift = drift.added.length > 0 || drift.removed.length > 0 || drift.changed.length > 0;
-        if (hasDrift) {
-          const usedIds = referencedFieldIds(current.root);
-          const removedInUse = drift.removed.filter((f) => usedIds.has(f.id)).map((f) => f.id);
-          setPendingDrift({ drift, removedInUse });
-          setDialog('drift');
-        }
+    if (refresh && document.source?.kind === 'dataverse') {
+      const drift = diffFields(document.fields, fields);
+      const hasDrift = drift.added.length > 0 || drift.removed.length > 0 || drift.changed.length > 0;
+      if (hasDrift) {
+        const usedIds = referencedFieldIds(document.root);
+        const removedInUse = drift.removed.filter((f) => usedIds.has(f.id)).map((f) => f.id);
+        setPendingDrift({ drift, removedInUse });
+        setDialog('drift');
       }
-      return applySource(
+    }
+    setDocument((current) =>
+      applySource(
         current,
         { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
         fields,
-      );
-    });
+      ),
+    );
 
     if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table).then((rels) =>
-        setRelatedSections(
-          rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-        ),
-      );
+      void adapter.getRelatedTables(table)
+        .then((rels) =>
+          setRelatedSections(
+            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
+          ),
+        )
+        .catch((err) => {
+          void adapter.notify(
+            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
+            'warning',
+          );
+        });
     }
   };
 
@@ -225,16 +267,23 @@ export function ExpressionBuilderShell({
   const handleExpandRelated = (navigationProperty: string) => {
     const table = document.source?.tableLogicalName;
     if (!table || !adapter.discoverRelatedFields) return;
-    void adapter.discoverRelatedFields(table, navigationProperty).then((result) => {
-      if (result.fields.length === 0) return;
-      setDocument((current) => ({
-        ...current,
-        fields: [
-          ...current.fields.filter((f) => !result.fields.some((nf) => nf.id === f.id)),
-          ...result.fields,
-        ],
-      }));
-    });
+    void adapter.discoverRelatedFields(table, navigationProperty)
+      .then((result) => {
+        if (result.fields.length === 0) return;
+        setDocument((current) => ({
+          ...current,
+          fields: [
+            ...current.fields.filter((f) => !result.fields.some((nf) => nf.id === f.id)),
+            ...result.fields,
+          ],
+        }));
+      })
+      .catch((err) => {
+        void adapter.notify(
+          `Could not expand related fields: ${err instanceof Error ? err.message : 'unknown error'}`,
+          'warning',
+        );
+      });
   };
 
   const createRuleFromField = (field: FieldDefinition) => {
@@ -298,11 +347,18 @@ export function ExpressionBuilderShell({
       return removeAffected?.length ? removeRules(base, removeAffected) : base;
     });
     if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table).then((rels) =>
-        setRelatedSections(
-          rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-        ),
-      );
+      void adapter.getRelatedTables(table)
+        .then((rels) =>
+          setRelatedSections(
+            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
+          ),
+        )
+        .catch((err) => {
+          void adapter.notify(
+            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
+            'warning',
+          );
+        });
     } else {
       setRelatedSections([]);
     }
@@ -319,11 +375,14 @@ export function ExpressionBuilderShell({
           onModeChange={updateMode}
           onExport={() => void exportDocument()}
           onImport={() => setDialog('importExpression')}
-          onToggleTheme={() =>
-            setPaletteId((current) =>
-              current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark',
-            )
-          }
+          onToggleTheme={() => {
+            setPaletteId((current) => {
+              const next = current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark';
+              void adapter.settings.set(PALETTE_SETTING_KEY, next).catch(() => {});
+              return next;
+            });
+            setPaletteOverride(true);
+          }}
           onCopyExpression={() => void copyExpression()}
         />
 
