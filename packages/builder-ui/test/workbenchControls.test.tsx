@@ -20,7 +20,7 @@ describe('workbench shared controls', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Collapse Docked Toolbox' }));
 
-    expect(screen.getByRole('complementary', { name: 'Docked Toolbox' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Collapse Docked Toolbox' })).toHaveAttribute('aria-expanded', 'true');
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 

@@ -179,7 +179,7 @@ describe('shared builder UI', () => {
 
     await user.click(screen.getByRole('button', { name: 'Collapse Toolbox' }));
 
-    expect(screen.getByRole('complementary', { name: 'Toolbox' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Expand Toolbox' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getAllByText('Toolbox')).toHaveLength(1);
   });
 
@@ -189,7 +189,7 @@ describe('shared builder UI', () => {
 
     await user.click(screen.getByRole('button', { name: 'Collapse Details' }));
 
-    expect(screen.getByRole('complementary', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Expand Details' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('preview collapse preserves the generated expression after re-expand', async () => {
@@ -198,7 +198,7 @@ describe('shared builder UI', () => {
 
     const expressionBefore = screen.getByLabelText('Generated expression').textContent;
     await user.click(screen.getByRole('button', { name: 'Collapse expression preview' }));
-    expect(screen.getByRole('region', { name: 'Expression Preview' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Expand expression preview' })).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(screen.getByRole('button', { name: 'Expand expression preview' }));
     expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);

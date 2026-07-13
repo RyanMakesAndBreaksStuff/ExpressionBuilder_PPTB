@@ -8,6 +8,7 @@ import {
   DialogSurface,
   DialogTitle,
   Input,
+  MessageBar,
   Text,
   makeStyles,
   tokens,
@@ -41,6 +42,17 @@ const useStyles = makeStyles({
   list: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS },
   saveRow: { display: 'flex', gap: tokens.spacingHorizontalS },
   grow: { flexGrow: 1 },
+  confirmRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    paddingLeft: tokens.spacingHorizontalM,
+    paddingRight: tokens.spacingHorizontalM,
+    paddingTop: tokens.spacingVerticalS,
+    paddingBottom: tokens.spacingVerticalS,
+    borderRadius: tokens.borderRadiusMedium,
+    backgroundColor: tokens.colorNeutralBackground3,
+  },
 });
 
 export function ManageProfilesDialog({
@@ -53,15 +65,23 @@ export function ManageProfilesDialog({
   const styles = useStyles();
   const [names, setNames] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const refresh = () => {
     void listProfiles(settings).then(setNames);
   };
 
   useEffect(() => {
-    if (open) refresh();
+    if (open) {
+      refresh();
+      setConfirmDelete(null);
+      setNewName('');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const trimmedNew = newName.trim();
+  const overwrites = trimmedNew.length > 0 && names.includes(trimmedNew);
 
   return (
     <Dialog open={open} onOpenChange={(_, d) => (!d.open ? onDismiss() : undefined)}>
@@ -78,42 +98,68 @@ export function ManageProfilesDialog({
               />
               <Button
                 appearance="primary"
-                disabled={!newName.trim() || currentFields.length === 0}
+                disabled={!trimmedNew || currentFields.length === 0}
                 onClick={async () => {
-                  await saveProfile(settings, { name: newName.trim(), fields: currentFields });
+                  await saveProfile(settings, { name: trimmedNew, fields: currentFields });
                   setNewName('');
                   refresh();
                 }}
               >
-                Save current
+                {overwrites ? 'Overwrite' : 'Save current'}
               </Button>
             </div>
+            {overwrites ? (
+              <MessageBar intent="warning">
+                A profile named "{trimmedNew}" already exists. Saving will overwrite it.
+              </MessageBar>
+            ) : null}
             <div className={styles.list}>
               {names.length === 0 ? <Text size={200}>No saved profiles.</Text> : null}
-              {names.map((name) => (
-                <div key={name} className={styles.row}>
-                  <Text className={styles.grow}>{name}</Text>
-                  <Button
-                    size="small"
-                    onClick={async () => {
-                      const profile = await loadProfile(settings, name);
-                      if (profile) onLoad(profile.name, profile.fields);
-                    }}
-                  >
-                    Load
-                  </Button>
-                  <Button
-                    size="small"
-                    appearance="subtle"
-                    icon={<DeleteRegular />}
-                    aria-label={`Delete ${name}`}
-                    onClick={async () => {
-                      await deleteProfile(settings, name);
-                      refresh();
-                    }}
-                  />
-                </div>
-              ))}
+              {names.map((name) =>
+                confirmDelete === name ? (
+                  <div key={name} className={styles.confirmRow} role="alert">
+                    <Text className={styles.grow}>Delete "{name}"?</Text>
+                    <Button
+                      size="small"
+                      appearance="primary"
+                      onClick={async () => {
+                        await deleteProfile(settings, name);
+                        setConfirmDelete(null);
+                        refresh();
+                      }}
+                    >
+                      Delete
+                    </Button>
+                    <Button
+                      size="small"
+                      appearance="secondary"
+                      onClick={() => setConfirmDelete(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div key={name} className={styles.row}>
+                    <Text className={styles.grow}>{name}</Text>
+                    <Button
+                      size="small"
+                      onClick={async () => {
+                        const profile = await loadProfile(settings, name);
+                        if (profile) onLoad(profile.name, profile.fields);
+                      }}
+                    >
+                      Load
+                    </Button>
+                    <Button
+                      size="small"
+                      appearance="subtle"
+                      icon={<DeleteRegular />}
+                      aria-label={`Delete ${name}`}
+                      onClick={() => setConfirmDelete(name)}
+                    />
+                  </div>
+                ),
+              )}
             </div>
           </DialogContent>
           <DialogActions>

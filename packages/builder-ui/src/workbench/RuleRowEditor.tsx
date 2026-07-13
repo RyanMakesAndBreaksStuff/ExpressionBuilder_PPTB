@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
-import { DuplicateIcon, GripIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
+import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 
 export function RuleRowEditor({
   fields,
@@ -90,9 +90,7 @@ export function RuleRowEditor({
       onClick={() => onSelect(rule.id)}
       onFocusCapture={() => onSelect(rule.id)}
     >
-      <span className="eb-drag-dots">
-        <GripIcon />
-      </span>
+      <span className="eb-drag-dots" aria-hidden="true" hidden />
       <span className={`eb-type ${field.type}`}>{getTypeLabel(field.type)}</span>
       <select
         className="eb-select"

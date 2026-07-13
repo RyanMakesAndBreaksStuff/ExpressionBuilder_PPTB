@@ -41,9 +41,17 @@ function FieldList({ items, ariaLabel, onCreateRuleFromField }: FieldListProps) 
         <li key={field.id}>
           <div
             className="eb-field-row"
+            role="button"
             tabIndex={0}
             onDoubleClick={() => onCreateRuleFromField?.(field)}
-            title="Double-click to add a rule"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onCreateRuleFromField?.(field);
+              }
+            }}
+            title="Double-click or press Enter to add a rule"
+            aria-label={`${field.label}, ${field.type}. Press Enter to add a rule.`}
           >
             <TypeGlyph type={field.type} />
             <span className="eb-field-main">

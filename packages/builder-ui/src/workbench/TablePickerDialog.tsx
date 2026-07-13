@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import {
   Button,
   Dialog,
@@ -72,6 +72,8 @@ function TablePickerBody({
   const [showSystem, setShowSystem] = useState(false);
   const [includeRelated, setIncludeRelated] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     void loadTables().then(setTables);
@@ -88,6 +90,34 @@ function TablePickerBody({
   }, [tables, search, showSystem]);
 
   const selectedTable = filtered.find((t) => t.logicalName === selected) ?? null;
+
+  // Keep active index in bounds when filter shrinks.
+  useEffect(() => {
+    if (activeIndex >= filtered.length) setActiveIndex(0);
+  }, [filtered.length, activeIndex]);
+
+  const focusIndex = (index: number) => {
+    setActiveIndex(index);
+    const el = listRef.current?.querySelectorAll<HTMLDivElement>('[role="option"]')[index];
+    el?.focus();
+  };
+
+  const onListKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (filtered.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusIndex((activeIndex + 1) % filtered.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusIndex((activeIndex - 1 + filtered.length) % filtered.length);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      focusIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      focusIndex(filtered.length - 1);
+    }
+  };
 
   return (
     <DialogBody>
@@ -114,20 +144,35 @@ function TablePickerBody({
         ) : filtered.length === 0 ? (
           <Text size={200}>No tables match.</Text>
         ) : (
-          <div className={styles.list} role="listbox" aria-label="Tables">
-            {filtered.map((t) => (
+          <div
+            className={styles.list}
+            role="listbox"
+            aria-label="Tables"
+            aria-activedescendant={filtered[activeIndex] ? `tbl-${filtered[activeIndex].logicalName}` : undefined}
+            ref={listRef}
+            onKeyDown={onListKeyDown}
+          >
+            {filtered.map((t, index) => (
               <div
                 key={t.logicalName}
+                id={`tbl-${t.logicalName}`}
                 role="option"
                 aria-selected={selected === t.logicalName}
-                tabIndex={0}
+                tabIndex={index === activeIndex ? 0 : -1}
                 className={mergeClasses(
                   styles.row,
                   selected === t.logicalName && styles.selected,
                 )}
-                onClick={() => setSelected(t.logicalName)}
+                onClick={() => {
+                  setSelected(t.logicalName);
+                  setActiveIndex(index);
+                }}
+                onFocus={() => setActiveIndex(index)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') setSelected(t.logicalName);
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelected(t.logicalName);
+                  }
                 }}
               >
                 <Text weight="semibold">{t.displayName}</Text>

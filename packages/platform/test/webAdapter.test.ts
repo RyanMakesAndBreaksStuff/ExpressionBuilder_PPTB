@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createWebAdapter } from '../src/webAdapter';
@@ -53,15 +54,15 @@ describe('createWebAdapter', () => {
     expect(mediaQuery.removeEventListener).toHaveBeenCalledTimes(1);
   });
 
-  it('logs notifications without host dependencies', async () => {
+  it('shows a toast notification without host dependencies', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn() } });
     stubLocalStorage();
     stubMatchMedia(false);
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    document.body.innerHTML = '';
 
     await createWebAdapter().notify('Saved', 'success');
 
-    expect(log).toHaveBeenCalledWith('[success] Saved');
+    expect(document.body.textContent).toContain('Saved');
   });
 
   it('exposes empty discovery results without throwing', async () => {

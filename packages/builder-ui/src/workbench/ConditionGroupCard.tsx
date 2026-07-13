@@ -4,11 +4,11 @@ import { DeleteRegular } from '@fluentui/react-icons';
 import { countRules } from '../app/builderState';
 import type { QueryGroup } from '../composer/querySchema';
 import { RuleRowEditor } from './RuleRowEditor';
-import { GripIcon } from './icons/BuilderIcons';
 
 interface ConditionGroupCardProps {
   group: QueryGroup;
   fields: FieldDefinition[];
+  isRoot?: boolean;
   selectedRuleId?: string;
   activeGroupId?: string;
   onSelectRule: (ruleId: string) => void;
@@ -26,6 +26,7 @@ interface ConditionGroupCardProps {
 export function ConditionGroupCard({
   fields,
   group,
+  isRoot = false,
   selectedRuleId,
   activeGroupId,
   onAddGroup,
@@ -41,7 +42,6 @@ export function ConditionGroupCard({
 }: ConditionGroupCardProps) {
   const isAnd = group.conjunction === 'and';
   const ruleCount = countRules(group);
-  const isRoot = group.id === 'root';
   const isFocused = group.id === activeGroupId;
 
   return (
@@ -50,10 +50,19 @@ export function ConditionGroupCard({
       role="group"
       aria-label={`${group.conjunction.toUpperCase()} group ${group.id}`}
     >
-      <div className="eb-group-toolbar" onClick={() => onFocusGroup(group.id)}>
-        <span className="eb-drag-dots">
-          <GripIcon />
-        </span>
+      <div
+        className="eb-group-toolbar"
+        tabIndex={0}
+        aria-label={`Focus ${group.conjunction.toUpperCase()} group ${group.id}`}
+        onClick={() => onFocusGroup(group.id)}
+        onKeyDown={(event) => {
+          if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            onFocusGroup(group.id);
+          }
+        }}
+      >
+        <span className="eb-drag-dots" aria-hidden="true" hidden />
         <div className="eb-logic-pill">
           <button
             type="button"
