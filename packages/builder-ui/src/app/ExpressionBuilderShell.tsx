@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { FluentProvider } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -136,22 +136,19 @@ export function ExpressionBuilderShell({
         });
       });
 
-    const unsubscribe = adapter.onThemeChanged((platformTheme) => {
-      // Host events only apply while the user has NOT locked a palette this session.
-      setPaletteId((current) => (paletteOverrideRef.current ? current : normalizePalette(platformTheme)));
-    });
-
     return () => {
       active = false;
-      unsubscribe();
     };
   }, [adapter]);
 
-  // Mirror override state into a ref so the theme listener always reads current value.
-  const paletteOverrideRef = useRef(paletteOverride);
   useEffect(() => {
-    paletteOverrideRef.current = paletteOverride;
-  }, [paletteOverride]);
+    const unsubscribe = adapter.onThemeChanged((platformTheme) => {
+      // Host events only apply while the user has NOT locked a palette this session.
+      setPaletteId((current) => (paletteOverride ? current : normalizePalette(platformTheme)));
+    });
+    return unsubscribe;
+  }, [adapter, paletteOverride]);
+
 
   const updateMode = (mode: ExpressionMode) => {
     setDocument((current) => ({ ...current, mode }));

@@ -91,10 +91,8 @@ function TablePickerBody({
 
   const selectedTable = filtered.find((t) => t.logicalName === selected) ?? null;
 
-  // Keep active index in bounds when filter shrinks.
-  useEffect(() => {
-    if (activeIndex >= filtered.length) setActiveIndex(0);
-  }, [filtered.length, activeIndex]);
+  // ponytail: clamp for render instead of a useEffect reset, so a shrinking filter can't leave activeIndex out of bounds.
+  const boundedActiveIndex = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
 
   const focusIndex = (index: number) => {
     setActiveIndex(index);
@@ -148,7 +146,7 @@ function TablePickerBody({
             className={styles.list}
             role="listbox"
             aria-label="Tables"
-            aria-activedescendant={filtered[activeIndex] ? `tbl-${filtered[activeIndex].logicalName}` : undefined}
+            aria-activedescendant={filtered[boundedActiveIndex] ? `tbl-${filtered[boundedActiveIndex].logicalName}` : undefined}
             ref={listRef}
             onKeyDown={onListKeyDown}
           >
@@ -158,7 +156,7 @@ function TablePickerBody({
                 id={`tbl-${t.logicalName}`}
                 role="option"
                 aria-selected={selected === t.logicalName}
-                tabIndex={index === activeIndex ? 0 : -1}
+                tabIndex={index === boundedActiveIndex ? 0 : -1}
                 className={mergeClasses(
                   styles.row,
                   selected === t.logicalName && styles.selected,
