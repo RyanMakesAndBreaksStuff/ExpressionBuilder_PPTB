@@ -1,16 +1,65 @@
 # Power Automate Expression Builder
 
-Power Automate Expression Builder is a React and TypeScript workspace for building Trigger Condition and Filter array advanced-mode predicates. It uses a pure expression engine, shared Fluent UI v9 builder UI, and thin host bootstraps for the browser and Power Platform Toolbox.
+A visual composer for Power Automate **Trigger Condition** and **Filter Array** advanced-mode expressions. Instead of hand-writing `@and(...)` / `@or(...)` predicates, you build conditions in a UI and the app emits valid Power Automate expression syntax — with live preview and real-time diagnostics.
 
-## Package Boundaries
+Ships two ways from one shared codebase: a standalone **web app** and a **Power Platform Toolbox (PPTB)** plugin.
+
+## Key Features
+
+- **Visual condition composer** — groups (AND/OR), rules, and nested logic
+- **Live expression preview** — see the generated expression as you build
+- **Field discovery** — connect to Dataverse tables to auto-discover fields and types
+- **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
+- **Field profiles** — save and reload field sets across sessions
+- **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators)
+- **Porcelain theme system** — light/dark, glassmorphism UI on Fluent UI v9
+- **Dockable workspace** — collapsible toolbox/support panes around the central canvas
+
+## Two Deployment Targets
+
+| Target                 | Purpose                                              | Run                | Build               |
+| ---------------------- | ----------------------------------------------------- | ------------------ | -------------------- |
+| **Web** (`apps/web`)   | Standalone browser app — try it with no Power Platform context | `npm run dev:web`  | `npm run build:web`  |
+| **PPTB** (`apps/pptb`) | Power Platform Toolbox package, published to the PPTB marketplace | `npm run dev:pptb` | `npm run build:pptb` |
+
+The web build deploys automatically to GitHub Pages on every push to `main` — see [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
+## Architecture
+
+Three shared packages, two thin host apps:
 
 ```text
-packages/engine: pure TypeScript expression formatting and diagnostics
-packages/platform: web and PPTB platform adapters
-packages/builder-ui: shared Fluent UI v9 Concept C composer
-apps/web: browser bootstrap only
-apps/pptb: Power Platform Toolbox bootstrap only
+┌─────────────────────────────────────────────────────────────┐
+│  apps/web          │  apps/pptb                              │
+│  Browser host       │  Power Platform Toolbox host            │
+│  (createWebAdapter) │  (createPptbAdapter)                    │
+└─────────┬───────────┴──────────┬───────────────────────────────┘
+          │                      │
+          └──────────┬───────────┘
+                      │
+┌─────────────────────┴─────────────────────────────────────┐
+│  packages/builder-ui                                       │
+│  Shared Fluent UI v9 composer + workbench + theme system   │
+│  Exports: ExpressionBuilderShell, queryActions, querySchema │
+└─────────────────────┬───────────────────────────────────────┘
+                       │
+          ┌────────────┼────────────┐
+          │            │            │
+   ┌──────┴─────┐ ┌────┴──────┐ ┌───┴───────┐
+   │ packages/  │ │ packages/ │ │ packages/ │
+   │ engine     │ │ platform  │ │ icons     │
+   │ Pure TS    │ │ Platform  │ │ SVG icons │
+   │ expression │ │ adapters  │ │           │
+   │ formatter  │ │ (web/pptb)│ │           │
+   └────────────┘ └───────────┘ └───────────┘
 ```
+
+**Design principles**
+
+1. **Pure engine** — `packages/engine` has zero UI dependencies; it only knows expression AST nodes, field definitions, and formatting rules.
+2. **Platform abstraction** — `packages/platform` defines a `PlatformAdapter` interface; web and PPTB implement it differently (clipboard, notifications, Dataverse API access).
+3. **Shared UI** — `packages/builder-ui` holds all visual components; the apps are thin bootstraps that inject the right adapter.
+4. **Type safety** — every package is TypeScript with `type: "module"`; types flow `engine` → `builder-ui` → `apps`.
 
 ## Setup
 
@@ -94,5 +143,9 @@ npm run preview:pptb
 
 ## Docs
 
-- [Usage (web + PPTB)](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/usage.md)
-- [User manual & developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
+- [User manual & developer docs](USER_MANUAL.md)
+- [Usage (web + PPTB)](usage.md)
+
+## License
+
+`apps/pptb` is published under [BSD-3-Clause](https://opensource.org/license/bsd-3-clause).
