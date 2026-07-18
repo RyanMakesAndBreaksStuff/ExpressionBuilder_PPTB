@@ -13,6 +13,7 @@ const workspaceSrc = {
 };
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES ? '/ExpressionBuilder_PPTB/' : '/',
   plugins: [react()],
   resolve: { alias: workspaceSrc },
 });
