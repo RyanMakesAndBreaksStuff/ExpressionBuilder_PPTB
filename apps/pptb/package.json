@@ -33,7 +33,7 @@
   "license": "BSD-3-Clause",
   "configurations": {
     "repository": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB",
-    "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/README.md",
+    "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/apps/pptb/README.md",
     "website": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md"
   },
   "scripts": {
