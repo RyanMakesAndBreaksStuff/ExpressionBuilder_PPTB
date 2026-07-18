@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.4",
+  "version": "1.0.6",
   "engines": {
     "node": ">=24.17.0 <25"
   },
@@ -12,7 +12,8 @@
   "author": "Ryan Rettinger",
   "main": "dist/index.html",
   "files": [
-    "dist"
+    "dist",
+    "npm-shrinkwrap.json"
   ],
   "icon": "icons/icon.svg",
   "keywords": [

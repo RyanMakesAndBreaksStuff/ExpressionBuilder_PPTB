@@ -1,0 +1,77 @@
+{
+  "name": "@ryanmakes/expressionbuilder_pptb",
+  "version": "1.0.6",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "@ryanmakes/expressionbuilder_pptb",
+      "version": "1.0.6",
+      "license": "BSD-3-Clause",
+      "devDependencies": {
+        "@pptb/types": "^1.2.3",
+        "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
+        "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6"
+      },
+      "engines": {
+        "node": ">=24.17.0 <25"
+      }
+    },
+    "../../packages/builder-ui": {
+      "dev": true
+    },
+    "../../packages/platform": {
+      "dev": true
+    },
+    "node_modules/@pptb/types": {
+      "version": "1.2.3",
+      "resolved": "https://registry.npmjs.org/@pptb/types/-/types-1.2.3.tgz",
+      "integrity": "sha512-6IvbIASYlqpyT6BPa/hVDMlE45u16aDKCrtPZO/WYrJSnOp5icfNHfYwPxJ6iUwmjKB7LNNTX/g3DGJxf+TVdw==",
+      "dev": true,
+      "license": "GPL-3.0",
+      "bin": {
+        "pptb-validate": "bin/pptb-validate.js"
+      }
+    },
+    "node_modules/@ryanmakes/eb_builder-ui": {
+      "resolved": "../../packages/builder-ui",
+      "link": true
+    },
+    "node_modules/@ryanmakes/eb_platformadapter": {
+      "resolved": "../../packages/platform",
+      "link": true
+    },
+    "node_modules/react": {
+      "version": "19.2.7",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.2.7.tgz",
+      "integrity": "sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==",
+      "dev": true,
+      "license": "MIT",
+      "engines": {
+        "node": ">=0.10.0"
+      }
+    },
+    "node_modules/react-dom": {
+      "version": "19.2.7",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.7.tgz",
+      "integrity": "sha512-t0BRVXvbiE/o20Hfw669rLbMCDWtYZLvmJigy2f0MxsXF+71pxhR3xOkspmsO8h3ZlNzyibAmtCa3l4lYKk6gQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "scheduler": "^0.27.0"
+      },
+      "peerDependencies": {
+        "react": "^19.2.7"
+      }
+    },
+    "node_modules/scheduler": {
+      "version": "0.27.0",
+      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz",
+      "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
+      "dev": true,
+      "license": "MIT"
+    }
+  }
+}
