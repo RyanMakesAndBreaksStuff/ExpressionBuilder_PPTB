@@ -2,6 +2,7 @@
   "name": "@ryanmakes/eb_platformadapter",
   "private": true,
   "version": "1.0.0",
+  "license": "BSD-3-Clause",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

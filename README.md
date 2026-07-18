@@ -148,4 +148,4 @@ npm run preview:pptb
 
 ## License
 
-`apps/pptb` is published under [BSD-3-Clause](https://opensource.org/license/bsd-3-clause).
+[BSD-3-Clause](LICENSE)
