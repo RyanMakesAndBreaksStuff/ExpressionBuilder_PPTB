@@ -2,12 +2,7 @@ name: Deploy apps/web to GitHub Pages
 
 on:
   push:
-<<<<<<< HEAD
-    branches:
-      - main
-=======
     branches: [main]
->>>>>>> 3d46100 (feat: add GitHub Actions workflow for deploying to GitHub Pages; update package version and configuration)
   workflow_dispatch:
 
 permissions:
@@ -24,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-<<<<<<< HEAD
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,21 +31,11 @@ jobs:
 
       - name: Build apps/web
         run: npm run build:web
-        env:
-          GITHUB_PAGES: 'true'
+
+      - uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-=======
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build:web
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
->>>>>>> 3d46100 (feat: add GitHub Actions workflow for deploying to GitHub Pages; update package version and configuration)
         with:
           path: apps/web/dist
 
@@ -62,10 +46,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-<<<<<<< HEAD
       - name: Deploy to GitHub Pages
         id: deployment
-=======
-      - id: deployment
->>>>>>> 3d46100 (feat: add GitHub Actions workflow for deploying to GitHub Pages; update package version and configuration)
         uses: actions/deploy-pages@v4

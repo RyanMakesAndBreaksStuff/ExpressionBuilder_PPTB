@@ -13,11 +13,7 @@ const workspaceSrc = {
 };
 
 export default defineConfig({
-<<<<<<< HEAD
-  base: process.env.GITHUB_PAGES ? '/ExpressionBuilder_PPTB/' : '/',
-=======
   base: process.env.GITHUB_ACTIONS ? '/ExpressionBuilder_PPTB/' : '/',
->>>>>>> 3d46100 (feat: add GitHub Actions workflow for deploying to GitHub Pages; update package version and configuration)
   plugins: [react()],
   resolve: { alias: workspaceSrc },
 });
