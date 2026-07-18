@@ -3,14 +3,17 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.1",
+  "version": "1.0.2",
   "engines": {
     "node": ">=24.17.0 <25"
   },
   "displayName": "Expression Builder For Power Platform Toolbox",
   "description": "Power Automate Trigger And Array Filter Builder",
   "author": "Ryan Rettinger",
-  "main": "index.html",
+  "main": "dist/index.html",
+  "files": [
+    "dist"
+  ],
   "icon": "icons/icon.svg",
   "keywords": [
     "power-automate",

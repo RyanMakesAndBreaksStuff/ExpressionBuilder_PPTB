@@ -43,7 +43,7 @@
     },
     "apps/pptb": {
       "name": "@ryanmakes/expressionbuilder_pptb",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "license": "BSD-3-Clause",
       "devDependencies": {
         "@pptb/types": "^1.2.3",
