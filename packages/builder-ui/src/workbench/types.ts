@@ -35,7 +35,6 @@ export interface WorkbenchHeaderProps {
   onImport: () => void;
   onExport: () => void;
   onToggleTheme: () => void;
-  onCopyExpression: () => void;
 }
 
 export interface FieldToolboxPaneProps {

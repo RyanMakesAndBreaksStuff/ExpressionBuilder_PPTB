@@ -204,12 +204,11 @@ describe('shared builder UI', () => {
     expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
   });
 
-  it('keeps import, export, and copy commands in the header without the saved JSON panel', () => {
+  it('keeps import and export commands in the header without the saved JSON panel', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
     expect(screen.getByRole('button', { name: /^import$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /copy expression/i })).toBeInTheDocument();
     expect(screen.queryByText(/saved expression json/i)).not.toBeInTheDocument();
   });
 

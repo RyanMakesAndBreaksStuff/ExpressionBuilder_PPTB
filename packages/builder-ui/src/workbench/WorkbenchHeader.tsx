@@ -2,12 +2,11 @@ import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
 import { porcelainTokens } from '../theme/workbenchTokens';
 import type { WorkbenchHeaderProps } from './types';
 import { ActionButton } from './controls/ActionButton';
-import { CopyIcon, ExportIcon, ImportIcon, MoonIcon, SunIcon } from './icons/BuilderIcons';
+import { ExportIcon, ImportIcon, MoonIcon, SunIcon } from './icons/BuilderIcons';
 
 export function WorkbenchHeader({
   mode,
   paletteId,
-  onCopyExpression,
   onExport,
   onImport,
   onModeChange,
@@ -44,11 +43,8 @@ export function WorkbenchHeader({
         <ActionButton variant="ghost" onClick={onImport} icon={<ImportIcon />}>
           Import
         </ActionButton>
-        <ActionButton variant="ghost" onClick={onExport} icon={<ExportIcon />}>
+        <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
           Export
-        </ActionButton>
-        <ActionButton variant="primary" onClick={onCopyExpression} icon={<CopyIcon />}>
-          Copy expression
         </ActionButton>
       </div>
     </header>

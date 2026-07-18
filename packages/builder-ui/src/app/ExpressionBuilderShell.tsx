@@ -380,7 +380,6 @@ export function ExpressionBuilderShell({
             });
             setPaletteOverride(true);
           }}
-          onCopyExpression={() => void copyExpression()}
         />
 
         <main
