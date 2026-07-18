@@ -1,6 +1,8 @@
 {
   "name": "@ryanmakes/expressionbuilder_pptb",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "1.0.0",
   "engines": {
     "node": ">=24.17.0 <25"
@@ -16,6 +18,10 @@
     "power-platform-toolbox",
     "cloud-flows"
   ],
+  "features": {
+    "multiConnection": "required",
+    "minAPI": "1.2.3"
+  },
   "contributors": [
     {
       "name": "Ryan Rettinger"
@@ -24,7 +30,8 @@
   "license": "BSD-3-Clause",
   "configurations": {
     "repository": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB",
-    "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/README.md"
+    "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/README.md",
+    "website": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md"
   },
   "scripts": {
     "validate": "pptb-validate",

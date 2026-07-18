@@ -83,17 +83,16 @@ npm run build:web
 npm run build:pptb
 ```
 
-Preview the browser build:
+Preview a build:
 
 ```bash
 npm run preview:web
+npm run preview:pptb
 ```
 
 `preview:web` rebuilds the web host before serving `apps/web/dist`, so it reflects the current workspace package output instead of stale preview assets.
 
 ## Docs
 
-- [Architecture](docs/architecture.md)
-- [Adapter contract](docs/adapter-contract.md)
-- [Expression cookbook](docs/expression-cookbook.md)
-- [Deployment](docs/deployment.md)
+- [Usage (web + PPTB)](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/usage.md)
+- [User manual & developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
