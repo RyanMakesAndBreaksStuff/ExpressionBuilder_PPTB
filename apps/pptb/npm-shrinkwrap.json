@@ -1,12 +1,12 @@
 {
   "name": "@ryanmakes/expressionbuilder_pptb",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@ryanmakes/expressionbuilder_pptb",
-      "version": "1.0.6",
+      "version": "1.0.8",
       "license": "BSD-3-Clause",
       "devDependencies": {
         "@pptb/types": "^1.2.3",

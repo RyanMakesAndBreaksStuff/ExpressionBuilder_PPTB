@@ -7,6 +7,7 @@
     "": {
       "name": "@ryanmakes/expresssionbuilder_main",
       "version": "1.0.0",
+      "license": "BSD-3-Clause",
       "workspaces": [
         "apps/*",
         "packages/*"
@@ -43,7 +44,7 @@
     },
     "apps/pptb": {
       "name": "@ryanmakes/expressionbuilder_pptb",
-      "version": "1.0.6",
+      "version": "1.0.8",
       "license": "BSD-3-Clause",
       "devDependencies": {
         "@pptb/types": "^1.2.3",
@@ -59,6 +60,7 @@
     "apps/web": {
       "name": "@ryanmakes/eb_web",
       "version": "1.0.0",
+      "license": "BSD-3-Clause",
       "dependencies": {
         "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
         "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
@@ -5811,6 +5813,7 @@
     "packages/builder-ui": {
       "name": "@ryanmakes/eb_builder-ui",
       "version": "1.0.0",
+      "license": "BSD-3-Clause",
       "dependencies": {
         "@fluentui/react-components": "9.74.1",
         "@fluentui/react-icons": "^2.0.330",
@@ -5825,11 +5828,13 @@
     },
     "packages/engine": {
       "name": "@ryanmakes/eb_engine",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "license": "BSD-3-Clause"
     },
     "packages/platform": {
       "name": "@ryanmakes/eb_platformadapter",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "license": "BSD-3-Clause"
     }
   }
 }
