@@ -17,6 +17,8 @@ const SEEN_KEY = 'eb.onboarding.seen.v1';
 
 export interface OnboardingPanelProps {
   settings: PlatformSettings;
+  /** Whether the host can connect to a live table (Dataverse). Web builds cannot. */
+  canConnectTable?: boolean;
 }
 
 const useStyles = makeStyles({
@@ -28,7 +30,7 @@ const useStyles = makeStyles({
   },
 });
 
-export function OnboardingPanel({ settings }: OnboardingPanelProps) {
+export function OnboardingPanel({ settings, canConnectTable = true }: OnboardingPanelProps) {
   const styles = useStyles();
   const [open, setOpen] = useState(false);
 
@@ -54,8 +56,9 @@ export function OnboardingPanel({ settings }: OnboardingPanelProps) {
           <DialogTitle>Welcome to the Expression Builder</DialogTitle>
           <DialogContent className={styles.body} id="eb-onboarding-desc">
             <Text>
-              Pick a data source to begin: connect a Dataverse table, import a schema, add fields
-              manually, or load samples.
+              {canConnectTable
+                ? 'Pick a data source to begin: connect a Dataverse table, import a schema, add fields manually, or load samples.'
+                : 'Pick a data source to begin: import a schema, add fields manually, or load samples.'}
             </Text>
             <Text size={200}>
               You can switch sources anytime from the source menu in the toolbox.

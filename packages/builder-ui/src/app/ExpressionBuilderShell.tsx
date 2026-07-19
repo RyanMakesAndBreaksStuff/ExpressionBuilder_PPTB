@@ -581,7 +581,7 @@ export function ExpressionBuilderShell({
         }}
       />
 
-      <OnboardingPanel settings={adapter.settings} />
+      <OnboardingPanel settings={adapter.settings} canConnectTable={canConnectTable} />
     </FluentProvider>
   );
 }
