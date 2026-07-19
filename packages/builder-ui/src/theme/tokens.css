@@ -34,7 +34,10 @@ body {
   --r-panel: 20px;
   --duration-fast: 160ms;
   --duration-med: 220ms;
+  /* dvh tracks the visible viewport as mobile browser chrome shows/hides;
+     the vh line is the fallback for engines without dvh support. */
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1013,6 +1016,13 @@ body {
   opacity: 1;
 }
 
+/* Touch devices have no hover to reveal faint ghost buttons — keep them visible. */
+@media (hover: none) {
+  .eb-root[data-theme="light"] .eb-action-ghost {
+    opacity: 1;
+  }
+}
+
 .eb-action-icon {
   display: inline-flex;
   align-items: center;
@@ -1452,9 +1462,31 @@ body {
     overflow-y: auto;
   }
 
-  .eb-dock-pane,
+  .eb-dock-pane:not(.eb-dock-collapsed),
   .eb-canvas-card {
     min-height: 220px;
+  }
+
+  /* In the stacked layout a collapsed dock is a horizontal bar, not the
+     desktop vertical rail — undo the writing-mode rotation and let it sit
+     at its natural chrome height. */
+  .eb-dock-collapsed .eb-pane-chrome {
+    height: 44px;
+    padding: 0 14px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .eb-dock-collapsed .eb-pane-title {
+    writing-mode: horizontal-tb;
+    transform: none;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .eb-dock-collapsed .eb-icon-btn {
+    margin-left: auto;
   }
 
   .eb-preview-card {
@@ -1463,6 +1495,11 @@ body {
 
   .eb-center-col {
     order: -1;
+    /* The grid's auto row undersizes this nested flex column (its children's
+       min-heights don't propagate into the row's intrinsic contribution and it
+       collapses to a sliver), so give the stacked canvas + preview an explicit
+       share of the viewport; the canvas body scrolls internally. */
+    min-height: min(70vh, 560px);
   }
 }
 
@@ -1472,8 +1509,113 @@ body {
     gap: 12px;
   }
 
+  /* Header reflows to two rows: brand + actions, then the mode switch
+     stretched across its own line. */
   .eb-workbench-header {
-    padding: 14px;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    padding: 10px 12px;
+  }
+
+  .eb-header-brand {
+    flex: 1 1 auto;
+    gap: 10px;
+  }
+
+  .eb-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .eb-header-titles h1 {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .eb-header-titles p {
+    display: none;
+  }
+
+  .eb-header-actions {
+    flex: 0 0 auto;
+  }
+
+  .eb-segmented {
+    order: 3;
+    width: 100%;
+    display: flex;
+  }
+
+  .eb-segmented [role="radio"] {
+    flex: 1 1 0;
+    padding: 0 8px;
+    font-size: 0.8rem;
+  }
+
+  /* Group toolbar (AND/OR pill, caption, actions) wraps instead of pushing
+     its + Rule / + Group buttons off the right edge. */
+  .eb-group-toolbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .eb-group-caption {
+    order: 3;
+    flex: 1 1 100%;
+  }
+
+  /* Rule rows stack: field on the glyph row, then operator, value, tools —
+     each on its own full-width line instead of a cramped multi-column grid. */
+  .eb-rule-row-editor {
+    grid-template-columns: 18px 24px minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .eb-rule-row-editor > .eb-select {
+    grid-column: 3 / -1;
+  }
+
+  .eb-value-wrap {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+
+  .eb-rule-tools {
+    grid-column: 1 / -1;
+  }
+
+  /* 16px inputs stop iOS Safari from auto-zooming the page on focus. */
+  .eb-input,
+  .eb-select,
+  .eb-textarea,
+  .eb-search-box {
+    font-size: 16px;
+  }
+
+  /* Comfortable touch targets for the row/icon controls. */
+  .eb-icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Header Import/Export shrink to icon-only; the clipped (not display:none)
+     label keeps the accessible name for screen readers. */
+  .eb-workbench-header .eb-action-btn > span:not(.eb-action-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .eb-workbench-header .eb-action-btn {
+    padding: 0 10px;
   }
 }
 
