@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
+import { ConditionDragHandle } from './ConditionDragHandle';
+import { ConditionMoveButtons } from './ConditionMoveButtons';
 
 export function RuleRowEditor({
   fields,
@@ -14,6 +16,10 @@ export function RuleRowEditor({
   rule,
   selected,
   selectedWrappers = [],
+  parentGroupId,
+  sourceIndex,
+  siblingCount,
+  onReorderNode,
 }: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
@@ -21,6 +27,44 @@ export function RuleRowEditor({
   const hasError = valueMissing && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
   const [rawValue, setRawValue] = useState(false);
   const appliedWraps = rule.wrappers ?? [];
+  const nodeLabel = field?.label ?? `unknown field ${rule.fieldId}`;
+  const hasReorderMetadata =
+    parentGroupId !== undefined &&
+    sourceIndex !== undefined &&
+    siblingCount !== undefined &&
+    onReorderNode !== undefined;
+  const moveButtons = hasReorderMetadata ? (
+    <ConditionMoveButtons
+      label={nodeLabel}
+      sourceIndex={sourceIndex}
+      siblingCount={siblingCount}
+      onMove={(finalIndex) => onReorderNode(rule.id, parentGroupId, finalIndex)}
+    />
+  ) : null;
+  const renderDraggableRow = (
+    renderRow: (
+      sourceRef?: (element: Element | null) => void,
+      handle?: ReactNode,
+      isDragging?: boolean,
+    ) => ReactNode,
+  ): ReactNode => {
+    if (!hasReorderMetadata) {
+      return renderRow();
+    }
+
+    return (
+      <ConditionDragHandle
+        nodeId={rule.id}
+        parentGroupId={parentGroupId}
+        sourceIndex={sourceIndex}
+        label={`condition ${nodeLabel}`}
+      >
+        {({ sourceRef, handle, isDragging }) =>
+          renderRow(sourceRef, handle, isDragging)
+        }
+      </ConditionDragHandle>
+    );
+  };
 
   // Group fields: ungrouped (primary) first, then one bucket per related table.
   const { primary, grouped } = useMemo(() => {
@@ -39,19 +83,23 @@ export function RuleRowEditor({
   }, [fields]);
 
   if (!field) {
-    return (
+    return renderDraggableRow((sourceRef, handle, isDragging = false) => (
       <div
-        className={`eb-rule-row-editor is-orphan${selected ? ' is-selected' : ''}`}
+        ref={sourceRef}
+        className={`eb-rule-row-editor is-orphan${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
         role="group"
         aria-label={`Unknown field ${rule.fieldId}`}
+        data-node-id={rule.id}
         onClick={() => onSelect(rule.id)}
       >
+        {handle}
         <span className="eb-orphan-badge" title="This field is not in the active source" aria-label="Unknown field">
           ⚠ Unknown field
         </span>
         <span className="eb-field-title">{rule.fieldId}</span>
         <span className="eb-muted">{rule.operator} {String(rule.value ?? '')}</span>
         <div className="eb-rule-tools">
+          {moveButtons}
           {onRequestRemap ? (
             <button
               type="button"
@@ -79,18 +127,20 @@ export function RuleRowEditor({
           </button>
         </div>
       </div>
-    );
+    ));
   }
 
-  return (
+  return renderDraggableRow((sourceRef, handle, isDragging = false) => (
     <div
-      className={`eb-rule-row-editor ${selected ? 'is-selected' : ''} ${hasError ? 'is-error' : ''}`}
+      ref={sourceRef}
+      className={`eb-rule-row-editor ${selected ? 'is-selected' : ''} ${hasError ? 'is-error' : ''} ${isDragging ? 'is-dragging' : ''}`}
       role="group"
       aria-label={`${fieldLabel} ${rule.operator} ${String(rule.value ?? '')}`}
+      data-node-id={rule.id}
       onClick={() => onSelect(rule.id)}
       onFocusCapture={() => onSelect(rule.id)}
     >
-      <span className="eb-drag-dots" aria-hidden="true" hidden />
+      {handle}
       <span className={`eb-type ${field.type}`}>{getTypeLabel(field.type)}</span>
       <select
         className="eb-select"
@@ -221,6 +271,7 @@ export function RuleRowEditor({
         ) : null}
       </div>
       <div className="eb-rule-tools">
+        {moveButtons}
         <button
           type="button"
           className="eb-icon-btn"
@@ -274,7 +325,7 @@ export function RuleRowEditor({
         ) : null}
       </div>
     </div>
-  );
+  ));
 }
 
 function getTypeLabel(type: FieldDefinition['type']): string {

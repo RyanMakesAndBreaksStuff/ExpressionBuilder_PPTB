@@ -1,11 +1,72 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
 import { sampleDocument } from '../src/app/sampleData';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
+import type { ReactNode } from 'react';
+import { PointerSensor } from '@dnd-kit/react';
+import { Accessibility } from '@dnd-kit/dom';
+
+type DragEndInput = {
+  operation: {
+    source?: { data: unknown };
+    target?: { data: unknown };
+  };
+  canceled: boolean;
+};
+
+type DragStartInput = {
+  operation: {
+    source?: { handle?: Element; data?: unknown };
+  };
+};
+
+type DragOverInput = {
+  operation: {
+    source?: { data: unknown };
+    target?: { data: unknown };
+  };
+};
+
+const dragDropHarness = vi.hoisted(() => ({
+  onDragStart: undefined as ((event: DragStartInput) => void) | undefined,
+  onDragOver: undefined as ((event: DragOverInput) => void) | undefined,
+  onDragEnd: undefined as ((event: DragEndInput) => void) | undefined,
+  plugins: undefined as ((defaults: unknown[]) => unknown[]) | undefined,
+  sensors: undefined as ((defaults: unknown[]) => unknown[]) | undefined,
+}));
+
+vi.mock('@dnd-kit/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dnd-kit/react')>();
+  return {
+    ...actual,
+    DragDropProvider: ({
+      children,
+      onDragStart,
+      onDragOver,
+      onDragEnd,
+      plugins,
+      sensors,
+    }: {
+      children: ReactNode;
+      onDragStart?: (event: DragStartInput) => void;
+      onDragOver?: (event: DragOverInput) => void;
+      onDragEnd?: (event: DragEndInput) => void;
+      plugins?: (defaults: unknown[]) => unknown[];
+      sensors?: (defaults: unknown[]) => unknown[];
+    }) => {
+      dragDropHarness.onDragStart = onDragStart;
+      dragDropHarness.onDragOver = onDragOver;
+      dragDropHarness.onDragEnd = onDragEnd;
+      dragDropHarness.plugins = plugins;
+      dragDropHarness.sensors = sensors;
+      return children;
+    },
+  };
+});
 
 function createAdapter(savedPalette: string | null = null): PlatformAdapter {
   return {
@@ -36,6 +97,11 @@ function createAdapter(savedPalette: string | null = null): PlatformAdapter {
 
 afterEach(() => {
   cleanup();
+  dragDropHarness.onDragStart = undefined;
+  dragDropHarness.onDragOver = undefined;
+  dragDropHarness.onDragEnd = undefined;
+  dragDropHarness.plugins = undefined;
+  dragDropHarness.sensors = undefined;
 });
 
 describe('shared builder UI', () => {
@@ -49,6 +115,176 @@ describe('shared builder UI', () => {
     expect(screen.getByRole('tab', { name: /diagnostics/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /mode context/i })).toBeInTheDocument();
   });
+
+  it('replaces only the default pointer sensor and accessibility plugin', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+
+    const otherSensor = class OtherSensor {};
+    const sensors = dragDropHarness.sensors?.([PointerSensor, otherSensor]);
+    expect(sensors).toHaveLength(2);
+    expect(sensors).toContain(otherSensor);
+    expect(sensors).not.toContain(PointerSensor);
+
+    const otherPlugin = class OtherPlugin {};
+    const plugins = dragDropHarness.plugins?.([Accessibility, otherPlugin]);
+    expect(plugins).toHaveLength(2);
+    expect(plugins).toContain(otherPlugin);
+    expect(plugins).not.toContain(Accessibility);
+  });
+
+  it('keeps accessibility announcements current and rejects stale drop data', async () => {
+    const user = userEvent.setup();
+    render(<ExpressionBuilderShell adapter={createAdapter()} />);
+
+    const dueDateSource = {
+      operation: {
+        source: {
+          data: { kind: 'toolbox-field', fieldId: 'DueDate' },
+        },
+      },
+    };
+
+    act(() => {
+      dragDropHarness.onDragStart?.(dueDateSource);
+    });
+    expect(screen.getByTestId('builder-drag-status')).toHaveTextContent(
+      'Picked up field DueDate.',
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Load sample fields' }),
+    );
+
+    act(() => {
+      dragDropHarness.onDragStart?.(dueDateSource);
+      dragDropHarness.onDragOver?.({
+        operation: {
+          source: dueDateSource.operation.source,
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 0 },
+          },
+        },
+      });
+    });
+    expect(screen.getByTestId('builder-drag-status')).toHaveTextContent(
+      'field Due date is over position 1 of 1 in AND group root.',
+    );
+
+    act(() => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: {
+            data: { kind: 'toolbox-field', fieldId: 'RemovedField' },
+          },
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 0 },
+          },
+        },
+        canceled: false,
+      });
+    });
+    expect(screen.getByTestId('builder-drag-status')).toHaveTextContent(
+      'Could not drop field RemovedField at that position. No changes were made.',
+    );
+  });
+
+  it('keeps the configured accessibility plugin stable and restores focus after reorder', async () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+
+    const configuredPlugin = dragDropHarness.plugins?.([Accessibility])[0];
+    const handle = screen.getByRole('button', { name: 'Reorder condition Status' });
+    handle.focus();
+    act(() => {
+      dragDropHarness.onDragStart?.({
+        operation: { source: { handle } },
+      });
+    });
+    screen.getByRole('button', { name: 'Clear all conditions' }).focus();
+
+    await act(async () => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: {
+            data: {
+              kind: 'condition-node',
+              nodeId: 'rule-status',
+              parentGroupId: 'root',
+              sourceIndex: 0,
+            },
+          },
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 3 },
+          },
+        },
+        canceled: false,
+      });
+      await Promise.resolve();
+    });
+
+    expect(handle).toHaveFocus();
+    expect(dragDropHarness.plugins?.([Accessibility])[0]).toBe(configuredPlugin);
+    expect(screen.getByTestId('builder-drag-status')).toHaveTextContent(
+      'Moved Status to position 4 of 4 in AND group root.',
+    );
+  });
+
+  it.each([
+    ['cancelled', true],
+    ['outside', false],
+  ])(
+    'restores focus and leaves order unchanged after an %s drop',
+    async (_description, canceled) => {
+      render(
+        <ExpressionBuilderShell
+          adapter={createAdapter()}
+          initialDocument={sampleDocument}
+        />,
+      );
+
+      const rootGroup = screen.getByRole('group', { name: 'AND group root' });
+      const rootChildren = rootGroup.querySelector(':scope > .eb-group-children');
+      const childOrder = () =>
+        Array.from(rootChildren?.children ?? [])
+          .filter((element) => element.hasAttribute('data-node-id'))
+          .map((element) => element.getAttribute('data-node-id'));
+      const initialOrder = childOrder();
+      const handle = screen.getByRole('button', {
+        name: 'Reorder condition Status',
+      });
+      handle.focus();
+      act(() => {
+        dragDropHarness.onDragStart?.({
+          operation: { source: { handle } },
+        });
+      });
+      screen.getByRole('button', { name: 'Clear all conditions' }).focus();
+
+      await act(async () => {
+        dragDropHarness.onDragEnd?.({
+          operation: {
+            source: {
+              data: {
+                kind: 'condition-node',
+                nodeId: 'rule-status',
+                parentGroupId: 'root',
+                sourceIndex: 0,
+              },
+            },
+          },
+          canceled,
+        });
+        await Promise.resolve();
+      });
+
+      expect(childOrder()).toEqual(initialOrder);
+      expect(handle).toHaveFocus();
+      expect(screen.getByTestId('builder-drag-status')).toHaveTextContent(
+        canceled
+          ? 'Cancelled dragging Status. No changes were made.'
+          : 'Could not drop Status at that position. No changes were made.',
+      );
+    },
+  );
 
   it('does not default production state to sample data', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
@@ -83,7 +319,7 @@ describe('shared builder UI', () => {
     expect(within(fields).queryByText('Status')).not.toBeInTheDocument();
   });
 
-  it('double-clicking a field after focusing a nested group adds the rule there, not root', async () => {
+  it('clicking a field after focusing a nested group adds the rule there, not root', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
@@ -91,9 +327,9 @@ describe('shared builder UI', () => {
     const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
     await user.click(within(routingGroup).getByText('Match any of the following'));
 
-    // Double-click a field that isn't already in any rule.
+    // Click a field that isn't already in any rule.
     const fieldList = screen.getByRole('list', { name: 'Dynamic content fields' });
-    await user.dblClick(within(fieldList).getByText('Due date'));
+    await user.click(within(fieldList).getByText('Due date'));
 
     // The new rule lands inside the focused nested group, not appended to root.
     // (Query by the rule row's group role/aria-label, not text, since every
@@ -102,6 +338,89 @@ describe('shared builder UI', () => {
     const dueDateRows = within(canvas).getAllByRole('group', { name: /^Due date/ });
     expect(dueDateRows).toHaveLength(1);
     expect(routingGroup).toContainElement(dueDateRows[0]);
+  });
+
+  it('pressing Enter on a field after focusing a nested group keeps the append path unchanged', async () => {
+    const user = userEvent.setup();
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+
+    const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
+    await user.click(within(routingGroup).getByText('Match any of the following'));
+    const dueDateAction = screen.getByRole('button', {
+      name: 'Add a rule for Due date, dateTime',
+    });
+    dueDateAction.focus();
+    await user.keyboard('{Enter}');
+
+    const dueDateRow = within(routingGroup).getByRole('group', { name: /^Due date/ });
+    expect(routingGroup).toContainElement(dueDateRow);
+    expect(
+      Array.from(routingGroup.querySelectorAll('.eb-rule-row-editor')).at(-1),
+    ).toBe(dueDateRow);
+  });
+
+  it('applies a resolved field-drop command at an exact nested-group index', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+
+    act(() => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: { data: { kind: 'toolbox-field', fieldId: 'DueDate' } },
+          target: {
+            data: { kind: 'condition-position', groupId: 'group-routing', index: 1 },
+          },
+        },
+        canceled: false,
+      });
+    });
+
+    const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
+    expect(
+      Array.from(routingGroup.querySelectorAll('.eb-rule-row-editor')).map((row) =>
+        row.getAttribute('data-node-id'),
+      ),
+    ).toEqual(['rule-region-emea', 'rule-1', 'rule-amount']);
+    expect(within(routingGroup).getByRole('group', { name: /^Due date/ })).toHaveClass(
+      'is-selected',
+    );
+    expect(routingGroup).toHaveClass('is-focused');
+
+    const expression = screen.getByLabelText('Generated expression').textContent ?? '';
+    expect(expression.indexOf("['DueDate']")).toBeLessThan(expression.indexOf("['Amount']"));
+  });
+
+  it('applies a sibling-reorder command to rendered and generated-expression order', () => {
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+
+    act(() => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: {
+            data: {
+              kind: 'condition-node',
+              nodeId: 'rule-status',
+              parentGroupId: 'root',
+              sourceIndex: 0,
+            },
+          },
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 3 },
+          },
+        },
+        canceled: false,
+      });
+    });
+
+    const rootGroup = screen.getByRole('group', { name: 'AND group root' });
+    const rootChildren = rootGroup.querySelector(':scope > .eb-group-children');
+    expect(
+      Array.from(rootChildren?.children ?? [])
+        .filter((element) => element.hasAttribute('data-node-id'))
+        .map((element) => element.getAttribute('data-node-id')),
+    ).toEqual(['rule-approver', 'group-routing', 'rule-status']);
+
+    const expression = screen.getByLabelText('Generated expression').textContent ?? '';
+    expect(expression.indexOf("['Approver']")).toBeLessThan(expression.indexOf("['Status']"));
   });
 
   it('changing a value updates the generated expression', async () => {

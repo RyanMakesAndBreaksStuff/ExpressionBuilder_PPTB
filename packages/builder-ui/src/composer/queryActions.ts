@@ -7,6 +7,12 @@ type VisitResult = {
   changed: boolean;
 };
 
+type NodeLocation = {
+  node: QueryNode;
+  parent?: QueryGroup;
+  index: number;
+};
+
 const defaultRule = (id: string): QueryRule => ({
   id,
   kind: 'rule',
@@ -47,13 +53,32 @@ const nextId = (document: QueryDocument, prefix: string): string => {
   return id;
 };
 
-const containsNode = (node: QueryNode, nodeId: string): boolean => {
+const findNodeLocation = (
+  node: QueryNode,
+  nodeId: string,
+  parent?: QueryGroup,
+  index = -1,
+): NodeLocation | undefined => {
   if (node.id === nodeId) {
-    return true;
+    return { node, parent, index };
   }
 
-  return node.kind === 'group' && node.children.some((child) => containsNode(child, nodeId));
+  if (node.kind === 'rule') {
+    return undefined;
+  }
+
+  for (const [childIndex, child] of node.children.entries()) {
+    const match = findNodeLocation(child, nodeId, node, childIndex);
+    if (match) {
+      return match;
+    }
+  }
+
+  return undefined;
 };
+
+const containsNode = (node: QueryNode, nodeId: string): boolean =>
+  findNodeLocation(node, nodeId) !== undefined;
 
 export const findFirstRule = (node: QueryNode): QueryRule | undefined => {
   if (node.kind === 'rule') {
@@ -91,21 +116,7 @@ export const findRule = (node: QueryNode, ruleId?: string): QueryRule | undefine
 };
 
 export const findParentGroupId = (node: QueryNode, ruleId?: string): string | undefined => {
-  if (!ruleId || node.kind === 'rule') {
-    return undefined;
-  }
-
-  for (const child of node.children) {
-    if (child.id === ruleId) {
-      return node.id;
-    }
-    const nested = findParentGroupId(child, ruleId);
-    if (nested) {
-      return nested;
-    }
-  }
-
-  return undefined;
+  return ruleId ? findNodeLocation(node, ruleId)?.parent?.id : undefined;
 };
 
 const addChildToGroup = (
@@ -245,9 +256,22 @@ export const addRule = (
   document: QueryDocument,
   parentGroupId: string,
   rule: Partial<QueryRule> = {},
+  targetIndex?: number,
 ): QueryDocument => {
+  if (targetIndex !== undefined) {
+    const target = findNodeLocation(document.root, parentGroupId)?.node;
+    if (
+      target?.kind !== 'group' ||
+      !Number.isInteger(targetIndex) ||
+      targetIndex < 0 ||
+      targetIndex > target.children.length
+    ) {
+      return document;
+    }
+  }
+
   const newRule = { ...defaultRule(nextId(document, 'rule')), ...rule, kind: 'rule' as const };
-  const root = addChildToGroup(document.root, parentGroupId, newRule);
+  const root = addChildToGroup(document.root, parentGroupId, newRule, targetIndex);
 
   return root === document.root
     ? document
@@ -335,13 +359,19 @@ export const moveNode = (
     return document;
   }
 
-  const removal = removeNode(document.root, nodeId);
-
-  if (!removal.node || !removal.removed) {
+  const source = findNodeLocation(document.root, nodeId)?.node;
+  const target = findNodeLocation(document.root, targetGroupId)?.node;
+  if (!source || target?.kind !== 'group') {
     return document;
   }
 
-  if (removal.removed.kind === 'group' && containsNode(removal.removed, targetGroupId)) {
+  if (source.kind === 'group' && containsNode(source, targetGroupId)) {
+    return document;
+  }
+
+  const removal = removeNode(document.root, nodeId);
+
+  if (!removal.node || !removal.removed) {
     return document;
   }
 
@@ -350,6 +380,42 @@ export const moveNode = (
     targetGroupId,
     removal.removed,
     targetIndex,
+  );
+
+  return root === removal.node ? document : { ...document, root };
+};
+
+export const reorderNode = (
+  document: QueryDocument,
+  nodeId: string,
+  parentGroupId: string,
+  finalIndex: number,
+): QueryDocument => {
+  if (!Number.isInteger(finalIndex)) {
+    return document;
+  }
+
+  const source = findNodeLocation(document.root, nodeId);
+  if (
+    !source?.parent ||
+    source.parent.id !== parentGroupId ||
+    finalIndex < 0 ||
+    finalIndex >= source.parent.children.length ||
+    finalIndex === source.index
+  ) {
+    return document;
+  }
+
+  const removal = removeNode(document.root, nodeId);
+  if (!removal.node || !removal.removed) {
+    return document;
+  }
+
+  const root = addChildToGroup(
+    removal.node as QueryGroup,
+    parentGroupId,
+    removal.removed,
+    finalIndex,
   );
 
   return root === removal.node ? document : { ...document, root };

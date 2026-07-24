@@ -15,6 +15,7 @@ export {
   deleteNode,
   duplicateRule,
   moveNode,
+  reorderNode,
   selectRule,
   updateRule,
 } from './composer/queryActions';

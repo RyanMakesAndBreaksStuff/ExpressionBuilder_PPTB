@@ -4,6 +4,7 @@ import type {
   FieldDefinition,
   FormatDiagnostic,
 } from '@ryanmakes/eb_engine';
+import type { ReactNode } from 'react';
 
 import type { PaletteId } from '../theme/workbenchTokens';
 import type { DataSourceDescriptor, QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
@@ -56,7 +57,7 @@ export interface FieldToolboxPaneProps {
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
   /** Called once when a related section is first expanded; resolves and appends its fields. */
   onExpandRelated?: (navigationProperty: string) => void;
-  /** Called when the user double-clicks a field row in the toolbox. */
+  /** Called when the user clicks a field row in the toolbox. */
   onCreateRuleFromField?: (field: FieldDefinition) => void;
   /** Currently selected wrapper ids (palette state). */
   selectedWrappers?: string[];
@@ -84,6 +85,8 @@ export interface ConditionCanvasProps {
   onUpdateRule: (ruleId: string, patch: RulePatch) => void;
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  /** Reorders a rule or nested group within its current parent only. */
+  onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
   /** Wipes all children from the root group, resetting the canvas to empty. */
   onClear: () => void;
   /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
@@ -119,4 +122,16 @@ export interface RuleRowEditorProps {
   onRequestRemap?: (ruleId: string) => void;
   /** Wrapper ids currently selected in the palette. */
   selectedWrappers?: string[];
+  parentGroupId?: string;
+  sourceIndex?: number;
+  siblingCount?: number;
+  onReorderNode?: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
+}
+
+export interface BuilderDragDropProviderProps {
+  children: ReactNode;
+  fields: FieldDefinition[];
+  root: QueryGroup;
+  onInsertField: (fieldId: string, groupId: string, index: number) => void;
+  onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
 }

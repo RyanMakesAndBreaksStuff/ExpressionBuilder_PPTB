@@ -1,14 +1,21 @@
+import { Fragment, type ReactNode } from 'react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { Button } from '@fluentui/react-components';
 import { DeleteRegular } from '@fluentui/react-icons';
 import { countRules } from '../app/builderState';
 import type { QueryGroup } from '../composer/querySchema';
 import { RuleRowEditor } from './RuleRowEditor';
+import { ConditionDragHandle } from './ConditionDragHandle';
+import { ConditionMoveButtons } from './ConditionMoveButtons';
+import { ConditionPositionTarget } from './ConditionPositionTarget';
 
 interface ConditionGroupCardProps {
   group: QueryGroup;
   fields: FieldDefinition[];
   isRoot?: boolean;
+  parentGroupId?: string;
+  sourceIndex?: number;
+  siblingCount?: number;
   selectedRuleId?: string;
   activeGroupId?: string;
   onSelectRule: (ruleId: string) => void;
@@ -19,6 +26,7 @@ interface ConditionGroupCardProps {
   onUpdateRule: (ruleId: string, patch: Partial<import('../composer/querySchema').QueryRule>) => void;
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
   onRequestRemap?: (ruleId: string) => void;
   selectedWrappers?: string[];
 }
@@ -27,6 +35,9 @@ export function ConditionGroupCard({
   fields,
   group,
   isRoot = false,
+  parentGroupId,
+  sourceIndex,
+  siblingCount,
   selectedRuleId,
   activeGroupId,
   onAddGroup,
@@ -34,6 +45,7 @@ export function ConditionGroupCard({
   onFocusGroup,
   onChangeGroupConjunction,
   onDeleteNode,
+  onReorderNode,
   onDuplicateRule,
   onSelectRule,
   onUpdateRule,
@@ -43,12 +55,23 @@ export function ConditionGroupCard({
   const isAnd = group.conjunction === 'and';
   const ruleCount = countRules(group);
   const isFocused = group.id === activeGroupId;
+  const groupLabel = `${group.conjunction.toUpperCase()} group ${group.id}`;
 
-  return (
+  const renderCard = ({
+    sourceRef,
+    handle,
+    isDragging = false,
+  }: {
+    sourceRef?: (element: Element | null) => void;
+    handle?: ReactNode;
+    isDragging?: boolean;
+  } = {}) => (
     <section
-      className={`eb-group-card ${!isRoot ? 'nested' : ''} ${isFocused ? 'is-focused' : ''}`}
+      ref={sourceRef}
+      className={`eb-group-card ${!isRoot ? 'nested' : ''} ${isFocused ? 'is-focused' : ''} ${isDragging ? 'is-dragging' : ''}`}
       role="group"
-      aria-label={`${group.conjunction.toUpperCase()} group ${group.id}`}
+      aria-label={groupLabel}
+      data-node-id={group.id}
     >
       <div
         className="eb-group-toolbar"
@@ -62,7 +85,7 @@ export function ConditionGroupCard({
           }
         }}
       >
-        <span className="eb-drag-dots" aria-hidden="true" hidden />
+        {handle}
         <div className="eb-logic-pill">
           <button
             type="button"
@@ -84,6 +107,19 @@ export function ConditionGroupCard({
         <span className="eb-group-caption">{isAnd ? 'Match all of the following' : 'Match any of the following'}</span>
         <span className="eb-group-count">{ruleCount} rules</span>
         <div className="eb-group-actions">
+          {!isRoot &&
+          parentGroupId !== undefined &&
+          sourceIndex !== undefined &&
+          siblingCount !== undefined ? (
+            <ConditionMoveButtons
+              label={`group ${group.id}`}
+              sourceIndex={sourceIndex}
+              siblingCount={siblingCount}
+              onMove={(finalIndex) =>
+                onReorderNode(group.id, parentGroupId, finalIndex)
+              }
+            />
+          ) : null}
           <button type="button" className="eb-text-btn" onClick={() => onAddRule(group.id)}>
             + Rule
           </button>
@@ -103,40 +139,60 @@ export function ConditionGroupCard({
       </div>
 
       <div className="eb-group-children">
-        {group.children.map((child) =>
-          child.kind === 'group' ? (
-            <ConditionGroupCard
-              key={child.id}
-              group={child}
-              fields={fields}
-              selectedRuleId={selectedRuleId}
-              activeGroupId={activeGroupId}
-              onSelectRule={onSelectRule}
-              onAddRule={onAddRule}
-              onAddGroup={onAddGroup}
-              onFocusGroup={onFocusGroup}
-              onChangeGroupConjunction={onChangeGroupConjunction}
-              onUpdateRule={onUpdateRule}
-              onDuplicateRule={onDuplicateRule}
-              onDeleteNode={onDeleteNode}
-              onRequestRemap={onRequestRemap}
-              selectedWrappers={selectedWrappers}
+        {group.children.map((child, childIndex) => (
+          <Fragment key={child.id}>
+            <ConditionPositionTarget
+              groupId={group.id}
+              groupLabel={groupLabel}
+              index={childIndex}
+              positionCount={group.children.length + 1}
             />
-          ) : (
-            <RuleRowEditor
-              key={child.id}
-              rule={child}
-              fields={fields}
-              selected={selectedRuleId === child.id}
-              onSelect={onSelectRule}
-              onUpdate={onUpdateRule}
-              onDuplicate={onDuplicateRule}
-              onDelete={onDeleteNode}
-              onRequestRemap={onRequestRemap}
-              selectedWrappers={selectedWrappers}
-            />
-          ),
-        )}
+            {child.kind === 'group' ? (
+              <ConditionGroupCard
+                group={child}
+                fields={fields}
+                parentGroupId={group.id}
+                sourceIndex={childIndex}
+                siblingCount={group.children.length}
+                selectedRuleId={selectedRuleId}
+                activeGroupId={activeGroupId}
+                onSelectRule={onSelectRule}
+                onAddRule={onAddRule}
+                onAddGroup={onAddGroup}
+                onFocusGroup={onFocusGroup}
+                onChangeGroupConjunction={onChangeGroupConjunction}
+                onUpdateRule={onUpdateRule}
+                onDuplicateRule={onDuplicateRule}
+                onDeleteNode={onDeleteNode}
+                onReorderNode={onReorderNode}
+                onRequestRemap={onRequestRemap}
+                selectedWrappers={selectedWrappers}
+              />
+            ) : (
+              <RuleRowEditor
+                rule={child}
+                fields={fields}
+                parentGroupId={group.id}
+                sourceIndex={childIndex}
+                siblingCount={group.children.length}
+                selected={selectedRuleId === child.id}
+                onSelect={onSelectRule}
+                onUpdate={onUpdateRule}
+                onDuplicate={onDuplicateRule}
+                onDelete={onDeleteNode}
+                onReorderNode={onReorderNode}
+                onRequestRemap={onRequestRemap}
+                selectedWrappers={selectedWrappers}
+              />
+            )}
+          </Fragment>
+        ))}
+        <ConditionPositionTarget
+          groupId={group.id}
+          groupLabel={groupLabel}
+          index={group.children.length}
+          positionCount={group.children.length + 1}
+        />
         <div className="eb-group-actions">
           <button type="button" className="eb-text-btn" onClick={() => onAddRule(group.id)}>
             + Rule
@@ -147,5 +203,27 @@ export function ConditionGroupCard({
         </div>
       </div>
     </section>
+  );
+
+  if (
+    isRoot ||
+    parentGroupId === undefined ||
+    sourceIndex === undefined ||
+    siblingCount === undefined
+  ) {
+    return renderCard();
+  }
+
+  return (
+    <ConditionDragHandle
+      nodeId={group.id}
+      parentGroupId={parentGroupId}
+      sourceIndex={sourceIndex}
+      label={`group ${group.id}`}
+    >
+      {({ sourceRef, handle, isDragging }) =>
+        renderCard({ sourceRef, handle, isDragging })
+      }
+    </ConditionDragHandle>
   );
 }

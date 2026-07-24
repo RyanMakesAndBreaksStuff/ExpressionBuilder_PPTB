@@ -7,6 +7,7 @@ import {
   duplicateRule,
   focusGroup,
   moveNode,
+  reorderNode,
   selectRule,
   updateRule,
 } from '../src/composer/queryActions';
@@ -48,6 +49,46 @@ const sampleDocument: QueryDocument = {
   },
 };
 
+const reorderDocument: QueryDocument = {
+  ...sampleDocument,
+  version: 2,
+  activeGroupId: 'group-nested',
+  root: {
+    ...sampleDocument.root,
+    children: [
+      {
+        id: 'rule-status',
+        kind: 'rule',
+        fieldId: 'Status',
+        operator: 'equals',
+        value: 'Approved',
+        wrappers: ['toLower'],
+      },
+      {
+        id: 'group-nested',
+        kind: 'group',
+        conjunction: 'or',
+        children: [
+          {
+            id: 'rule-region',
+            kind: 'rule',
+            fieldId: 'Region',
+            operator: 'equals',
+            value: 'EMEA',
+          },
+        ],
+      },
+      {
+        id: 'rule-pending',
+        kind: 'rule',
+        fieldId: 'Status',
+        operator: 'equals',
+        value: 'Pending',
+      },
+    ],
+  },
+};
+
 describe('queryActions', () => {
   it('adds a rule to a group, selects it, and focuses its parent group', () => {
     const result = addRule(sampleDocument, 'root');
@@ -56,6 +97,55 @@ describe('queryActions', () => {
     expect(result).toHaveProperty('root.children.length', 2);
     expect(result.selectedRuleId).toBe('rule-1');
     expect(result.activeGroupId).toBe('root');
+  });
+
+  it.each([
+    ['start', 0, ['rule-inserted', 'rule-status', 'group-nested', 'rule-pending']],
+    ['middle', 1, ['rule-status', 'rule-inserted', 'group-nested', 'rule-pending']],
+    ['end', 3, ['rule-status', 'group-nested', 'rule-pending', 'rule-inserted']],
+  ])('adds a rule at the requested %s position', (_position, targetIndex, expectedIds) => {
+    const result = addRule(
+      reorderDocument,
+      'root',
+      {
+        id: 'rule-inserted',
+        fieldId: 'Region',
+        operator: 'equals',
+        value: 'APAC',
+      },
+      targetIndex,
+    );
+
+    expect(result.root.children.map((child) => child.id)).toEqual(expectedIds);
+    expect(result.selectedRuleId).toBe('rule-inserted');
+    expect(result.activeGroupId).toBe('root');
+    expect(reorderDocument.root.children.map((child) => child.id)).toEqual([
+      'rule-status',
+      'group-nested',
+      'rule-pending',
+    ]);
+  });
+
+  it('inserts into a nested group and rejects a stale indexed target', () => {
+    const result = addRule(
+      reorderDocument,
+      'group-nested',
+      {
+        id: 'rule-nested-first',
+        fieldId: 'Status',
+        operator: 'equals',
+        value: 'Rejected',
+      },
+      0,
+    );
+    const nested = result.root.children.find((child) => child.id === 'group-nested');
+
+    expect(nested?.kind === 'group' ? nested.children.map((child) => child.id) : []).toEqual([
+      'rule-nested-first',
+      'rule-region',
+    ]);
+    expect(addRule(reorderDocument, 'missing-group', {}, 0)).toBe(reorderDocument);
+    expect(addRule(reorderDocument, 'group-nested', {}, 2)).toBe(reorderDocument);
   });
 
   it('adds a nested group, focuses it, and leaves the selected rule alone', () => {
@@ -127,5 +217,81 @@ describe('queryActions', () => {
     expect(result.root.children).toHaveLength(1);
     expect(group).toMatchObject({ id: 'group-region', kind: 'group' });
     expect(group.kind === 'group' ? group.children[0]?.id : undefined).toBe('rule-status');
+  });
+
+  it.each([
+    ['upward', 'rule-pending', 0, ['rule-pending', 'rule-status', 'group-nested']],
+    ['downward', 'rule-status', 2, ['group-nested', 'rule-pending', 'rule-status']],
+  ])(
+    'reorders a sibling %s using its final post-removal index',
+    (_direction, nodeId, finalIndex, expectedIds) => {
+      const result = reorderNode(reorderDocument, nodeId, 'root', finalIndex);
+
+      expect(result.root.children.map((child) => child.id)).toEqual(expectedIds);
+      expect(result.version).toBe(2);
+      expect(result.selectedRuleId).toBe('rule-status');
+      expect(result.activeGroupId).toBe('group-nested');
+      expect(result.root.children.find((child) => child.id === 'rule-status')).toMatchObject({
+        value: 'Approved',
+        wrappers: ['toLower'],
+      });
+      expect(reorderDocument.root.children.map((child) => child.id)).toEqual([
+        'rule-status',
+        'group-nested',
+        'rule-pending',
+      ]);
+    },
+  );
+
+  it.each([
+    ['same final index', 'rule-status', 'root', 0],
+    ['missing node', 'missing', 'root', 0],
+    ['wrong parent', 'rule-status', 'group-nested', 0],
+    ['root source', 'root', 'root', 0],
+    ['fractional final index', 'rule-status', 'root', 0.5],
+    ['negative final index', 'rule-status', 'root', -1],
+    ['stale final index', 'rule-status', 'root', 3],
+  ])(
+    'returns the original document for an invalid sibling reorder: %s',
+    (_description, nodeId, parentGroupId, finalIndex) => {
+      expect(reorderNode(reorderDocument, nodeId, parentGroupId, finalIndex)).toBe(
+        reorderDocument,
+      );
+    },
+  );
+
+  it('rejects cross-parent reordering while retaining guarded cross-group moves', () => {
+    expect(reorderNode(reorderDocument, 'rule-region', 'root', 0)).toBe(reorderDocument);
+
+    const moved = moveNode(reorderDocument, 'rule-status', 'group-nested', 0);
+    const nested = moved.root.children.find((child) => child.id === 'group-nested');
+    expect(nested?.kind === 'group' ? nested.children.map((child) => child.id) : []).toEqual([
+      'rule-status',
+      'rule-region',
+    ]);
+  });
+
+  it('reorders a non-root group as a sibling without recreating the moved node', () => {
+    const nestedBefore = reorderDocument.root.children[1];
+    const result = reorderNode(reorderDocument, 'group-nested', 'root', 0);
+
+    expect(result.root.children.map((child) => child.id)).toEqual([
+      'group-nested',
+      'rule-status',
+      'rule-pending',
+    ]);
+    expect(result.root.children[0]).toBe(nestedBefore);
+    expect(result.fields).toBe(reorderDocument.fields);
+  });
+
+  it('retains moveNode guards for the root and moving a group into its descendant', () => {
+    expect(moveNode(reorderDocument, 'root', 'group-nested')).toBe(reorderDocument);
+
+    const withDescendant = addGroup(reorderDocument, 'group-nested', {
+      id: 'group-descendant',
+    });
+    expect(moveNode(withDescendant, 'group-nested', 'group-descendant')).toBe(
+      withDescendant,
+    );
   });
 });

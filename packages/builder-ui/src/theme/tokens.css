@@ -526,6 +526,11 @@ body {
   background: var(--surface2);
   overflow: hidden;
   padding: 0;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
   /* Keep natural height inside the flex-column scroll pane. Because this card
      has overflow:hidden, its flex auto-min-size collapses to 0, so without this
      it shrinks to the pane height and clips its rules instead of letting
@@ -539,7 +544,7 @@ body {
   border-left: 3px solid var(--accent);
 }
 
-/* Focused group: where a double-clicked toolbox field / "+ Rule" lands. */
+/* Focused group: where a clicked toolbox field / "+ Rule" lands. */
 .eb-group-card.is-focused {
   border-color: var(--accent);
   box-shadow: var(--focus-ring);
@@ -588,6 +593,118 @@ body {
   scrollbar-gutter: stable;
 }
 
+.eb-group-card:has(> .eb-group-children > .eb-condition-drop-target.is-drop-target) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: var(--focus-ring);
+}
+
+/* Explicit insertion boundaries remain large enough to target without
+   changing the surrounding rule/group layout when their drag state changes. */
+.eb-condition-drop-target {
+  width: 100%;
+  min-height: 28px;
+  margin-block: -5px;
+  display: grid;
+  grid-template-columns: minmax(16px, 1fr) auto minmax(16px, 1fr);
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--r-sm);
+  color: var(--text3);
+  opacity: 0.45;
+  user-select: none;
+  transition:
+    background var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
+}
+
+.eb-condition-drop-target::before,
+.eb-condition-drop-target::after {
+  content: "";
+  border-top: 1px dashed var(--border);
+  transition:
+    border-color var(--duration-fast) ease,
+    border-width var(--duration-fast) ease;
+}
+
+.eb-condition-drop-target > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-caption2);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.eb-condition-drop-target.is-active {
+  background: var(--surface2);
+  opacity: 1;
+}
+
+.eb-condition-drop-target.is-active > span {
+  opacity: 1;
+}
+
+.eb-condition-drop-target.is-active.is-valid-drop {
+  color: var(--accent);
+}
+
+.eb-condition-drop-target.is-active.is-valid-drop::before,
+.eb-condition-drop-target.is-active.is-valid-drop::after {
+  border-top-color: var(--accent);
+  border-top-style: solid;
+  border-top-width: 2px;
+}
+
+.eb-condition-drop-target.is-active.is-valid-drop > span::before {
+  content: "↓";
+}
+
+.eb-condition-drop-target.is-active.is-invalid-drop {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.eb-condition-drop-target.is-active.is-invalid-drop::before,
+.eb-condition-drop-target.is-active.is-invalid-drop::after {
+  border-top-color: var(--danger-stroke);
+  border-top-style: dashed;
+}
+
+.eb-condition-drop-target.is-active.is-invalid-drop > span {
+  text-decoration: line-through;
+}
+
+.eb-condition-drop-target.is-active.is-invalid-drop > span::before {
+  content: "×";
+  text-decoration: none;
+}
+
+.eb-condition-drop-target.is-active.is-ineligible {
+  color: var(--text3);
+  opacity: 0.5;
+}
+
+.eb-condition-drop-target.is-active.is-ineligible::before,
+.eb-condition-drop-target.is-active.is-ineligible::after {
+  border-top-color: var(--border-strong);
+  border-top-style: dotted;
+}
+
+.eb-condition-drop-target.is-active.is-ineligible > span::before {
+  content: "–";
+  text-decoration: none;
+}
+
+.eb-condition-drop-target.is-drop-target {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 /* Logic Pill */
 .eb-logic-pill {
   display: inline-flex;
@@ -617,34 +734,85 @@ body {
   color: var(--fg-onbrand);
 }
 
-/* Drag Dots */
-.eb-drag-dots {
-  width: 18px;
-  height: 18px;
+/* Dedicated drag handles: activation and touch suppression stay off editable
+   rows and controls. */
+.eb-root .eb-drag-handle {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text3);
+  border: 1px solid var(--interactive-stroke);
+  border-radius: var(--r-sm);
+  color: var(--text2);
+  background: var(--surface2);
   flex: 0 0 auto;
   cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition:
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
 }
 
-.eb-drag-dots svg {
-  width: 12px;
-  height: 12px;
+.eb-root .eb-drag-handle:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--surface3);
+}
+
+.eb-root .eb-drag-handle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.eb-root .eb-drag-handle:active,
+.is-dragging .eb-drag-handle {
+  cursor: grabbing;
+}
+
+.eb-root .eb-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.eb-condition-move-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
+.eb-condition-move-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.eb-field-row.is-dragging,
+.eb-rule-row-editor.is-dragging,
+.eb-group-card.is-dragging {
+  opacity: 0.58;
 }
 
 /* Rule Row Editor */
 .eb-rule-row-editor {
   display: grid;
-  grid-template-columns: 18px 24px minmax(110px, 0.95fr) minmax(120px, 0.9fr) minmax(170px, 1.4fr) auto;
+  grid-template-columns: 28px 24px minmax(110px, 0.95fr) minmax(120px, 0.9fr) minmax(170px, 1.4fr) auto;
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid var(--interactive-stroke);
   background: var(--surface);
-  transition: border-color var(--duration-fast) ease;
+  transition:
+    border-color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
 }
 
 .eb-rule-row-editor.is-selected {
@@ -729,20 +897,42 @@ body {
 
 .eb-field-row {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 28px;
   align-items: center;
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
   border: 1px solid transparent;
   background: var(--bg2);
-  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
-  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
 }
 
 .eb-field-row:hover {
   border-color: var(--border-strong);
   background: var(--surface2);
+}
+
+.eb-field-insert-action {
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.eb-field-insert-action:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .eb-field-main {
@@ -1418,7 +1608,7 @@ body {
   }
 
   .eb-rule-row-editor {
-    grid-template-columns: 18px 24px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 28px 24px minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .eb-value-wrap,
@@ -1599,5 +1789,17 @@ body {
   .eb-root * {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+  }
+
+  .eb-drag-handle,
+  .eb-condition-drop-target,
+  .eb-condition-drop-target::before,
+  .eb-condition-drop-target::after,
+  .eb-condition-drop-target > span,
+  .eb-field-row.is-dragging,
+  .eb-rule-row-editor.is-dragging,
+  .eb-group-card.is-dragging {
+    transition: none !important;
+    animation: none !important;
   }
 }

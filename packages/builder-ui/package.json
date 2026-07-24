@@ -1,7 +1,7 @@
 {
   "name": "@ryanmakes/eb_builder-ui",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "BSD-3-Clause",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,7 +18,8 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@dnd-kit/react": "^0.5.0",
+    "@dnd-kit/dom": "0.5.0",
+    "@dnd-kit/react": "0.5.0",
     "@fluentui/react-components": "9.74.1",
     "@fluentui/react-icons": "^2.0.330",
     "@ryanmakes/eb_engine": "file:../engine",

@@ -36,7 +36,7 @@ describe('workbench Graphite tokens', () => {
       '--border-strong': '#AEBDCA',
       '--text': '#18212B',
       '--text2': '#41505F',
-      '--text3': '#647484',
+      '--text3': '#55626F',
       '--accent': '#155EEF',
       '--accent-strong': '#004EEB',
       '--accent-ink': '#F7FAFF',
@@ -90,7 +90,7 @@ describe('workbench Graphite tokens', () => {
     expect(createGraphiteFluentTheme('graphiteLight')).toMatchObject({
       colorBrandBackground: '#155EEF',
       colorNeutralForegroundOnBrand: '#F7FAFF',
-      colorNeutralStrokeAccessible: '#647484',
+      colorNeutralStrokeAccessible: '#55626F',
     });
     expect(createGraphiteFluentTheme('graphiteDark')).toMatchObject({
       colorBrandBackground: '#77A7FF',

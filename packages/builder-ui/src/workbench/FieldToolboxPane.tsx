@@ -10,13 +10,13 @@ import {
   tokens,
 } from '@fluentui/react-components';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
-import { TypeGlyph } from '../components/TypeGlyph';
 import type { FieldToolboxPaneProps } from './types';
 import { DockPane } from './controls/DockPane';
 import { TabStrip } from './controls/TabStrip';
 import { WrapperChips } from './WrapperChips';
 import { SourceChip } from './SourceChip';
 import { GetStartedPanel } from './GetStartedPanel';
+import { ToolboxFieldList } from './ToolboxFieldList';
 
 const PRIMARY_ITEM_VALUE = '__primary__';
 
@@ -26,47 +26,6 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
   },
 });
-
-// ── Extracted component (React best-practices: structure-single-responsibility)
-interface FieldListProps {
-  items: FieldDefinition[];
-  ariaLabel: string;
-  onCreateRuleFromField?: (field: FieldDefinition) => void;
-}
-
-function FieldList({ items, ariaLabel, onCreateRuleFromField }: FieldListProps) {
-  return (
-    <ul className="eb-field-list" role="list" aria-label={ariaLabel}>
-      {items.map((field) => (
-        <li key={field.id}>
-          <div
-            className="eb-field-row"
-            role="button"
-            tabIndex={0}
-            onDoubleClick={() => onCreateRuleFromField?.(field)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onCreateRuleFromField?.(field);
-              }
-            }}
-            title="Double-click or press Enter to add a rule"
-            aria-label={`${field.label}, ${field.type}. Press Enter to add a rule.`}
-          >
-            <TypeGlyph type={field.type} />
-            <span className="eb-field-main">
-              <span className="eb-field-title">{field.label}</span>
-              <span className="eb-field-detail">
-                {field.path.join('.')} &middot; {field.type}
-              </span>
-            </span>
-            <span className="eb-field-type-badge">{field.type}</span>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function FieldToolboxPane({
@@ -200,7 +159,11 @@ export function FieldToolboxPane({
                     <AccordionPanel>
                       <div className="eb-accordion-panel-content">
                         {filteredPrimary.length > 0 ? (
-                          <FieldList items={filteredPrimary} ariaLabel="Dynamic content fields" onCreateRuleFromField={onCreateRuleFromField} />
+                          <ToolboxFieldList
+                            items={filteredPrimary}
+                            ariaLabel="Dynamic content fields"
+                            onCreateRuleFromField={onCreateRuleFromField}
+                          />
                         ) : needle ? (
                           <Text size={200} className={styles.emptyText}>
                             No primary fields match.
@@ -240,7 +203,7 @@ export function FieldToolboxPane({
                             ) : visibleFields.length === 0 ? (
                               <Text size={100}>No fields.</Text>
                             ) : (
-                              <FieldList
+                              <ToolboxFieldList
                                 items={visibleFields}
                                 ariaLabel={section.displayName + ' fields'}
                                 onCreateRuleFromField={onCreateRuleFromField}

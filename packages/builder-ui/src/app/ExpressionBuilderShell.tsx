@@ -10,6 +10,7 @@ import {
   deleteNode,
   duplicateRule,
   focusGroup,
+  reorderNode,
   selectRule,
   updateRule,
 } from '../composer/queryActions';
@@ -41,6 +42,7 @@ import { SourceUpdatedDialog } from '../workbench/SourceUpdatedDialog';
 import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
 import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
+import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
 import {
   getDefaultWorkbenchState,
   toggleDock,
@@ -49,6 +51,12 @@ import {
 import '../theme/tokens.css';
 
 const PALETTE_SETTING_KEY = 'eb.workbench.palette';
+
+const createRuleSeed = (field: FieldDefinition) => ({
+  fieldId: field.id,
+  operator: getSafeOperator(field, 'equals'),
+  value: getDefaultValue(field),
+});
 
 export interface ExpressionBuilderShellProps {
   adapter: PlatformAdapter;
@@ -291,12 +299,29 @@ export function ExpressionBuilderShell({
   const createRuleFromField = (field: FieldDefinition) => {
     setDocument((current) => {
       const targetGroupId = current.activeGroupId ?? current.root.id;
-      return addRule(current, targetGroupId, {
-        fieldId: field.id,
-        operator: getSafeOperator(field, 'equals'),
-        value: getDefaultValue(field),
-      });
+      return addRule(current, targetGroupId, createRuleSeed(field));
     });
+  };
+
+  const insertFieldAtPosition = (
+    fieldId: string,
+    groupId: string,
+    index: number,
+  ) => {
+    setDocument((current) => {
+      const field = current.fields.find((candidate) => candidate.id === fieldId);
+      return field ? addRule(current, groupId, createRuleSeed(field), index) : current;
+    });
+  };
+
+  const reorderConditionNode = (
+    nodeId: string,
+    parentGroupId: string,
+    finalIndex: number,
+  ) => {
+    setDocument((current) =>
+      reorderNode(current, nodeId, parentGroupId, finalIndex),
+    );
   };
 
   const toggleWrapper = (wrapperId: string) =>
@@ -387,103 +412,131 @@ export function ExpressionBuilderShell({
           }}
         />
 
-        <main
-          className="eb-workspace"
-          style={
-            {
-              '--eb-left-dock-width': workbench.leftDockCollapsed ? '68px' : '286px',
-              '--eb-right-dock-width': workbench.rightDockCollapsed ? '68px' : '330px',
-            } as CSSProperties
-          }
+        <BuilderDragDropProvider
+          fields={document.fields}
+          root={document.root}
+          onInsertField={insertFieldAtPosition}
+          onReorderNode={reorderConditionNode}
         >
-          <FieldToolboxPane
-            fields={document.fields}
-            source={document.source ?? { kind: 'unknown' }}
-            activeTab={workbench.leftTab}
-            collapsed={workbench.leftDockCollapsed}
-            onTabChange={(leftTab) => setWorkbench((current) => ({ ...current, leftTab }))}
-            onToggleCollapsed={() => setWorkbench((current) => toggleDock(current, 'left'))}
-            onSwitchTable={() => setDialog('tablePicker')}
-            onImport={() => setDialog('import')}
-            onAddField={() => setDialog('addField')}
-            onLoadSamples={loadSampleFields}
-            canConnectTable={canConnectTable}
-            onManageProfiles={() => setDialog('profiles')}
-            onRefresh={() => {
-              const table = document.source?.tableLogicalName;
-              const label = document.source?.label ?? table ?? 'Dataverse';
-              const includeRelated = document.source?.includeRelated ?? false;
-              if (table) {
-                void connectFieldsCached(table, label, includeRelated, true);
-              } else {
-                void connectFields();
-              }
-            }}
-            relatedSections={relatedSections}
-            onExpandRelated={handleExpandRelated}
-            onCreateRuleFromField={createRuleFromField}
-            selectedWrappers={selectedWrappers}
-            onToggleWrapper={toggleWrapper}
-            onClearWrapperSelection={() => setSelectedWrappers([])}
-          />
-
-          <div className="eb-center-col">
-            <ConditionCanvas
-              root={document.root}
+          <main
+            className="eb-workspace"
+            style={
+              {
+                '--eb-left-dock-width': workbench.leftDockCollapsed ? '68px' : '286px',
+                '--eb-right-dock-width': workbench.rightDockCollapsed ? '68px' : '330px',
+              } as CSSProperties
+            }
+          >
+            <FieldToolboxPane
               fields={document.fields}
-              mode={document.mode}
-              selectedRuleId={selectedRule?.id}
-              activeGroupId={document.activeGroupId ?? document.root.id}
-              onFocusGroup={(groupId) => setDocument((current) => focusGroup(current, groupId))}
+              source={document.source ?? { kind: 'unknown' }}
+              activeTab={workbench.leftTab}
+              collapsed={workbench.leftDockCollapsed}
+              onTabChange={(leftTab) =>
+                setWorkbench((current) => ({ ...current, leftTab }))
+              }
+              onToggleCollapsed={() =>
+                setWorkbench((current) => toggleDock(current, 'left'))
+              }
+              onSwitchTable={() => setDialog('tablePicker')}
+              onImport={() => setDialog('import')}
+              onAddField={() => setDialog('addField')}
+              onLoadSamples={loadSampleFields}
+              canConnectTable={canConnectTable}
+              onManageProfiles={() => setDialog('profiles')}
+              onRefresh={() => {
+                const table = document.source?.tableLogicalName;
+                const label = document.source?.label ?? table ?? 'Dataverse';
+                const includeRelated = document.source?.includeRelated ?? false;
+                if (table) {
+                  void connectFieldsCached(table, label, includeRelated, true);
+                } else {
+                  void connectFields();
+                }
+              }}
+              relatedSections={relatedSections}
+              onExpandRelated={handleExpandRelated}
+              onCreateRuleFromField={createRuleFromField}
               selectedWrappers={selectedWrappers}
-              onRequestRemap={(ruleId) => {
-                setDocument((current) => selectRule(current, ruleId));
-                setDialog('remap');
-              }}
-              onSelectRule={(ruleId) => {
-                setDocument((current) => selectRule(current, ruleId));
-                setImportDiagnostics([]);
-              }}
-              onAddRule={(groupId) =>
-                setDocument((current) =>
-                  addRule(current, groupId, {
-                    fieldId: current.fields[0]?.id ?? '',
-                    operator: 'equals',
-                    value: getDefaultValue(current.fields[0]),
-                  }),
-                )
-              }
-              onAddGroup={(groupId) => setDocument((current) => addGroup(current, groupId))}
-              onChangeGroupConjunction={(groupId, conjunction) =>
-                setDocument((current) => changeGroupConjunction(current, groupId, conjunction))
-              }
-              onUpdateRule={(ruleId, patch) => {
-                setDocument((current) => updateRule(current, ruleId, patch));
-                setImportDiagnostics([]);
-              }}
-              onDuplicateRule={(ruleId) => setDocument((current) => duplicateRule(current, ruleId))}
-              onDeleteNode={(nodeId) => setDocument((current) => deleteNode(current, nodeId))}
-              onClear={() => setDocument((current) => clearDocument(current))}
+              onToggleWrapper={toggleWrapper}
+              onClearWrapperSelection={() => setSelectedWrappers([])}
             />
 
-            <ExpressionDocumentPanel
-              expression={derived.expression}
-              collapsed={workbench.previewCollapsed}
-              copyState={workbench.copyState}
-              onToggleCollapsed={() => setWorkbench((current) => togglePreview(current))}
-              onCopy={() => void copyExpression()}
-            />
-          </div>
+            <div className="eb-center-col">
+              <ConditionCanvas
+                root={document.root}
+                fields={document.fields}
+                mode={document.mode}
+                selectedRuleId={selectedRule?.id}
+                activeGroupId={document.activeGroupId ?? document.root.id}
+                onFocusGroup={(groupId) =>
+                  setDocument((current) => focusGroup(current, groupId))
+                }
+                selectedWrappers={selectedWrappers}
+                onRequestRemap={(ruleId) => {
+                  setDocument((current) => selectRule(current, ruleId));
+                  setDialog('remap');
+                }}
+                onSelectRule={(ruleId) => {
+                  setDocument((current) => selectRule(current, ruleId));
+                  setImportDiagnostics([]);
+                }}
+                onAddRule={(groupId) =>
+                  setDocument((current) =>
+                    addRule(current, groupId, {
+                      fieldId: current.fields[0]?.id ?? '',
+                      operator: 'equals',
+                      value: getDefaultValue(current.fields[0]),
+                    }),
+                  )
+                }
+                onAddGroup={(groupId) =>
+                  setDocument((current) => addGroup(current, groupId))
+                }
+                onChangeGroupConjunction={(groupId, conjunction) =>
+                  setDocument((current) =>
+                    changeGroupConjunction(current, groupId, conjunction),
+                  )
+                }
+                onUpdateRule={(ruleId, patch) => {
+                  setDocument((current) => updateRule(current, ruleId, patch));
+                  setImportDiagnostics([]);
+                }}
+                onDuplicateRule={(ruleId) =>
+                  setDocument((current) => duplicateRule(current, ruleId))
+                }
+                onDeleteNode={(nodeId) =>
+                  setDocument((current) => deleteNode(current, nodeId))
+                }
+                onReorderNode={reorderConditionNode}
+                onClear={() => setDocument((current) => clearDocument(current))}
+              />
 
-          <SupportPane
-            mode={document.mode}
-            diagnostics={diagnostics}
-            activeTab={workbench.rightTab}
-            collapsed={workbench.rightDockCollapsed}
-            onTabChange={(rightTab) => setWorkbench((current) => ({ ...current, rightTab }))}
-            onToggleCollapsed={() => setWorkbench((current) => toggleDock(current, 'right'))}
-          />
-        </main>
+              <ExpressionDocumentPanel
+                expression={derived.expression}
+                collapsed={workbench.previewCollapsed}
+                copyState={workbench.copyState}
+                onToggleCollapsed={() =>
+                  setWorkbench((current) => togglePreview(current))
+                }
+                onCopy={() => void copyExpression()}
+              />
+            </div>
+
+            <SupportPane
+              mode={document.mode}
+              diagnostics={diagnostics}
+              activeTab={workbench.rightTab}
+              collapsed={workbench.rightDockCollapsed}
+              onTabChange={(rightTab) =>
+                setWorkbench((current) => ({ ...current, rightTab }))
+              }
+              onToggleCollapsed={() =>
+                setWorkbench((current) => toggleDock(current, 'right'))
+              }
+            />
+          </main>
+        </BuilderDragDropProvider>
       </div>
 
       <ImportSchemaDialog

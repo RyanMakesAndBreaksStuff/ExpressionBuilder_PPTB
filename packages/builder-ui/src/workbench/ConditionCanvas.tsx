@@ -1,13 +1,38 @@
+import { useState } from 'react';
 import { Button } from '@fluentui/react-components';
 import { DeleteRegular } from '@fluentui/react-icons';
 import { BuilderIcon } from './icons/BuilderIcons';
 import type { ConditionCanvasProps } from './types';
 import { ConditionGroupCard } from './ConditionGroupCard';
 import { resolveOrphans } from '../app/sourceState';
+import type { QueryGroup, QueryNode } from '../composer/querySchema';
+import { formatAccessiblePosition } from './dragDropModel';
 
 export function ConditionCanvas(props: ConditionCanvasProps) {
   const orphanCount = resolveOrphans(props.root, props.fields).size;
   const isEmpty = props.root.children.length === 0;
+  const [reorderAnnouncement, setReorderAnnouncement] = useState('');
+
+  const handleReorderNode = (
+    nodeId: string,
+    parentGroupId: string,
+    finalIndex: number,
+  ) => {
+    const node = findNode(props.root, nodeId);
+    const parent = findGroup(props.root, parentGroupId);
+    props.onReorderNode(nodeId, parentGroupId, finalIndex);
+
+    if (node && parent) {
+      const label =
+        node.kind === 'group'
+          ? `group ${node.id}`
+          : (props.fields.find((field) => field.id === node.fieldId)?.label ??
+            `unknown field ${node.fieldId}`);
+      setReorderAnnouncement(
+        `Moved ${label} to ${formatAccessiblePosition(finalIndex, parent.children.length)}.`,
+      );
+    }
+  };
 
   return (
     <section className="eb-canvas-card" role="region" aria-label="Condition Builder">
@@ -36,9 +61,44 @@ export function ConditionCanvas(props: ConditionCanvasProps) {
           {...props}
           group={props.root}
           isRoot
+          onReorderNode={handleReorderNode}
           onRequestRemap={props.onRequestRemap}
         />
+      </div>
+      <div
+        className="eb-sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="condition-reorder-status"
+      >
+        {reorderAnnouncement}
       </div>
     </section>
   );
 }
+
+const findNode = (group: QueryGroup, nodeId: string): QueryNode | undefined => {
+  if (group.id === nodeId) {
+    return group;
+  }
+
+  for (const child of group.children) {
+    if (child.id === nodeId) {
+      return child;
+    }
+    if (child.kind === 'group') {
+      const nested = findNode(child, nodeId);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const findGroup = (group: QueryGroup, groupId: string): QueryGroup | undefined => {
+  const node = findNode(group, groupId);
+  return node?.kind === 'group' ? node : undefined;
+};

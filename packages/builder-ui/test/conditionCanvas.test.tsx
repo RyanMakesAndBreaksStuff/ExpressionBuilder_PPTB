@@ -23,11 +23,13 @@ function renderCanvas(overrides = {}) {
     onUpdateRule: vi.fn(),
     onDuplicateRule: vi.fn(),
     onDeleteNode: vi.fn(),
+    onReorderNode: vi.fn(),
+    onClear: vi.fn(),
     ...overrides,
   };
 
-  render(<ConditionCanvas {...props} />);
-  return props;
+  const view = render(<ConditionCanvas {...props} />);
+  return { ...props, ...view };
 }
 
 describe('ConditionCanvas', () => {
@@ -68,4 +70,139 @@ describe('ConditionCanvas', () => {
     expect(screen.getByRole('group', { name: 'AND group root' })).toHaveClass('is-focused');
     expect(routingGroup).not.toHaveClass('is-focused');
   });
+
+  it('renders named reorder handles for every rule and non-root group, but not the root', () => {
+    renderCanvas();
+
+    expect(screen.getByRole('button', { name: 'Reorder condition Status' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder condition Approver' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reorder condition Region' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder condition Amount' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reorder group group-routing' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reorder group root' })).not.toBeInTheDocument();
+  });
+
+  it('renders a reorder handle for an orphan rule', () => {
+    renderCanvas({
+      root: {
+        ...sampleDocument.root,
+        children: [
+          {
+            id: 'rule-legacy',
+            kind: 'rule',
+            fieldId: 'LegacyStatus',
+            operator: 'equals',
+            value: 'Old',
+          },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Reorder condition unknown field LegacyStatus' }),
+    ).toBeInTheDocument();
+  });
+
+  it('exposes before, between, after, and empty-group insertion positions', () => {
+    const { container, unmount } = render(
+      <ConditionCanvas
+        {...renderCanvasProps()}
+        root={sampleDocument.root}
+      />,
+    );
+
+    expect(container.querySelectorAll('[data-drop-position]')).toHaveLength(7);
+    const firstPosition = container.querySelector(
+      '[data-drop-position="0"][data-group-id="root"]',
+    );
+    expect(firstPosition).toHaveAttribute(
+      'aria-label',
+      'Insert at position 1 of 4 in AND group root',
+    );
+    const lastPosition = container.querySelector(
+      '[data-drop-position="3"][data-group-id="root"]',
+    );
+    expect(lastPosition).toHaveAttribute(
+      'aria-label',
+      'Insert at position 4 of 4 in AND group root',
+    );
+
+    unmount();
+    const { container: emptyContainer } = render(
+      <ConditionCanvas
+        {...renderCanvasProps()}
+        root={{ id: 'root', kind: 'group', conjunction: 'and', children: [] }}
+      />,
+    );
+    const emptyPosition = emptyContainer.querySelector(
+      '[data-drop-position="0"][data-group-id="root"]',
+    );
+    expect(emptyPosition).toHaveAttribute(
+      'aria-label',
+      'Insert at position 1 of 1 in AND group root',
+    );
+  });
+
+  it('keeps editable controls and actions outside the drag activator', () => {
+    renderCanvas();
+
+    const row = screen.getByRole('group', { name: /Approver contains finance/i });
+    const handle = within(row).getByRole('button', { name: 'Reorder condition Approver' });
+    const fieldSelect = within(row).getByLabelText('Field for Approver');
+    const deleteButton = within(row).getByRole('button', { name: 'Delete rule' });
+
+    expect(handle).not.toContainElement(fieldSelect);
+    expect(handle).not.toContainElement(deleteButton);
+  });
+
+  it('does not mark inactive insertion positions as valid drops', () => {
+    const { container } = renderCanvas();
+
+    for (const target of container.querySelectorAll('[data-drop-position]')) {
+      expect(target).not.toHaveClass('is-valid-drop');
+      expect(target).not.toHaveClass('is-invalid-drop');
+      expect(target).not.toHaveClass('is-drop-target');
+    }
+  });
+
+  it('supports non-drag Move up and Move down actions with a polite announcement', async () => {
+    const props = renderCanvas();
+    const statusRow = screen.getByRole('group', { name: /Status equals Approved/i });
+
+    expect(within(statusRow).getByRole('button', { name: 'Move Status up' })).toBeDisabled();
+    await userEvent.click(within(statusRow).getByRole('button', { name: 'Move Status down' }));
+
+    expect(props.onReorderNode).toHaveBeenCalledWith('rule-status', 'root', 1);
+    expect(screen.getByTestId('condition-reorder-status')).toHaveTextContent(
+      'Moved Status to position 2 of 3.',
+    );
+
+    const routingGroup = screen.getByRole('group', { name: 'OR group group-routing' });
+    expect(
+      within(routingGroup).getByRole('button', { name: 'Move group group-routing down' }),
+    ).toBeDisabled();
+  });
 });
+
+function renderCanvasProps() {
+  return {
+    fields: sampleDocument.fields,
+    mode: sampleDocument.mode,
+    selectedRuleId: sampleDocument.selectedRuleId,
+    activeGroupId: 'root',
+    onSelectRule: vi.fn(),
+    onAddRule: vi.fn(),
+    onAddGroup: vi.fn(),
+    onFocusGroup: vi.fn(),
+    onChangeGroupConjunction: vi.fn(),
+    onUpdateRule: vi.fn(),
+    onDuplicateRule: vi.fn(),
+    onDeleteNode: vi.fn(),
+    onReorderNode: vi.fn(),
+    onClear: vi.fn(),
+  };
+}
