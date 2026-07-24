@@ -12,14 +12,14 @@ Ships two ways from one shared codebase: a standalone **web app** and a **Power 
 - **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
 - **Field profiles** — save and reload field sets across sessions
 - **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators)
-- **Porcelain theme system** — light/dark, glassmorphism UI on Fluent UI v9
+- **Graphite theme system** — accessible light/dark semantic tokens on Fluent UI v9
 - **Dockable workspace** — collapsible toolbox/support panes around the central canvas
 
 ## Two Deployment Targets
 
-| Target                 | Purpose                                              | Run                | Build               |
-| ---------------------- | ----------------------------------------------------- | ------------------ | -------------------- |
-| **Web** (`apps/web`)   | Standalone browser app — try it with no Power Platform context | `npm run dev:web`  | `npm run build:web`  |
+| Target                         | Purpose                                                           | Run                  | Build                  |
+| ------------------------------ | ----------------------------------------------------------------- | -------------------- | ---------------------- |
+| **Web** (`apps/web`)   | Standalone browser app — try it with no Power Platform context   | `npm run dev:web`  | `npm run build:web`  |
 | **PPTB** (`apps/pptb`) | Power Platform Toolbox package, published to the PPTB marketplace | `npm run dev:pptb` | `npm run build:pptb` |
 
 The web build deploys automatically to GitHub Pages on every push to `main` — see [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
@@ -143,7 +143,7 @@ npm run preview:pptb
 
 ## Docs
 
-- [User manual & developer docs](USER_MANUAL.md)
+- [User manual &amp; developer docs](USER_MANUAL.md)
 - [Usage (web + PPTB)](usage.md)
 
 ## License

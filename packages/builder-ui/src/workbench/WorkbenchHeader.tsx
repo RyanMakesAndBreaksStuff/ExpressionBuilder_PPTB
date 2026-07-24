@@ -1,5 +1,5 @@
 import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
-import { porcelainTokens } from '../theme/workbenchTokens';
+import { graphiteTokens } from '../theme/workbenchTokens';
 import type { WorkbenchHeaderProps } from './types';
 import { ActionButton } from './controls/ActionButton';
 import { ExportIcon, ImportIcon, MoonIcon, SunIcon } from './icons/BuilderIcons';
@@ -12,14 +12,14 @@ export function WorkbenchHeader({
   onModeChange,
   onToggleTheme,
 }: WorkbenchHeaderProps) {
-  const theme = porcelainTokens[paletteId].mode;
+  const theme = graphiteTokens[paletteId].mode;
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
     <header className="eb-workbench-header">
       <div className="eb-header-brand">
         <div className="eb-brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M8 7h12M8 12h8M8 17h6" />
             <path d="M4 7l2-2-2-2M4 17l2 2-2 2" />
           </svg>

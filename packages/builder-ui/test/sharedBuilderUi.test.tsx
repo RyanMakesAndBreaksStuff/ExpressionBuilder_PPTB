@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
 import { sampleDocument } from '../src/app/sampleData';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 
-function createAdapter(): PlatformAdapter {
+function createAdapter(savedPalette: string | null = null): PlatformAdapter {
   return {
     copyToClipboard: vi.fn(),
     notify: vi.fn(),
@@ -22,7 +22,11 @@ function createAdapter(): PlatformAdapter {
       // Report the first-run onboarding as already seen so its modal Dialog does not
       // auto-open and trap focus mid-test (it would steal focus from the mode radios
       // and break keyboard-navigation assertions). Other keys still resolve to null.
-      get: vi.fn(async (key: string) => (key === 'eb.onboarding.seen.v1' ? '1' : null)),
+      get: vi.fn(async (key: string) => {
+        if (key === 'eb.onboarding.seen.v1') return '1';
+        if (key === 'eb.workbench.palette') return savedPalette;
+        return null;
+      }),
       set: vi.fn(async () => undefined),
       remove: vi.fn(async () => undefined),
     },
@@ -225,5 +229,35 @@ describe('shared builder UI', () => {
     await user.click(toggle);
 
     expect(screen.getByRole('button', { name: 'Switch to dark theme' })).toBeInTheDocument();
+    expect(adapter.settings.set).toHaveBeenCalledWith('eb.workbench.palette', 'graphiteLight');
+  });
+
+  it.each([
+    ['porcelainLight', 'graphiteLight', 'light'],
+    ['porcelainDark', 'graphiteDark', 'dark'],
+  ] as const)('migrates the legacy %s preference to %s', async (legacyId, graphiteId, mode) => {
+    const adapter = createAdapter(legacyId);
+    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', mode);
+      expect(adapter.settings.set).toHaveBeenCalledWith('eb.workbench.palette', graphiteId);
+    });
+  });
+
+  it('uses a saved Graphite preference without rewriting it', async () => {
+    const adapter = createAdapter('graphiteLight');
+    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
+
+    await waitFor(() => expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'light'));
+    expect(adapter.settings.set).not.toHaveBeenCalledWith('eb.workbench.palette', 'graphiteLight');
+  });
+
+  it('falls back to the host theme for an unknown saved preference', async () => {
+    const adapter = createAdapter('unknown-palette');
+    vi.mocked(adapter.getTheme).mockResolvedValue('highContrast');
+    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
+
+    await waitFor(() => expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'dark'));
   });
 });

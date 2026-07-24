@@ -29,7 +29,8 @@ dist-ssr
 /docs
 ! /docs/source-data/*
 /test-results
-/tests/e2e
+/tests/e2e/*
+!/tests/e2e/theme-smoke.spec.ts
 /ui-ux
 /package-lock.json
 /.claude/skills
@@ -46,3 +47,4 @@ LEAN-CTX.md
 /LEAN-CTX.md.bak
 /tasks/todo.md
 stylesheet*/
+AGENTS.md

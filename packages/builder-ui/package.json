@@ -18,10 +18,11 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@ryanmakes/eb_engine": "file:../engine",
-    "@ryanmakes/eb_platformadapter": "file:../platform",
+    "@dnd-kit/react": "^0.5.0",
     "@fluentui/react-components": "9.74.1",
     "@fluentui/react-icons": "^2.0.330",
+    "@ryanmakes/eb_engine": "file:../engine",
+    "@ryanmakes/eb_platformadapter": "file:../platform",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

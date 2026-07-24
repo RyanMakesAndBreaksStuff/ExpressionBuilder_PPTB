@@ -39,7 +39,7 @@
 - **Schema import** — Import fields from CSV, JSON, or JSON Schema when you don't have a live connection.
 - **Field profiles** — Save and reload field sets for reuse across sessions.
 - **Diagnostics** — Real-time validation with actionable error messages (type mismatches, unknown fields, unsupported operators).
-- **Six-palette theme system** — Porcelain light/dark themes with glassmorphism UI, adapted from Fluent UI v9.
+- **Graphite theme system** — accessible light/dark semantic themes adapted from Fluent UI v9.
 - **Dockable workspace** — Collapsible left toolbox and right support panes around the central canvas.
 
 ---

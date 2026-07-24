@@ -64,30 +64,25 @@ body {
   --bg-sel: var(--accent-soft);
   --stroke1: var(--border);
   --stroke2: var(--border);
-  --stroke-acc: var(--border-strong);
+  --stroke-acc: var(--interactive-stroke);
   --fg1: var(--text);
   --fg2: var(--text2);
   --fg3: var(--text3);
-  --fg-onbrand: #ffffff;
+  --fg-onbrand: var(--accent-ink);
   --brand: var(--accent);
   --brand-hover: var(--accent-strong);
   --brand-pressed: var(--accent-strong);
   --brand-fg: var(--accent);
   --brand-subtle: var(--accent-soft);
-  --danger: var(--danger);
   --danger-bg: var(--danger-soft);
   --danger-stroke: var(--danger);
-  --warn: var(--warn);
   --warn-bg: var(--warn-soft);
   --warn-stroke: var(--warn);
-  --good: var(--good);
   --good-bg: var(--good-soft);
   --good-stroke: var(--good);
-  --info: var(--info);
   --info-bg: var(--info-soft);
-  --shadow-sm: 0 1px 2px rgba(42, 31, 34, 0.12);
-  --shadow-md: 0 18px 48px rgba(42, 31, 34, 0.12);
-  --ring: 0 0 0 3px var(--accent-soft);
+  --info-stroke: var(--info);
+  --ring: 0 0 0 3px var(--accent);
   --focus-ring: var(--ring);
   --r-control: var(--r-md);
   --r-card: var(--r-sm);
@@ -103,30 +98,25 @@ body {
   --bg-sel: var(--accent-soft);
   --stroke1: var(--border);
   --stroke2: var(--border);
-  --stroke-acc: var(--border-strong);
+  --stroke-acc: var(--interactive-stroke);
   --fg1: var(--text);
   --fg2: var(--text2);
   --fg3: var(--text3);
-  --fg-onbrand: #ffffff;
+  --fg-onbrand: var(--accent-ink);
   --brand: var(--accent);
   --brand-hover: var(--accent-strong);
   --brand-pressed: var(--accent-strong);
   --brand-fg: var(--accent);
   --brand-subtle: var(--accent-soft);
-  --danger: var(--danger);
   --danger-bg: var(--danger-soft);
   --danger-stroke: var(--danger);
-  --warn: var(--warn);
   --warn-bg: var(--warn-soft);
   --warn-stroke: var(--warn);
-  --good: var(--good);
   --good-bg: var(--good-soft);
   --good-stroke: var(--good);
-  --info: var(--info);
   --info-bg: var(--info-soft);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
-  --shadow-md: 0 18px 48px rgba(0, 0, 0, 0.24);
-  --ring: 0 0 0 3px var(--accent-soft);
+  --info-stroke: var(--info);
+  --ring: 0 0 0 3px var(--accent);
   --focus-ring: var(--ring);
   --r-control: var(--r-md);
   --r-card: var(--r-sm);
@@ -181,7 +171,7 @@ body {
   gap: 16px;
   padding: 12px 18px;
   border-bottom: 1px solid var(--border);
-  background: rgba(10, 14, 20, 0.68);
+  background: var(--panel);
   backdrop-filter: blur(18px);
   flex: 0 0 auto;
 }
@@ -202,7 +192,7 @@ body {
   justify-content: center;
   color: var(--fg-onbrand);
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-sm);
   flex: 0 0 auto;
 }
 
@@ -248,9 +238,8 @@ body {
   gap: 4px;
   padding: 4px;
   border-radius: 999px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   flex: 0 0 auto;
 }
 
@@ -272,7 +261,7 @@ body {
 }
 
 .eb-segmented [aria-checked="true"] {
-  color: white;
+  color: var(--fg-onbrand);
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
 }
 
@@ -303,8 +292,8 @@ body {
   flex-direction: column;
   border-radius: var(--r-panel);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%), var(--surface);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: border-color var(--duration-med) ease, background var(--duration-med) ease;
 }
@@ -316,7 +305,7 @@ body {
   gap: 10px;
   padding: 0 14px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface2);
+  background: var(--surface2);
   flex: 0 0 auto;
 }
 
@@ -428,8 +417,8 @@ body {
   min-height: 0;
   border-radius: var(--r-panel);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%), var(--surface);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -443,7 +432,7 @@ body {
   gap: 10px;
   padding: 0 14px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface2);
+  background: var(--surface2);
   flex: 0 0 auto;
 }
 
@@ -473,8 +462,8 @@ body {
   flex: 0 0 auto;
   border-radius: var(--r-panel);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%), var(--surface);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: flex-basis var(--duration-med) ease, min-height var(--duration-med) ease;
 }
@@ -491,7 +480,7 @@ body {
   gap: 10px;
   padding: 0 14px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface2);
+  background: var(--surface2);
   flex: 0 0 auto;
 }
 
@@ -534,8 +523,7 @@ body {
 .eb-group-card {
   border-radius: 18px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%), var(--surface2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: var(--surface2);
   overflow: hidden;
   padding: 0;
   /* Keep natural height inside the flex-column scroll pane. Because this card
@@ -607,7 +595,7 @@ body {
   padding: 4px;
   border-radius: 999px;
   background: var(--surface3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
 }
 
 .eb-logic-pill button {
@@ -626,7 +614,7 @@ body {
 
 .eb-logic-pill button.is-active {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: white;
+  color: var(--fg-onbrand);
 }
 
 /* Drag Dots */
@@ -654,8 +642,8 @@ body {
   align-items: center;
   padding: 10px 12px;
   border-radius: 16px;
-  border: 1px solid var(--border);
-  background: rgba(14, 19, 28, 0.38);
+  border: 1px solid var(--interactive-stroke);
+  background: var(--surface);
   transition: border-color var(--duration-fast) ease;
 }
 
@@ -665,13 +653,13 @@ body {
 }
 
 .eb-rule-row-editor.is-error {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: linear-gradient(0deg, var(--danger-soft), var(--danger-soft)), rgba(14, 19, 28, 0.28);
+  border-color: var(--danger-stroke);
+  background: var(--danger-soft);
 }
 
 .eb-rule-row-editor.is-orphan {
-  border-color: rgba(255, 200, 60, 0.35);
-  background: linear-gradient(0deg, var(--warn-soft, rgba(255, 200, 60, 0.08)), var(--warn-soft, rgba(255, 200, 60, 0.08))), rgba(14, 19, 28, 0.28);
+  border-color: var(--warn-stroke);
+  background: var(--warn-soft);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -682,8 +670,8 @@ body {
 .eb-orphan-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #c8871a;
-  background: rgba(255, 200, 60, 0.15);
+  color: var(--warn);
+  background: var(--warn-soft);
   border-radius: 4px;
   padding: 2px 6px;
   white-space: nowrap;
@@ -700,7 +688,7 @@ body {
 }
 
 .eb-rule-row-editor.is-orphan .eb-muted {
-  color: var(--text-subtle, rgba(255, 255, 255, 0.4));
+  color: var(--text3);
   font-size: 12px;
 }
 
@@ -747,7 +735,7 @@ body {
   padding: 10px;
   border-radius: 14px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg2);
   transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
   cursor: pointer;
 }
@@ -802,7 +790,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--fg-onbrand);
   font-size: 0.68rem;
   font-family: var(--eb-mono);
   font-weight: 700;
@@ -810,23 +798,23 @@ body {
 }
 
 .eb-type.choice {
-  background: linear-gradient(135deg, #647eff, #7aa2ff);
+  background: var(--accent);
 }
 
 .eb-type.string {
-  background: linear-gradient(135deg, #17b8a6, #44d2be);
+  background: var(--accent-2);
 }
 
 .eb-type.number {
-  background: linear-gradient(135deg, #f59c33, #f6be5a);
+  background: var(--warn);
 }
 
 .eb-type.dateTime {
-  background: linear-gradient(135deg, #f26695, #ff8cb1);
+  background: var(--danger);
 }
 
 .eb-type.boolean {
-  background: linear-gradient(135deg, #8592a6, #a9b4c6);
+  background: var(--info);
 }
 
 /* Wrap Grid */
@@ -840,7 +828,7 @@ body {
   height: 30px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface2);
   color: var(--text2);
   display: inline-flex;
@@ -862,14 +850,14 @@ body {
 .eb-wrap-chip.is-selected {
   border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: white;
+  color: var(--fg-onbrand);
   box-shadow: var(--shadow-sm);
 }
 
 .eb-wrap-chip.is-selected:hover {
   border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: white;
+  color: var(--fg-onbrand);
 }
 
 .eb-wrap-chip svg {
@@ -881,16 +869,13 @@ body {
 .eb-search-box {
   width: 100%;
   height: 38px;
-  padding: 0 12px 0 38px;
+  padding: 0 12px;
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface2);
   color: var(--text);
   font-size: 0.85rem;
   transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238292a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 12px center;
 }
 
 .eb-search-box::placeholder {
@@ -912,7 +897,7 @@ body {
   height: 40px;
   padding: 0 12px;
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface);
   color: var(--text);
   font-size: 0.85rem;
@@ -950,7 +935,7 @@ body {
   height: 38px;
   padding: 0 14px;
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface);
   color: var(--text2);
   display: inline-flex;
@@ -974,7 +959,7 @@ body {
 }
 
 .eb-action-primary {
-  color: white;
+  color: var(--fg-onbrand);
   border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
 }
@@ -994,26 +979,15 @@ body {
   border-color: transparent;
 }
 
-/* Header ghost buttons: always white-on-glass regardless of theme */
+/* Header ghost buttons follow the active Graphite surface. */
 .eb-workbench-header .eb-action-ghost {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text2);
 }
 
 .eb-workbench-header .eb-action-ghost:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-/* In light mode ghost buttons are at 20% opacity (barely visible) and reveal on hover */
-.eb-root[data-theme="light"] .eb-action-ghost {
-  opacity: 0.2;
-  transition: opacity var(--duration-fast) ease;
-}
-
-.eb-root[data-theme="light"] .eb-action-ghost:hover,
-.eb-root[data-theme="light"] .eb-action-ghost:focus-visible {
-  opacity: 1;
+  color: var(--text);
+  background: var(--surface2);
+  border-color: var(--interactive-stroke);
 }
 
 /* Touch devices have no hover to reveal faint ghost buttons — keep them visible. */
@@ -1039,7 +1013,7 @@ body {
   width: 34px;
   height: 34px;
   border-radius: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface);
   color: var(--text2);
   display: inline-flex;
@@ -1069,7 +1043,7 @@ body {
   height: 38px;
   padding: 0 14px;
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--interactive-stroke);
   background: var(--surface);
   color: var(--text2);
   display: inline-flex;
@@ -1102,7 +1076,7 @@ body {
   padding: 14px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface2);
+  background: var(--surface2);
   font-family: var(--eb-mono);
   font-size: 0.83rem;
   line-height: 1.8;
@@ -1124,11 +1098,11 @@ body {
 }
 
 .str {
-  color: #ff8ba5;
+  color: var(--danger);
 }
 
 .num {
-  color: #f7cb62;
+  color: var(--warn);
   font-weight: 700;
 }
 
@@ -1174,37 +1148,37 @@ body {
 
 .eb-diagnostic-card.success {
   background: var(--good-bg);
-  border-color: rgba(53, 197, 138, 0.22);
+  border-color: var(--good-stroke);
 }
 
 .eb-diagnostic-card.warning {
   background: var(--warn-bg);
-  border-color: rgba(245, 182, 65, 0.2);
+  border-color: var(--warn-stroke);
 }
 
 .eb-diagnostic-card.error {
   background: var(--danger-bg);
-  border-color: rgba(249, 115, 96, 0.2);
+  border-color: var(--danger-stroke);
 }
 
 .eb-diag-good {
   background: var(--good-bg);
-  border-color: rgba(53, 197, 138, 0.22);
+  border-color: var(--good-stroke);
 }
 
 .eb-diag-warn {
   background: var(--warn-bg);
-  border-color: rgba(245, 182, 65, 0.2);
+  border-color: var(--warn-stroke);
 }
 
 .eb-diag-info {
   background: var(--info-bg);
-  border-color: rgba(88, 168, 255, 0.2);
+  border-color: var(--info-stroke);
 }
 
 .eb-diag-error {
   background: var(--danger-bg);
-  border-color: rgba(249, 115, 96, 0.2);
+  border-color: var(--danger-stroke);
 }
 
 .eb-diag-title {
@@ -1244,7 +1218,7 @@ body {
   padding: 12px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg2);
 }
 
 .eb-context-label {

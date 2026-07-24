@@ -17,10 +17,11 @@ import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
 import { diffFields, type FieldDrift } from '../importExport/metadataCache';
 import {
-  createPorcelainFluentTheme,
-  porcelainTokens,
+  createGraphiteFluentTheme,
+  graphiteTokens,
+  migratePaletteId,
   type PaletteId,
-  type PorcelainThemeMode,
+  type GraphiteThemeMode,
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
@@ -68,7 +69,7 @@ export function ExpressionBuilderShell({
 }: ExpressionBuilderShellProps) {
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
-  const [paletteId, setPaletteId] = useState<PaletteId>('porcelainDark');
+  const [paletteId, setPaletteId] = useState<PaletteId>('graphiteDark');
   // Tracks whether the user has explicitly picked a palette this session.
   // When true, host theme events no longer overwrite the choice.
   // ponytail: session flag + persisted setting; skip a per-user "auto/light/dark" tri-state until asked
@@ -110,7 +111,7 @@ export function ExpressionBuilderShell({
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
-  const theme = porcelainTokens[paletteId].mode;
+  const theme = graphiteTokens[paletteId].mode;
 
   useEffect(() => {
     let active = true;
@@ -120,9 +121,13 @@ export function ExpressionBuilderShell({
       .get(PALETTE_SETTING_KEY)
       .then((stored) => {
         if (!active) return;
-        if (stored === 'porcelainDark' || stored === 'porcelainLight') {
-          setPaletteId(stored);
+        const savedPalette = migratePaletteId(stored);
+        if (savedPalette) {
+          setPaletteId(savedPalette);
           setPaletteOverride(true);
+          if (stored !== savedPalette) {
+            void adapter.settings.set(PALETTE_SETTING_KEY, savedPalette).catch(() => {});
+          }
           return;
         }
         void adapter.getTheme().then((platformTheme) => {
@@ -361,10 +366,10 @@ export function ExpressionBuilderShell({
     }
   };
 
-  const paletteVars = porcelainTokens[paletteId].cssVariables;
+  const paletteVars = graphiteTokens[paletteId].cssVariables;
 
   return (
-    <FluentProvider theme={createPorcelainFluentTheme(paletteId)}>
+    <FluentProvider theme={createGraphiteFluentTheme(paletteId)}>
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <WorkbenchHeader
           mode={document.mode}
@@ -374,7 +379,7 @@ export function ExpressionBuilderShell({
           onImport={() => setDialog('importExpression')}
           onToggleTheme={() => {
             setPaletteId((current) => {
-              const next = current === 'porcelainDark' ? 'porcelainLight' : 'porcelainDark';
+              const next = current === 'graphiteDark' ? 'graphiteLight' : 'graphiteDark';
               void adapter.settings.set(PALETTE_SETTING_KEY, next).catch(() => {});
               return next;
             });
@@ -587,8 +592,7 @@ export function ExpressionBuilderShell({
 }
 
 function normalizePalette(platformTheme: PlatformTheme): PaletteId {
-  const mode: PorcelainThemeMode =
+  const mode: GraphiteThemeMode =
     platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
-  return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
+  return mode === 'dark' ? 'graphiteDark' : 'graphiteLight';
 }
-
