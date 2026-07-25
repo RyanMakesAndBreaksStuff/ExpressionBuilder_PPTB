@@ -22,11 +22,11 @@ Ships two ways from one shared codebase: a standalone **web app** and a **Power 
 | **Web** (`apps/web`)   | Standalone browser app — try it with no Power Platform context   | `npm run dev:web`  | `npm run build:web`  |
 | **PPTB** (`apps/pptb`) | Power Platform Toolbox package, published to the PPTB marketplace | `npm run dev:pptb` | `npm run build:pptb` |
 
-The web build deploys automatically to GitHub Pages on every push to `main` — see [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+The web build deploys automatically to GitHub Pages on every push to `main` — see [`.github/workflows/deploy-pages.yml`](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/.github/workflows/deploy-pages.yml).
 
 ## Architecture
 
-Three shared packages, two thin host apps:
+Two shared packages, two thin host apps:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -40,18 +40,19 @@ Three shared packages, two thin host apps:
 ┌─────────────────────┴─────────────────────────────────────┐
 │  packages/builder-ui                                       │
 │  Shared Fluent UI v9 composer + workbench + theme system   │
-│  Exports: ExpressionBuilderShell, queryActions, querySchema │
+│  Exports: ExpressionBuilderShell + query document types    │
+│  (QueryGroup, QueryRule, ...) and actions (addRule, ...)    │
 └─────────────────────┬───────────────────────────────────────┘
                        │
-          ┌────────────┼────────────┐
-          │            │            │
-   ┌──────┴─────┐ ┌────┴──────┐ ┌───┴───────┐
-   │ packages/  │ │ packages/ │ │ packages/ │
-   │ engine     │ │ platform  │ │ icons     │
-   │ Pure TS    │ │ Platform  │ │ SVG icons │
-   │ expression │ │ adapters  │ │           │
-   │ formatter  │ │ (web/pptb)│ │           │
-   └────────────┘ └───────────┘ └───────────┘
+              ┌────────┴────────┐
+              │                 │
+       ┌──────┴─────┐    ┌──────┴────┐
+       │ packages/  │    │ packages/ │
+       │ engine     │    │ platform  │
+       │ Pure TS    │    │ Platform  │
+       │ expression │    │ adapters  │
+       │ formatter  │    │ (web/pptb)│
+       └────────────┘    └───────────┘
 ```
 
 **Design principles**
@@ -143,9 +144,9 @@ npm run preview:pptb
 
 ## Docs
 
-- [User manual &amp; developer docs](USER_MANUAL.md)
-- [Usage (web + PPTB)](usage.md)
+- [User manual &amp; developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
+- [Usage (web + PPTB)](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/usage.md)
 
 ## License
 
-[BSD-3-Clause](LICENSE)
+[BSD-3-Clause](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/LICENSE)

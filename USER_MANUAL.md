@@ -1,22 +1,22 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.0 | **Last updated**: 2025-07-03 | **Node**: `24.17.0` | **React**: `19.2.6`
+> **Version**: 1.0.0 | **Last updated**: 2026-07-24 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
 ## Table of Contents
 
-1. [What Is This?](#1-what-is-this)
-2. [Architecture Overview](#2-architecture-overview)
-3. [Project Structure](#3-project-structure)
-4. [Getting Started](#4-getting-started)
-5. [Using the Expression Builder](#5-using-the-expression-builder)
-6. [Package Reference](#6-package-reference)
-7. [Development Workflow](#7-development-workflow)
-8. [Testing](#8-testing)
-9. [Deployment](#9-deployment)
-10. [Troubleshooting](#10-troubleshooting)
-11. [Appendix: Glossary](#11-appendix-glossary)
+1. [What Is This?](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#1-what-is-this)
+2. [Architecture Overview](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#2-architecture-overview)
+3. [Project Structure](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#3-project-structure)
+4. [Getting Started](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#4-getting-started)
+5. [Using the Expression Builder](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#5-using-the-expression-builder)
+6. [Package Reference](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#6-package-reference)
+7. [Development Workflow](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#7-development-workflow)
+8. [Testing](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#8-testing)
+9. [Deployment](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#9-deployment)
+10. [Troubleshooting](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#10-troubleshooting)
+11. [Appendix: Glossary](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#11-appendix-glossary)
 
 ---
 
@@ -46,33 +46,33 @@
 
 ## 2. Architecture Overview
 
-The workspace follows a **layered architecture** with three shared packages and two thin host apps.
+The workspace follows a **layered architecture** with two shared packages and two thin host apps.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  apps/web          │  apps/pptb                               │
-│  Browser host      │  Power Platform Toolbox host              │
-│  (createWebAdapter)│  (createPptbAdapter)                     │
-└─────────┬──────────┴──────────┬────────────────────────────────┘
-          │                   │
-          │  ┌────────────────┘
-          │  │
-┌─────────┴──┴──────────────────────────────────────────────┐
+│  apps/web          │  apps/pptb                              │
+│  Browser host       │  Power Platform Toolbox host            │
+│  (createWebAdapter) │  (createPptbAdapter)                    │
+└─────────┬───────────┴──────────┬───────────────────────────────┘
+          │                      │
+          └──────────┬───────────┘
+                      │
+┌─────────────────────┴─────────────────────────────────────┐
 │  packages/builder-ui                                       │
 │  Shared Fluent UI v9 composer + workbench + theme system   │
-│  Exports: ExpressionBuilderShell, queryActions, querySchema│
-└─────────────────────────────────────────────────────────────┘
-          │
-          ├──────────┬──────────┐
-          │          │          │
-┌─────────┴──┐ ┌──────┴────┐ ┌──┴────────┐
-│  packages  │ │  packages │ │  packages │
-│  /engine   │ │  /platform│ │  /icons   │
-│  Pure TS   │ │  Platform │ │  (SVG     │
-│  expression│ │  adapters │ │  icons)   │
-│  formatter │ │  (web/pptb)│ │           │
-│  + types   │ │  + metadata│ │           │
-└────────────┘ └───────────┘ └───────────┘
+│  Exports: ExpressionBuilderShell + query document types    │
+│  (QueryGroup, QueryRule, ...) and actions (addRule, ...)    │
+└─────────────────────┬───────────────────────────────────────┘
+                       │
+              ┌────────┴────────┐
+              │                 │
+       ┌──────┴─────┐    ┌──────┴────┐
+       │ packages/  │    │ packages/ │
+       │ engine     │    │ platform  │
+       │ Pure TS    │    │ Platform  │
+       │ expression │    │ adapters  │
+       │ formatter  │    │ (web/pptb)│
+       └────────────┘    └───────────┘
 ```
 
 ### Design Principles
@@ -143,8 +143,6 @@ ExpressionBuilder/
 │               ├── TablePickerDialog.tsx     # Dataverse table picker
 │               └── ... (more dialogs and panels)
 ├── tests/                        # E2E test specs
-├── icons/                        # Custom SVG icon library
-├── ui-ux/                        # Design reference files
 ├── package.json                  # Root workspace manifest
 ├── tsconfig.base.json            # Shared TypeScript config
 ├── vitest.config.ts              # Unit test config
@@ -252,7 +250,7 @@ npm run dev:pptb
 #### Step 2: Add Conditions
 
 1. Click a field in the **Field Toolbox** — a new rule is added to the active group.
-2. Select an **operator** from the dropdown (e.g., `equals`, `contains`, `greaterThan`).
+2. Select an **operator** from the dropdown (e.g., `equals`, `contains`, `greater`).
 3. Enter a **value** — the type is validated (string, number, boolean, dateTime, choice).
 4. Click **+ Add Group** to create nested AND/OR logic.
 
@@ -264,7 +262,7 @@ The **Expression Preview** panel at the bottom updates live as you edit. The gen
 @and(
   equals(triggerBody()['status'], 'active'),
   or(
-    greaterThan(triggerBody()['createdon'], '2025-01-01'),
+    greater(triggerBody()['createdon'], '2025-01-01'),
     contains(triggerBody()['email'], '@contoso.com')
   )
 )
@@ -290,10 +288,10 @@ Switch modes via the dropdown in the **Workbench Header**. The expression syntax
 | Field Type | Supported Operators                                                                                                   |
 | ---------- | --------------------------------------------------------------------------------------------------------------------- |
 | `string`   | `equals`, `notEquals`, `contains`, `startsWith`, `endsWith`, `empty`, `notEmpty`                                      |
-| `number`   | `equals`, `notEquals`, `greaterThan`, `greaterThanOrEquals`, `lessThan`, `lessThanOrEquals`                           |
-| `boolean`  | `equals`                                                                                                              |
-| `dateTime` | `equals`, `notEquals`, `greaterThan`, `greaterThanOrEquals`, `lessThan`, `lessThanOrEquals` (with `ticks()` wrapping) |
-| `choice`   | `equals`, `notEquals`                                                                                                 |
+| `number`   | `equals`, `notEquals`, `greater`, `less`, `greaterOrEquals`, `lessOrEquals`                                           |
+| `boolean`  | `equals`, `notEquals`                                                                                                 |
+| `dateTime` | `equals`, `notEquals`, `greater`, `less`, `greaterOrEquals`, `lessOrEquals` (with `ticks()` wrapping)                 |
+| `choice`   | `equals`, `notEquals`, `empty`, `notEmpty`                                                                            |
 
 ### 5.6 Function Wrappers
 
@@ -348,7 +346,7 @@ const result = formatExpression(astNode, {
 // result.returnType  → 'boolean'
 ```
 
-**Key exports:**
+**Key exports** (partial — see `packages/engine/src/index.ts` for the full type surface: `FieldDefinition`, `ExpressionNode`, `GroupNode`, `RuleNode`, `FormatResult`, etc.):
 
 | Export                    | Purpose                                               |
 | ------------------------- | ----------------------------------------------------- |
@@ -356,6 +354,7 @@ const result = formatExpression(astNode, {
 | `formatFieldReference`    | Field → `triggerBody()['field']` or `item()['field']` |
 | `formatLiteral`           | Value → quoted/unquoted literal string                |
 | `OPERATORS_BY_FIELD_TYPE` | Which operators each field type supports              |
+| `isOperatorSupported`     | Check whether a field type supports a given operator id |
 | `FormatDiagnostic`        | Type for validation errors/warnings                   |
 
 ### 6.2 `packages/platform` — Platform Adapters
@@ -375,7 +374,7 @@ const webAdapter = createWebAdapter();
 const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 ```
 
-**PlatformAdapter interface:**
+**PlatformAdapter interface** (`discoverFields`/`getTables`/`getRelatedTables`/`discoverRelatedFields`/`listDataSources` are all optional — hosts may omit them):
 
 | Method                            | Purpose                                |
 | --------------------------------- | -------------------------------------- |
@@ -387,10 +386,14 @@ const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 | `getTables()`                     | List available Dataverse tables        |
 | `getRelatedTables()`              | Get one-hop navigation properties      |
 | `discoverRelatedFields()`         | Expand a related table's fields        |
+| `listDataSources()`               | Enumerate selectable data sources (optional) |
+| `getDataverseFields()` *(deprecated)* | Use `discoverFields({})` instead   |
 
 ### 6.3 `packages/builder-ui` — Shared UI Composer
 
 The main application shell and all visual components.
+
+The package also re-exports the query-document types (`QueryDocument`, `QueryGroup`, `QueryNode`, `QueryRule`, `RulePatch`, `DataSourceDescriptor`, `DataSourceKind`) and document-mutation actions (`addGroup`, `addRule`, `changeGroupConjunction`, `deleteNode`, `duplicateRule`, `moveNode`, `reorderNode`, `selectRule`, `updateRule`) individually — see `packages/builder-ui/src/index.ts` for the exact list.
 
 ```typescript
 import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
@@ -507,7 +510,7 @@ npm run test:e2e
 npx playwright test --headed
 
 # Run a specific test file
-npx playwright test tests/smoke.spec.ts
+npx playwright test tests/e2e/theme-smoke.spec.ts
 ```
 
 ### 8.3 Writing New Tests
