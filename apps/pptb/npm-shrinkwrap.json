@@ -1,0 +1,186 @@
+{
+  "name": "@ryanmakes/expressionbuilder_pptb",
+  "version": "1.1.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "@ryanmakes/expressionbuilder_pptb",
+      "version": "1.1.0",
+      "license": "BSD-3-Clause",
+      "devDependencies": {
+        "@pptb/types": "1.2.4",
+        "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
+        "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6"
+      },
+      "engines": {
+        "node": ">=24.17.0 <25"
+      }
+    },
+    "../../packages/builder-ui": {
+      "name": "@ryanmakes/eb_builder-ui",
+      "version": "1.1.0",
+      "dev": true,
+      "license": "BSD-3-Clause",
+      "dependencies": {
+        "@dnd-kit/collision": "0.5.0",
+        "@dnd-kit/dom": "0.5.0",
+        "@dnd-kit/react": "0.5.0",
+        "@fluentui/react-components": "9.74.1",
+        "@fluentui/react-icons": "^2.0.330",
+        "@ryanmakes/eb_engine": "file:../engine",
+        "@ryanmakes/eb_platformadapter": "file:../platform",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6"
+      },
+      "devDependencies": {
+        "vitest": "^4.1.8"
+      }
+    },
+    "../../packages/platform": {
+      "name": "@ryanmakes/eb_platformadapter",
+      "version": "1.0.0",
+      "dev": true,
+      "license": "BSD-3-Clause"
+    },
+    "node_modules/@isaacs/fs-minipass": {
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/@isaacs/fs-minipass/-/fs-minipass-4.0.1.tgz",
+      "integrity": "sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==",
+      "dev": true,
+      "license": "ISC",
+      "dependencies": {
+        "minipass": "^7.0.4"
+      },
+      "engines": {
+        "node": ">=18.0.0"
+      }
+    },
+    "node_modules/@pptb/types": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@pptb/types/-/types-1.2.4.tgz",
+      "integrity": "sha512-iyDWGtFiZHfj0rLqnNzUXndMHhl1c18vJi9PZ0K8ADcsq22CaKaneaCe+lQHi+WjLI1mQGRg8quVdhzErjgHAg==",
+      "dev": true,
+      "license": "GPL-3.0",
+      "dependencies": {
+        "@pptb/validate": "^0.0.2"
+      },
+      "bin": {
+        "pptb-validate": "bin/pptb-validate.js"
+      }
+    },
+    "node_modules/@pptb/validate": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/@pptb/validate/-/validate-0.0.2.tgz",
+      "integrity": "sha512-QsuimcuDgEbblqC4uAeXE+ONm5KJ5twKbGFh9d8e4leF2jsISgVpVzYPgivSLUA9iomDGmMnXcklHPgb4jEf1A==",
+      "dev": true,
+      "license": "GPL-3.0",
+      "dependencies": {
+        "tar": "^7.5.16"
+      },
+      "bin": {
+        "pptb-validate": "dist/cli.js"
+      }
+    },
+    "node_modules/@ryanmakes/eb_builder-ui": {
+      "resolved": "../../packages/builder-ui",
+      "link": true
+    },
+    "node_modules/@ryanmakes/eb_platformadapter": {
+      "resolved": "../../packages/platform",
+      "link": true
+    },
+    "node_modules/chownr": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/chownr/-/chownr-3.0.0.tgz",
+      "integrity": "sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==",
+      "dev": true,
+      "license": "BlueOak-1.0.0",
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/minipass": {
+      "version": "7.1.3",
+      "resolved": "https://registry.npmjs.org/minipass/-/minipass-7.1.3.tgz",
+      "integrity": "sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==",
+      "dev": true,
+      "license": "BlueOak-1.0.0",
+      "engines": {
+        "node": ">=16 || 14 >=14.17"
+      }
+    },
+    "node_modules/minizlib": {
+      "version": "3.1.0",
+      "resolved": "https://registry.npmjs.org/minizlib/-/minizlib-3.1.0.tgz",
+      "integrity": "sha512-KZxYo1BUkWD2TVFLr0MQoM8vUUigWD3LlD83a/75BqC+4qE0Hb1Vo5v1FgcfaNXvfXzr+5EhQ6ing/CaBijTlw==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "minipass": "^7.1.2"
+      },
+      "engines": {
+        "node": ">= 18"
+      }
+    },
+    "node_modules/react": {
+      "version": "19.2.8",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.2.8.tgz",
+      "integrity": "sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==",
+      "dev": true,
+      "license": "MIT",
+      "engines": {
+        "node": ">=0.10.0"
+      }
+    },
+    "node_modules/react-dom": {
+      "version": "19.2.8",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.8.tgz",
+      "integrity": "sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "scheduler": "^0.27.0"
+      },
+      "peerDependencies": {
+        "react": "^19.2.8"
+      }
+    },
+    "node_modules/scheduler": {
+      "version": "0.27.0",
+      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz",
+      "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/tar": {
+      "version": "7.5.22",
+      "resolved": "https://registry.npmjs.org/tar/-/tar-7.5.22.tgz",
+      "integrity": "sha512-MFO/QzvtAOmJbkhOaCTvbGcFN9L9b+JunIsDwaKljSOdcLMea3NJ1k9Usz/rjdfSXTq4dfzfeS7W4p4YOAAHeA==",
+      "dev": true,
+      "license": "BlueOak-1.0.0",
+      "dependencies": {
+        "@isaacs/fs-minipass": "^4.0.0",
+        "chownr": "^3.0.0",
+        "minipass": "^7.1.2",
+        "minizlib": "^3.1.0",
+        "yallist": "^5.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/yallist": {
+      "version": "5.0.0",
+      "resolved": "https://registry.npmjs.org/yallist/-/yallist-5.0.0.tgz",
+      "integrity": "sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==",
+      "dev": true,
+      "license": "BlueOak-1.0.0",
+      "engines": {
+        "node": ">=18"
+      }
+    }
+  }
+}
