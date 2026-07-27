@@ -1,12 +1,14 @@
 # Power Automate Expression Builder
 
+> **Version**: 1.0.1
+
 A visual composer for Power Automate **Trigger Condition** and **Filter Array** advanced-mode expressions. Instead of hand-writing `@and(...)` / `@or(...)` predicates, you build conditions in a UI and the app emits valid Power Automate expression syntax — with live preview and real-time diagnostics.
 
 Ships two ways from one shared codebase: a standalone **web app** and a **Power Platform Toolbox (PPTB)** plugin.
 
 ## Key Features
 
-- **Visual condition composer** — groups (AND/OR), rules, and nested logic
+- **Visual condition composer** — groups (AND/OR), rules, and nested logic, reorderable via drag handle or keyboard-accessible move buttons
 - **Live expression preview** — see the generated expression as you build
 - **Field discovery** — connect to Dataverse tables to auto-discover fields and types
 - **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
@@ -145,7 +147,7 @@ npm run preview:pptb
 ## Docs
 
 - [User manual &amp; developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
-- [Usage (web + PPTB)](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/usage.md)
+- [PPTB Usage](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/PPTB_USAGE.md)
 
 ## License
 

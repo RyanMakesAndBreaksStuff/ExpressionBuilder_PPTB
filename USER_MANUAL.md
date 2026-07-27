@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.0 | **Last updated**: 2026-07-24 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.0.1 | **Last updated**: 2026-07-27 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### Key Features
 
-- **Visual condition composer** — Drag-and-drop style condition builder with groups (AND/OR), rules, and nested logic.
+- **Visual condition composer** — Groups (AND/OR), rules, and nested logic, reorderable via drag handle or keyboard-accessible up/down move buttons.
 - **Live expression preview** — See the generated Power Automate expression as you build.
 - **Field discovery** — Connect to Dataverse tables to auto-discover fields and their types.
 - **Schema import** — Import fields from CSV, JSON, or JSON Schema when you don't have a live connection.
@@ -135,6 +135,11 @@ ExpressionBuilder/
 │           │   └── tokens.css            # CSS custom properties
 │           └── workbench/          # Workbench panels and dialogs
 │               ├── ConditionCanvas.tsx       # Central drag/drop canvas
+│               ├── BuilderDragDropProvider.tsx  # dnd-kit drag context + drop handling
+│               ├── ConditionDragHandle.tsx   # Draggable grip handle for rules/groups
+│               ├── ConditionMoveButtons.tsx  # Up/down keyboard-accessible reorder buttons
+│               ├── ConditionPositionTarget.tsx  # Drop-position targets between/inside groups
+│               ├── dragDropModel.ts          # Drag metadata + id encoding for condition nodes
 │               ├── WorkbenchHeader.tsx       # Top command bar
 │               ├── FieldToolboxPane.tsx      # Left field/toolbox panel
 │               ├── SupportPane.tsx           # Right diagnostics/help panel
@@ -324,6 +329,15 @@ Apply string transformations to both operands using the **Wrappers** feature:
 1. Click **Manage Profiles** in the left panel.
 2. Save the current field set with a name.
 3. Load a saved profile later to quickly switch between schemas.
+
+#### Reorder Conditions (Drag-and-Drop)
+
+Rules and groups can be repositioned within a document two ways:
+
+- **Drag handle** — grab the grip icon on a rule or group and drop it on a highlighted position target (before/after a sibling, or into a group).
+- **Move buttons** — use the up/down chevron buttons next to a condition as a keyboard-accessible alternative to dragging; each is disabled at the first/last position in its group.
+
+Both paths call the same `moveNode`/`reorderNode` document actions, so diagnostics and the expression preview stay in sync as you reorder.
 
 ---
 
@@ -752,6 +766,7 @@ error  React Hook useEffect is called conditionally  react-hooks/rules-of-hooks
 | **Query Document**   | The complete state of the builder: mode, fields, root group, selected rule, and source descriptor.            |
 | **Rule**             | A single condition in the condition tree: `fieldId` + `operator` + `value` (+ optional wrappers).             |
 | **Wrapper**          | A function applied to both operands of a rule, e.g., `trim`, `toLower`, `coalesce`.                           |
+| **Drag Handle**      | The grip control on a rule or group used to drag-and-drop reposition it in the canvas.                        |
 | **Field Drift**      | When a refreshed schema differs from the cached version (fields added, removed, or changed).                  |
 | **Orphaned Field**   | A field referenced in a rule that no longer exists in the current schema.                                     |
 

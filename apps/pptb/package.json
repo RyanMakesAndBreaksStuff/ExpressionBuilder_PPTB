@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.8",
+  "version": "1.0.9",
   "engines": {
     "node": ">=24.17.0 <25"
   },
@@ -41,7 +41,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@pptb/types": "^1.2.3",
+    "@pptb/types": "1.2.4",
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
     "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
     "react": "^19.2.6",

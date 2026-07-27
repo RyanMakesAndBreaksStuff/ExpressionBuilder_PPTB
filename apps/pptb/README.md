@@ -1,5 +1,7 @@
 # Power Automate Expression Builder
 
+> **Version**: 1.0.9
+
 Power Automate Expression Builder is a React and TypeScript app for building Trigger Condition and Filter array advanced-mode predicates inside the Power Platform Toolbox. It uses a pure expression engine and shared Fluent UI v9 builder UI, with a thin host bootstrap for PPTB.
 
 ## Package Boundaries
@@ -77,5 +79,5 @@ npm run preview:pptb
 
 ## Docs
 
-- [Usage](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/usage.md)
+- [PPTB Usage](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/PPTB_USAGE.md)
 - [User manual & developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
