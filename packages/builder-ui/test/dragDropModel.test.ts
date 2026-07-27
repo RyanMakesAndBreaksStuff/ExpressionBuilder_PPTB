@@ -234,9 +234,29 @@ describe('dragDropModel', () => {
   it('creates stable, namespaced IDs for every drag/drop role', () => {
     expect(toolboxFieldDragId('account:name')).toBe('toolbox-field:account%3Aname');
     expect(conditionNodeDragId('rule:status')).toBe('condition-node:rule%3Astatus');
-    expect(conditionPositionDropId('group:main', 3)).toBe(
-      'condition-position:group%3Amain:3',
+    expect(conditionPositionDropId('group:main', 'rule:status')).toBe(
+      'condition-position:group%3Amain:rule%3Astatus',
     );
+    expect(conditionPositionDropId('group:main', undefined)).toBe(
+      'condition-position:group%3Amain:end',
+    );
+  });
+
+  // Regression: positional ids collided on insert, so registering a new
+  // separator evicted an existing one (and destroyed its re-register effect),
+  // permanently dropping it from dnd-kit's registry. Identity-keyed ids must
+  // stay stable for a node that merely shifts position.
+  it('keeps drop-target IDs stable when a node shifts position', () => {
+    const before = ['a', 'b'].map((id) => conditionPositionDropId('root', id));
+    const afterInsertAtZero = ['x', 'a', 'b'].map((id) =>
+      conditionPositionDropId('root', id),
+    );
+
+    expect(new Set(afterInsertAtZero).size).toBe(3);
+    for (const id of before) {
+      expect(afterInsertAtZero).toContain(id);
+    }
+    expect(conditionPositionDropId('root', undefined)).not.toBe(before[0]);
   });
 
   it('formats zero-based indices as one-based accessible position labels', () => {

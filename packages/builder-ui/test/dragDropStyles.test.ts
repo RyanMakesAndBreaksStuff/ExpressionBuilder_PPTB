@@ -170,7 +170,7 @@ describe('drag-and-drop visual contract', () => {
     );
   });
 
-  it('makes every boundary a row-sized hit area and fills an empty root group', () => {
+  it('gives every boundary a non-overlapping hit area and fills an empty root group', () => {
     const positionTarget = declarationBlock('.eb-condition-drop-target');
     const emptyGroup = declarationBlock('.eb-group-card.is-empty');
     const rootGroup = declarationBlock('.eb-group-card.is-root');
@@ -181,8 +181,8 @@ describe('drag-and-drop visual contract', () => {
       '.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal',
     );
 
-    expect(positionTarget).toMatch(/min-height:\s*100px\s*;/);
-    expect(positionTarget).toMatch(/margin-block:\s*-41px\s*;/);
+    expect(positionTarget).toMatch(/min-height:\s*32px\s*;/);
+    expect(positionTarget).not.toMatch(/margin-block\s*:/);
     expect(positionTarget).toMatch(/pointer-events:\s*none\s*;/);
     expect(emptyGroup).toMatch(/display:\s*flex\s*;/);
     expect(rootGroup).toMatch(/flex-grow:\s*1\s*;/);

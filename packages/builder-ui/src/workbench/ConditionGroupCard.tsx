@@ -154,6 +154,7 @@ export function ConditionGroupCard({
               groupId={group.id}
               groupLabel={groupLabel}
               index={childIndex}
+              beforeNodeId={child.id}
               positionCount={group.children.length + 1}
             />
             {child.kind === 'group' ? (

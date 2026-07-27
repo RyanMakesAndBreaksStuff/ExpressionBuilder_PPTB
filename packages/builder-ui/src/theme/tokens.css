@@ -621,13 +621,9 @@ body {
   box-shadow: var(--focus-ring);
 }
 
-/* Each boundary keeps the same 18px flow footprint as before, but its 100px
-   collision box reaches across the adjacent 62px rule row. Overlapping boxes
-   let dnd-kit's pointer-distance ranking select the nearest exact index. */
 .eb-condition-drop-target {
   width: 100%;
-  min-height: 100px;
-  margin-block: -41px;
+  min-height: 32px;
   display: grid;
   grid-template-columns: minmax(16px, 1fr) auto minmax(16px, 1fr);
   align-items: center;

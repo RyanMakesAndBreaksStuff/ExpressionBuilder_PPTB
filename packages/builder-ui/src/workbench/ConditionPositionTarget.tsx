@@ -1,4 +1,5 @@
 import { useDragOperation, useDroppable } from '@dnd-kit/react';
+import { closestCenter } from '@dnd-kit/collision';
 import {
   conditionPositionDropId,
   formatAccessiblePosition,
@@ -12,6 +13,8 @@ interface ConditionPositionTargetProps {
   groupLabel: string;
   index: number;
   positionCount: number;
+  /** Id of the node this separator sits before; omitted for the terminal one. */
+  beforeNodeId?: string;
   terminal?: boolean;
 }
 
@@ -20,6 +23,7 @@ export function ConditionPositionTarget({
   groupLabel,
   index,
   positionCount,
+  beforeNodeId,
   terminal = false,
 }: ConditionPositionTargetProps) {
   const metadata: ConditionPositionDropMetadata = {
@@ -41,9 +45,16 @@ export function ConditionPositionTarget({
     isConditionNodeDragMetadata(source.data) &&
     source.data.parentGroupId !== groupId;
   const { isDropTarget, ref } = useDroppable({
-    id: conditionPositionDropId(groupId, index),
+    id: conditionPositionDropId(groupId, beforeNodeId),
     data: metadata,
     type: 'condition-position',
+    // These separators are thin (~32px) with tall rule rows between them, so
+    // the default detector (pointer/shape intersection) leaves ~130px dead
+    // zones over each rule where nothing is targeted and a drop is discarded.
+    // closestCenter always ranks every accepted position by distance, so the
+    // pane tiles cleanly between separators with no dead zones and no reliance
+    // on hit-box geometry.
+    collisionDetector: closestCenter,
     accept: (draggable) =>
       resolveDragDropCommand({
         source: draggable.data,

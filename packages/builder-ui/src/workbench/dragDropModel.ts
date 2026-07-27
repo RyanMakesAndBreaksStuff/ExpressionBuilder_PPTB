@@ -171,8 +171,25 @@ export const toolboxFieldDragId = (fieldId: string): string =>
 export const conditionNodeDragId = (nodeId: string): string =>
   `condition-node:${encoded(nodeId)}`;
 
-export const conditionPositionDropId = (groupId: string, index: number): string =>
-  `condition-position:${encoded(groupId)}:${index}`;
+/**
+ * Drop-target IDs are keyed by *identity*, not position: the id of the node the
+ * separator sits before, or `end` for the terminal separator.
+ *
+ * Positional ids (`...:0`, `...:1`) collide on insert. When a rule is added, the
+ * terminal separator's index shifts (N -> N+1) while a freshly mounted separator
+ * claims the old id. `Entity` defers id changes to a microtask but layout effects
+ * register synchronously in tree order, so the new separator registers under the
+ * old key first. `EntityRegistry.register` then evicts the previous holder AND
+ * runs its cleanup, destroying the very effect that would have re-registered it
+ * under its new id. The evicted separator is unregistered permanently.
+ */
+export const conditionPositionDropId = (
+  groupId: string,
+  beforeNodeId: string | undefined,
+): string =>
+  `condition-position:${encoded(groupId)}:${
+    beforeNodeId === undefined ? 'end' : encoded(beforeNodeId)
+  }`;
 
 export const formatAccessiblePosition = (index: number, total: number): string =>
   `position ${index + 1} of ${total}`;

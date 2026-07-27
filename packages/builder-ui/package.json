@@ -18,6 +18,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@dnd-kit/collision": "0.5.0",
     "@dnd-kit/dom": "0.5.0",
     "@dnd-kit/react": "0.5.0",
     "@fluentui/react-components": "9.74.1",
