@@ -22,10 +22,6 @@
     "power-platform-toolbox",
     "cloud-flows"
   ],
-  "features": {
-    "multiConnection": "required",
-    "minAPI": "1.2.3"
-  },
   "contributors": [
     {
       "name": "Ryan Rettinger"

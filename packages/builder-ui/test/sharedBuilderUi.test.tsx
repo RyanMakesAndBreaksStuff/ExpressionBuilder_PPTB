@@ -389,6 +389,50 @@ describe('shared builder UI', () => {
     expect(expression.indexOf("['DueDate']")).toBeLessThan(expression.indexOf("['Amount']"));
   });
 
+  it('applies first-field and append drops to an initially empty root group', () => {
+    render(
+      <ExpressionBuilderShell
+        adapter={createAdapter()}
+        initialDocument={{
+          ...sampleDocument,
+          root: { ...sampleDocument.root, children: [] },
+          selectedRuleId: undefined,
+          activeGroupId: 'root',
+        }}
+      />,
+    );
+
+    act(() => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: { data: { kind: 'toolbox-field', fieldId: 'DueDate' } },
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 0 },
+          },
+        },
+        canceled: false,
+      });
+    });
+    act(() => {
+      dragDropHarness.onDragEnd?.({
+        operation: {
+          source: { data: { kind: 'toolbox-field', fieldId: 'Status' } },
+          target: {
+            data: { kind: 'condition-position', groupId: 'root', index: 1 },
+          },
+        },
+        canceled: false,
+      });
+    });
+
+    const rootGroup = screen.getByRole('group', { name: 'AND group root' });
+    const ruleLabels = Array.from(
+      rootGroup.querySelectorAll(':scope > .eb-group-children > .eb-rule-row-editor'),
+    ).map((row) => row.getAttribute('aria-label'));
+    expect(ruleLabels[0]).toMatch(/^Due date/);
+    expect(ruleLabels[1]).toMatch(/^Status/);
+  });
+
   it('applies a sibling-reorder command to rendered and generated-expression order', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 

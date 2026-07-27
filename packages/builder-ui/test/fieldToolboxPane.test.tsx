@@ -28,6 +28,19 @@ function baseProps() {
 }
 
 describe('FieldToolboxPane', () => {
+  it('uses the type badge as the only type marker in each field row', () => {
+    render(<FieldToolboxPane {...baseProps()} activeTab="dynamicContent" />);
+
+    const firstFieldAction = screen.getByRole('button', {
+      name: `Add a rule for ${sampleFields[0].label}, ${sampleFields[0].type}`,
+    });
+    const typeBadge = firstFieldAction.querySelector('.eb-field-type-badge');
+
+    expect(firstFieldAction.querySelector('.eb-type')).not.toBeInTheDocument();
+    expect(typeBadge).toHaveClass('choice');
+    expect(typeBadge).toHaveTextContent('choice');
+  });
+
   it('renders a separately named drag handle for every field', () => {
     render(<FieldToolboxPane {...baseProps()} activeTab="dynamicContent" />);
 

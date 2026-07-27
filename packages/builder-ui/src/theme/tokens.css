@@ -538,6 +538,28 @@ body {
   flex-shrink: 0;
 }
 
+.eb-group-card.is-root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.eb-group-card.is-empty {
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+}
+
+.eb-group-card.is-root > .eb-group-children,
+.eb-group-card.is-empty > .eb-group-children {
+  flex: 1;
+}
+
+.eb-group-card.is-root > .eb-group-children > .eb-condition-drop-target.is-terminal,
+.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal {
+  flex: 1;
+}
+
 .eb-group-card.nested {
   margin-top: 12px;
   margin-left: 16px;
@@ -599,12 +621,13 @@ body {
   box-shadow: var(--focus-ring);
 }
 
-/* Explicit insertion boundaries remain large enough to target without
-   changing the surrounding rule/group layout when their drag state changes. */
+/* Each boundary keeps the same 18px flow footprint as before, but its 100px
+   collision box reaches across the adjacent 62px rule row. Overlapping boxes
+   let dnd-kit's pointer-distance ranking select the nearest exact index. */
 .eb-condition-drop-target {
   width: 100%;
-  min-height: 28px;
-  margin-block: -5px;
+  min-height: 100px;
+  margin-block: -41px;
   display: grid;
   grid-template-columns: minmax(16px, 1fr) auto minmax(16px, 1fr);
   align-items: center;
@@ -612,6 +635,7 @@ body {
   border-radius: var(--r-sm);
   color: var(--text3);
   opacity: 0.45;
+  pointer-events: none;
   user-select: none;
   transition:
     background var(--duration-fast) ease,
@@ -641,7 +665,6 @@ body {
 }
 
 .eb-condition-drop-target.is-active {
-  background: var(--surface2);
   opacity: 1;
 }
 
@@ -666,7 +689,6 @@ body {
 
 .eb-condition-drop-target.is-active.is-invalid-drop {
   color: var(--danger);
-  background: var(--danger-soft);
 }
 
 .eb-condition-drop-target.is-active.is-invalid-drop::before,
@@ -701,6 +723,12 @@ body {
 }
 
 .eb-condition-drop-target.is-drop-target {
+  color: var(--accent);
+}
+
+.eb-condition-drop-target.is-drop-target > span {
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
   background: var(--accent-soft);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
@@ -919,7 +947,7 @@ body {
   min-width: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   border: 0;
@@ -951,6 +979,10 @@ body {
   text-overflow: ellipsis;
 }
 
+.eb-field-row .eb-field-title {
+  font-size: 12.5px;
+}
+
 .eb-field-detail {
   font-size: 0.76rem;
   color: var(--text3);
@@ -960,14 +992,14 @@ body {
 }
 
 .eb-field-type-badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  color: var(--text3);
-  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 0;
+  color: var(--fg-onbrand);
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.07em;
+  line-height: 1;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   flex: 0 0 auto;
 }
@@ -987,23 +1019,28 @@ body {
   flex: 0 0 auto;
 }
 
-.eb-type.choice {
+.eb-type.choice,
+.eb-field-type-badge.choice {
   background: var(--accent);
 }
 
-.eb-type.string {
+.eb-type.string,
+.eb-field-type-badge.string {
   background: var(--accent-2);
 }
 
-.eb-type.number {
+.eb-type.number,
+.eb-field-type-badge.number {
   background: var(--warn);
 }
 
-.eb-type.dateTime {
+.eb-type.dateTime,
+.eb-field-type-badge.dateTime {
   background: var(--danger);
 }
 
-.eb-type.boolean {
+.eb-type.boolean,
+.eb-field-type-badge.boolean {
   background: var(--info);
 }
 

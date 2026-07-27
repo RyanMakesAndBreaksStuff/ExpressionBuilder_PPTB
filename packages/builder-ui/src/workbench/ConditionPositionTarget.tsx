@@ -12,6 +12,7 @@ interface ConditionPositionTargetProps {
   groupLabel: string;
   index: number;
   positionCount: number;
+  terminal?: boolean;
 }
 
 export function ConditionPositionTarget({
@@ -19,6 +20,7 @@ export function ConditionPositionTarget({
   groupLabel,
   index,
   positionCount,
+  terminal = false,
 }: ConditionPositionTargetProps) {
   const metadata: ConditionPositionDropMetadata = {
     kind: 'condition-position',
@@ -58,6 +60,7 @@ export function ConditionPositionTarget({
       aria-label={`Insert at ${formatAccessiblePosition(index, positionCount)} in ${groupLabel}`}
       className={[
         'eb-condition-drop-target',
+        terminal ? 'is-terminal' : '',
         isActive ? 'is-active' : '',
         isValidDrop ? 'is-valid-drop' : isIneligibleGroup ? 'is-ineligible' : isActive ? 'is-invalid-drop' : '',
         isDropTarget && isValidDrop ? 'is-drop-target' : '',

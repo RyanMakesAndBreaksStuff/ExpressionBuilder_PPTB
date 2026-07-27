@@ -130,6 +130,8 @@ describe('ConditionCanvas', () => {
       'aria-label',
       'Insert at position 4 of 4 in AND group root',
     );
+    expect(lastPosition).toHaveClass('is-terminal');
+    expect(firstPosition).not.toHaveClass('is-terminal');
 
     unmount();
     const { container: emptyContainer } = render(
@@ -141,10 +143,15 @@ describe('ConditionCanvas', () => {
     const emptyPosition = emptyContainer.querySelector(
       '[data-drop-position="0"][data-group-id="root"]',
     );
+    const emptyRoot = emptyContainer.querySelector(
+      '.eb-group-card.is-root.is-empty[data-node-id="root"]',
+    );
     expect(emptyPosition).toHaveAttribute(
       'aria-label',
       'Insert at position 1 of 1 in AND group root',
     );
+    expect(emptyPosition).toHaveClass('is-terminal');
+    expect(emptyRoot).toBeInTheDocument();
   });
 
   it('keeps editable controls and actions outside the drag activator', () => {

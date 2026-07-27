@@ -53,6 +53,7 @@ export function ConditionGroupCard({
   selectedWrappers,
 }: ConditionGroupCardProps) {
   const isAnd = group.conjunction === 'and';
+  const isEmpty = group.children.length === 0;
   const ruleCount = countRules(group);
   const isFocused = group.id === activeGroupId;
   const groupLabel = `${group.conjunction.toUpperCase()} group ${group.id}`;
@@ -68,7 +69,15 @@ export function ConditionGroupCard({
   } = {}) => (
     <section
       ref={sourceRef}
-      className={`eb-group-card ${!isRoot ? 'nested' : ''} ${isFocused ? 'is-focused' : ''} ${isDragging ? 'is-dragging' : ''}`}
+      className={[
+        'eb-group-card',
+        isRoot ? 'is-root' : 'nested',
+        isEmpty ? 'is-empty' : '',
+        isFocused ? 'is-focused' : '',
+        isDragging ? 'is-dragging' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       role="group"
       aria-label={groupLabel}
       data-node-id={group.id}
@@ -192,6 +201,7 @@ export function ConditionGroupCard({
           groupLabel={groupLabel}
           index={group.children.length}
           positionCount={group.children.length + 1}
+          terminal
         />
         <div className="eb-group-actions">
           <button type="button" className="eb-text-btn" onClick={() => onAddRule(group.id)}>

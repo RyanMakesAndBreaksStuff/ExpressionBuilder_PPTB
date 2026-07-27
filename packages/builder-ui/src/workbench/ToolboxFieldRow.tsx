@@ -1,7 +1,6 @@
 import { Button } from '@fluentui/react-components';
 import { useDraggable } from '@dnd-kit/react';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
-import { TypeGlyph } from '../components/TypeGlyph';
 import { GripIcon } from './icons/BuilderIcons';
 import {
   toolboxFieldDragId,
@@ -46,14 +45,15 @@ export function ToolboxFieldRow({
         title="Add a rule for this field"
         aria-label={`Add a rule for ${field.label}, ${field.type}`}
       >
-        <TypeGlyph type={field.type} />
         <span className="eb-field-main">
           <span className="eb-field-title">{field.label}</span>
           <span className="eb-field-detail">
             {field.path.join('.')} &middot; {field.type}
           </span>
         </span>
-        <span className="eb-field-type-badge">{field.type}</span>
+        <span className={`eb-field-type-badge ${field.type}`}>
+          {field.type}
+        </span>
       </button>
       <Button
         ref={handleRef}

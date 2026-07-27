@@ -95,6 +95,27 @@ describe('dragDropModel', () => {
     });
   });
 
+  it('accepts index zero when a toolbox field is the first rule in an empty group', () => {
+    expect(
+      resolveCurrentDragDropCommand({
+        source: toolboxField('DueDate'),
+        target: conditionPosition({ groupId: 'root', index: 0 }),
+        fields: sampleDocument.fields,
+        root: {
+          id: 'root',
+          kind: 'group',
+          conjunction: 'and',
+          children: [],
+        },
+      }),
+    ).toEqual({
+      kind: 'insert-field',
+      fieldId: 'DueDate',
+      groupId: 'root',
+      index: 0,
+    });
+  });
+
   it.each([
     [
       'a stale field ID',

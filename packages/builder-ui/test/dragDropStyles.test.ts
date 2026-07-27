@@ -170,6 +170,26 @@ describe('drag-and-drop visual contract', () => {
     );
   });
 
+  it('makes every boundary a row-sized hit area and fills an empty root group', () => {
+    const positionTarget = declarationBlock('.eb-condition-drop-target');
+    const emptyGroup = declarationBlock('.eb-group-card.is-empty');
+    const rootGroup = declarationBlock('.eb-group-card.is-root');
+    const emptyChildren = declarationBlock(
+      '.eb-group-card.is-empty > .eb-group-children',
+    );
+    const emptyTarget = declarationBlock(
+      '.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal',
+    );
+
+    expect(positionTarget).toMatch(/min-height:\s*100px\s*;/);
+    expect(positionTarget).toMatch(/margin-block:\s*-41px\s*;/);
+    expect(positionTarget).toMatch(/pointer-events:\s*none\s*;/);
+    expect(emptyGroup).toMatch(/display:\s*flex\s*;/);
+    expect(rootGroup).toMatch(/flex-grow:\s*1\s*;/);
+    expect(emptyChildren).toMatch(/flex:\s*1\s*;/);
+    expect(emptyTarget).toMatch(/flex:\s*1\s*;/);
+  });
+
   it('disables drag/drop motion when reduced motion is requested', () => {
     expect(css).toMatch(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.eb-root\s*,\s*\.eb-root\s+\*\s*\{[\s\S]*?transition-duration:\s*1ms\s*!important\s*;/,
