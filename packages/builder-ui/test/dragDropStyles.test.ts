@@ -254,6 +254,30 @@ describe('drag-and-drop visual contract', () => {
     );
   });
 
+  it('scrolls the stacked layout as one page instead of nesting scrollers', () => {
+    const stacked = mediaBlock('max-width: 900px');
+
+    // .eb-workspace owns the only scroll below 900px.
+    expect(stacked).toMatch(/\.eb-workspace\s*\{[^}]*overflow-y:\s*auto\s*;/);
+
+    // The canvas must contribute its real height to the grid's auto row.
+    // flex: 1 1 auto with min-height: 0 contributes nothing and collapses the
+    // row, which is what the old min(70vh, 560px) floor was propping up.
+    expect(stacked).toMatch(/\.eb-canvas-card\s*\{[^}]*flex:\s*0 0 auto\s*;/);
+    expect(stacked).not.toMatch(/min-height:\s*min\(/);
+
+    // The desktop scroll chain (.eb-pane-body -> .eb-group-children) stands
+    // down, or a short window hides rules behind two nested scrollbars.
+    expect(stacked).toMatch(/\.eb-center-col\s*\{[^}]*overflow:\s*visible\s*;/);
+    expect(stacked).toMatch(
+      /\.eb-canvas-card \.eb-pane-body,\s*\.eb-group-children\s*\{[^}]*overflow:\s*visible\s*;/,
+    );
+
+    // Desktop keeps per-container scrolling.
+    expect(declarationBlock('.eb-pane-body')).toMatch(/\boverflow:\s*auto\s*;/);
+    expect(declarationBlock('.eb-group-children')).toMatch(/\boverflow:\s*auto\s*;/);
+  });
+
   it('wraps the group toolbar at every width so its actions never clip', () => {
     // .eb-group-card sets overflow: hidden, and the dock widths are inline
     // styles that collapse independently of the viewport, so the wrap cannot

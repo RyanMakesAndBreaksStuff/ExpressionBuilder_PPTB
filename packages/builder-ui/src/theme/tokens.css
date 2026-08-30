@@ -1710,12 +1710,29 @@ body {
     flex-basis: auto;
   }
 
+  /* Stacked layout scrolls as one page. The desktop chain nests two scroll
+     containers (.eb-pane-body, then .eb-group-children) inside a column that
+     was pinned to a share of the viewport, so on a short window the builder
+     became a sliver with its rules hidden behind inner scrollbars. Sizing the
+     column and the canvas to their content instead hands every pane to
+     .eb-workspace's own overflow-y.
+
+     The old viewport-share floor existed because .eb-canvas-card was
+     flex: 1 1 auto with min-height: 0, contributing nothing to the grid's
+     auto row and collapsing it; flex: 0 0 auto restores a real intrinsic
+     contribution, so the floor is no longer needed to hold the column open. */
   .eb-center-col {
-    /* The grid's auto row undersizes this nested flex column (its children's
-       min-heights don't propagate into the row's intrinsic contribution and it
-       collapses to a sliver), so give the stacked canvas + preview an explicit
-       share of the viewport; the canvas body scrolls internally. */
-    min-height: min(70vh, 560px);
+    overflow: visible;
+  }
+
+  .eb-canvas-card {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .eb-canvas-card .eb-pane-body,
+  .eb-group-children {
+    overflow: visible;
   }
 }
 
