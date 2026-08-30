@@ -34,6 +34,10 @@ body {
   --r-panel: 20px;
   --duration-fast: 160ms;
   --duration-med: 220ms;
+  /* Floor for the workspace's single grid row: ~220px of usable canvas plus the
+     18px gap and the content-sized preview card beneath it. Below this the
+     workspace scrolls rather than compressing the canvas out of existence. */
+  --eb-workspace-min-height: 460px;
   /* dvh tracks the visible viewport as mobile browser chrome shows/hides;
      the vh line is the fallback for engines without dvh support. */
   height: 100vh;
@@ -277,11 +281,22 @@ body {
   grid-template-columns: var(--eb-left-dock-width) minmax(0, 1fr) var(--eb-right-dock-width);
   /* Bound the single row to the container so tall content doesn't stretch the
      row (auto rows grow with content). Without this the canvas/preview cards
-     grow past the viewport and their inner bodies never scroll. */
-  grid-template-rows: minmax(0, 1fr);
+     grow past the viewport and their inner bodies never scroll.
+
+     The floor is the height half of the same complaint: .eb-canvas-card is the
+     only flexible item in .eb-center-col (the preview card is flex: 0 0 auto and
+     content-sized), so a short container made the canvas absorb the entire
+     shortfall and collapse to a sliver with its rules hidden behind inner
+     scrollbars. This is not a narrow-screen case — PPTB hosts the tool in an
+     iframe that is routinely wide but short — so it is fixed here rather than
+     behind a width breakpoint. When there is ample height 1fr wins and the
+     computed layout is unchanged; when there is not, overflow-y scrolls the
+     workspace instead of crushing the canvas. */
+  grid-template-rows: minmax(var(--eb-workspace-min-height), 1fr);
   gap: 18px;
   padding: 18px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   transition: grid-template-columns var(--duration-med) ease, gap var(--duration-med) ease;
 }
 
@@ -357,6 +372,16 @@ body {
   padding: 10px 12px 0;
   background: var(--surface);
   flex: 0 0 auto;
+  overflow-x: auto;
+  /* The strip is only as tall as its 34px tabs, so a visible horizontal
+     scrollbar would push the active tab's border-bottom off the pane edge and
+     break the tab/panel join. Tabs stay reachable by pointer drag and by the
+     strip's arrow-key navigation. */
+  scrollbar-width: none;
+}
+
+.eb-tab-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .eb-tab-strip button {
@@ -368,6 +393,7 @@ body {
   color: var(--text3);
   font-size: 0.82rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: all var(--duration-fast) ease;
 }
@@ -575,7 +601,9 @@ body {
 .eb-group-toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+  row-gap: 8px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
 }
@@ -1648,6 +1676,13 @@ body {
   .eb-rule-tools {
     grid-column: 3 / -1;
   }
+
+  /* Once the toolbar wraps, send the caption to its own full-width row so the
+     + Rule / + Group actions keep the first row to themselves. */
+  .eb-group-caption {
+    order: 3;
+    flex: 1 1 100%;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1690,13 +1725,29 @@ body {
     flex-basis: auto;
   }
 
+  /* Stacked layout scrolls as one page. The desktop chain nests two scroll
+     containers (.eb-pane-body, then .eb-group-children) inside a column that
+     was pinned to a share of the viewport, so on a short window the builder
+     became a sliver with its rules hidden behind inner scrollbars. Sizing the
+     column and the canvas to their content instead hands every pane to
+     .eb-workspace's own overflow-y.
+
+     The old viewport-share floor existed because .eb-canvas-card was
+     flex: 1 1 auto with min-height: 0, contributing nothing to the grid's
+     auto row and collapsing it; flex: 0 0 auto restores a real intrinsic
+     contribution, so the floor is no longer needed to hold the column open. */
   .eb-center-col {
-    order: -1;
-    /* The grid's auto row undersizes this nested flex column (its children's
-       min-heights don't propagate into the row's intrinsic contribution and it
-       collapses to a sliver), so give the stacked canvas + preview an explicit
-       share of the viewport; the canvas body scrolls internally. */
-    min-height: min(70vh, 560px);
+    overflow: visible;
+  }
+
+  .eb-canvas-card {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .eb-canvas-card .eb-pane-body,
+  .eb-group-children {
+    overflow: visible;
   }
 }
 
@@ -1749,18 +1800,6 @@ body {
     flex: 1 1 0;
     padding: 0 8px;
     font-size: 0.8rem;
-  }
-
-  /* Group toolbar (AND/OR pill, caption, actions) wraps instead of pushing
-     its + Rule / + Group buttons off the right edge. */
-  .eb-group-toolbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
-  .eb-group-caption {
-    order: 3;
-    flex: 1 1 100%;
   }
 
   /* Rule rows stack: field on the glyph row, then operator, value, tools —

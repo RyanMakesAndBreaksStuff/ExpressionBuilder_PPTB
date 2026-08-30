@@ -19,6 +19,49 @@ function readSource(relativePath: string): string {
   return readFileSync(resolve(sourceRoot, relativePath), 'utf8');
 }
 
+function mediaBlock(query: string): string {
+  const start = css.indexOf(`@media (${query})`);
+  if (start === -1) throw new Error(`Missing media query: ${query}`);
+  const open = css.indexOf('{', start);
+  let depth = 0;
+  for (let index = open; index < css.length; index += 1) {
+    if (css[index] === '{') depth += 1;
+    else if (css[index] === '}') {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, index);
+    }
+  }
+  throw new Error(`Unterminated media query: ${query}`);
+}
+
+/** tokens.css with every @media block removed: the rules that apply at any size. */
+function unscopedCss(): string {
+  let out = '';
+  let index = 0;
+  while (index < css.length) {
+    const start = css.indexOf('@media', index);
+    if (start === -1) {
+      out += css.slice(index);
+      break;
+    }
+    out += css.slice(index, start);
+    const open = css.indexOf('{', start);
+    let depth = 0;
+    for (let scan = open; scan < css.length; scan += 1) {
+      if (css[scan] === '{') depth += 1;
+      else if (css[scan] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          index = scan + 1;
+          break;
+        }
+      }
+    }
+    if (depth !== 0) throw new Error('Unterminated media query');
+  }
+  return out;
+}
+
 function declarationBlock(selectorFragment: string): string {
   const rule = cssRules.find(({ selectors }) =>
     selectors.includes(selectorFragment),
@@ -212,6 +255,105 @@ describe('drag-and-drop visual contract', () => {
     );
     expect(css).toMatch(
       /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*?\.eb-workspace\s*\{[\s\S]*?grid-template-columns:\s*1fr\s*;/,
+    );
+  });
+
+  it('keeps the Toolbox first in the stacked layout', () => {
+    // The workspace renders Toolbox -> center column -> inspector, so the
+    // stacked layout must not reorder the center column ahead of the Toolbox:
+    // users landing on a narrow window need the field list, not the canvas.
+    const stacked = mediaBlock('max-width: 900px');
+    expect(stacked).toMatch(/\.eb-center-col\s*\{/);
+    expect(stacked).not.toMatch(/\.eb-center-col\s*\{[^}]*\border\s*:/);
+  });
+
+  it('scrolls the tab strip without breaking the active tab join', () => {
+    const strip = declarationBlock('.eb-tab-strip');
+    expect(strip).toMatch(/\boverflow-x:\s*auto\s*;/);
+    // A visible scrollbar inside the 34px-tall strip would detach the active
+    // tab's border-bottom from the pane below it.
+    expect(strip).toMatch(/\bscrollbar-width:\s*none\s*;/);
+    expect(declarationBlock('.eb-tab-strip::-webkit-scrollbar')).toMatch(
+      /\bdisplay:\s*none\s*;/,
+    );
+    // Labels must not wrap, or the strip grows instead of scrolling.
+    expect(declarationBlock('.eb-tab-strip button')).toMatch(
+      /\bwhite-space:\s*nowrap\s*;/,
+    );
+  });
+
+  it('scrolls the stacked layout as one page instead of nesting scrollers', () => {
+    const stacked = mediaBlock('max-width: 900px');
+
+    // .eb-workspace owns the only scroll below 900px.
+    expect(stacked).toMatch(/\.eb-workspace\s*\{[^}]*overflow-y:\s*auto\s*;/);
+
+    // The canvas must contribute its real height to the grid's auto row.
+    // flex: 1 1 auto with min-height: 0 contributes nothing and collapses the
+    // row, which is what the old min(70vh, 560px) floor was propping up.
+    expect(stacked).toMatch(/\.eb-canvas-card\s*\{[^}]*flex:\s*0 0 auto\s*;/);
+    expect(stacked).not.toMatch(/min-height:\s*min\(/);
+
+    // The desktop scroll chain (.eb-pane-body -> .eb-group-children) stands
+    // down, or a short window hides rules behind two nested scrollbars.
+    expect(stacked).toMatch(/\.eb-center-col\s*\{[^}]*overflow:\s*visible\s*;/);
+    expect(stacked).toMatch(
+      /\.eb-canvas-card \.eb-pane-body,\s*\.eb-group-children\s*\{[^}]*overflow:\s*visible\s*;/,
+    );
+
+    // Desktop keeps per-container scrolling. declarationBlock() reads the first
+    // rule in file order (the base rule), so this pins the base declarations
+    // against an in-place edit; the unscoped sweep below is what catches the
+    // same override being duplicated outside the media query.
+    expect(declarationBlock('.eb-pane-body')).toMatch(/\boverflow:\s*auto\s*;/);
+    expect(declarationBlock('.eb-group-children')).toMatch(/\boverflow:\s*auto\s*;/);
+
+    // The stand-down must stay media-scoped. A duplicate rule added later in the
+    // file would win on source order and silently unconstrain the desktop cards,
+    // and declarationBlock() cannot see past the first match.
+    const desktop = unscopedCss();
+    expect(desktop).not.toMatch(
+      /\.eb-(pane-body|group-children|center-col)[^{}]*\{[^}]*overflow:\s*visible\s*;/,
+    );
+
+    // Load-bearing on the desktop path: a scrolling center column unconstrains
+    // the canvas/preview cards so their inner bodies stop scrolling.
+    expect(declarationBlock('.eb-center-col')).toMatch(/\boverflow:\s*hidden\s*;/);
+  });
+
+  it('floors the workspace row so a short host never crushes the canvas', () => {
+    // Height, unlike width, is not a narrow-screen concern: PPTB hosts the tool
+    // in an iframe that is routinely wide but short, so this fix must not sit
+    // behind a width breakpoint. .eb-canvas-card is the only flexible item in
+    // .eb-center-col, so without a floor it absorbs the whole shortfall.
+    const workspace = declarationBlock('.eb-workspace');
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(var\(--eb-workspace-min-height\),\s*1fr\)\s*;/,
+    );
+    expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
+    expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
+
+    // A real floor, not a placeholder — the canvas needs ~220px to show rules.
+    const floor = /--eb-workspace-min-height:\s*(\d+)px\s*;/.exec(
+      declarationBlock('.eb-root'),
+    );
+    expect(floor).not.toBeNull();
+    expect(Number(floor![1])).toBeGreaterThanOrEqual(400);
+  });
+
+  it('wraps the group toolbar at every width so its actions never clip', () => {
+    // .eb-group-card sets overflow: hidden, and the dock widths are inline
+    // styles that collapse independently of the viewport, so the wrap cannot
+    // be gated behind a breakpoint without leaving widths where + Rule and
+    // + Group get clipped.
+    expect(declarationBlock('.eb-group-toolbar')).toMatch(
+      /\bflex-wrap:\s*wrap\s*;/,
+    );
+    expect(declarationBlock('.eb-group-card')).toMatch(
+      /\boverflow:\s*hidden\s*;/,
+    );
+    expect(mediaBlock('max-width: 1100px')).toMatch(
+      /\.eb-group-caption\s*\{[^}]*flex:\s*1 1 100%/,
     );
   });
 });
