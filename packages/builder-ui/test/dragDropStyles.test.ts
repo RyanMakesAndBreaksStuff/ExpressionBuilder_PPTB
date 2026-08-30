@@ -19,6 +19,21 @@ function readSource(relativePath: string): string {
   return readFileSync(resolve(sourceRoot, relativePath), 'utf8');
 }
 
+function mediaBlock(query: string): string {
+  const start = css.indexOf(`@media (${query})`);
+  if (start === -1) throw new Error(`Missing media query: ${query}`);
+  const open = css.indexOf('{', start);
+  let depth = 0;
+  for (let index = open; index < css.length; index += 1) {
+    if (css[index] === '{') depth += 1;
+    else if (css[index] === '}') {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, index);
+    }
+  }
+  throw new Error(`Unterminated media query: ${query}`);
+}
+
 function declarationBlock(selectorFragment: string): string {
   const rule = cssRules.find(({ selectors }) =>
     selectors.includes(selectorFragment),
@@ -212,6 +227,46 @@ describe('drag-and-drop visual contract', () => {
     );
     expect(css).toMatch(
       /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*?\.eb-workspace\s*\{[\s\S]*?grid-template-columns:\s*1fr\s*;/,
+    );
+  });
+
+  it('keeps the Toolbox first in the stacked layout', () => {
+    // The workspace renders Toolbox -> center column -> inspector, so the
+    // stacked layout must not reorder the center column ahead of the Toolbox:
+    // users landing on a narrow window need the field list, not the canvas.
+    const stacked = mediaBlock('max-width: 900px');
+    expect(stacked).toMatch(/\.eb-center-col\s*\{/);
+    expect(stacked).not.toMatch(/\.eb-center-col\s*\{[^}]*\border\s*:/);
+  });
+
+  it('scrolls the tab strip without breaking the active tab join', () => {
+    const strip = declarationBlock('.eb-tab-strip');
+    expect(strip).toMatch(/\boverflow-x:\s*auto\s*;/);
+    // A visible scrollbar inside the 34px-tall strip would detach the active
+    // tab's border-bottom from the pane below it.
+    expect(strip).toMatch(/\bscrollbar-width:\s*none\s*;/);
+    expect(declarationBlock('.eb-tab-strip::-webkit-scrollbar')).toMatch(
+      /\bdisplay:\s*none\s*;/,
+    );
+    // Labels must not wrap, or the strip grows instead of scrolling.
+    expect(declarationBlock('.eb-tab-strip button')).toMatch(
+      /\bwhite-space:\s*nowrap\s*;/,
+    );
+  });
+
+  it('wraps the group toolbar at every width so its actions never clip', () => {
+    // .eb-group-card sets overflow: hidden, and the dock widths are inline
+    // styles that collapse independently of the viewport, so the wrap cannot
+    // be gated behind a breakpoint without leaving widths where + Rule and
+    // + Group get clipped.
+    expect(declarationBlock('.eb-group-toolbar')).toMatch(
+      /\bflex-wrap:\s*wrap\s*;/,
+    );
+    expect(declarationBlock('.eb-group-card')).toMatch(
+      /\boverflow:\s*hidden\s*;/,
+    );
+    expect(mediaBlock('max-width: 1100px')).toMatch(
+      /\.eb-group-caption\s*\{[^}]*flex:\s*1 1 100%/,
     );
   });
 });

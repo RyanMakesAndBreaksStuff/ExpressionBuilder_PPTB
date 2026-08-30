@@ -358,6 +358,15 @@ body {
   background: var(--surface);
   flex: 0 0 auto;
   overflow-x: auto;
+  /* The strip is only as tall as its 34px tabs, so a visible horizontal
+     scrollbar would push the active tab's border-bottom off the pane edge and
+     break the tab/panel join. Tabs stay reachable by pointer drag and by the
+     strip's arrow-key navigation. */
+  scrollbar-width: none;
+}
+
+.eb-tab-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .eb-tab-strip button {
@@ -577,7 +586,9 @@ body {
 .eb-group-toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+  row-gap: 8px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
 }
@@ -1651,13 +1662,8 @@ body {
     grid-column: 3 / -1;
   }
 
-  /* Group toolbar (AND/OR pill, caption, actions) wraps instead of pushing
-     its + Rule / + Group buttons off the right edge. */
-  .eb-group-toolbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
+  /* Once the toolbar wraps, send the caption to its own full-width row so the
+     + Rule / + Group actions keep the first row to themselves. */
   .eb-group-caption {
     order: 3;
     flex: 1 1 100%;
