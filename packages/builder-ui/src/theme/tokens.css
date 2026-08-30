@@ -357,6 +357,7 @@ body {
   padding: 10px 12px 0;
   background: var(--surface);
   flex: 0 0 auto;
+  overflow-x: auto;
 }
 
 .eb-tab-strip button {
@@ -368,6 +369,7 @@ body {
   color: var(--text3);
   font-size: 0.82rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: all var(--duration-fast) ease;
 }
@@ -1648,6 +1650,18 @@ body {
   .eb-rule-tools {
     grid-column: 3 / -1;
   }
+
+  /* Group toolbar (AND/OR pill, caption, actions) wraps instead of pushing
+     its + Rule / + Group buttons off the right edge. */
+  .eb-group-toolbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .eb-group-caption {
+    order: 3;
+    flex: 1 1 100%;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1691,7 +1705,6 @@ body {
   }
 
   .eb-center-col {
-    order: -1;
     /* The grid's auto row undersizes this nested flex column (its children's
        min-heights don't propagate into the row's intrinsic contribution and it
        collapses to a sliver), so give the stacked canvas + preview an explicit
@@ -1749,18 +1762,6 @@ body {
     flex: 1 1 0;
     padding: 0 8px;
     font-size: 0.8rem;
-  }
-
-  /* Group toolbar (AND/OR pill, caption, actions) wraps instead of pushing
-     its + Rule / + Group buttons off the right edge. */
-  .eb-group-toolbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
-  .eb-group-caption {
-    order: 3;
-    flex: 1 1 100%;
   }
 
   /* Rule rows stack: field on the glyph row, then operator, value, tools —
