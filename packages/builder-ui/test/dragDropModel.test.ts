@@ -171,11 +171,117 @@ describe('dragDropModel', () => {
     ).toBeUndefined();
   });
 
-  it('rejects a condition-node move across parent groups', () => {
+  it('moves a condition node across parent groups', () => {
     expect(
       resolveDragDropCommand({
         source: conditionNode({ parentGroupId: 'group-a' }),
         target: conditionPosition({ groupId: 'group-b', index: 0 }),
+      }),
+    ).toEqual({
+      kind: 'move-node',
+      nodeId: 'rule-status',
+      targetGroupId: 'group-b',
+      index: 0,
+    });
+  });
+
+  it('does not shift a cross-group index the way a reorder does', () => {
+    // A reorder subtracts one when moving down, because removing the node
+    // shifts everything after it. A move removes from a different list, so the
+    // target index is already correct and the correction would overshoot.
+    expect(
+      resolveDragDropCommand({
+        source: conditionNode({ parentGroupId: 'group-a', sourceIndex: 0 }),
+        target: conditionPosition({ groupId: 'group-b', index: 2 }),
+      }),
+    ).toMatchObject({ kind: 'move-node', index: 2 });
+
+    expect(
+      resolveDragDropCommand({
+        source: conditionNode({ parentGroupId: 'root', sourceIndex: 0 }),
+        target: conditionPosition({ groupId: 'root', index: 2 }),
+      }),
+    ).toMatchObject({ kind: 'reorder-node', index: 1 });
+  });
+
+  it('validates a cross-group move against the current document', () => {
+    // group-routing holds two rules, so index 2 appends. A reorder stops one
+    // short of the child count; a move may land past the last child.
+    expect(
+      resolveCurrentDragDropCommand({
+        source: conditionNode({
+          nodeId: 'rule-status',
+          parentGroupId: 'root',
+          sourceIndex: 0,
+        }),
+        target: conditionPosition({ groupId: 'group-routing', index: 2 }),
+        fields: sampleDocument.fields,
+        root: sampleDocument.root,
+      }),
+    ).toEqual({
+      kind: 'move-node',
+      nodeId: 'rule-status',
+      targetGroupId: 'group-routing',
+      index: 2,
+    });
+
+    expect(
+      resolveCurrentDragDropCommand({
+        source: conditionNode({
+          nodeId: 'rule-status',
+          parentGroupId: 'root',
+          sourceIndex: 0,
+        }),
+        target: conditionPosition({ groupId: 'group-routing', index: 3 }),
+        fields: sampleDocument.fields,
+        root: sampleDocument.root,
+      }),
+    ).toBeUndefined();
+  });
+
+  it('refuses to drop a group inside itself or its own descendants', () => {
+    const nested = {
+      id: 'root',
+      kind: 'group' as const,
+      conjunction: 'and' as const,
+      children: [
+        {
+          id: 'group-outer',
+          kind: 'group' as const,
+          conjunction: 'and' as const,
+          children: [
+            {
+              id: 'group-inner',
+              kind: 'group' as const,
+              conjunction: 'or' as const,
+              children: [],
+            },
+          ],
+        },
+      ],
+    };
+
+    for (const groupId of ['group-outer', 'group-inner']) {
+      expect(
+        resolveCurrentDragDropCommand({
+          source: conditionNode({
+            nodeId: 'group-outer',
+            parentGroupId: 'root',
+            sourceIndex: 0,
+          }),
+          target: conditionPosition({ groupId, index: 0 }),
+          fields: sampleDocument.fields,
+          root: nested,
+        }),
+      ).toBeUndefined();
+    }
+  });
+
+  it('still rejects a same-group no-op rather than treating it as a move', () => {
+    expect(
+      resolveDragDropCommand({
+        source: conditionNode({ parentGroupId: 'root', sourceIndex: 1 }),
+        target: conditionPosition({ groupId: 'root', index: 1 }),
       }),
     ).toBeUndefined();
   });

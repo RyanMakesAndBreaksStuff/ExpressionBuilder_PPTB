@@ -29,11 +29,12 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('ConditionPositionTarget', () => {
-  const renderTarget = () =>
+  const renderTarget = (ancestorGroupIds: readonly string[] = ['root']) =>
     render(
       <ConditionPositionTarget
         groupId="root"
         groupLabel="AND group root"
+        ancestorGroupIds={ancestorGroupIds}
         index={1}
         positionCount={3}
       />,
@@ -68,7 +69,8 @@ describe('ConditionPositionTarget', () => {
     expect(target).toHaveClass('is-active', 'is-valid-drop', 'is-drop-target');
   });
 
-  it('marks a cross-group position as ineligible without a target state', () => {
+  it('accepts a node dragged in from another group', () => {
+    // Issue #9: a rule created outside a group could never be moved into one.
     dragState.source = {
       data: {
         kind: 'condition-node',
@@ -79,6 +81,26 @@ describe('ConditionPositionTarget', () => {
     };
     dragState.isDropTarget = true;
     renderTarget();
+
+    const target = screen.getByRole('separator');
+    expect(target).toHaveClass('is-active', 'is-valid-drop', 'is-drop-target');
+    expect(target).not.toHaveClass('is-ineligible');
+  });
+
+  it('marks a position inside the dragged group itself as ineligible', () => {
+    // The one genuinely illegal cross-group target. This component sees a
+    // single group and the drag metadata carries no tree, so only the ancestor
+    // chain can rule it out before the drop is attempted.
+    dragState.source = {
+      data: {
+        kind: 'condition-node',
+        nodeId: 'group-outer',
+        parentGroupId: 'root',
+        sourceIndex: 0,
+      },
+    };
+    dragState.isDropTarget = true;
+    renderTarget(['root', 'group-outer']);
 
     const target = screen.getByRole('separator');
     expect(target).toHaveClass('is-active', 'is-ineligible');

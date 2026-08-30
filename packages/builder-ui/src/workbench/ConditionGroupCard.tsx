@@ -13,6 +13,8 @@ interface ConditionGroupCardProps {
   group: QueryGroup;
   fields: FieldDefinition[];
   isRoot?: boolean;
+  /** Ids of every group above this one, root first. See ConditionPositionTarget. */
+  ancestorGroupIds?: readonly string[];
   parentGroupId?: string;
   sourceIndex?: number;
   siblingCount?: number;
@@ -35,6 +37,7 @@ export function ConditionGroupCard({
   fields,
   group,
   isRoot = false,
+  ancestorGroupIds = [],
   parentGroupId,
   sourceIndex,
   siblingCount,
@@ -57,6 +60,9 @@ export function ConditionGroupCard({
   const ruleCount = countRules(group);
   const isFocused = group.id === activeGroupId;
   const groupLabel = `${group.conjunction.toUpperCase()} group ${group.id}`;
+  // Separators rendered here sit inside this group, so the chain they guard
+  // against includes it.
+  const targetAncestorIds = [...ancestorGroupIds, group.id];
 
   const renderCard = ({
     sourceRef,
@@ -153,6 +159,7 @@ export function ConditionGroupCard({
             <ConditionPositionTarget
               groupId={group.id}
               groupLabel={groupLabel}
+              ancestorGroupIds={targetAncestorIds}
               index={childIndex}
               beforeNodeId={child.id}
               positionCount={group.children.length + 1}
@@ -161,6 +168,7 @@ export function ConditionGroupCard({
               <ConditionGroupCard
                 group={child}
                 fields={fields}
+                ancestorGroupIds={targetAncestorIds}
                 parentGroupId={group.id}
                 sourceIndex={childIndex}
                 siblingCount={group.children.length}
@@ -200,6 +208,7 @@ export function ConditionGroupCard({
         <ConditionPositionTarget
           groupId={group.id}
           groupLabel={groupLabel}
+          ancestorGroupIds={targetAncestorIds}
           index={group.children.length}
           positionCount={group.children.length + 1}
           terminal

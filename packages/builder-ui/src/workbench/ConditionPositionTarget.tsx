@@ -13,6 +13,14 @@ interface ConditionPositionTargetProps {
   groupLabel: string;
   index: number;
   positionCount: number;
+  /**
+   * This separator's own group and every group above it, root first. A node can
+   * never land inside itself, and only the ancestor chain can tell: this
+   * component sees one group, and resolveDragDropCommand sees only the drag
+   * metadata, so without it a group dragged onto its own descendants would light
+   * up as a valid target and then be rejected on drop.
+   */
+  ancestorGroupIds: readonly string[];
   /** Id of the node this separator sits before; omitted for the terminal one. */
   beforeNodeId?: string;
   terminal?: boolean;
@@ -23,6 +31,7 @@ export function ConditionPositionTarget({
   groupLabel,
   index,
   positionCount,
+  ancestorGroupIds,
   beforeNodeId,
   terminal = false,
 }: ConditionPositionTargetProps) {
@@ -33,17 +42,18 @@ export function ConditionPositionTarget({
   };
   const { source } = useDragOperation();
   const isActive = source !== null && source !== undefined;
+  const landsInsideItself =
+    isActive &&
+    isConditionNodeDragMetadata(source.data) &&
+    ancestorGroupIds.includes(source.data.nodeId);
   const isValidDrop =
     isActive &&
+    !landsInsideItself &&
     resolveDragDropCommand({
       source: source.data,
       target: metadata,
     }) !== undefined;
-  const isIneligibleGroup =
-    isActive &&
-    !isValidDrop &&
-    isConditionNodeDragMetadata(source.data) &&
-    source.data.parentGroupId !== groupId;
+  const isIneligibleGroup = isActive && !isValidDrop && landsInsideItself;
   const { isDropTarget, ref } = useDroppable({
     id: conditionPositionDropId(groupId, beforeNodeId),
     data: metadata,
@@ -56,6 +66,10 @@ export function ConditionPositionTarget({
     // on hit-box geometry.
     collisionDetector: closestCenter,
     accept: (draggable) =>
+      !(
+        isConditionNodeDragMetadata(draggable.data) &&
+        ancestorGroupIds.includes(draggable.data.nodeId)
+      ) &&
       resolveDragDropCommand({
         source: draggable.data,
         target: metadata,

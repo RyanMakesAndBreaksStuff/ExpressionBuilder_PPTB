@@ -134,4 +134,5 @@ export interface BuilderDragDropProviderProps {
   root: QueryGroup;
   onInsertField: (fieldId: string, groupId: string, index: number) => void;
   onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
+  onMoveNode: (nodeId: string, targetGroupId: string, index: number) => void;
 }
