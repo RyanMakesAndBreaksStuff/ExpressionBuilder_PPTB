@@ -34,6 +34,34 @@ function mediaBlock(query: string): string {
   throw new Error(`Unterminated media query: ${query}`);
 }
 
+/** tokens.css with every @media block removed: the rules that apply at any size. */
+function unscopedCss(): string {
+  let out = '';
+  let index = 0;
+  while (index < css.length) {
+    const start = css.indexOf('@media', index);
+    if (start === -1) {
+      out += css.slice(index);
+      break;
+    }
+    out += css.slice(index, start);
+    const open = css.indexOf('{', start);
+    let depth = 0;
+    for (let scan = open; scan < css.length; scan += 1) {
+      if (css[scan] === '{') depth += 1;
+      else if (css[scan] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          index = scan + 1;
+          break;
+        }
+      }
+    }
+    if (depth !== 0) throw new Error('Unterminated media query');
+  }
+  return out;
+}
+
 function declarationBlock(selectorFragment: string): string {
   const rule = cssRules.find(({ selectors }) =>
     selectors.includes(selectorFragment),
@@ -273,9 +301,44 @@ describe('drag-and-drop visual contract', () => {
       /\.eb-canvas-card \.eb-pane-body,\s*\.eb-group-children\s*\{[^}]*overflow:\s*visible\s*;/,
     );
 
-    // Desktop keeps per-container scrolling.
+    // Desktop keeps per-container scrolling. declarationBlock() reads the first
+    // rule in file order (the base rule), so this pins the base declarations
+    // against an in-place edit; the unscoped sweep below is what catches the
+    // same override being duplicated outside the media query.
     expect(declarationBlock('.eb-pane-body')).toMatch(/\boverflow:\s*auto\s*;/);
     expect(declarationBlock('.eb-group-children')).toMatch(/\boverflow:\s*auto\s*;/);
+
+    // The stand-down must stay media-scoped. A duplicate rule added later in the
+    // file would win on source order and silently unconstrain the desktop cards,
+    // and declarationBlock() cannot see past the first match.
+    const desktop = unscopedCss();
+    expect(desktop).not.toMatch(
+      /\.eb-(pane-body|group-children|center-col)[^{}]*\{[^}]*overflow:\s*visible\s*;/,
+    );
+
+    // Load-bearing on the desktop path: a scrolling center column unconstrains
+    // the canvas/preview cards so their inner bodies stop scrolling.
+    expect(declarationBlock('.eb-center-col')).toMatch(/\boverflow:\s*hidden\s*;/);
+  });
+
+  it('floors the workspace row so a short host never crushes the canvas', () => {
+    // Height, unlike width, is not a narrow-screen concern: PPTB hosts the tool
+    // in an iframe that is routinely wide but short, so this fix must not sit
+    // behind a width breakpoint. .eb-canvas-card is the only flexible item in
+    // .eb-center-col, so without a floor it absorbs the whole shortfall.
+    const workspace = declarationBlock('.eb-workspace');
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(var\(--eb-workspace-min-height\),\s*1fr\)\s*;/,
+    );
+    expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
+    expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
+
+    // A real floor, not a placeholder — the canvas needs ~220px to show rules.
+    const floor = /--eb-workspace-min-height:\s*(\d+)px\s*;/.exec(
+      declarationBlock('.eb-root'),
+    );
+    expect(floor).not.toBeNull();
+    expect(Number(floor![1])).toBeGreaterThanOrEqual(400);
   });
 
   it('wraps the group toolbar at every width so its actions never clip', () => {

@@ -34,6 +34,10 @@ body {
   --r-panel: 20px;
   --duration-fast: 160ms;
   --duration-med: 220ms;
+  /* Floor for the workspace's single grid row: ~220px of usable canvas plus the
+     18px gap and the content-sized preview card beneath it. Below this the
+     workspace scrolls rather than compressing the canvas out of existence. */
+  --eb-workspace-min-height: 460px;
   /* dvh tracks the visible viewport as mobile browser chrome shows/hides;
      the vh line is the fallback for engines without dvh support. */
   height: 100vh;
@@ -277,11 +281,22 @@ body {
   grid-template-columns: var(--eb-left-dock-width) minmax(0, 1fr) var(--eb-right-dock-width);
   /* Bound the single row to the container so tall content doesn't stretch the
      row (auto rows grow with content). Without this the canvas/preview cards
-     grow past the viewport and their inner bodies never scroll. */
-  grid-template-rows: minmax(0, 1fr);
+     grow past the viewport and their inner bodies never scroll.
+
+     The floor is the height half of the same complaint: .eb-canvas-card is the
+     only flexible item in .eb-center-col (the preview card is flex: 0 0 auto and
+     content-sized), so a short container made the canvas absorb the entire
+     shortfall and collapse to a sliver with its rules hidden behind inner
+     scrollbars. This is not a narrow-screen case — PPTB hosts the tool in an
+     iframe that is routinely wide but short — so it is fixed here rather than
+     behind a width breakpoint. When there is ample height 1fr wins and the
+     computed layout is unchanged; when there is not, overflow-y scrolls the
+     workspace instead of crushing the canvas. */
+  grid-template-rows: minmax(var(--eb-workspace-min-height), 1fr);
   gap: 18px;
   padding: 18px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   transition: grid-template-columns var(--duration-med) ease, gap var(--duration-med) ease;
 }
 
