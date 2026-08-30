@@ -485,7 +485,16 @@ body {
 
 /* Preview Card */
 .eb-preview-card {
+  display: flex;
+  flex-direction: column;
   flex: 0 0 auto;
+  /* Content-sized with no ceiling, this card grows with the expression and the
+     canvas — the only flexible sibling — pays for every pixel. An empty document
+     measures 178px, so the cap is inert until the expression runs past roughly
+     four lines, after which .eb-preview-body scrolls instead. The flex column
+     above is what makes that body shrink; with max-height alone it keeps its
+     natural height and the overflow is silently clipped. */
+  max-height: 220px;
   border-radius: var(--r-panel);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -531,6 +540,8 @@ body {
   padding: 14px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 14px;
   overflow: auto;
   scrollbar-gutter: stable;
@@ -564,10 +575,18 @@ body {
   flex-shrink: 0;
 }
 
+/* The root card is the exception to the flex-shrink:0 above. It is the pane's
+   only child, so refusing to shrink makes it grow to its full content height:
+   .eb-group-children then sizes to that expanded parent, its overflow:auto never
+   engages, and the scroll falls outward to .eb-pane-body. Measured in PPTB at a
+   420px frame with six rules, the list rendered 1334px tall inside a 398px
+   canvas. flex:1 1 auto restores shrink; min-height:0 defeats the automatic
+   minimum that would otherwise still block it. Nested cards keep shrink:0. */
 .eb-group-card.is-root {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .eb-group-card.is-empty {
@@ -579,6 +598,9 @@ body {
 .eb-group-card.is-root > .eb-group-children,
 .eb-group-card.is-empty > .eb-group-children {
   flex: 1;
+  /* Pairs with .is-root's min-height:0 above: once the card can shrink, this is
+     what lets the list shrink with it and scroll internally. */
+  min-height: 0;
 }
 
 .eb-group-card.is-root > .eb-group-children > .eb-condition-drop-target.is-terminal,
@@ -1723,6 +1745,10 @@ body {
 
   .eb-preview-card {
     flex-basis: auto;
+    /* The desktop cap keeps a long expression from eating the canvas they share
+       a column with. Stacked, they no longer compete and the page scrolls as
+       one, so an inner scroll region here would only add a second scrollbar. */
+    max-height: none;
   }
 
   /* Stacked layout scrolls as one page. The desktop chain nests two scroll

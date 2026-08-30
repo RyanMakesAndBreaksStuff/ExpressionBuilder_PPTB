@@ -10,6 +10,7 @@ import {
   deleteNode,
   duplicateRule,
   focusGroup,
+  moveNode,
   reorderNode,
   selectRule,
   updateRule,
@@ -324,6 +325,14 @@ export function ExpressionBuilderShell({
     );
   };
 
+  const moveConditionNode = (
+    nodeId: string,
+    targetGroupId: string,
+    index: number,
+  ) => {
+    setDocument((current) => moveNode(current, nodeId, targetGroupId, index));
+  };
+
   const toggleWrapper = (wrapperId: string) =>
     setSelectedWrappers((current) =>
       current.includes(wrapperId) ? current.filter((id) => id !== wrapperId) : [...current, wrapperId],
@@ -417,6 +426,7 @@ export function ExpressionBuilderShell({
           root={document.root}
           onInsertField={insertFieldAtPosition}
           onReorderNode={reorderConditionNode}
+          onMoveNode={moveConditionNode}
         >
           <main
             className="eb-workspace"

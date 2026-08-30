@@ -52,6 +52,7 @@ export function BuilderDragDropProvider({
   root,
   onInsertField,
   onReorderNode,
+  onMoveNode,
 }: BuilderDragDropProviderProps) {
   const initiatingHandle = useRef<HTMLElement | null>(null);
   const [dragAnnouncement, setDragAnnouncement] = useState('');
@@ -92,6 +93,8 @@ export function BuilderDragDropProvider({
           onInsertField(command.fieldId, command.groupId, command.index);
         } else if (command?.kind === 'reorder-node') {
           onReorderNode(command.nodeId, command.parentGroupId, command.index);
+        } else if (command?.kind === 'move-node') {
+          onMoveNode(command.nodeId, command.targetGroupId, command.index);
         }
 
         const handle = initiatingHandle.current;

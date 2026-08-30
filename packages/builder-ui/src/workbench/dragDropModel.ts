@@ -34,6 +34,12 @@ export type DragDropCommand =
       nodeId: string;
       parentGroupId: string;
       index: number;
+    }
+  | {
+      kind: 'move-node';
+      nodeId: string;
+      targetGroupId: string;
+      index: number;
     };
 
 export type DragDropResolutionInput = {
@@ -113,8 +119,27 @@ export const resolveDragDropCommand = ({
     };
   }
 
-  if (!isConditionNodeDragMetadata(source) || source.parentGroupId !== target.groupId) {
+  if (!isConditionNodeDragMetadata(source)) {
     return undefined;
+  }
+
+  if (source.parentGroupId !== target.groupId) {
+    /**
+     * A move into another group. The index is used as-is: unlike a reorder, the
+     * node is removed from a *different* list, so nothing shifts in the target
+     * and the -1 correction below would land it one position too high.
+     *
+     * Legality beyond shape — the target group existing, and a group never
+     * landing inside itself — needs the document tree, so it is enforced by
+     * resolveCurrentDragDropCommand and mirrored in the drop target's own
+     * ancestor check.
+     */
+    return {
+      kind: 'move-node',
+      nodeId: source.nodeId,
+      targetGroupId: target.groupId,
+      index: target.index,
+    };
   }
 
   if (target.index === source.sourceIndex || target.index === source.sourceIndex + 1) {
@@ -155,10 +180,31 @@ export const resolveCurrentDragDropCommand = ({
   }
 
   const source = findNodeLocation(root, command.nodeId);
-  return source?.parent?.id === command.parentGroupId &&
-    source.index === input.source.sourceIndex &&
-    command.index >= 0 &&
-    command.index < targetGroup.children.length
+  if (
+    !source ||
+    source.parent?.id !== input.source.parentGroupId ||
+    source.index !== input.source.sourceIndex
+  ) {
+    return undefined;
+  }
+
+  if (command.kind === 'move-node') {
+    // Appending past the last child is legal for a move but not for a reorder,
+    // so the bound is inclusive here. findNodeLocation matches the subtree root
+    // as well as its descendants, which covers both dropping a group onto its
+    // own separators and onto one nested deeper inside it.
+    const landsInsideItself =
+      source.node.kind === 'group' &&
+      findNodeLocation(source.node, command.targetGroupId) !== undefined;
+
+    return command.index >= 0 &&
+      command.index <= targetGroup.children.length &&
+      !landsInsideItself
+      ? command
+      : undefined;
+  }
+
+  return command.index >= 0 && command.index < targetGroup.children.length
     ? command
     : undefined;
 };

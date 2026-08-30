@@ -228,7 +228,9 @@ describe('drag-and-drop visual contract', () => {
     expect(positionTarget).not.toMatch(/margin-block\s*:/);
     expect(positionTarget).toMatch(/pointer-events:\s*none\s*;/);
     expect(emptyGroup).toMatch(/display:\s*flex\s*;/);
-    expect(rootGroup).toMatch(/flex-grow:\s*1\s*;/);
+    // The shorthand carries grow: 1, which is what fills an empty root here;
+    // it also restores shrink, covered by the root-scroll test below.
+    expect(rootGroup).toMatch(/\bflex:\s*1 1 auto\s*;/);
     expect(emptyChildren).toMatch(/flex:\s*1\s*;/);
     expect(emptyTarget).toMatch(/flex:\s*1\s*;/);
   });
@@ -354,6 +356,60 @@ describe('drag-and-drop visual contract', () => {
     );
     expect(mediaBlock('max-width: 1100px')).toMatch(
       /\.eb-group-caption\s*\{[^}]*flex:\s*1 1 100%/,
+    );
+  });
+
+  it('lets the root group shrink so the rule list owns the canvas scroll', () => {
+    // .eb-group-card sets flex-shrink: 0 so nested groups keep their natural
+    // height. Inherited by the root card that rule is a bug: the root grows to
+    // its full content height, .eb-group-children sizes to that expanded parent
+    // instead of the space available, its overflow: auto never engages, and the
+    // scroll falls outward to .eb-pane-body. Measured in PPTB at a 420px frame
+    // with six rules: a 1334px list inside a 398px canvas, with .eb-pane-body
+    // reporting 1426/353 and .eb-group-children an inert 1334/1334.
+    const root = declarationBlock('.eb-group-card.is-root');
+    expect(root).toMatch(/\bflex:\s*1 1 auto\s*;/);
+    expect(root).toMatch(/\bmin-height:\s*0\s*;/);
+
+    // Both halves are load-bearing: without min-height: 0 the automatic minimum
+    // still blocks the shrink even once flex-shrink is restored.
+    expect(
+      declarationBlock('.eb-group-card.is-root > .eb-group-children'),
+    ).toMatch(/\bmin-height:\s*0\s*;/);
+    expect(declarationBlock('.eb-group-children')).toMatch(
+      /\boverflow:\s*auto\s*;/,
+    );
+
+    // Nested cards keep the shrink: 0 the root now overrides.
+    expect(declarationBlock('.eb-group-card')).toMatch(/\bflex-shrink:\s*0\s*;/);
+  });
+
+  it('caps the preview so a long expression cannot crowd out the canvas', () => {
+    // .eb-preview-card is content-sized, and .eb-canvas-card is the only
+    // flexible sibling in .eb-center-col, so unbounded preview growth comes
+    // straight out of the canvas. An empty document measures 178px, so the cap
+    // sits above that: it bounds growth rather than clipping the common case.
+    const preview = declarationBlock('.eb-preview-card');
+    const cap = /max-height:\s*(\d+)px\s*;/.exec(preview);
+    expect(cap).not.toBeNull();
+    expect(Number(cap![1])).toBeGreaterThan(178);
+    expect(Number(cap![1])).toBeLessThanOrEqual(320);
+
+    // max-height alone clips silently — the body keeps its natural height and
+    // the overflow is simply hidden by the card. The flex column is what makes
+    // the body shrink and scroll inside the cap.
+    expect(preview).toMatch(/\bdisplay:\s*flex\s*;/);
+    expect(preview).toMatch(/\bflex-direction:\s*column\s*;/);
+    const previewBody = declarationBlock('.eb-preview-body');
+    expect(previewBody).toMatch(/\bflex:\s*1 1 auto\s*;/);
+    expect(previewBody).toMatch(/\bmin-height:\s*0\s*;/);
+    expect(previewBody).toMatch(/\boverflow:\s*auto\s*;/);
+
+    // Stacked, the cards no longer compete for a shared column and the page
+    // scrolls as one, so the cap is released rather than adding a second
+    // scrollbar inside the flow.
+    expect(mediaBlock('max-width: 900px')).toMatch(
+      /\.eb-preview-card\s*\{[^}]*max-height:\s*none\s*;/,
     );
   });
 });
