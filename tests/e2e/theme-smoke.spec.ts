@@ -3,6 +3,7 @@ import { expect, test, type Page } from 'playwright/test';
 declare global {
   interface Window {
     toolboxAPI?: unknown;
+    __fireHostTheme?: (theme: string) => void;
   }
 }
 
@@ -28,20 +29,29 @@ async function expectGraphiteTheme(page: Page, mode: 'light' | 'dark'): Promise<
     .toEqual(expected);
 }
 
-test('web host renders and toggles the Graphite palette', async ({ page }) => {
+test('web host follows the host theme (no toggle)', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('eb.onboarding.seen.v1', '1');
-    localStorage.setItem('eb.workbench.palette', 'graphiteLight');
   });
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('http://127.0.0.1:5173/');
 
   await expectGraphiteTheme(page, 'light');
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await expect(page.getByRole('button', { name: /Switch to .* theme/ })).toHaveCount(0);
+
+  // Firing the host theme change flips the palette.
+  await page.emulateMedia({ colorScheme: 'dark' });
   await expectGraphiteTheme(page, 'dark');
 });
 
-test('PPTB host renders and toggles the Graphite palette', async ({ page }) => {
+test('PPTB host follows the host theme (no toggle)', async ({ page }) => {
   await page.addInitScript(() => {
+    const handlers: Array<(details: unknown, payload: unknown) => void> = [];
+    window.__fireHostTheme = (theme: string) => {
+      handlers.forEach((handler) =>
+        handler(undefined, { event: 'settings:updated', data: { theme } }),
+      );
+    };
     window.toolboxAPI = {
       utils: {
         copyToClipboard: async () => undefined,
@@ -55,7 +65,9 @@ test('PPTB host renders and toggles the Graphite palette', async ({ page }) => {
         getAll: async () => ({}),
       },
       events: {
-        on: () => undefined,
+        on: (handler: (details: unknown, payload: unknown) => void) => {
+          handlers.push(handler);
+        },
         off: () => undefined,
         getHistory: async () => [],
       },
@@ -63,7 +75,11 @@ test('PPTB host renders and toggles the Graphite palette', async ({ page }) => {
   });
   await page.goto('http://127.0.0.1:5174/');
 
+  // Initial render mirrors the host theme.
   await expectGraphiteTheme(page, 'dark');
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await expect(page.getByRole('button', { name: /Switch to .* theme/ })).toHaveCount(0);
+
+  // Firing the host theme change flips the palette.
+  await page.evaluate(() => window.__fireHostTheme?.('light'));
   await expectGraphiteTheme(page, 'light');
 });

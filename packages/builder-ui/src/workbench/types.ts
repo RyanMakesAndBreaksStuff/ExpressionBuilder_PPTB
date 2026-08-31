@@ -6,7 +6,6 @@ import type {
 } from '@ryanmakes/eb_engine';
 import type { ReactNode } from 'react';
 
-import type { PaletteId } from '../theme/workbenchTokens';
 import type { DataSourceDescriptor, QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
 
 export type RightWorkbenchTab = 'diagnostics' | 'modeContext';
@@ -29,11 +28,9 @@ export interface ModeContext {
 
 export interface WorkbenchHeaderProps {
   mode: ExpressionMode;
-  paletteId: PaletteId;
   onModeChange: (mode: ExpressionMode) => void;
   onImport: () => void;
   onExport: () => void;
-  onToggleTheme: () => void;
 }
 
 export interface FieldToolboxPaneProps {

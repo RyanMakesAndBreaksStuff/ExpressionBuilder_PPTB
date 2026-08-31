@@ -68,7 +68,7 @@ vi.mock('@dnd-kit/react', async (importOriginal) => {
   };
 });
 
-function createAdapter(savedPalette: string | null = null): PlatformAdapter {
+function createAdapter(): PlatformAdapter {
   return {
     copyToClipboard: vi.fn(),
     notify: vi.fn(),
@@ -85,7 +85,6 @@ function createAdapter(savedPalette: string | null = null): PlatformAdapter {
       // and break keyboard-navigation assertions). Other keys still resolve to null.
       get: vi.fn(async (key: string) => {
         if (key === 'eb.onboarding.seen.v1') return '1';
-        if (key === 'eb.workbench.palette') return savedPalette;
         return null;
       }),
       set: vi.fn(async () => undefined),
@@ -573,48 +572,36 @@ describe('shared builder UI', () => {
     expect(screen.queryByText(/saved expression json/i)).not.toBeInTheDocument();
   });
 
-  it('removes the palette bench and keeps a working icon theme toggle', async () => {
-    const user = userEvent.setup();
+  it('removes the palette bench and the manual theme toggle', async () => {
     const adapter = createAdapter();
     vi.mocked(adapter.getTheme).mockResolvedValue('dark');
-    render(<ExpressionBuilderShell adapter={adapter} />);
+    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
 
     expect(screen.queryByText('Atlas')).not.toBeInTheDocument();
     expect(screen.queryByText('Sandstone')).not.toBeInTheDocument();
 
-    const toggle = await screen.findByRole('button', { name: 'Switch to light theme' });
-    await user.click(toggle);
-
-    expect(screen.getByRole('button', { name: 'Switch to dark theme' })).toBeInTheDocument();
-    expect(adapter.settings.set).toHaveBeenCalledWith('eb.workbench.palette', 'graphiteLight');
+    await waitFor(() =>
+      expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'dark'),
+    );
+    expect(screen.queryByRole('button', { name: /Switch to .* theme/ })).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['porcelainLight', 'graphiteLight', 'light'],
-    ['porcelainDark', 'graphiteDark', 'dark'],
-  ] as const)('migrates the legacy %s preference to %s', async (legacyId, graphiteId, mode) => {
-    const adapter = createAdapter(legacyId);
+  it('follows the host theme on mount and on live changes', async () => {
+    const adapter = createAdapter();
+    vi.mocked(adapter.getTheme).mockResolvedValue('light');
     const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
 
-    await waitFor(() => {
-      expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', mode);
-      expect(adapter.settings.set).toHaveBeenCalledWith('eb.workbench.palette', graphiteId);
-    });
-  });
+    // Initial render mirrors the host theme.
+    await waitFor(() =>
+      expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'light'),
+    );
 
-  it('uses a saved Graphite preference without rewriting it', async () => {
-    const adapter = createAdapter('graphiteLight');
-    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
+    // Driving a host theme change flips the palette.
+    const handler = vi.mocked(adapter.onThemeChanged).mock.calls[0][0];
+    act(() => handler('dark'));
 
-    await waitFor(() => expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'light'));
-    expect(adapter.settings.set).not.toHaveBeenCalledWith('eb.workbench.palette', 'graphiteLight');
-  });
-
-  it('falls back to the host theme for an unknown saved preference', async () => {
-    const adapter = createAdapter('unknown-palette');
-    vi.mocked(adapter.getTheme).mockResolvedValue('highContrast');
-    const { container } = render(<ExpressionBuilderShell adapter={adapter} />);
-
-    await waitFor(() => expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'dark'));
+    await waitFor(() =>
+      expect(container.querySelector('.eb-root')).toHaveAttribute('data-theme', 'dark'),
+    );
   });
 });

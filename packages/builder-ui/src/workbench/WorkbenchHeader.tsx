@@ -1,20 +1,14 @@
 import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
-import { graphiteTokens } from '../theme/workbenchTokens';
 import type { WorkbenchHeaderProps } from './types';
 import { ActionButton } from './controls/ActionButton';
-import { ExportIcon, ImportIcon, MoonIcon, SunIcon } from './icons/BuilderIcons';
+import { ExportIcon, ImportIcon } from './icons/BuilderIcons';
 
 export function WorkbenchHeader({
   mode,
-  paletteId,
   onExport,
   onImport,
   onModeChange,
-  onToggleTheme,
 }: WorkbenchHeaderProps) {
-  const theme = graphiteTokens[paletteId].mode;
-  const nextTheme = theme === 'dark' ? 'light' : 'dark';
-
   return (
     <header className="eb-workbench-header">
       <div className="eb-header-brand">
@@ -33,13 +27,6 @@ export function WorkbenchHeader({
       <ModeSegmentedControl mode={mode} onChange={onModeChange} />
 
       <div className="eb-header-actions">
-        <ActionButton
-          variant="icon"
-          label={`Switch to ${nextTheme} theme`}
-          title={`Switch to ${nextTheme} theme`}
-          icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          onClick={onToggleTheme}
-        />
         <ActionButton variant="ghost" onClick={onImport} icon={<ImportIcon />}>
           Import
         </ActionButton>
