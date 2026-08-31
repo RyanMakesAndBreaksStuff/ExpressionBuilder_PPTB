@@ -6,7 +6,6 @@ export function getDefaultWorkbenchState(): WorkbenchState {
     leftDockCollapsed: false,
     rightDockCollapsed: false,
     previewCollapsed: false,
-    leftTab: 'dynamicContent',
     rightTab: 'diagnostics',
     copyState: 'idle',
   };

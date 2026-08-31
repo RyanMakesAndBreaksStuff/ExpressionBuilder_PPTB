@@ -16,7 +16,6 @@ function baseProps() {
     fields: sampleFields,
     source,
     collapsed: false,
-    onTabChange: vi.fn(),
     onToggleCollapsed: vi.fn(),
     onSwitchTable: vi.fn(),
     onImport: vi.fn(),
@@ -29,7 +28,7 @@ function baseProps() {
 
 describe('FieldToolboxPane', () => {
   it('uses the type badge as the only type marker in each field row', () => {
-    render(<FieldToolboxPane {...baseProps()} activeTab="dynamicContent" />);
+    render(<FieldToolboxPane {...baseProps()} />);
 
     const firstFieldAction = screen.getByRole('button', {
       name: `Add a rule for ${sampleFields[0].label}, ${sampleFields[0].type}`,
@@ -42,7 +41,7 @@ describe('FieldToolboxPane', () => {
   });
 
   it('renders a separately named drag handle for every field', () => {
-    render(<FieldToolboxPane {...baseProps()} activeTab="dynamicContent" />);
+    render(<FieldToolboxPane {...baseProps()} />);
 
     expect(screen.getAllByRole('button', { name: /^Drag .+ to insert$/ })).toHaveLength(
       sampleFields.length,
@@ -52,7 +51,7 @@ describe('FieldToolboxPane', () => {
   it('creates a rule when a field row is clicked', async () => {
     const onCreateRuleFromField = vi.fn();
     render(
-      <FieldToolboxPane {...baseProps()} activeTab="dynamicContent" onCreateRuleFromField={onCreateRuleFromField} />,
+      <FieldToolboxPane {...baseProps()} onCreateRuleFromField={onCreateRuleFromField} />,
     );
 
     const list = screen.getByRole('list', { name: 'Dynamic content fields' });
@@ -73,7 +72,6 @@ describe('FieldToolboxPane', () => {
       render(
         <FieldToolboxPane
           {...baseProps()}
-          activeTab="dynamicContent"
           onCreateRuleFromField={onCreateRuleFromField}
         />,
       );
@@ -95,7 +93,6 @@ describe('FieldToolboxPane', () => {
     render(
       <FieldToolboxPane
         {...baseProps()}
-        activeTab="dynamicContent"
         onCreateRuleFromField={onCreateRuleFromField}
       />,
     );
@@ -108,21 +105,5 @@ describe('FieldToolboxPane', () => {
 
     expect(handle).toHaveFocus();
     expect(onCreateRuleFromField).not.toHaveBeenCalled();
-  });
-
-  it('toggles wrapper selection from the wrappers tab', async () => {
-    const onToggleWrapper = vi.fn();
-    render(
-      <FieldToolboxPane
-        {...baseProps()}
-        activeTab="wrappers"
-        selectedWrappers={[]}
-        onToggleWrapper={onToggleWrapper}
-        onClearWrapperSelection={vi.fn()}
-      />,
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /Select toLower/ }));
-    expect(onToggleWrapper).toHaveBeenCalledWith('toLower');
   });
 });

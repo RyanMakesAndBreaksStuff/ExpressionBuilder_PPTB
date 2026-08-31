@@ -110,8 +110,6 @@ describe('shared builder UI', () => {
 
     expect(screen.getByRole('heading', { name: /condition builder/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /expression preview/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /dynamic content/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /wrappers/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /diagnostics/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /mode context/i })).toBeInTheDocument();
   });
@@ -479,19 +477,15 @@ describe('shared builder UI', () => {
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("'director'");
   });
 
-  it('applies a selected toLower wrapper to both sides of a rule', async () => {
+  it('applies a toLower wrapper to both sides of a rule from the per-row menu', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
     const approverRow = screen.getByRole('group', { name: /Approver contains finance/i });
-    await user.click(approverRow);
 
-    // Select the toLower wrapper in the Wrappers tab.
-    await user.click(screen.getByRole('tab', { name: /wrappers/i }));
-    await user.click(screen.getByRole('button', { name: /Select toLower/ }));
-
-    // Apply it from the rule row.
-    await user.click(within(approverRow).getByRole('button', { name: 'Apply Wrap' }));
+    // Open the row's own wrapper menu and check toLower.
+    await user.click(within(approverRow).getByRole('button', { name: 'Wrappers for Approver' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
 
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent('toLower(');
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("toLower('finance')");

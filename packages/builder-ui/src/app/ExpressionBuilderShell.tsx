@@ -101,7 +101,6 @@ export function ExpressionBuilderShell({
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
   >([]);
-  const [selectedWrappers, setSelectedWrappers] = useState<string[]>([]);
 
   // Pending state for the switch-source confirmation dialog (T18).
   type PendingSwitch = {
@@ -333,11 +332,6 @@ export function ExpressionBuilderShell({
     setDocument((current) => moveNode(current, nodeId, targetGroupId, index));
   };
 
-  const toggleWrapper = (wrapperId: string) =>
-    setSelectedWrappers((current) =>
-      current.includes(wrapperId) ? current.filter((id) => id !== wrapperId) : [...current, wrapperId],
-    );
-
   const loadSampleFields = () => {
     setDocument((current) =>
       applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
@@ -440,11 +434,7 @@ export function ExpressionBuilderShell({
             <FieldToolboxPane
               fields={document.fields}
               source={document.source ?? { kind: 'unknown' }}
-              activeTab={workbench.leftTab}
               collapsed={workbench.leftDockCollapsed}
-              onTabChange={(leftTab) =>
-                setWorkbench((current) => ({ ...current, leftTab }))
-              }
               onToggleCollapsed={() =>
                 setWorkbench((current) => toggleDock(current, 'left'))
               }
@@ -467,9 +457,6 @@ export function ExpressionBuilderShell({
               relatedSections={relatedSections}
               onExpandRelated={handleExpandRelated}
               onCreateRuleFromField={createRuleFromField}
-              selectedWrappers={selectedWrappers}
-              onToggleWrapper={toggleWrapper}
-              onClearWrapperSelection={() => setSelectedWrappers([])}
             />
 
             <div className="eb-center-col">
@@ -482,7 +469,6 @@ export function ExpressionBuilderShell({
                 onFocusGroup={(groupId) =>
                   setDocument((current) => focusGroup(current, groupId))
                 }
-                selectedWrappers={selectedWrappers}
                 onRequestRemap={(ruleId) => {
                   setDocument((current) => selectRule(current, ruleId));
                   setDialog('remap');

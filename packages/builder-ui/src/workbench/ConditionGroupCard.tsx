@@ -30,7 +30,6 @@ interface ConditionGroupCardProps {
   onDeleteNode: (nodeId: string) => void;
   onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
   onRequestRemap?: (ruleId: string) => void;
-  selectedWrappers?: string[];
 }
 
 export function ConditionGroupCard({
@@ -53,7 +52,6 @@ export function ConditionGroupCard({
   onSelectRule,
   onUpdateRule,
   onRequestRemap,
-  selectedWrappers,
 }: ConditionGroupCardProps) {
   const isAnd = group.conjunction === 'and';
   const isEmpty = group.children.length === 0;
@@ -184,7 +182,6 @@ export function ConditionGroupCard({
                 onDeleteNode={onDeleteNode}
                 onReorderNode={onReorderNode}
                 onRequestRemap={onRequestRemap}
-                selectedWrappers={selectedWrappers}
               />
             ) : (
               <RuleRowEditor
@@ -200,7 +197,6 @@ export function ConditionGroupCard({
                 onDelete={onDeleteNode}
                 onReorderNode={onReorderNode}
                 onRequestRemap={onRequestRemap}
-                selectedWrappers={selectedWrappers}
               />
             )}
           </Fragment>

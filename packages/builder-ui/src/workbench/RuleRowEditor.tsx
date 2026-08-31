@@ -1,10 +1,18 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import {
+  Menu,
+  MenuItemCheckbox,
+  MenuList,
+  MenuPopover,
+  MenuTrigger,
+} from '@fluentui/react-components';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 import { ConditionDragHandle } from './ConditionDragHandle';
 import { ConditionMoveButtons } from './ConditionMoveButtons';
+import { WRAPPERS } from './wrappers';
 
 export function RuleRowEditor({
   fields,
@@ -15,7 +23,6 @@ export function RuleRowEditor({
   onRequestRemap,
   rule,
   selected,
-  selectedWrappers = [],
   parentGroupId,
   sourceIndex,
   siblingCount,
@@ -272,6 +279,44 @@ export function RuleRowEditor({
       </div>
       <div className="eb-rule-tools">
         {moveButtons}
+        <Menu
+          checkedValues={{ wrappers: appliedWraps }}
+          onCheckedValueChange={(_, { checkedItems }) => {
+            const set = new Set(checkedItems);
+            // keep already-applied in their current order, then append newly-checked in click order
+            const kept = appliedWraps.filter((id) => set.has(id));
+            const added = checkedItems.filter((id) => !appliedWraps.includes(id));
+            onUpdate(rule.id, { wrappers: [...kept, ...added] });
+          }}
+        >
+          <MenuTrigger disableButtonEnhancement>
+            <button
+              type="button"
+              className="eb-icon-btn"
+              title="Wrappers"
+              aria-label={`Wrappers for ${fieldLabel}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <WrapIcon />
+            </button>
+          </MenuTrigger>
+          <MenuPopover onClick={(e) => e.stopPropagation()}>
+            <MenuList>
+              {WRAPPERS.map((w) => (
+                <MenuItemCheckbox
+                  key={w.id}
+                  name="wrappers"
+                  value={w.id}
+                  title={w.detail}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="eb-menu-item-label">{w.label}</span>
+                  <span className="eb-menu-item-detail">{w.detail}</span>
+                </MenuItemCheckbox>
+              ))}
+            </MenuList>
+          </MenuPopover>
+        </Menu>
         <button
           type="button"
           className="eb-icon-btn"
@@ -296,33 +341,6 @@ export function RuleRowEditor({
         >
           <TrashIcon />
         </button>
-      </div>
-      <div className="eb-rule-row-actions">
-        <button
-          type="button"
-          className="eb-action-btn eb-action-subtle"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUpdate(rule.id, { wrappers: selectedWrappers });
-          }}
-          disabled={selectedWrappers.length === 0}
-          aria-label="Apply Wrap"
-        >
-          Apply Wrap
-        </button>
-        {appliedWraps.length ? (
-          <button
-            type="button"
-            className="eb-action-btn eb-action-subtle"
-            onClick={(e) => {
-              e.stopPropagation();
-              onUpdate(rule.id, { wrappers: [] });
-            }}
-            aria-label="Clear wraps"
-          >
-            Clear wraps
-          </button>
-        ) : null}
       </div>
     </div>
   ));

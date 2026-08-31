@@ -12,8 +12,6 @@ import {
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import type { FieldToolboxPaneProps } from './types';
 import { DockPane } from './controls/DockPane';
-import { TabStrip } from './controls/TabStrip';
-import { WrapperChips } from './WrapperChips';
 import { SourceChip } from './SourceChip';
 import { GetStartedPanel } from './GetStartedPanel';
 import { ToolboxFieldList } from './ToolboxFieldList';
@@ -29,7 +27,6 @@ const useStyles = makeStyles({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function FieldToolboxPane({
-  activeTab,
   collapsed,
   fields,
   source,
@@ -40,14 +37,10 @@ export function FieldToolboxPane({
   onManageProfiles,
   onRefresh,
   canConnectTable = true,
-  onTabChange,
   onToggleCollapsed,
   relatedSections,
   onExpandRelated,
   onCreateRuleFromField,
-  selectedWrappers,
-  onToggleWrapper,
-  onClearWrapperSelection,
 }: FieldToolboxPaneProps) {
   const styles = useStyles();
   const [search, setSearch] = useState('');
@@ -99,21 +92,9 @@ export function FieldToolboxPane({
       side="left"
       collapsed={collapsed}
       meta=""
-      tabs={
-        <TabStrip
-          label="Toolbox tabs"
-          activeTab={activeTab}
-          tabs={[
-            { id: 'dynamicContent', label: 'Dynamic Content' },
-            { id: 'wrappers', label: 'Wrappers' },
-          ]}
-          onChange={onTabChange}
-        />
-      }
       onToggleCollapsed={onToggleCollapsed}
     >
-      {activeTab === 'dynamicContent' ? (
-        <div className="eb-toolbox-stack">
+      <div className="eb-toolbox-stack">
           <SourceChip
             source={source}
             onSwitchTable={onSwitchTable}
@@ -218,18 +199,7 @@ export function FieldToolboxPane({
               </div>
             </>
           )}
-        </div>
-      ) : (
-        <div className="eb-toolbox-stack">
-          <div className="eb-toolbox-scroll">
-            <WrapperChips
-              selected={selectedWrappers ?? []}
-              onToggle={(wrapperId) => onToggleWrapper?.(wrapperId)}
-              onClearSelection={() => onClearWrapperSelection?.()}
-            />
-          </div>
-        </div>
-      )}
+      </div>
     </DockPane>
   );
 }
