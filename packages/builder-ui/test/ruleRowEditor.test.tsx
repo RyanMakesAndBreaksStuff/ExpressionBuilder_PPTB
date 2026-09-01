@@ -53,16 +53,43 @@ describe('RuleRowEditor', () => {
     expect(onUpdate).toHaveBeenCalledWith('rule-1', { value: 1 });
   });
 
-  it('applies the selected wrappers via Apply Wrap', async () => {
-    const { onUpdate } = renderRow(baseRule, { selectedWrappers: ['toLower', 'trim'] });
-    await userEvent.click(screen.getByRole('button', { name: 'Apply Wrap' }));
-    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower', 'trim'] });
+  it('applies a wrapper from the per-row menu', async () => {
+    const { onUpdate } = renderRow(baseRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'] });
   });
 
-  it('clears applied wraps with one click', async () => {
+  it('removes a wrapper by unchecking it in the menu', async () => {
     const wrappedRule: QueryRule = { ...baseRule, wrappers: ['toLower'] };
     const { onUpdate } = renderRow(wrappedRule);
-    await userEvent.click(screen.getByRole('button', { name: 'Clear wraps' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
     expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: [] });
+  });
+
+  it('shows existing wrappers pre-checked in the menu', async () => {
+    const wrappedRule: QueryRule = { ...baseRule, wrappers: ['toLower', 'trim'] };
+    renderRow(wrappedRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /toLower/ })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemcheckbox', { name: /trim/ })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemcheckbox', { name: /toUpper/ })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('appends a newly checked wrapper after existing ones (nesting order)', async () => {
+    const wrappedRule: QueryRule = { ...baseRule, wrappers: ['trim'] };
+    const { onUpdate } = renderRow(wrappedRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['trim', 'toLower'] });
+  });
+
+  it('unchecking one wrapper leaves the rest in place', async () => {
+    const wrappedRule: QueryRule = { ...baseRule, wrappers: ['trim', 'toLower'] };
+    const { onUpdate } = renderRow(wrappedRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /trim/ }));
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'] });
   });
 });

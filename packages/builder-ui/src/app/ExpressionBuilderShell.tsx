@@ -21,7 +21,6 @@ import { diffFields, type FieldDrift } from '../importExport/metadataCache';
 import {
   createGraphiteFluentTheme,
   graphiteTokens,
-  migratePaletteId,
   type PaletteId,
   type GraphiteThemeMode,
 } from '../theme/workbenchTokens';
@@ -51,8 +50,6 @@ import {
 } from '../workbench/workbenchState';
 import '../theme/tokens.css';
 
-const PALETTE_SETTING_KEY = 'eb.workbench.palette';
-
 const createRuleSeed = (field: FieldDefinition) => ({
   fieldId: field.id,
   operator: getSafeOperator(field, 'equals'),
@@ -79,10 +76,6 @@ export function ExpressionBuilderShell({
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [paletteId, setPaletteId] = useState<PaletteId>('graphiteDark');
-  // Tracks whether the user has explicitly picked a palette this session.
-  // When true, host theme events no longer overwrite the choice.
-  // ponytail: session flag + persisted setting; skip a per-user "auto/light/dark" tri-state until asked
-  const [paletteOverride, setPaletteOverride] = useState(false);
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
@@ -101,7 +94,6 @@ export function ExpressionBuilderShell({
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
   >([]);
-  const [selectedWrappers, setSelectedWrappers] = useState<string[]>([]);
 
   // Pending state for the switch-source confirmation dialog (T18).
   type PendingSwitch = {
@@ -124,45 +116,10 @@ export function ExpressionBuilderShell({
 
   useEffect(() => {
     let active = true;
-
-    // Prefer persisted palette; fall back to host theme.
-    void adapter.settings
-      .get(PALETTE_SETTING_KEY)
-      .then((stored) => {
-        if (!active) return;
-        const savedPalette = migratePaletteId(stored);
-        if (savedPalette) {
-          setPaletteId(savedPalette);
-          setPaletteOverride(true);
-          if (stored !== savedPalette) {
-            void adapter.settings.set(PALETTE_SETTING_KEY, savedPalette).catch(() => {});
-          }
-          return;
-        }
-        void adapter.getTheme().then((platformTheme) => {
-          if (active) setPaletteId(normalizePalette(platformTheme));
-        });
-      })
-      .catch(() => {
-        // Settings read failed — fall back to host theme silently.
-        void adapter.getTheme().then((platformTheme) => {
-          if (active) setPaletteId(normalizePalette(platformTheme));
-        });
-      });
-
-    return () => {
-      active = false;
-    };
+    void adapter.getTheme().then((t) => { if (active) setPaletteId(normalizePalette(t)); });
+    const unsubscribe = adapter.onThemeChanged((t) => setPaletteId(normalizePalette(t)));
+    return () => { active = false; unsubscribe(); };
   }, [adapter]);
-
-  useEffect(() => {
-    const unsubscribe = adapter.onThemeChanged((platformTheme) => {
-      // Host events only apply while the user has NOT locked a palette this session.
-      setPaletteId((current) => (paletteOverride ? current : normalizePalette(platformTheme)));
-    });
-    return unsubscribe;
-  }, [adapter, paletteOverride]);
-
 
   const updateMode = (mode: ExpressionMode) => {
     setDocument((current) => ({ ...current, mode }));
@@ -333,11 +290,6 @@ export function ExpressionBuilderShell({
     setDocument((current) => moveNode(current, nodeId, targetGroupId, index));
   };
 
-  const toggleWrapper = (wrapperId: string) =>
-    setSelectedWrappers((current) =>
-      current.includes(wrapperId) ? current.filter((id) => id !== wrapperId) : [...current, wrapperId],
-    );
-
   const loadSampleFields = () => {
     setDocument((current) =>
       applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
@@ -407,18 +359,9 @@ export function ExpressionBuilderShell({
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <WorkbenchHeader
           mode={document.mode}
-          paletteId={paletteId}
           onModeChange={updateMode}
           onExport={() => void exportDocument()}
           onImport={() => setDialog('importExpression')}
-          onToggleTheme={() => {
-            setPaletteId((current) => {
-              const next = current === 'graphiteDark' ? 'graphiteLight' : 'graphiteDark';
-              void adapter.settings.set(PALETTE_SETTING_KEY, next).catch(() => {});
-              return next;
-            });
-            setPaletteOverride(true);
-          }}
         />
 
         <BuilderDragDropProvider
@@ -440,11 +383,7 @@ export function ExpressionBuilderShell({
             <FieldToolboxPane
               fields={document.fields}
               source={document.source ?? { kind: 'unknown' }}
-              activeTab={workbench.leftTab}
               collapsed={workbench.leftDockCollapsed}
-              onTabChange={(leftTab) =>
-                setWorkbench((current) => ({ ...current, leftTab }))
-              }
               onToggleCollapsed={() =>
                 setWorkbench((current) => toggleDock(current, 'left'))
               }
@@ -467,9 +406,6 @@ export function ExpressionBuilderShell({
               relatedSections={relatedSections}
               onExpandRelated={handleExpandRelated}
               onCreateRuleFromField={createRuleFromField}
-              selectedWrappers={selectedWrappers}
-              onToggleWrapper={toggleWrapper}
-              onClearWrapperSelection={() => setSelectedWrappers([])}
             />
 
             <div className="eb-center-col">
@@ -482,7 +418,6 @@ export function ExpressionBuilderShell({
                 onFocusGroup={(groupId) =>
                   setDocument((current) => focusGroup(current, groupId))
                 }
-                selectedWrappers={selectedWrappers}
                 onRequestRemap={(ruleId) => {
                   setDocument((current) => selectRule(current, ruleId));
                   setDialog('remap');

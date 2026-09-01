@@ -12,7 +12,6 @@ describe('workbenchState', () => {
       leftDockCollapsed: false,
       rightDockCollapsed: false,
       previewCollapsed: false,
-      leftTab: 'dynamicContent',
       rightTab: 'diagnostics',
       copyState: 'idle',
     });

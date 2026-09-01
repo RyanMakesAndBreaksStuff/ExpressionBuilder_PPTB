@@ -938,12 +938,15 @@ body {
   display: contents;
 }
 
-.eb-rule-row-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-  margin-top: 4px;
+.eb-menu-item-label {
+  display: block;
+}
+
+.eb-menu-item-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text3);
 }
 
 .eb-rule-tools {

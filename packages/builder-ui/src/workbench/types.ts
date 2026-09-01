@@ -6,10 +6,8 @@ import type {
 } from '@ryanmakes/eb_engine';
 import type { ReactNode } from 'react';
 
-import type { PaletteId } from '../theme/workbenchTokens';
 import type { DataSourceDescriptor, QueryGroup, QueryRule, RulePatch } from '../composer/querySchema';
 
-export type LeftWorkbenchTab = 'dynamicContent' | 'wrappers';
 export type RightWorkbenchTab = 'diagnostics' | 'modeContext';
 export type DockSide = 'left' | 'right';
 export type CopyState = 'idle' | 'copied';
@@ -18,7 +16,6 @@ export interface WorkbenchState {
   leftDockCollapsed: boolean;
   rightDockCollapsed: boolean;
   previewCollapsed: boolean;
-  leftTab: LeftWorkbenchTab;
   rightTab: RightWorkbenchTab;
   copyState: CopyState;
 }
@@ -31,19 +28,15 @@ export interface ModeContext {
 
 export interface WorkbenchHeaderProps {
   mode: ExpressionMode;
-  paletteId: PaletteId;
   onModeChange: (mode: ExpressionMode) => void;
   onImport: () => void;
   onExport: () => void;
-  onToggleTheme: () => void;
 }
 
 export interface FieldToolboxPaneProps {
   fields: FieldDefinition[];
   source: DataSourceDescriptor;
-  activeTab: LeftWorkbenchTab;
   collapsed: boolean;
-  onTabChange: (tab: LeftWorkbenchTab) => void;
   onToggleCollapsed: () => void;
   onSwitchTable: () => void;
   onImport: () => void;
@@ -59,12 +52,6 @@ export interface FieldToolboxPaneProps {
   onExpandRelated?: (navigationProperty: string) => void;
   /** Called when the user clicks a field row in the toolbox. */
   onCreateRuleFromField?: (field: FieldDefinition) => void;
-  /** Currently selected wrapper ids (palette state). */
-  selectedWrappers?: string[];
-  /** Toggle a wrapper in the palette selection. */
-  onToggleWrapper?: (wrapperId: string) => void;
-  /** Clear the entire palette selection. */
-  onClearWrapperSelection?: () => void;
 }
 
 export interface ConditionCanvasProps {
@@ -74,8 +61,6 @@ export interface ConditionCanvasProps {
   selectedRuleId?: string;
   /** Group that new rules/groups/fields are added to; shown with a focus outline. */
   activeGroupId?: string;
-  /** Wrapper ids currently selected in the palette; applied when a rule's "Apply Wrap" is clicked. */
-  selectedWrappers?: string[];
   onSelectRule: (ruleId: string) => void;
   onAddRule: (groupId: string) => void;
   onAddGroup: (groupId: string) => void;
@@ -120,8 +105,6 @@ export interface RuleRowEditorProps {
   onDelete: (ruleId: string) => void;
   /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
   onRequestRemap?: (ruleId: string) => void;
-  /** Wrapper ids currently selected in the palette. */
-  selectedWrappers?: string[];
   parentGroupId?: string;
   sourceIndex?: number;
   siblingCount?: number;
