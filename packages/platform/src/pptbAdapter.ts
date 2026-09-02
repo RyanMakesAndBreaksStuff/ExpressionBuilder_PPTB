@@ -1,3 +1,5 @@
+import type ToolBoxAPI from '@pptb/types/toolboxAPI';
+
 import type {
   NotificationLevel,
   PlatformAdapter,
@@ -32,66 +34,20 @@ const OPTIONSET_CAST_BY_TYPE: Record<string, string> = {
   MultiSelectPicklist: 'MultiSelectPicklistAttributeMetadata',
 };
 
-interface PptbClipboardApi {
-  writeText?: (text: string) => MaybePromise<void>;
-  copy?: (text: string) => MaybePromise<void>;
-}
-
-interface PptbNotificationOptions {
-  title: string;
-  body: string;
-  type?: NotificationLevel;
-  duration?: number;
-}
-
-interface PptbSettingsApi {
-  get?: (key: string) => MaybePromise<string | null | undefined>;
-  set?: (key: string, value: string) => MaybePromise<void>;
-  remove?: (key: string) => MaybePromise<void>;
-}
-
-interface PptbUtilsApi {
-  copyToClipboard?: (text: string) => MaybePromise<void>;
-  showNotification?: (options: PptbNotificationOptions) => MaybePromise<void>;
-  getCurrentTheme?: () => MaybePromise<string | null | undefined>;
-}
-
-interface PptbEventPayload {
-  event: string;
-  data?: unknown;
-}
-
-interface PptbEventsApi {
-  on?: (handler: (details: unknown, payload: PptbEventPayload) => void) => MaybePromise<void>;
-  off?: (handler: (details: unknown, payload: PptbEventPayload) => void) => MaybePromise<void>;
-}
-
+/**
+ * Local mirror of the real `@pptb/types` API surface (1.2.5), narrowed to the
+ * three namespaces this adapter actually uses (`utils`, `settings`, `events`)
+ * and with every member made optional. Optionality matters for two reasons:
+ * tests construct partial fakes, and the adapter must degrade gracefully when
+ * running off-host (e.g. in a browser during local dev) where `toolboxAPI` is
+ * entirely absent. There must be no members here beyond what `ToolBoxAPI.API`
+ * actually declares — a fabricated fallback arm is exactly how the
+ * `settings.remove` bug happened (it silently absorbed a real-API miss).
+ */
 export interface PptbToolboxApi {
-  clipboard?: PptbClipboardApi;
-  utils?: PptbUtilsApi;
-  settings?: PptbSettingsApi;
-  events?: PptbEventsApi;
-  copyToClipboard?: (text: string) => MaybePromise<void>;
-  notify?: (message: string, level: NotificationLevel) => MaybePromise<void>;
-  showNotification?: (
-    message: string,
-    level: NotificationLevel,
-  ) => MaybePromise<void>;
-  getTheme?: () => MaybePromise<string | null | undefined>;
-  theme?: string | null;
-  onThemeChanged?: (handler: (theme: string) => void) => MaybePromise<() => void>;
-  addThemeChangedListener?: (
-    handler: (theme: string) => void,
-  ) => MaybePromise<() => void>;
-  getSetting?: (key: string) => MaybePromise<string | null | undefined>;
-  setSetting?: (key: string, value: string) => MaybePromise<void>;
-  removeSetting?: (key: string) => MaybePromise<void>;
-  getDataverseFields?: () => MaybePromise<unknown[] | null | undefined>;
-  listDataverseFields?: () => MaybePromise<unknown[] | null | undefined>;
-}
-
-interface PptbWindow extends Window {
-  toolboxAPI?: PptbToolboxApi;
+  utils?: Partial<ToolBoxAPI.UtilsAPI>;
+  settings?: Partial<ToolBoxAPI.SettingsAPI>;
+  events?: Partial<ToolBoxAPI.EventsAPI>;
 }
 
 function getWindowToolboxApi(): PptbToolboxApi | undefined {
@@ -99,7 +55,12 @@ function getWindowToolboxApi(): PptbToolboxApi | undefined {
     return undefined;
   }
 
-  return (window as PptbWindow).toolboxAPI;
+  // Not `window as Window` — importing `@pptb/types/toolboxAPI` merges a
+  // `declare global { interface Window { toolboxAPI: ToolBoxAPI.API } }`
+  // augmentation (required, real API) into this file's ambient scope, which
+  // would conflict with our optional/narrowed `PptbToolboxApi` shape if we
+  // extended `Window` directly. Casting through `unknown` sidesteps that.
+  return (window as unknown as { toolboxAPI?: PptbToolboxApi }).toolboxAPI;
 }
 
 function getWindowDataverseApi(): DataverseApi | undefined {
@@ -125,6 +86,12 @@ function normalizeTheme(theme: string | null | undefined): PlatformTheme {
     return 'dark';
   }
 
+  // PPTB's real `utils.getCurrentTheme()` only ever resolves "light" | "dark"
+  // (see @pptb/types 1.2.5) — it never emits a high-contrast value. This
+  // branch is kept anyway because `PlatformTheme` is a port-level type shared
+  // with `webAdapter.ts` and any future adapter; normalizing here means the
+  // port's `highContrast` value stays reachable without every call site
+  // re-deriving it, even though no current adapter actually produces it.
   if (
     normalized === 'highcontrast' ||
     normalized === 'high-contrast' ||
@@ -145,82 +112,38 @@ export function createPptbAdapter(
 
   const adapter: PlatformAdapter = {
     async copyToClipboard(text) {
-      if (api?.utils?.copyToClipboard) {
-        await api.utils.copyToClipboard(text);
-        return;
-      }
-
-      if (api?.copyToClipboard) {
-        await api.copyToClipboard(text);
-        return;
-      }
-
-      if (api?.clipboard?.writeText) {
-        await api.clipboard.writeText(text);
-        return;
-      }
-
-      if (api?.clipboard?.copy) {
-        await api.clipboard.copy(text);
-      }
+      await api?.utils?.copyToClipboard?.(text);
     },
 
     async notify(message, level) {
-      if (api?.utils?.showNotification) {
-        await api.utils.showNotification({
-          title: levelLabel(level),
-          body: message,
-          type: level,
-        });
-        return;
-      }
-
-      if (api?.notify) {
-        await api.notify(message, level);
-        return;
-      }
-
-      if (api?.showNotification) {
-        await api.showNotification(message, level);
-      }
+      await api?.utils?.showNotification?.({
+        title: levelLabel(level),
+        body: message,
+        type: level,
+      });
     },
 
     async getTheme() {
-      if (api?.utils?.getCurrentTheme) {
-        return normalizeTheme(await api.utils.getCurrentTheme());
-      }
-
-      if (api?.getTheme) {
-        return normalizeTheme(await api.getTheme());
-      }
-
-      return normalizeTheme(api?.theme);
+      return normalizeTheme(await api?.utils?.getCurrentTheme?.());
     },
 
     onThemeChanged(handler) {
-      const wrappedHandler = (theme: string) => {
-        handler(normalizeTheme(theme));
-      };
-
+      // Sanctioned pattern per docs/api-info/events-api: there is no
+      // dedicated theme-change event, so we listen for "settings:updated"
+      // and read the theme back out of its payload.
       if (api?.events?.on) {
-        const eventHandler = (_details: unknown, payload: PptbEventPayload) => {
+        const eventHandler = (_details: unknown, payload: ToolBoxAPI.ToolBoxEventPayload) => {
           if (payload.event === 'settings:updated' && isThemePayload(payload.data)) {
             handler(normalizeTheme(payload.data.theme));
           }
         };
 
-        void api.events.on(eventHandler);
+        api.events.on(eventHandler);
         return () => {
-          void api.events?.off?.(eventHandler);
+          // events.off exists on the real API but is undocumented in
+          // docs/api-info/ — keep it behind optional chaining.
+          api?.events?.off?.(eventHandler);
         };
-      }
-
-      const unsubscribe =
-        api?.onThemeChanged?.(wrappedHandler) ??
-        api?.addThemeChangedListener?.(wrappedHandler);
-
-      if (typeof unsubscribe === 'function') {
-        return unsubscribe;
       }
 
       return () => undefined;
@@ -228,29 +151,37 @@ export function createPptbAdapter(
 
     settings: {
       async get(key) {
-        const value = api?.settings?.get
-          ? await api.settings.get(key)
-          : await api?.getSetting?.(key);
-
-        return value ?? null;
+        const value = await api?.settings?.get?.(key);
+        // The real host's `settings.get` returns `Promise<any>`; coerce
+        // rather than assert, since PlatformSettings.get is typed `string |
+        // null` (see PlatformAdapter.ts) — a deliberate narrowing kept even
+        // though the host itself is untyped here.
+        return typeof value === 'string' ? value : null;
       },
 
       async set(key, value) {
-        if (api?.settings?.set) {
-          await api.settings.set(key, value);
-          return;
-        }
-
-        await api?.setSetting?.(key, value);
+        await api?.settings?.set?.(key, value);
       },
 
       async remove(key) {
-        if (api?.settings?.remove) {
-          await api.settings.remove(key);
-          return;
-        }
+        // The real PPTB host settings API (v1.2.5) exposes only
+        // getAll/get/set/setAll — there is no settings.remove. Emulate
+        // deletion via read-modify-write. This is not atomic: a concurrent
+        // write landing between getAll and setAll would be lost
+        // (last-writer-wins), which is acceptable for a single host /
+        // single tool instance — no locking is implemented here.
+        const all = (await api?.settings?.getAll?.()) ?? {};
+        if (!(key in all)) return;
+        const { [key]: _removed, ...rest } = all;
+        await api?.settings?.setAll?.(rest);
+      },
 
-        await api?.removeSetting?.(key);
+      async getAll() {
+        return (await api?.settings?.getAll?.()) ?? null;
+      },
+
+      async setAll(values) {
+        await api?.settings?.setAll?.(values);
       },
     },
 
@@ -347,14 +278,6 @@ export function createPptbAdapter(
       if (dv?.getEntityRelatedMetadata) {
         const result = await adapter.discoverFields?.({});
         return result?.fields ?? [];
-      }
-
-      const legacy = api?.getDataverseFields
-        ? await api.getDataverseFields()
-        : await api?.listDataverseFields?.();
-
-      if (Array.isArray(legacy)) {
-        return legacy;
       }
 
       await adapter.notify(

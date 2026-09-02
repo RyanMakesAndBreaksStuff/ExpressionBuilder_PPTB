@@ -16,5 +16,8 @@
     "test": "vitest run",
     "build": "tsc -b",
     "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@pptb/types": "1.2.5"
   }
 }

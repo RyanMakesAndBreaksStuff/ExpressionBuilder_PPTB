@@ -47,95 +47,92 @@ describe('createPptbAdapter', () => {
     expect(api.settings?.set).toHaveBeenCalledWith('draft', 'value');
   });
 
-  it('uses common PPTB clipboard, notification, theme, and settings methods', async () => {
-    let themeHandler: ((theme: string) => void) | undefined;
-    const unsubscribe = vi.fn();
-    const api: PptbToolboxApi = {
-      copyToClipboard: vi.fn().mockResolvedValue(undefined),
-      notify: vi.fn().mockResolvedValue(undefined),
-      getTheme: vi.fn().mockResolvedValue('high-contrast'),
-      onThemeChanged: vi.fn((handler) => {
-        themeHandler = handler;
-        return unsubscribe;
-      }),
-      getSetting: vi.fn().mockResolvedValue('stored'),
-      setSetting: vi.fn().mockResolvedValue(undefined),
-      removeSetting: vi.fn().mockResolvedValue(undefined),
-      getDataverseFields: vi.fn().mockResolvedValue([{ id: 'Status' }]),
-    };
+  it('is a safe no-op off-host (no toolboxAPI at all)', async () => {
+    const api: PptbToolboxApi = {};
     const adapter = createPptbAdapter(api);
     const observedTheme = vi.fn();
 
-    await adapter.copyToClipboard('@equals(true, true)');
-    await adapter.notify('Saved', 'success');
-    await expect(adapter.getTheme()).resolves.toBe('highContrast');
-    const removeListener = adapter.onThemeChanged(observedTheme);
-    themeHandler?.('dark');
-    removeListener();
-    await expect(adapter.settings.get('draft')).resolves.toBe('stored');
-    await adapter.settings.set('draft', 'value');
-    await adapter.settings.remove('draft');
-    await expect(adapter.getDataverseFields()).resolves.toEqual([
-      { id: 'Status' },
-    ]);
-
-    expect(api.copyToClipboard).toHaveBeenCalledWith('@equals(true, true)');
-    expect(api.notify).toHaveBeenCalledWith('Saved', 'success');
-    expect(observedTheme).toHaveBeenCalledWith('dark');
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(api.getSetting).toHaveBeenCalledWith('draft');
-    expect(api.setSetting).toHaveBeenCalledWith('draft', 'value');
-    expect(api.removeSetting).toHaveBeenCalledWith('draft');
-  });
-
-  it('supports nested optional API methods', async () => {
-    const api: PptbToolboxApi = {
-      clipboard: {
-        writeText: vi.fn().mockResolvedValue(undefined),
-      },
-      showNotification: vi.fn().mockResolvedValue(undefined),
-      theme: 'dark',
-      addThemeChangedListener: vi.fn((handler) => {
-        handler('highContrast');
-        return vi.fn();
-      }),
-      settings: {
-        get: vi.fn().mockResolvedValue(undefined),
-        set: vi.fn().mockResolvedValue(undefined),
-        remove: vi.fn().mockResolvedValue(undefined),
-      },
-      listDataverseFields: vi.fn().mockResolvedValue([{ id: 'Amount' }]),
-    };
-    const adapter = createPptbAdapter(api);
-    const observedTheme = vi.fn();
-
-    await adapter.copyToClipboard('text');
-    await adapter.notify('Heads up', 'warning');
-    await expect(adapter.getTheme()).resolves.toBe('dark');
-    adapter.onThemeChanged(observedTheme);
+    await expect(adapter.copyToClipboard('text')).resolves.toBeUndefined();
+    await expect(adapter.notify('Heads up', 'warning')).resolves.toBeUndefined();
+    await expect(adapter.getTheme()).resolves.toBe('light');
+    const unsubscribe = adapter.onThemeChanged(observedTheme);
+    expect(() => unsubscribe()).not.toThrow();
     await expect(adapter.settings.get('missing')).resolves.toBeNull();
-    await adapter.settings.set('draft', 'value');
-    await adapter.settings.remove('draft');
-    await expect(adapter.getDataverseFields()).resolves.toEqual([
-      { id: 'Amount' },
-    ]);
-
-    expect(api.clipboard?.writeText).toHaveBeenCalledWith('text');
-    expect(api.showNotification).toHaveBeenCalledWith('Heads up', 'warning');
-    expect(observedTheme).toHaveBeenCalledWith('highContrast');
+    await expect(adapter.settings.set('draft', 'value')).resolves.toBeUndefined();
+    await expect(adapter.settings.remove('draft')).resolves.toBeUndefined();
   });
 
   it('falls back to sample fields notification when no Dataverse connection exists', async () => {
     const api: PptbToolboxApi = {
-      notify: vi.fn().mockResolvedValue(undefined),
+      utils: {
+        showNotification: vi.fn().mockResolvedValue(undefined),
+      },
     };
     const adapter = createPptbAdapter(api);
 
     await expect(adapter.getDataverseFields()).resolves.toEqual([]);
 
-    expect(api.notify).toHaveBeenCalledWith(
-      'Using sample fields because no Dataverse connection is available.',
-      'info',
-    );
+    expect(api.utils?.showNotification).toHaveBeenCalledWith({
+      title: 'Info',
+      body: 'Using sample fields because no Dataverse connection is available.',
+      type: 'info',
+    });
+  });
+
+  describe('settings.remove', () => {
+    it('deletes the key via read-modify-write, preserving every sibling key', async () => {
+      const api: PptbToolboxApi = {
+        settings: {
+          getAll: vi.fn().mockResolvedValue({
+            'eb.profile.v1.a': '{}',
+            'eb.profile.v1.b': '{}',
+            'eb.profiles.index.v1': '["a","b"]',
+          }),
+          setAll: vi.fn().mockResolvedValue(undefined),
+        },
+      };
+      const adapter = createPptbAdapter(api);
+
+      await adapter.settings.remove('eb.profile.v1.a');
+
+      expect(api.settings?.setAll).toHaveBeenCalledTimes(1);
+      expect(api.settings?.setAll).toHaveBeenCalledWith({
+        'eb.profile.v1.b': '{}',
+        'eb.profiles.index.v1': '["a","b"]',
+      });
+    });
+
+    it('short-circuits without calling setAll when the key is absent', async () => {
+      const api: PptbToolboxApi = {
+        settings: {
+          getAll: vi.fn().mockResolvedValue({ 'eb.profile.v1.b': '{}' }),
+          setAll: vi.fn().mockResolvedValue(undefined),
+        },
+      };
+      const adapter = createPptbAdapter(api);
+
+      await adapter.settings.remove('eb.profile.v1.missing');
+
+      expect(api.settings?.setAll).not.toHaveBeenCalled();
+    });
+
+    it('is a safe no-op when the settings namespace is entirely absent', async () => {
+      const api: PptbToolboxApi = {};
+      const adapter = createPptbAdapter(api);
+
+      await expect(adapter.settings.remove('anything')).resolves.toBeUndefined();
+    });
+
+    it('propagates a throw from the host instead of swallowing it', async () => {
+      const api: PptbToolboxApi = {
+        settings: {
+          getAll: vi.fn().mockResolvedValue({ key: 'value' }),
+          setAll: vi.fn().mockRejectedValue(new Error('host write failed')),
+        },
+      };
+      const adapter = createPptbAdapter(api);
+
+      await expect(adapter.settings.remove('key')).rejects.toThrow('host write failed');
+    });
   });
 });

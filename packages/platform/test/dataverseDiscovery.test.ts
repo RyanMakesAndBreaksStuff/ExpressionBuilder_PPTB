@@ -71,11 +71,11 @@ describe('PPTB adapter discovery', () => {
   });
 
   it('degrades to empty + notify when bridge missing', async () => {
-    const notify = vi.fn().mockResolvedValue(undefined);
-    const adapter = createPptbAdapter({ notify } as never, undefined);
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    const adapter = createPptbAdapter({ utils: { showNotification } }, undefined);
     const result = await adapter.discoverFields?.({ table: 'account' });
     expect(result?.fields).toEqual([]);
-    expect(notify).toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalled();
   });
 });
 

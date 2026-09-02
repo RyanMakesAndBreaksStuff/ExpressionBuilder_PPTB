@@ -12,6 +12,7 @@ import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 import { ConditionDragHandle } from './ConditionDragHandle';
 import { ConditionMoveButtons } from './ConditionMoveButtons';
+import { listGroupMoveTargets } from './dragDropModel';
 import { WRAPPERS } from './wrappers';
 
 export function RuleRowEditor({
@@ -27,6 +28,8 @@ export function RuleRowEditor({
   sourceIndex,
   siblingCount,
   onReorderNode,
+  root,
+  onMoveNode,
 }: RuleRowEditorProps) {
   const field = findField(fields, rule.fieldId);
   const fieldLabel = field?.label ?? rule.fieldId;
@@ -40,12 +43,18 @@ export function RuleRowEditor({
     sourceIndex !== undefined &&
     siblingCount !== undefined &&
     onReorderNode !== undefined;
+  const moveTargets =
+    hasReorderMetadata && root
+      ? listGroupMoveTargets(root, rule.id, parentGroupId)
+      : undefined;
   const moveButtons = hasReorderMetadata ? (
     <ConditionMoveButtons
       label={nodeLabel}
       sourceIndex={sourceIndex}
       siblingCount={siblingCount}
       onMove={(finalIndex) => onReorderNode(rule.id, parentGroupId, finalIndex)}
+      moveTargets={moveTargets}
+      onMoveToGroup={onMoveNode ? (targetGroupId) => onMoveNode(rule.id, targetGroupId) : undefined}
     />
   ) : null;
   const renderDraggableRow = (

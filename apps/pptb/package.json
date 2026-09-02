@@ -28,6 +28,10 @@
     }
   ],
   "license": "BSD-3-Clause",
+  "features": {
+    "minAPI": "1.0.17",
+    "multiConnection": "none"
+  },
   "configurations": {
     "repository": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB",
     "readmeUrl": "https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/apps/pptb/README.md",
@@ -41,7 +45,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@pptb/types": "1.2.4",
+    "@pptb/types": "1.2.5",
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
     "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
     "react": "^19.2.6",

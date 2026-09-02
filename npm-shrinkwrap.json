@@ -47,7 +47,7 @@
       "version": "1.1.0",
       "license": "BSD-3-Clause",
       "devDependencies": {
-        "@pptb/types": "1.2.4",
+        "@pptb/types": "1.2.5",
         "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
         "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
         "react": "^19.2.6",
@@ -2301,7 +2301,9 @@
       }
     },
     "node_modules/@pptb/types": {
-      "version": "1.2.4",
+      "version": "1.2.5",
+      "resolved": "https://registry.npmjs.org/@pptb/types/-/types-1.2.5.tgz",
+      "integrity": "sha512-DDTl1gJ2xuZaF1fSQUSL61+KHvwmNMZhJwfvJzxxKlxqN+juv7THrZC+ewjaHsZaQo9LHgxhCDKDTwV/quTf8Q==",
       "dev": true,
       "license": "GPL-3.0",
       "dependencies": {

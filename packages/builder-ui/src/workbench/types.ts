@@ -72,6 +72,12 @@ export interface ConditionCanvasProps {
   onDeleteNode: (nodeId: string) => void;
   /** Reorders a rule or nested group within its current parent only. */
   onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
+  /**
+   * Reparents a rule or nested group into a different group (appended to the
+   * end), via the keyboard "Move to..." menu. Optional: when omitted, that
+   * menu is not shown - drag/drop remains available regardless.
+   */
+  onMoveNode?: (nodeId: string, targetGroupId: string) => void;
   /** Wipes all children from the root group, resetting the canvas to empty. */
   onClear: () => void;
   /** Called when the user clicks "Remap…" on an orphaned rule (T16/T17). */
@@ -109,6 +115,10 @@ export interface RuleRowEditorProps {
   sourceIndex?: number;
   siblingCount?: number;
   onReorderNode?: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
+  /** Root of the whole document, used to list sibling groups for the "Move to" menu. */
+  root?: QueryGroup;
+  /** Reparents this rule into a different group. See ConditionCanvasProps.onMoveNode. */
+  onMoveNode?: (nodeId: string, targetGroupId: string) => void;
 }
 
 export interface BuilderDragDropProviderProps {

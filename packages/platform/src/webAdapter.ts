@@ -75,6 +75,24 @@ export function createWebAdapter(): PlatformAdapter {
       async remove(key) {
         localStorage.removeItem(key);
       },
+
+      async getAll() {
+        const result: Record<string, string> = {};
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (key === null) continue;
+          const value = localStorage.getItem(key);
+          if (value !== null) result[key] = value;
+        }
+        return result;
+      },
+
+      async setAll(values) {
+        localStorage.clear();
+        for (const [key, value] of Object.entries(values)) {
+          localStorage.setItem(key, value);
+        }
+      },
     },
 
     async listDataSources() {

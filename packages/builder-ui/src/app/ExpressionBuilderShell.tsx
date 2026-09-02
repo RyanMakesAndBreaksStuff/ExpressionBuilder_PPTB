@@ -285,7 +285,7 @@ export function ExpressionBuilderShell({
   const moveConditionNode = (
     nodeId: string,
     targetGroupId: string,
-    index: number,
+    index?: number,
   ) => {
     setDocument((current) => moveNode(current, nodeId, targetGroupId, index));
   };
@@ -454,6 +454,7 @@ export function ExpressionBuilderShell({
                   setDocument((current) => deleteNode(current, nodeId))
                 }
                 onReorderNode={reorderConditionNode}
+                onMoveNode={(nodeId, targetGroupId) => moveConditionNode(nodeId, targetGroupId)}
                 onClear={() => setDocument((current) => clearDocument(current))}
               />
 
@@ -528,6 +529,7 @@ export function ExpressionBuilderShell({
           setRelatedSections([]);
           setDialog('none');
         }}
+        onNotify={adapter.notify}
       />
 
       <TablePickerDialog

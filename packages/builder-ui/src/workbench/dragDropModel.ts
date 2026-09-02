@@ -274,3 +274,45 @@ const findGroup = (root: QueryGroup, groupId: string): QueryGroup | undefined =>
   const node = findNodeLocation(root, groupId)?.node;
   return node?.kind === 'group' ? node : undefined;
 };
+
+export interface GroupMoveTarget {
+  id: string;
+  label: string;
+}
+
+const groupMoveLabel = (group: QueryGroup): string =>
+  group.id === 'root' ? 'the root group' : `${group.conjunction.toUpperCase()} group ${group.id}`;
+
+/**
+ * Lists every group a node can be moved into via the keyboard "Move to..."
+ * menu (ConditionMoveButtons) - the keyboard-accessible counterpart to
+ * dragging a rule/group across groups. Excludes:
+ *  - the node's current parent (already reachable via the up/down buttons)
+ *  - the node itself, when the node being moved is a group
+ *  - any descendant of that group, which would create a cycle - mirrors the
+ *    "landsInsideItself" guard in resolveCurrentDragDropCommand above.
+ */
+export const listGroupMoveTargets = (
+  root: QueryGroup,
+  nodeId: string,
+  currentParentId: string,
+): GroupMoveTarget[] => {
+  const sourceNode = findNodeLocation(root, nodeId)?.node;
+  const isDescendantOfSource = (candidate: QueryGroup): boolean =>
+    sourceNode?.kind === 'group' && findNodeLocation(sourceNode, candidate.id) !== undefined;
+
+  const targets: GroupMoveTarget[] = [];
+  const visit = (group: QueryGroup) => {
+    if (group.id !== nodeId && group.id !== currentParentId && !isDescendantOfSource(group)) {
+      targets.push({ id: group.id, label: groupMoveLabel(group) });
+    }
+    for (const child of group.children) {
+      if (child.kind === 'group') {
+        visit(child);
+      }
+    }
+  };
+
+  visit(root);
+  return targets;
+};

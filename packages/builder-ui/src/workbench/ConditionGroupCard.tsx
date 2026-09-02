@@ -8,6 +8,7 @@ import { RuleRowEditor } from './RuleRowEditor';
 import { ConditionDragHandle } from './ConditionDragHandle';
 import { ConditionMoveButtons } from './ConditionMoveButtons';
 import { ConditionPositionTarget } from './ConditionPositionTarget';
+import { listGroupMoveTargets } from './dragDropModel';
 
 interface ConditionGroupCardProps {
   group: QueryGroup;
@@ -29,6 +30,10 @@ interface ConditionGroupCardProps {
   onDuplicateRule: (ruleId: string) => void;
   onDeleteNode: (nodeId: string) => void;
   onReorderNode: (nodeId: string, parentGroupId: string, finalIndex: number) => void;
+  /** Root of the whole document, used to list sibling groups for the "Move to" menu. */
+  root?: QueryGroup;
+  /** Reparents a rule or nested group into a different group. */
+  onMoveNode?: (nodeId: string, targetGroupId: string) => void;
   onRequestRemap?: (ruleId: string) => void;
 }
 
@@ -48,6 +53,8 @@ export function ConditionGroupCard({
   onChangeGroupConjunction,
   onDeleteNode,
   onReorderNode,
+  root,
+  onMoveNode,
   onDuplicateRule,
   onSelectRule,
   onUpdateRule,
@@ -131,12 +138,24 @@ export function ConditionGroupCard({
               onMove={(finalIndex) =>
                 onReorderNode(group.id, parentGroupId, finalIndex)
               }
+              moveTargets={root ? listGroupMoveTargets(root, group.id, parentGroupId) : undefined}
+              onMoveToGroup={onMoveNode ? (targetGroupId) => onMoveNode(group.id, targetGroupId) : undefined}
             />
           ) : null}
-          <button type="button" className="eb-text-btn" onClick={() => onAddRule(group.id)}>
+          <button
+            type="button"
+            className="eb-text-btn"
+            aria-label={`Add rule to group ${group.id}`}
+            onClick={() => onAddRule(group.id)}
+          >
             + Rule
           </button>
-          <button type="button" className="eb-text-btn" onClick={() => onAddGroup(group.id)}>
+          <button
+            type="button"
+            className="eb-text-btn"
+            aria-label={`Add group to group ${group.id}`}
+            onClick={() => onAddGroup(group.id)}
+          >
             + Group
           </button>
           {!isRoot && (
@@ -181,6 +200,8 @@ export function ConditionGroupCard({
                 onDuplicateRule={onDuplicateRule}
                 onDeleteNode={onDeleteNode}
                 onReorderNode={onReorderNode}
+                root={root}
+                onMoveNode={onMoveNode}
                 onRequestRemap={onRequestRemap}
               />
             ) : (
@@ -196,6 +217,8 @@ export function ConditionGroupCard({
                 onDuplicate={onDuplicateRule}
                 onDelete={onDeleteNode}
                 onReorderNode={onReorderNode}
+                root={root}
+                onMoveNode={onMoveNode}
                 onRequestRemap={onRequestRemap}
               />
             )}
@@ -210,10 +233,20 @@ export function ConditionGroupCard({
           terminal
         />
         <div className="eb-group-actions">
-          <button type="button" className="eb-text-btn" onClick={() => onAddRule(group.id)}>
+          <button
+            type="button"
+            className="eb-text-btn"
+            aria-label={`Add rule at end of group ${group.id}`}
+            onClick={() => onAddRule(group.id)}
+          >
             + Rule
           </button>
-          <button type="button" className="eb-text-btn" onClick={() => onAddGroup(group.id)}>
+          <button
+            type="button"
+            className="eb-text-btn"
+            aria-label={`Add group at end of group ${group.id}`}
+            onClick={() => onAddGroup(group.id)}
+          >
             + Group
           </button>
         </div>

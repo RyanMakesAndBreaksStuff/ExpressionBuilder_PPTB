@@ -34,6 +34,22 @@ export function ConditionCanvas(props: ConditionCanvasProps) {
     }
   };
 
+  const handleMoveNode = (nodeId: string, targetGroupId: string) => {
+    const node = findNode(props.root, nodeId);
+    const targetGroup = findGroup(props.root, targetGroupId);
+    props.onMoveNode?.(nodeId, targetGroupId);
+
+    if (node && targetGroup) {
+      const label =
+        node.kind === 'group'
+          ? `group ${node.id}`
+          : (props.fields.find((field) => field.id === node.fieldId)?.label ??
+            `unknown field ${node.fieldId}`);
+      const targetLabel = targetGroup.id === 'root' ? 'the root group' : `group ${targetGroup.id}`;
+      setReorderAnnouncement(`Moved ${label} to ${targetLabel}.`);
+    }
+  };
+
   return (
     <section className="eb-canvas-card" role="region" aria-label="Condition Builder">
       <div className="eb-canvas-header">
@@ -62,6 +78,8 @@ export function ConditionCanvas(props: ConditionCanvasProps) {
           group={props.root}
           isRoot
           onReorderNode={handleReorderNode}
+          root={props.root}
+          onMoveNode={props.onMoveNode ? handleMoveNode : undefined}
           onRequestRemap={props.onRequestRemap}
         />
       </div>

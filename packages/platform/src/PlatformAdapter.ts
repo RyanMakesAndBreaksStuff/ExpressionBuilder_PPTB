@@ -7,6 +7,20 @@ export interface PlatformSettings {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
+  /**
+   * Optional bulk read of every stored key/value pair. Implemented where the
+   * host exposes it (e.g. pptb, web localStorage); consumers that need to
+   * enumerate keys (such as an orphan sweep) must treat its absence as "not
+   * supported" and no-op rather than assuming an empty settings store.
+   */
+  getAll?(): Promise<Record<string, string> | null>;
+  /**
+   * Optional bulk write that REPLACES the entire settings object on the
+   * host. Callers must always build the payload from a full getAll() result
+   * minus only the keys they intend to remove/change — never from a partial
+   * set of keys — or unrelated stored data will be silently destroyed.
+   */
+  setAll?(values: Record<string, string>): Promise<void>;
 }
 
 /** A selectable data source the host can enumerate (e.g. a Dataverse connection). */

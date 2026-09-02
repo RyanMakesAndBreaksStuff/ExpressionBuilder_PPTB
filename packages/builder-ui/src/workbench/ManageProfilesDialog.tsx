@@ -15,12 +15,13 @@ import {
 } from '@fluentui/react-components';
 import { DeleteRegular } from '@fluentui/react-icons';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
-import type { PlatformSettings } from '@ryanmakes/eb_platformadapter';
+import type { NotificationLevel, PlatformSettings } from '@ryanmakes/eb_platformadapter';
 import {
   deleteProfile,
   listProfiles,
   loadProfile,
   saveProfile,
+  sweepOrphanedProfiles,
 } from '../importExport/fieldProfiles';
 
 export interface ManageProfilesDialogProps {
@@ -29,6 +30,7 @@ export interface ManageProfilesDialogProps {
   currentFields: FieldDefinition[];
   onDismiss: () => void;
   onLoad: (name: string, fields: FieldDefinition[]) => void;
+  onNotify: (message: string, level: NotificationLevel) => void;
 }
 
 const useStyles = makeStyles({
@@ -61,6 +63,7 @@ export function ManageProfilesDialog({
   currentFields,
   onDismiss,
   onLoad,
+  onNotify,
 }: ManageProfilesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(_, d) => (!d.open ? onDismiss() : undefined)}>
@@ -71,6 +74,7 @@ export function ManageProfilesDialog({
             currentFields={currentFields}
             onDismiss={onDismiss}
             onLoad={onLoad}
+            onNotify={onNotify}
           />
         )}
       </DialogSurface>
@@ -84,6 +88,7 @@ function ManageProfilesDialogBody({
   currentFields,
   onDismiss,
   onLoad,
+  onNotify,
 }: Omit<ManageProfilesDialogProps, 'open'>) {
   const styles = useStyles();
   const [names, setNames] = useState<string[]>([]);
@@ -95,7 +100,11 @@ function ManageProfilesDialogBody({
   };
 
   useEffect(() => {
-    refresh();
+    // Sweep once per dialog open (this component is mounted fresh each time
+    // the dialog opens — see the comment above) rather than on every
+    // listProfiles() call, so the rare cleanup write doesn't run on every
+    // list read or app init.
+    void sweepOrphanedProfiles(settings).then(refresh, refresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -140,9 +149,13 @@ function ManageProfilesDialogBody({
                   size="small"
                   appearance="primary"
                   onClick={async () => {
-                    await deleteProfile(settings, name);
-                    setConfirmDelete(null);
-                    refresh();
+                    try {
+                      await deleteProfile(settings, name);
+                      setConfirmDelete(null);
+                      refresh();
+                    } catch {
+                      onNotify(`Could not delete profile "${name}".`, 'error');
+                    }
                   }}
                 >
                   Delete
