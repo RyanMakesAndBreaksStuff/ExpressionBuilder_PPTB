@@ -1,10 +1,25 @@
 # Power Automate Expression Builder
 
-> **Version**: 1.0.1
+> **Version**: 1.0.2
 
 A visual composer for Power Automate **Trigger Condition** and **Filter Array** advanced-mode expressions. Instead of hand-writing `@and(...)` / `@or(...)` predicates, you build conditions in a UI and the app emits valid Power Automate expression syntax — with live preview and real-time diagnostics.
 
 Ships two ways from one shared codebase: a standalone **web app** and a **Power Platform Toolbox (PPTB)** plugin.
+
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+
+<details>
+<summary>More screenshots</summary>
+
+Nested AND/OR groups in the dark theme:
+
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+
+Schema import — Field JSON, a sample payload, JSON Schema, or CSV:
+
+![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+
+</details>
 
 ## Key Features
 

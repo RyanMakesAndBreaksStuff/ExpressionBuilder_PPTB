@@ -1,6 +1,16 @@
 # PPTB Usage
 
-> **Version**: 1.0.1
+> **Version**: 1.1.1
+
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+
+## Install
+
+Install **Expression Builder** from the Power Platform Toolbox marketplace (host API `1.0.17`+), then open it from the tool list. Select an environment connection first if you want Dataverse field discovery; every other feature works without one.
+
+## Permissions & External Connections
+
+The tool declares **no `cspExceptions`** and contacts no external domain — no telemetry, no backend. Dataverse access goes through the host `dataverseAPI` against the connection you pick, and reads table/attribute **metadata only** (never records). Persistence uses the host `settings` API for field profiles and UI preferences.
 
 ## Building Conditions
 
@@ -9,6 +19,14 @@
 3. **Set operator/value** — the type (string, number, boolean, dateTime, choice) drives which operators and value editor show.
 4. **Add Group** — nest AND/OR logic as needed.
 5. Copy the generated expression from the Expression Preview panel, or Export the document as JSON to reload later.
+
+Nested AND/OR groups, in the Toolbox dark theme:
+
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+
+With no Dataverse connection, import fields as Field JSON, a sample payload, JSON Schema, or CSV:
+
+![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
 
 ## Reordering Conditions (Drag-and-Drop)
 

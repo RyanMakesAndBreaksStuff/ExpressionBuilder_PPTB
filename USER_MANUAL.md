@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.1 | **Last updated**: 2026-07-27 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.0.2 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -23,6 +23,8 @@
 ## 1. What Is This?
 
 **Power Automate Expression Builder** is a React/TypeScript application for building **Trigger Condition** and **Filter Array** advanced-mode predicates for Power Automate flows. Instead of hand-writing complex `@and(...)` / `@or(...)` expressions, you use a visual composer to build conditions, which the app translates into valid Power Automate expression syntax.
+
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
 
 ### Two Deployment Targets
 
@@ -248,7 +250,10 @@ npm run dev:pptb
 #### Step 1: Load Fields
 
 - **Option A — Connect to Dataverse** (PPTB only): Click **Connect Table** → select a table → click **Confirm**. The app discovers all fields and their types.
-- **Option B — Import a schema**: Click **Import** → paste CSV, JSON, or JSON Schema.
+- **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste.
+
+  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+
 - **Option C — Use sample data**: Click **Load Samples** to populate demo fields.
 - **Option D — Add manually**: Click **Add Field** and define fields one by one.
 
@@ -258,6 +263,10 @@ npm run dev:pptb
 2. Select an **operator** from the dropdown (e.g., `equals`, `contains`, `greater`).
 3. Enter a **value** — the type is validated (string, number, boolean, dateTime, choice).
 4. Click **+ Add Group** to create nested AND/OR logic.
+
+Nested AND/OR groups, shown here in the dark theme:
+
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
 
 #### Step 3: Review the Expression
 

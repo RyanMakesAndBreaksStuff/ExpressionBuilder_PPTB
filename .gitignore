@@ -26,7 +26,8 @@ dist-ssr
 *.sw?
 /.agents/skills
 /.vs
-/docs
+/docs/*
+!/docs/images/
 ! /docs/source-data/*
 /test-results
 /tests/e2e/*
