@@ -17,6 +17,23 @@ describe('workbenchState', () => {
     });
   });
 
+  it('starts with both docks collapsed on a stacked viewport that already has fields', () => {
+    expect(getDefaultWorkbenchState({ stacked: true, hasFields: true })).toMatchObject({
+      leftDockCollapsed: true,
+      rightDockCollapsed: true,
+      previewCollapsed: false,
+    });
+  });
+
+  it('keeps the toolbox open on a stacked viewport with no fields yet', () => {
+    // Collapsing it would unmount SourceChip and GetStartedPanel, leaving a
+    // phone user no visible route to import or add fields.
+    expect(getDefaultWorkbenchState({ stacked: true, hasFields: false })).toMatchObject({
+      leftDockCollapsed: false,
+      rightDockCollapsed: true,
+    });
+  });
+
   it('toggles individual dock and preview state without changing unrelated state', () => {
     const state = getDefaultWorkbenchState();
 

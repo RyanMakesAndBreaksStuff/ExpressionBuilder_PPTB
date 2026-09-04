@@ -31,11 +31,18 @@ export interface ImportSchemaDialogProps {
 
 type ImportMode = 'native' | 'sample' | 'jsonSchema' | 'csv';
 
+/**
+ * Tab labels only — kept short so all four fit a 375px dialog without the strip
+ * scrolling and peek-clipping the last tab. MODE_HINTS renders directly beneath
+ * the strip and carries the full description of each format, so the dropped
+ * words ("Record", "Headers", the second "JSON") are not lost. IMPORT_LABELS is
+ * the separate, longer name stamped on the imported fields.
+ */
 const MODE_LABELS: Record<ImportMode, string> = {
   native: 'Field JSON',
-  sample: 'Sample Record',
-  jsonSchema: 'JSON Schema',
-  csv: 'CSV Headers',
+  sample: 'Sample',
+  jsonSchema: 'Schema',
+  csv: 'CSV',
 };
 
 const MODE_PLACEHOLDERS: Record<ImportMode, string> = {

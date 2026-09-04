@@ -39,8 +39,13 @@ export function ExpressionDocumentPanel({
             <ActionButton onClick={onCopy} icon={<CopyIcon />}>
               Copy
             </ActionButton>
-            <span className={`eb-copy-state ${copyState === 'copied' ? 'on' : ''}`} role="status" aria-label="copy status">
-              Expression copied
+            {/* The live region stays mounted so a later update is announced, but its
+                text is empty while idle: opacity:0 hides it visually and leaves it in
+                the accessibility tree, so kept text would be read on any traversal. No
+                aria-label either — a name on a live region is announced instead of the
+                content, which made the update say "copy status". */}
+            <span className={`eb-copy-state ${copyState === 'copied' ? 'on' : ''}`} role="status">
+              {copyState === 'copied' ? 'Expression copied' : ''}
             </span>
           </div>
         </div>

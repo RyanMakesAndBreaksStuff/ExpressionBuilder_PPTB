@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { FluentProvider } from '@fluentui/react-components';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
 import {
@@ -45,6 +45,7 @@ import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
 import {
   getDefaultWorkbenchState,
+  isStackedViewport,
   toggleDock,
   togglePreview,
 } from '../workbench/workbenchState';
@@ -79,7 +80,28 @@ export function ExpressionBuilderShell({
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
-  const [workbench, setWorkbench] = useState(getDefaultWorkbenchState);
+  const [workbench, setWorkbench] = useState(() =>
+    getDefaultWorkbenchState({ stacked: isStackedViewport(), hasFields: initialDocument.fields.length > 0 }),
+  );
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(copyResetTimer.current), []);
+
+  /**
+   * Stacked, the Toolbox has to stay open on an empty document — it holds the
+   * only route to a data source. The moment fields arrive it has done that job,
+   * and a full field list below the canvas is what buried the canvas in the
+   * first place, so fold it away on the empty→populated transition only. Later
+   * field changes and any manual toggle are left alone.
+   */
+  const hadFields = useRef(initialDocument.fields.length > 0);
+  const hasFields = document.fields.length > 0;
+  useEffect(() => {
+    const wasEmpty = !hadFields.current;
+    hadFields.current = hasFields;
+    if (wasEmpty && hasFields && isStackedViewport()) {
+      setWorkbench((current) => ({ ...current, leftDockCollapsed: true }));
+    }
+  }, [hasFields]);
   type OpenDialog =
     | 'none'
     | 'tablePicker'
@@ -109,6 +131,23 @@ export function ExpressionBuilderShell({
   type PendingDrift = { drift: FieldDrift; removedInUse: string[] };
   const [pendingDrift, setPendingDrift] = useState<PendingDrift | null>(null);
 
+  /**
+   * Blocking overlay for retrieve/load operations. Without it the user can edit
+   * rules or start a second discovery while the first promise is still in
+   * flight, and the late result overwrites what they just did.
+   * ponytail: single label, not a counter — these operations are mutually
+   * exclusive because the overlay itself blocks starting a second one.
+   */
+  const [busy, setBusy] = useState<string | null>(null);
+  const runBusy = async <T,>(label: string, work: () => Promise<T>): Promise<T | undefined> => {
+    setBusy(label);
+    try {
+      return await work();
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
@@ -130,7 +169,12 @@ export function ExpressionBuilderShell({
     try {
       await adapter.copyToClipboard(derived.expression);
       setWorkbench((current) => ({ ...current, copyState: 'copied' }));
-      setTimeout(() => {
+      // A second copy inside the window would otherwise let the first timer clear
+      // the confirmation early, and an unmount mid-window would set state on a
+      // dead component.
+      if (copyResetTimer.current !== undefined) clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = setTimeout(() => {
+        copyResetTimer.current = undefined;
         setWorkbench((current) => ({ ...current, copyState: 'idle' }));
       }, 1200);
     } catch (err) {
@@ -235,7 +279,7 @@ export function ExpressionBuilderShell({
   const handleExpandRelated = (navigationProperty: string) => {
     const table = document.source?.tableLogicalName;
     if (!table || !adapter.discoverRelatedFields) return;
-    void adapter.discoverRelatedFields(table, navigationProperty)
+    void runBusy('Loading related fields…', () => adapter.discoverRelatedFields!(table, navigationProperty)
       .then((result) => {
         if (result.fields.length === 0) return;
         setDocument((current) => ({
@@ -251,7 +295,7 @@ export function ExpressionBuilderShell({
           `Could not expand related fields: ${err instanceof Error ? err.message : 'unknown error'}`,
           'warning',
         );
-      });
+      }));
   };
 
   const createRuleFromField = (field: FieldDefinition) => {
@@ -397,11 +441,9 @@ export function ExpressionBuilderShell({
                 const table = document.source?.tableLogicalName;
                 const label = document.source?.label ?? table ?? 'Dataverse';
                 const includeRelated = document.source?.includeRelated ?? false;
-                if (table) {
-                  void connectFieldsCached(table, label, includeRelated, true);
-                } else {
-                  void connectFields();
-                }
+                void runBusy('Refreshing fields…', () =>
+                  table ? connectFieldsCached(table, label, includeRelated, true) : connectFields(),
+                );
               }}
               relatedSections={relatedSections}
               onExpandRelated={handleExpandRelated}
@@ -483,6 +525,12 @@ export function ExpressionBuilderShell({
             />
           </main>
         </BuilderDragDropProvider>
+
+        {busy ? (
+          <div className="eb-busy-overlay" role="alert" aria-busy="true" aria-live="polite">
+            <Spinner label={busy} />
+          </div>
+        ) : null}
       </div>
 
       <ImportSchemaDialog
@@ -538,7 +586,9 @@ export function ExpressionBuilderShell({
         onDismiss={() => setDialog('none')}
         onConfirm={(table, includeRelated) => {
           setDialog('none');
-          void handleTableConfirm(table.logicalName, table.displayName, includeRelated);
+          void runBusy('Loading table fields…', () =>
+            handleTableConfirm(table.logicalName, table.displayName, includeRelated),
+          );
         }}
       />
 

@@ -53,3 +53,6 @@ tasks/lessons.md
 apps/pptb/ryanmakes-expressionbuilder_pptb-1.1.0.tgz
 *.db
 .rm-frontend-review/
+/.playwright-mcp
+/.codegraph
+/CLAUDE.md

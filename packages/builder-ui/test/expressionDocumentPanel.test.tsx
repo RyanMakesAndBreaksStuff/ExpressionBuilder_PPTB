@@ -51,6 +51,22 @@ describe('ExpressionDocumentPanel', () => {
       />,
     );
 
-    expect(screen.getByRole('status', { name: 'copy status' })).toHaveTextContent('Expression copied');
+    expect(screen.getByRole('status')).toHaveTextContent('Expression copied');
+  });
+
+  it('keeps the copy live region mounted but empty while idle', () => {
+    render(
+      <ExpressionDocumentPanel
+        expression="@equals(item()?['Status'],'Approved')"
+        collapsed={false}
+        copyState="idle"
+        onToggleCollapsed={vi.fn()}
+        onCopy={vi.fn()}
+      />,
+    );
+
+    // Mounted, so the later update is announced; empty, so nothing is read on
+    // traversal (opacity:0 hides it visually but not from assistive tech).
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 });
