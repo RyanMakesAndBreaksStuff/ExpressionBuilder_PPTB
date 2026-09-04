@@ -16,8 +16,6 @@ import type {
 } from './dataverseApi';
 import { mapDataverseAttributes, type DataverseAttributeMetadata } from './dataverseMetadata';
 
-type MaybePromise<T> = T | Promise<T>;
-
 /**
  * Cast segment per Dataverse choice attribute type. OptionSet is a navigation
  * property that lives on these DERIVED AttributeMetadata subtypes, not on the base
@@ -172,7 +170,8 @@ export function createPptbAdapter(
         // single tool instance — no locking is implemented here.
         const all = (await api?.settings?.getAll?.()) ?? {};
         if (!(key in all)) return;
-        const { [key]: _removed, ...rest } = all;
+        const rest = { ...all };
+        delete rest[key];
         await api?.settings?.setAll?.(rest);
       },
 
