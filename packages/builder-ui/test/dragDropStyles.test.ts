@@ -256,17 +256,17 @@ describe('drag-and-drop visual contract', () => {
       /@media\s*\(max-width:\s*1100px\)\s*\{[\s\S]*?\.eb-rule-row-editor\s*\{[\s\S]*?grid-template-columns\s*:/,
     );
     expect(css).toMatch(
-      /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*?\.eb-workspace\s*\{[\s\S]*?grid-template-columns:\s*1fr\s*;/,
+      /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*?\.eb-workspace\s*\{[\s\S]*?display:\s*flex\s*;/,
     );
   });
 
-  it('keeps the Toolbox first in the stacked layout', () => {
-    // The workspace renders Toolbox -> center column -> inspector, so the
-    // stacked layout must not reorder the center column ahead of the Toolbox:
-    // users landing on a narrow window need the field list, not the canvas.
+  it('puts the canvas ahead of the Toolbox in the stacked layout', () => {
+    // DOM order stays Toolbox -> center -> inspector (drag/focus unchanged).
+    // Visual order on a narrow window must lead with the builder, not the field list.
     const stacked = mediaBlock('max-width: 900px');
-    expect(stacked).toMatch(/\.eb-center-col\s*\{/);
-    expect(stacked).not.toMatch(/\.eb-center-col\s*\{[^}]*\border\s*:/);
+    expect(stacked).toMatch(/\.eb-center-col\s*\{[^}]*\border\s*:\s*-1\s*;/);
+    // Must stay media-scoped: an unscoped order would swap the desktop grid columns.
+    expect(unscopedCss()).not.toMatch(/\.eb-center-col[^{]*\{[^}]*\border\s*:/);
   });
 
   it('scrolls the tab strip without breaking the active tab join', () => {
@@ -287,18 +287,22 @@ describe('drag-and-drop visual contract', () => {
   it('scrolls the stacked layout as one page instead of nesting scrollers', () => {
     const stacked = mediaBlock('max-width: 900px');
 
-    // .eb-workspace owns the only scroll below 900px.
+    // .eb-workspace is a flex column below 900px (not a grid — grid's auto row
+    // sizing measured the nested flex-in-flex center column as near-zero and
+    // let its overflow content spill into the next pane) and owns the only
+    // scroll at this width.
+    expect(stacked).toMatch(/\.eb-workspace\s*\{[^}]*display:\s*flex\s*;/);
     expect(stacked).toMatch(/\.eb-workspace\s*\{[^}]*overflow-y:\s*auto\s*;/);
 
-    // The canvas must contribute its real height to the grid's auto row.
-    // flex: 1 1 auto with min-height: 0 contributes nothing and collapses the
-    // row, which is what the old min(70vh, 560px) floor was propping up.
+    // Every direct child sizes to its own content instead of being flex-grown
+    // or shrunk by the column, so a pane never collapses below what it needs.
+    expect(stacked).toMatch(/\.eb-workspace\s*>\s*\*\s*\{[^}]*flex:\s*0 0 auto\s*;/);
     expect(stacked).toMatch(/\.eb-canvas-card\s*\{[^}]*flex:\s*0 0 auto\s*;/);
     expect(stacked).not.toMatch(/min-height:\s*min\(/);
 
     // The desktop scroll chain (.eb-pane-body -> .eb-group-children) stands
     // down, or a short window hides rules behind two nested scrollbars.
-    expect(stacked).toMatch(/\.eb-center-col\s*\{[^}]*overflow:\s*visible\s*;/);
+    expect(stacked).toMatch(/\.eb-center-col[^{]*\{[^}]*overflow:\s*visible\s*;/);
     expect(stacked).toMatch(
       /\.eb-canvas-card \.eb-pane-body,\s*\.eb-group-children\s*\{[^}]*overflow:\s*visible\s*;/,
     );
@@ -335,12 +339,28 @@ describe('drag-and-drop visual contract', () => {
     expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
     expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
 
-    // A real floor, not a placeholder — the canvas needs ~220px to show rules.
+    // A real floor, not a placeholder, but low enough that a short host (PPTB
+    // routinely gives ~420px total, ~350px after the header) can show the
+    // empty-state canvas without forcing an immediate, pointless scrollbar.
     const floor = /--eb-workspace-min-height:\s*(\d+)px\s*;/.exec(
       declarationBlock('.eb-root'),
     );
     expect(floor).not.toBeNull();
-    expect(Number(floor![1])).toBeGreaterThanOrEqual(400);
+    expect(Number(floor![1])).toBeGreaterThanOrEqual(250);
+    expect(Number(floor![1])).toBeLessThan(350);
+  });
+
+  it('lets the centre column scroll on a short host instead of crushing the canvas', () => {
+    const short = mediaBlock('min-width: 901px) and (max-height: 620px');
+
+    expect(short).toMatch(/\.eb-canvas-card\s*\{[^}]*flex:\s*0 0 auto\s*;/);
+    expect(short).toMatch(/\.eb-canvas-card\s*\{[^}]*min-height:\s*220px\s*;/);
+    expect(short).toMatch(/\.eb-center-col\s*\{[^}]*overflow-y:\s*auto\s*;/);
+    expect(short).toMatch(
+      /\.eb-canvas-card,\s*\.eb-canvas-card \.eb-pane-body,\s*\.eb-group-children\s*\{[^}]*overflow:\s*visible\s*;/,
+    );
+    expect(short).not.toMatch(/\.eb-workspace\s*\{[^}]*display:\s*flex\s*;/);
+    expect(short).not.toMatch(/max-height:\s*128px/);
   });
 
   it('wraps the group toolbar at every width so its actions never clip', () => {

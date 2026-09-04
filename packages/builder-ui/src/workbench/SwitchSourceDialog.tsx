@@ -26,7 +26,16 @@ export interface SwitchSourceDialogProps {
 }
 
 const useStyles = makeStyles({
-  body: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM, minWidth: '380px' },
+  body: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  messageBar: { minWidth: 0, maxWidth: '100%', whiteSpace: 'normal' },
+  radioGroup: { minWidth: 0, width: '100%' },
+  radio: { minWidth: 0, maxWidth: '100%', whiteSpace: 'normal' },
 });
 
 export function SwitchSourceDialog({ open, diff, targetLabel, onDismiss, onConfirm }: SwitchSourceDialogProps) {
@@ -44,15 +53,23 @@ export function SwitchSourceDialog({ open, diff, targetLabel, onDismiss, onConfi
               <Text>No existing rules reference fields missing from the new source.</Text>
             ) : (
               <>
-                <MessageBar intent="warning">
+                <MessageBar className={styles.messageBar} intent="warning">
                   <MessageBarBody>
                     {affected} rule{affected === 1 ? '' : 's'} reference{affected === 1 ? 's' : ''} fields that
                     don't exist in {targetLabel}.
                   </MessageBarBody>
                 </MessageBar>
-                <RadioGroup value={mode} onChange={(_, d) => setMode(d.value as 'keep' | 'remove')}>
-                  <Radio value="keep" label="Keep rules and flag unknown fields (recommended)" />
-                  <Radio value="remove" label="Remove the affected rules" />
+                <RadioGroup
+                  className={styles.radioGroup}
+                  value={mode}
+                  onChange={(_, d) => setMode(d.value as 'keep' | 'remove')}
+                >
+                  <Radio
+                    className={styles.radio}
+                    value="keep"
+                    label="Keep rules and flag unknown fields (recommended)"
+                  />
+                  <Radio className={styles.radio} value="remove" label="Remove the affected rules" />
                 </RadioGroup>
               </>
             )}

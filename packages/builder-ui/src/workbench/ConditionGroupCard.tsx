@@ -232,24 +232,6 @@ export function ConditionGroupCard({
           positionCount={group.children.length + 1}
           terminal
         />
-        <div className="eb-group-actions">
-          <button
-            type="button"
-            className="eb-text-btn"
-            aria-label={`Add rule at end of group ${group.id}`}
-            onClick={() => onAddRule(group.id)}
-          >
-            + Rule
-          </button>
-          <button
-            type="button"
-            className="eb-text-btn"
-            aria-label={`Add group at end of group ${group.id}`}
-            onClick={() => onAddGroup(group.id)}
-          >
-            + Group
-          </button>
-        </div>
       </div>
     </section>
   );

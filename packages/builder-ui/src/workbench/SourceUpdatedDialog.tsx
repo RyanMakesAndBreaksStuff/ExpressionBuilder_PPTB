@@ -21,7 +21,13 @@ export interface SourceUpdatedDialogProps {
 }
 
 const useStyles = makeStyles({
-  body: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalS, minWidth: '360px' },
+  body: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalS,
+    minWidth: 0,
+    maxWidth: '100%',
+  },
   line: { color: tokens.colorNeutralForeground2 },
 });
 

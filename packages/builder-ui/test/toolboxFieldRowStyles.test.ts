@@ -35,11 +35,13 @@ describe('toolbox field row styles', () => {
   it('keeps the type badge compact and softly squared', () => {
     const badge = declarations('.eb-field-type-badge');
 
-    expect(badge).toMatch(/padding:\s*2px 6px\s*;/);
+    // Small enough that an average field name + type ("Amount · number")
+    // doesn't ellipsize just to make room for the badge next to it.
+    expect(badge).toMatch(/padding:\s*1px 4px\s*;/);
     expect(badge).toMatch(/border-radius:\s*4px\s*;/);
-    expect(badge).toMatch(/font-size:\s*9px\s*;/);
-    expect(badge).toMatch(/line-height:\s*1\s*;/);
-    expect(badge).toMatch(/letter-spacing:\s*0\.05em\s*;/);
+    expect(badge).toMatch(/font-size:\s*8px\s*;/);
+    expect(badge).toMatch(/letter-spacing:\s*0\.01em\s*;/);
+    expect(badge).toMatch(/white-space:\s*nowrap\s*;/);
   });
 
   it.each([

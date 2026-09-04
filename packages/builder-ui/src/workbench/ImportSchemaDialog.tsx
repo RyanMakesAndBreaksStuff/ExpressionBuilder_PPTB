@@ -14,6 +14,7 @@ import {
   Text,
   Textarea,
   makeStyles,
+  mergeClasses,
   tokens,
 } from '@fluentui/react-components';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
@@ -61,6 +62,12 @@ interface ParseResult {
 type ParseForModeResult = ParseResult | { errors: FieldImportDiagnostic[] };
 
 const useStyles = makeStyles({
+  tablist: {
+    flexWrap: 'nowrap',
+    overflowX: 'auto',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
   editor: {
     width: '100%',
     minHeight: '160px',
@@ -158,6 +165,7 @@ export function ImportSchemaDialog({ open, onDismiss, onImport }: ImportSchemaDi
               selectedValue={mode}
               onTabSelect={handleModeChange}
               size="small"
+              className={mergeClasses(styles.tablist, 'eb-dialog-tablist')}
             >
               {(Object.keys(MODE_LABELS) as ImportMode[]).map((m) => (
                 <Tab key={m} value={m}>

@@ -30,14 +30,17 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalS,
-    minWidth: '420px',
+    minWidth: 0,
+    maxWidth: '100%',
   },
+  input: { minWidth: 0, width: '100%', maxWidth: '100%' },
   list: {
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalXXS,
     maxHeight: '320px',
     overflowY: 'auto',
+    minWidth: 0,
   },
   row: {
     display: 'flex',
@@ -48,6 +51,7 @@ const useStyles = makeStyles({
     paddingRight: tokens.spacingHorizontalS,
     borderRadius: tokens.borderRadiusMedium,
     cursor: 'pointer',
+    minWidth: 0,
   },
   selected: { backgroundColor: tokens.colorBrandBackground2 },
   logical: { color: tokens.colorNeutralForeground3 },
@@ -122,6 +126,7 @@ function TablePickerBody({
       <DialogTitle>Select a table</DialogTitle>
       <DialogContent className={styles.body}>
         <Input
+          className={styles.input}
           value={search}
           onChange={(_, d) => setSearch(d.value)}
           placeholder="Search tables..."

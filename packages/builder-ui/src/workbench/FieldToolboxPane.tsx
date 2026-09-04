@@ -132,7 +132,7 @@ export function FieldToolboxPane({
                 >
                   {/* Primary table — accordion, open by default */}
                   <AccordionItem value={PRIMARY_ITEM_VALUE}>
-                    <AccordionHeader>
+                    <AccordionHeader size="small">
                       <span className="eb-accordion-label">
                         <span className="eb-accordion-title">{primaryLabel}</span>
                       </span>
@@ -170,6 +170,7 @@ export function FieldToolboxPane({
                         value={section.navigationProperty}
                       >
                         <AccordionHeader
+                          size="small"
                           onClick={() => handleAccordionToggle(section.navigationProperty)}
                         >
                           <span className="eb-accordion-label">

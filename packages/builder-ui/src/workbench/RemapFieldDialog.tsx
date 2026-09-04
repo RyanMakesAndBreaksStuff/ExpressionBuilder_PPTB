@@ -26,7 +26,14 @@ export interface RemapFieldDialogProps {
 }
 
 const useStyles = makeStyles({
-  body: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM, minWidth: '360px' },
+  body: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  dropdown: { minWidth: 0, width: '100%', maxWidth: '100%' },
 });
 
 export function RemapFieldDialog({ open, rule, fields, onDismiss, onRemap }: RemapFieldDialogProps) {
@@ -73,6 +80,7 @@ function RemapFieldDialogBody({
           replacement field.
         </Text>
         <Dropdown
+          className={styles.dropdown}
           placeholder="Select a field"
           selectedOptions={targetId ? [targetId] : []}
           onOptionSelect={(_, d) => setTargetId(d.optionValue ?? null)}

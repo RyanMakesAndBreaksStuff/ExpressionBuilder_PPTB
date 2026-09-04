@@ -82,16 +82,13 @@ describe('ConditionGroupCard accessibility', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('labels the toolbar and footer add-rule/add-group buttons distinctly per group', () => {
+  it('labels the toolbar add-rule/add-group buttons distinctly per group', () => {
     const props = renderTree();
 
     expect(screen.getByRole('button', { name: 'Add rule to group root' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add rule at end of group root' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add group to group root' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add group at end of group root' })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Add rule to group group-a' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add rule at end of group group-a' })).toBeInTheDocument();
 
     screen.getByRole('button', { name: 'Add rule to group group-a-1' }).click();
     expect(props.onAddRule).toHaveBeenCalledWith('group-a-1');

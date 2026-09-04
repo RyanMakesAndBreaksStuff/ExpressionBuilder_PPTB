@@ -1,15 +1,15 @@
 {
   "name": "@ryanmakes/expressionbuilder_pptb",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@ryanmakes/expressionbuilder_pptb",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "license": "BSD-3-Clause",
       "devDependencies": {
-        "@pptb/types": "1.2.4",
+        "@pptb/types": "1.2.5",
         "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
         "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
         "react": "^19.2.6",
@@ -21,7 +21,7 @@
     },
     "../../packages/builder-ui": {
       "name": "@ryanmakes/eb_builder-ui",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dev": true,
       "license": "BSD-3-Clause",
       "dependencies": {
@@ -41,7 +41,7 @@
     },
     "../../packages/platform": {
       "name": "@ryanmakes/eb_platformadapter",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dev": true,
       "license": "BSD-3-Clause"
     },
@@ -59,7 +59,7 @@
       }
     },
     "node_modules/@pptb/types": {
-      "version": "1.2.4",
+      "version": "1.2.5",
       "resolved": "https://registry.npmjs.org/@pptb/types/-/types-1.2.4.tgz",
       "integrity": "sha512-iyDWGtFiZHfj0rLqnNzUXndMHhl1c18vJi9PZ0K8ADcsq22CaKaneaCe+lQHi+WjLI1mQGRg8quVdhzErjgHAg==",
       "dev": true,

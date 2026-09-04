@@ -31,6 +31,7 @@ dist-ssr
 /test-results
 /tests/e2e/*
 !/tests/e2e/theme-smoke.spec.ts
+!/tests/e2e/short-viewport-canvas.spec.ts
 /ui-ux
 /package-lock.json
 /.claude/skills
@@ -51,3 +52,4 @@ AGENTS.md
 tasks/lessons.md
 apps/pptb/ryanmakes-expressionbuilder_pptb-1.1.0.tgz
 *.db
+.rm-frontend-review/

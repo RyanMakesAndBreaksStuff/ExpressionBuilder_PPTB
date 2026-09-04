@@ -42,12 +42,13 @@ function fixHtmlForPPTB(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), fixHtmlForPPTB()],
   resolve: { alias: workspaceSrc },
   base: './',
   publicDir: 'public',
   build: {
+    sourcemap: mode === 'development',  
     rollupOptions: {
       output: {
         format: 'iife',
@@ -56,4 +57,8 @@ export default defineConfig({
       },
     },
   },
-});
+}));
+
+
+
+
