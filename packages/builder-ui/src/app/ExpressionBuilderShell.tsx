@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -24,7 +24,7 @@ import {
   type PaletteId,
   type GraphiteThemeMode,
 } from '../theme/workbenchTokens';
-import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
+import { countRules, deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
 import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
@@ -43,6 +43,8 @@ import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
 import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
+import { JsonReferenceWorkspace } from '../workbench/JsonReferenceWorkspace';
+import type { BuilderPanelIds, BuilderView } from '../workbench/types';
 import {
   getDefaultWorkbenchState,
   isStackedViewport,
@@ -85,6 +87,24 @@ export function ExpressionBuilderShell({
   );
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);
+
+  // Which builder is showing. Never persisted: every load opens on the
+  // Condition builder (FR-002) and a reload drops JSON reference state
+  // (FR-008). The JSON workspace mounts the first time it is opened and then
+  // stays mounted while hidden, so its state survives switching.
+  const [builderView, setBuilderView] = useState<BuilderView>('condition');
+  const [jsonReferenceOpened, setJsonReferenceOpened] = useState(false);
+  const builderIdBase = useId();
+  const panelIds: BuilderPanelIds = {
+    conditionTab: `${builderIdBase}-condition-tab`,
+    conditionPanel: `${builderIdBase}-condition-panel`,
+    jsonTab: `${builderIdBase}-json-tab`,
+    jsonPanel: `${builderIdBase}-json-panel`,
+  };
+  const changeBuilderView = (view: BuilderView) => {
+    setBuilderView(view);
+    if (view === 'jsonReference') setJsonReferenceOpened(true);
+  };
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the
@@ -149,6 +169,7 @@ export function ExpressionBuilderShell({
   };
 
   const derived = useMemo(() => deriveBuilderState(document), [document]);
+  const ruleCount = useMemo(() => countRules(document.root), [document.root]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
   const theme = graphiteTokens[paletteId].mode;
@@ -414,6 +435,10 @@ export function ExpressionBuilderShell({
           onModeChange={updateMode}
           onExport={() => void exportDocument()}
           onImport={() => setDialog('importExpression')}
+          builderView={builderView}
+          onBuilderViewChange={changeBuilderView}
+          ruleCount={ruleCount}
+          panelIds={panelIds}
         />
 
         <BuilderDragDropProvider
@@ -423,114 +448,133 @@ export function ExpressionBuilderShell({
           onReorderNode={reorderConditionNode}
           onMoveNode={moveConditionNode}
         >
-          <main
-            className="eb-workspace"
-            style={
-              {
-                '--eb-left-dock-width': workbench.leftDockCollapsed ? '68px' : '286px',
-                '--eb-right-dock-width': workbench.rightDockCollapsed ? '68px' : '330px',
-              } as CSSProperties
-            }
-          >
-            <FieldToolboxPane
-              fields={document.fields}
-              source={document.source ?? { kind: 'unknown' }}
-              collapsed={workbench.leftDockCollapsed}
-              onToggleCollapsed={() =>
-                setWorkbench((current) => toggleDock(current, 'left'))
+          {/* One main landmark for both builders (FR-005); each builder is a tab panel inside it. */}
+          <main className="eb-builder-main">
+            <div
+              id={panelIds.conditionPanel}
+              role="tabpanel"
+              aria-labelledby={panelIds.conditionTab}
+              hidden={builderView !== 'condition'}
+              className="eb-builder-panel eb-workspace"
+              style={
+                {
+                  '--eb-left-dock-width': workbench.leftDockCollapsed ? '68px' : '286px',
+                  '--eb-right-dock-width': workbench.rightDockCollapsed ? '68px' : '330px',
+                } as CSSProperties
               }
-              onSwitchTable={() => setDialog('tablePicker')}
-              onImport={() => setDialog('import')}
-              onAddField={() => setDialog('addField')}
-              onLoadSamples={loadSampleFields}
-              canConnectTable={canConnectTable}
-              onManageProfiles={() => setDialog('profiles')}
-              onRefresh={() => {
-                const table = document.source?.tableLogicalName;
-                const label = document.source?.label ?? table ?? 'Dataverse';
-                const includeRelated = document.source?.includeRelated ?? false;
-                void runBusy('Refreshing fields…', () =>
-                  table ? connectFieldsCached(table, label, includeRelated, true) : connectFields(),
-                );
-              }}
-              relatedSections={relatedSections}
-              onExpandRelated={handleExpandRelated}
-              onCreateRuleFromField={createRuleFromField}
-            />
-
-            <div className="eb-center-col">
-              <ConditionCanvas
-                root={document.root}
+            >
+              <FieldToolboxPane
                 fields={document.fields}
-                mode={document.mode}
-                selectedRuleId={selectedRule?.id}
-                activeGroupId={document.activeGroupId ?? document.root.id}
-                onFocusGroup={(groupId) =>
-                  setDocument((current) => focusGroup(current, groupId))
-                }
-                onRequestRemap={(ruleId) => {
-                  setDocument((current) => selectRule(current, ruleId));
-                  setDialog('remap');
-                }}
-                onSelectRule={(ruleId) => {
-                  setDocument((current) => selectRule(current, ruleId));
-                  setImportDiagnostics([]);
-                }}
-                onAddRule={(groupId) =>
-                  setDocument((current) =>
-                    addRule(current, groupId, {
-                      fieldId: current.fields[0]?.id ?? '',
-                      operator: 'equals',
-                      value: getDefaultValue(current.fields[0]),
-                    }),
-                  )
-                }
-                onAddGroup={(groupId) =>
-                  setDocument((current) => addGroup(current, groupId))
-                }
-                onChangeGroupConjunction={(groupId, conjunction) =>
-                  setDocument((current) =>
-                    changeGroupConjunction(current, groupId, conjunction),
-                  )
-                }
-                onUpdateRule={(ruleId, patch) => {
-                  setDocument((current) => updateRule(current, ruleId, patch));
-                  setImportDiagnostics([]);
-                }}
-                onDuplicateRule={(ruleId) =>
-                  setDocument((current) => duplicateRule(current, ruleId))
-                }
-                onDeleteNode={(nodeId) =>
-                  setDocument((current) => deleteNode(current, nodeId))
-                }
-                onReorderNode={reorderConditionNode}
-                onMoveNode={(nodeId, targetGroupId) => moveConditionNode(nodeId, targetGroupId)}
-                onClear={() => setDocument((current) => clearDocument(current))}
-              />
-
-              <ExpressionDocumentPanel
-                expression={derived.expression}
-                collapsed={workbench.previewCollapsed}
-                copyState={workbench.copyState}
+                source={document.source ?? { kind: 'unknown' }}
+                collapsed={workbench.leftDockCollapsed}
                 onToggleCollapsed={() =>
-                  setWorkbench((current) => togglePreview(current))
+                  setWorkbench((current) => toggleDock(current, 'left'))
                 }
-                onCopy={() => void copyExpression()}
+                onSwitchTable={() => setDialog('tablePicker')}
+                onImport={() => setDialog('import')}
+                onAddField={() => setDialog('addField')}
+                onLoadSamples={loadSampleFields}
+                canConnectTable={canConnectTable}
+                onManageProfiles={() => setDialog('profiles')}
+                onRefresh={() => {
+                  const table = document.source?.tableLogicalName;
+                  const label = document.source?.label ?? table ?? 'Dataverse';
+                  const includeRelated = document.source?.includeRelated ?? false;
+                  void runBusy('Refreshing fields…', () =>
+                    table ? connectFieldsCached(table, label, includeRelated, true) : connectFields(),
+                  );
+                }}
+                relatedSections={relatedSections}
+                onExpandRelated={handleExpandRelated}
+                onCreateRuleFromField={createRuleFromField}
+              />
+  
+              <div className="eb-center-col">
+                <ConditionCanvas
+                  root={document.root}
+                  fields={document.fields}
+                  mode={document.mode}
+                  selectedRuleId={selectedRule?.id}
+                  activeGroupId={document.activeGroupId ?? document.root.id}
+                  onFocusGroup={(groupId) =>
+                    setDocument((current) => focusGroup(current, groupId))
+                  }
+                  onRequestRemap={(ruleId) => {
+                    setDocument((current) => selectRule(current, ruleId));
+                    setDialog('remap');
+                  }}
+                  onSelectRule={(ruleId) => {
+                    setDocument((current) => selectRule(current, ruleId));
+                    setImportDiagnostics([]);
+                  }}
+                  onAddRule={(groupId) =>
+                    setDocument((current) =>
+                      addRule(current, groupId, {
+                        fieldId: current.fields[0]?.id ?? '',
+                        operator: 'equals',
+                        value: getDefaultValue(current.fields[0]),
+                      }),
+                    )
+                  }
+                  onAddGroup={(groupId) =>
+                    setDocument((current) => addGroup(current, groupId))
+                  }
+                  onChangeGroupConjunction={(groupId, conjunction) =>
+                    setDocument((current) =>
+                      changeGroupConjunction(current, groupId, conjunction),
+                    )
+                  }
+                  onUpdateRule={(ruleId, patch) => {
+                    setDocument((current) => updateRule(current, ruleId, patch));
+                    setImportDiagnostics([]);
+                  }}
+                  onDuplicateRule={(ruleId) =>
+                    setDocument((current) => duplicateRule(current, ruleId))
+                  }
+                  onDeleteNode={(nodeId) =>
+                    setDocument((current) => deleteNode(current, nodeId))
+                  }
+                  onReorderNode={reorderConditionNode}
+                  onMoveNode={(nodeId, targetGroupId) => moveConditionNode(nodeId, targetGroupId)}
+                  onClear={() => setDocument((current) => clearDocument(current))}
+                />
+  
+                <ExpressionDocumentPanel
+                  expression={derived.expression}
+                  collapsed={workbench.previewCollapsed}
+                  copyState={workbench.copyState}
+                  onToggleCollapsed={() =>
+                    setWorkbench((current) => togglePreview(current))
+                  }
+                  onCopy={() => void copyExpression()}
+                />
+              </div>
+  
+              <SupportPane
+                mode={document.mode}
+                diagnostics={diagnostics}
+                activeTab={workbench.rightTab}
+                collapsed={workbench.rightDockCollapsed}
+                onTabChange={(rightTab) =>
+                  setWorkbench((current) => ({ ...current, rightTab }))
+                }
+                onToggleCollapsed={() =>
+                  setWorkbench((current) => toggleDock(current, 'right'))
+                }
               />
             </div>
 
-            <SupportPane
-              mode={document.mode}
-              diagnostics={diagnostics}
-              activeTab={workbench.rightTab}
-              collapsed={workbench.rightDockCollapsed}
-              onTabChange={(rightTab) =>
-                setWorkbench((current) => ({ ...current, rightTab }))
-              }
-              onToggleCollapsed={() =>
-                setWorkbench((current) => toggleDock(current, 'right'))
-              }
-            />
+            <div
+              id={panelIds.jsonPanel}
+              role="tabpanel"
+              aria-labelledby={panelIds.jsonTab}
+              hidden={builderView !== 'jsonReference'}
+              className="eb-builder-panel eb-json-panel"
+            >
+              {jsonReferenceOpened ? (
+                <JsonReferenceWorkspace adapter={adapter} active={builderView === 'jsonReference'} />
+              ) : null}
+            </div>
           </main>
         </BuilderDragDropProvider>
 

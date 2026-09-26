@@ -1,13 +1,18 @@
 import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
 import type { WorkbenchHeaderProps } from './types';
 import { ActionButton } from './controls/ActionButton';
+import { BuilderTabs } from './BuilderTabs';
 import { ExportIcon, ImportIcon } from './icons/BuilderIcons';
 
 export function WorkbenchHeader({
+  builderView,
   mode,
+  onBuilderViewChange,
   onExport,
   onImport,
   onModeChange,
+  panelIds,
+  ruleCount,
 }: WorkbenchHeaderProps) {
   return (
     <header className="eb-workbench-header">
@@ -24,16 +29,26 @@ export function WorkbenchHeader({
         </div>
       </div>
 
-      <ModeSegmentedControl mode={mode} onChange={onModeChange} />
+      <BuilderTabs view={builderView} ruleCount={ruleCount} ids={panelIds} onChange={onBuilderViewChange} />
 
-      <div className="eb-header-actions">
-        <ActionButton variant="ghost" onClick={onImport} icon={<ImportIcon />}>
-          Import
-        </ActionButton>
-        <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
-          Export
-        </ActionButton>
-      </div>
+      {builderView === 'condition' ? (
+        <>
+          <ModeSegmentedControl mode={mode} onChange={onModeChange} />
+
+          <div className="eb-header-actions">
+            <ActionButton variant="ghost" onClick={onImport} icon={<ImportIcon />}>
+              Import
+            </ActionButton>
+            <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
+              Export
+            </ActionButton>
+          </div>
+        </>
+      ) : (
+        <p className="eb-header-privacy">
+          Pasted JSON is processed locally and is not uploaded or saved by this feature.
+        </p>
+      )}
     </header>
   );
 }
