@@ -1,0 +1,76 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+
+// CI runs no browser, so these pin the layout rules the e2e spec verifies.
+const css = readFileSync(
+  resolve(fileURLToPath(new URL('../src/', import.meta.url)), 'theme/tokens.css'),
+  'utf8',
+).replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** Every block for one exact media query, joined. */
+function mediaBlocks(query: string): string {
+  const blocks: string[] = [];
+  for (let start = css.indexOf(`@media (${query})`); start !== -1; start = css.indexOf(`@media (${query})`, start + 1)) {
+    const open = css.indexOf('{', start);
+    let depth = 0;
+    for (let index = open; index < css.length; index += 1) {
+      if (css[index] === '{') depth += 1;
+      else if (css[index] === '}' && --depth === 0) {
+        blocks.push(css.slice(open + 1, index));
+        break;
+      }
+    }
+  }
+  if (blocks.length === 0) throw new Error(`Missing media query: ${query}`);
+  return blocks.join('\n');
+}
+
+function rule(source: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`(?:^|[}\\s,])${escaped}\\s*\\{([^}]*)\\}`).exec(source);
+  if (!match) throw new Error(`Missing rule: ${selector}`);
+  return match[1];
+}
+
+describe('JSON reference styles', () => {
+  it('hides the inactive builder panel even where a display rule applies (FR-005)', () => {
+    expect(rule(css, '.eb-builder-panel[hidden]')).toMatch(/display:\s*none;/);
+  });
+
+  it('keeps the header one row and 71px tall above 900px (FR-007)', () => {
+    expect(rule(css, '.eb-builder-tabs')).toMatch(/min-height:\s*70px;/);
+    expect(rule(css, '.eb-builder-tabs')).toMatch(/margin-block:\s*-12px;/);
+    const wide = mediaBlocks('min-width: 901px');
+    expect(rule(wide, '.eb-header-actions')).toMatch(/flex-wrap:\s*nowrap;/);
+    expect(rule(wide, '.eb-header-brand')).toMatch(/flex:\s*0 999 auto;/);
+    expect(wide).toMatch(/text-overflow:\s*ellipsis;/);
+    expect(mediaBlocks('min-width: 901px) and (max-width: 1180px')).toMatch(/clip:\s*rect\(0, 0, 0, 0\);/);
+  });
+
+  it('scrolls the tree inside its card on wide screens and the workspace as one when stacked (FR-092)', () => {
+    expect(rule(css, '.eb-payload-tree')).toMatch(/overflow:\s*auto;/);
+    expect(rule(css, '.eb-json-workspace')).toMatch(/overflow-y:\s*auto;/);
+    const stacked = mediaBlocks('max-width: 900px');
+    expect(rule(stacked, '.eb-json-workspace')).toMatch(/flex-direction:\s*column;/);
+    expect(rule(stacked, '.eb-payload-tree')).toMatch(/overflow-y:\s*hidden;/);
+    expect(rule(stacked, '.eb-builder-tabs')).toMatch(/flex:\s*1 1 100%;/);
+  });
+
+  it('meets text contrast for function names and payload roots in light mode (FR-085)', () => {
+    expect(rule(css, '.fn')).toMatch(/color:\s*var\(--code-fn\);/);
+    expect(rule(css, '.eb-root[data-theme="light"]')).toMatch(
+      /--code-fn:\s*color-mix\(in srgb, var\(--accent-2\) 85%, var\(--text\)\);/,
+    );
+    expect(rule(css, '.eb-root[data-theme="dark"]')).toMatch(/--code-fn:\s*var\(--accent-2\);/);
+  });
+
+  it('shows a disabled Copy at 50% opacity (FR-052)', () => {
+    expect(rule(css, '.eb-json-copy-row .eb-action-btn:disabled')).toMatch(/opacity:\s*0\.5;/);
+  });
+
+  it('animates only through the shared duration token, which reduced motion shortens (FR-093)', () => {
+    expect(rule(css, '.eb-tree-chevron')).toMatch(/transition:\s*transform var\(--duration-fast\) ease;/);
+  });
+});

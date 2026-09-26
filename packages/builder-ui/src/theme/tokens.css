@@ -91,6 +91,9 @@ body {
   --focus-ring: var(--ring);
   --r-control: var(--r-md);
   --r-card: var(--r-sm);
+  /* --accent-2 is 4.4:1 on --surface2 and 4.2:1 on --accent-soft; function names
+     and payload roots need 4.5:1, so light mode darkens it towards --text. */
+  --code-fn: color-mix(in srgb, var(--accent-2) 85%, var(--text));
 }
 
 .eb-root[data-theme="dark"] {
@@ -125,6 +128,7 @@ body {
   --focus-ring: var(--ring);
   --r-control: var(--r-md);
   --r-card: var(--r-sm);
+  --code-fn: var(--accent-2);
 }
 
 .eb-root {
@@ -1384,7 +1388,7 @@ body {
 }
 
 .fn {
-  color: var(--accent-2);
+  color: var(--code-fn);
   font-weight: 700;
 }
 
@@ -2074,4 +2078,683 @@ body {
   opacity: 0.85;
   backdrop-filter: blur(1px);
   cursor: progress;
+}
+
+/* Builder tabs (FR-001, FR-004). The strip spans the header's full height so
+   the selected tab's accent line sits on the header border. min-height is the
+   46px row the mode switch sets plus the 24px of header padding, so the header
+   stays 71px in both views, with or without the mode switch (FR-007). */
+.eb-builder-tabs {
+  display: flex;
+  align-self: stretch;
+  flex: 0 0 auto;
+  margin-block: -12px;
+  min-height: 70px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.eb-builder-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text3);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+
+.eb-builder-tab:hover {
+  color: var(--text);
+}
+
+.eb-builder-tab[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.eb-builder-tab svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.eb-builder-tab-count {
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--r-circ);
+  background: var(--surface3);
+  color: var(--text2);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eb-header-privacy {
+  margin: 0 0 0 auto;
+  flex: 0 1 420px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text3);
+}
+
+/* Builder panels (FR-005): one main landmark holds both tab panels; the
+   hidden one is display:none, which author display rules would otherwise win. */
+.eb-builder-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.eb-builder-panel[hidden] {
+  display: none;
+}
+
+.eb-json-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* JSON reference workspace (FR-090, FR-092). Single-line flex on wide screens
+   so the stretched content column has a definite height and the tree, not the
+   page, scrolls. */
+.eb-json-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  padding: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.eb-json-card {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.eb-json-card-header {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  flex: 0 0 auto;
+}
+
+.eb-json-card-header h2 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.eb-json-card-header h2 svg {
+  width: 13px;
+  height: 13px;
+}
+
+.eb-json-card-body {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.eb-json-source {
+  flex: 1 1 300px;
+  min-height: 560px;
+}
+
+.eb-json-source .eb-json-card-body {
+  flex: 1 1 auto;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.eb-json-content {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.eb-json-payload {
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+.eb-json-reference {
+  flex: 0 0 auto;
+}
+
+/* Source pane */
+.eb-json-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.eb-json-field .eb-label {
+  margin-bottom: 0;
+}
+
+.eb-json-help {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.eb-json-help.is-invalid {
+  color: var(--danger);
+}
+
+.eb-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.eb-json-sample {
+  flex: 1 1 auto;
+}
+
+.eb-json-sample .eb-textarea {
+  flex: 1 1 auto;
+  min-height: 180px;
+}
+
+.eb-json-parse-row,
+.eb-json-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.eb-json-status,
+.eb-json-copy-status {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.eb-json-copy-status {
+  margin-left: auto;
+}
+
+.eb-json-status.is-muted,
+.eb-json-copy-status.is-muted {
+  color: var(--text3);
+}
+
+.eb-json-status.is-good,
+.eb-json-copy-status.is-good {
+  color: var(--good);
+}
+
+.eb-json-status.is-warn {
+  color: var(--warn);
+}
+
+.eb-json-status.is-danger,
+.eb-json-copy-status.is-danger {
+  color: var(--danger);
+}
+
+.eb-json-error,
+.eb-json-hint {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-lg);
+  color: var(--text);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.eb-json-error {
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+}
+
+.eb-json-hint {
+  margin: 12px 14px 0;
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+}
+
+.eb-json-hint code {
+  font-family: var(--eb-mono);
+}
+
+/* Radio groups (FR-081): Output from as a pill, The pasted JSON is as cards,
+   Copy format as a small segmented control. */
+.eb-choice-pill,
+.eb-choice-segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  border-radius: var(--r-circ);
+  border: 1px solid var(--interactive-stroke);
+}
+
+.eb-choice-pill {
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface3);
+}
+
+.eb-choice-segmented {
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface2);
+}
+
+.eb-choice-pill [role="radio"],
+.eb-choice-segmented [role="radio"] {
+  border: none;
+  border-radius: var(--r-circ);
+  background: transparent;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.eb-choice-pill [role="radio"] {
+  height: 32px;
+  padding: 0 14px;
+  color: var(--text3);
+  font-size: 12.2px;
+  font-weight: 800;
+}
+
+.eb-choice-segmented [role="radio"] {
+  height: 24px;
+  padding: 0 12px;
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.eb-choice-pill [aria-checked="true"],
+.eb-choice-segmented [aria-checked="true"] {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: var(--accent-ink);
+}
+
+.eb-choice-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eb-choice-cards [role="radio"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+
+.eb-choice-cards [role="radio"]:hover {
+  border-color: var(--border-strong);
+}
+
+.eb-choice-cards [aria-checked="true"],
+.eb-choice-cards [aria-checked="true"]:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.eb-choice-cards .eb-choice-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.eb-choice-cards .eb-choice-detail {
+  font-family: var(--eb-mono);
+  font-size: 12px;
+  color: var(--code-fn);
+  overflow-wrap: anywhere;
+}
+
+.eb-choice-cards code {
+  font: inherit;
+}
+
+/* Payload tree (FR-031 to FR-036) */
+.eb-json-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 0.85rem;
+}
+
+.eb-json-empty p {
+  margin: 0;
+}
+
+.eb-json-empty .eb-json-empty-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.eb-payload-tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eb-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 10px 0 calc(10px + (var(--eb-tree-level) - 1) * 18px);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+
+.eb-tree-row:hover {
+  border-color: var(--border-strong);
+}
+
+.eb-tree-row[aria-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.eb-tree-row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.eb-tree-chevron {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  transition: transform var(--duration-fast) ease;
+}
+
+.eb-tree-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.eb-tree-chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.eb-tree-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eb-tree-label.is-key {
+  font-weight: 700;
+}
+
+.eb-tree-label.is-root,
+.eb-tree-label.is-index,
+.eb-tree-more .eb-tree-label,
+.eb-tree-preview {
+  font-family: var(--eb-mono);
+  font-size: 12px;
+}
+
+.eb-tree-label.is-root {
+  color: var(--code-fn);
+}
+
+.eb-tree-label.is-index,
+.eb-tree-preview {
+  color: var(--text3);
+}
+
+.eb-tree-more .eb-tree-label {
+  color: var(--accent);
+}
+
+.eb-tree-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eb-field-type-badge.object,
+.eb-field-type-badge.array {
+  background: var(--accent);
+}
+
+.eb-field-type-badge.null {
+  background: var(--text3);
+}
+
+/* Reference card (FR-043 to FR-046, FR-050 to FR-054) */
+.eb-json-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eb-mono);
+}
+
+.eb-json-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eb-json-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.eb-json-crumb {
+  padding: 2px 8px;
+  border-radius: var(--r-circ);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-family: var(--eb-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.eb-json-crumb-separator {
+  color: var(--text3);
+}
+
+.eb-json-placeholder {
+  color: var(--text3);
+  font-family: var(--eb-font);
+}
+
+.eb-json-note {
+  margin: 0;
+  color: var(--warn);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* FR-052: not operable, and shown at 50% opacity. */
+.eb-json-copy-row .eb-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Header fit above 900px (FR-007): one row, never taller than today. The title
+   truncates first (it stays whole for assistive technology), and the brand
+   keeps at least its 34px mark plus the 14px gap. */
+@media (min-width: 901px) {
+  .eb-header-brand {
+    flex: 0 999 auto;
+    min-width: 48px;
+  }
+
+  .eb-header-titles {
+    overflow: hidden;
+  }
+
+  .eb-header-titles h1,
+  .eb-header-titles p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .eb-header-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+}
+
+/* Where truncating the title is not enough, Import and Export go icon-only; the
+   clipped label keeps each button's accessible name. */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .eb-workbench-header .eb-action-btn > span:not(.eb-action-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .eb-workbench-header .eb-action-btn {
+    padding: 0 10px;
+  }
+}
+
+/* Stacked (FR-092): the tabs take their own row under the brand, the JSON
+   panes stack with Source first, and the workspace scrolls as one. */
+@media (max-width: 900px) {
+  .eb-builder-tabs {
+    order: 2;
+    flex: 1 1 100%;
+    margin-block: 0;
+    min-height: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .eb-header-privacy {
+    order: 3;
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .eb-json-workspace {
+    flex-direction: column;
+  }
+
+  .eb-json-workspace > *,
+  .eb-json-content > * {
+    flex: 0 0 auto;
+  }
+
+  .eb-json-source,
+  .eb-json-payload {
+    min-height: 0;
+  }
+
+  .eb-json-source .eb-json-card-body {
+    overflow: visible;
+  }
+
+  /* Deep keys can still scroll sideways inside the card, never the page. */
+  .eb-payload-tree {
+    flex: 0 0 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+@media (max-width: 700px) {
+  .eb-json-workspace,
+  .eb-json-content {
+    gap: 12px;
+  }
+
+  .eb-json-workspace {
+    padding: 12px;
+  }
+}
+
+/* The whole tab strip fits at 375px (FR-092). */
+@media (max-width: 480px) {
+  .eb-builder-tab {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .eb-builder-tab svg {
+    display: none;
+  }
 }
