@@ -1,0 +1,47 @@
+# Design: Adopt Superpowers v6.0–v6.3 Improvements
+
+**Date:** 2026-08-15
+**Feature:** 028-adopt-superpowers-v6-improvements
+
+## Problem
+
+sdd-superpowers forks and adapts a subset of skills from the upstream `superpowers` plugin (`github.com/obra/superpowers`). Upstream shipped seven releases between v6.0.0 (2026-06-16) and v6.3.0 (2026-08-12) — a rewrite of its subagent review flow, plan-structure additions, a visual-companion security fix, a rebuilt TDD reference, two new skill-writing guidance sections, and several finishing-a-development-branch bug fixes. None of this reached our fork. One of the gaps was live and actively harmful: `skills/systematic-debugging/SKILL.md` contained the unhyphenated string `"Ultrathink this"`, which is the exact keyword Claude Code scans for to force extended thinking — every session that loaded the skill silently triggered it. (This one has already been fixed directly, in the same worktree as this spec, since it was a one-character, zero-risk correction — not part of the work this plan covers.)
+
+## Chosen Approach
+
+Port the upstream improvements that fit our architecture; skip the ones that don't. The key fork: upstream's v6.0–v6.2 subagent-driven-development rewrite (`task-reviewer-prompt.md`, `review-package`/`task-brief` scripts, `re-review-prompt.md`, a 5-round circuit breaker) assumes a reviewer subagent runs after every task. Our `subagent-driven-development` deliberately has none — TDD-per-unit is the only per-task gate, with one end-of-execution `sdd-review` (Mode B) review, and this trade-off is already documented inline (`SKILL.md:24`, `SKILL.md:206-214`). That machinery does not port. The *behavior* underneath parts of it is architecture-agnostic and does port: controllers ruling on non-catastrophic plan conflicts instead of stalling, batching small same-shape tasks, and banning implementer subagents from spawning their own subagents.
+
+Everything else is either a straight content port (already validated and shipped upstream) or a small, well-scoped bug fix. No new upstream design work is required — this plan is a backport, not a redesign.
+
+**Workstreams (also the plan's task groups):**
+
+1. **`sdd-execute`: rulings, not stalls.** Replace the blanket "stop on any unclear/contradictory plan instruction" behavior with upstream's four-thing stop list (irreversible/destructive op; security-sensitive action; a side effect outside the worktree needing consent — merge/push/publish; a plan so broken every path is a guess). Everything else becomes a recorded ruling (in `TodoWrite` narration / commit messages) and execution continues.
+2. **`subagent-driven-development`: pre-dispatch conflict scan, batching, no-subagent-spawning.** Before Task 1, scan the plan for conflicts against itself and against the new Global Constraints block (workstream 3), write the scan as a table, and rule on each row. Add "batch small same-shape work" guidance to the task loop. Add the no-subagents contract to `implementer-prompt.md` and a Red Flags line to `SKILL.md`.
+3. **`sdd-plan`: Global Constraints, Interfaces, right-sizing.** Add a Global Constraints block (project-wide rules copied verbatim from the spec, binding on every phase) and a per-phase Interfaces block (what a phase consumes/produces, since an implementer subagent sees only its own task text) to `template.md`; add right-sizing guidance to `SKILL.md`/`reference.md`.
+4. **`sdd-brainstorm` visual companion: security hardening.** Port upstream's hardened `server.cjs`/`start-server.sh`/`stop-server.sh`/`helper.js`/`frame-template.html` (per-session key, cookie re-auth, sandboxed file serving, no-store/deny-framing headers, restart-and-reconnect on the same port, 4-hour idle timeout, `--open` auto-launch) and update `visual-companion.md` to match. File-for-file port — filenames are identical on both sides.
+5. **`test-driven-development`: replace `testing-anti-patterns.md` with `writing-good-tests.md`.** Port upstream's rebuilt reference (two principles — name the break, exercise the real thing — plus a mutation check; explicit string-presence-trap and change-detector-trap callouts) and repoint `SKILL.md`'s reference link.
+6. **`writing-skills`: two additions.** Add "Match the Form to the Failure" (table: flat-rule vs. worked-example guidance, by failure type) and "Micro-Test Wording" (sample a phrasing against a no-guidance control before committing to it).
+7. **`finishing-a-development-branch`: three fixes.** Move "discard" out of the standing menu (explicit-request-only). Make PR creation forge-agnostic (forge CLI if available, else the URL the push prints) instead of hardcoding `gh pr create`. Add untracked-file-safe worktree removal (stop, list files, ask — never `--force` on our own initiative) plus the `GIT_DIR`/`GIT_COMMON`/`WORKTREE_PATH`-captured-before-cd environment detection this repo's own `EnterWorktree` tool now makes a live path (this session used it).
+8. **Style consistency: two files.** Convert `subagent-driven-development`'s `## Advantages` and `writing-skills`' `## The Bottom Line` to the Common Rationalizations table format already used elsewhere in this repo (`systematic-debugging`, `test-driven-development`, `requesting-code-review`, `receiving-code-review` already use it — verified by grep, no changes needed there).
+
+## Trade-offs & Rationale
+
+- **Cherry-picking workstream 1–2 instead of the full reviewer-flow rewrite** costs us upstream's per-task defect-catching (a real quality signal in their evals) but keeps our documented cost/quality trade-off (TDD-only, one cheap final review) intact rather than silently inverting a decision this repo already made deliberately. Reconsidering that trade-off is explicitly out of scope (see below) — it deserves its own design work, not a backport.
+- **File-for-file port for the visual companion** (workstream 4) is lower-risk than re-deriving the security model ourselves: upstream's version is already shipped and hardened against a real reported vulnerability (#1014). The cost is adopting their exact mechanism (session-key-in-URL + cookie) rather than a bespoke one; accepted because that mechanism is well-understood and the port is close to drop-in given identical filenames.
+- **Skipping the CSO→SDO rename** (part of workstream 6) diverges from upstream, but that rename exists solely to make upstream's guidance harness-neutral across Codex/Devin/Hermes/etc. sdd-superpowers is Claude Code-specific by construction (`TodoWrite`, `EnterPlanMode`/`ExitPlanMode` are load-bearing in multiple skills) — porting the rename would create vocabulary drift from the rest of this repo for no benefit.
+- **One combined plan across all eight workstreams** (per your direction) trades a single larger review for one execution pass instead of eight separate spec→plan cycles. Workstreams are independent enough (different files, no shared interfaces) that this doesn't create cross-task coupling risk — right-sizing guidance (workstream 3, ironically) keeps each plan task scoped to one workstream's files.
+
+## Key Design Decisions
+
+- **No new `.superpowers/sdd/` or plan-scoped workspace.** Upstream's plan-scoped workspace directory fix (v6.2.0) solves cross-plan progress-ledger contamination for a *file-based* ledger. Our orchestration uses `TodoWrite`, which is session-scoped and dies with the session — there is no persisted, git-ignored ledger to contaminate. Not adopted; noted here so a future reader doesn't wonder why it's missing.
+- **"Rulings, not stalls" applies to `sdd-execute`, not a new skill.** Upstream's version of this lives in their `subagent-driven-development` (their controller). Ours splits controller responsibilities across `sdd-execute` (owns "When to Stop and Ask") and `subagent-driven-development` (owns per-task dispatch) — the stop-list replacement belongs in `sdd-execute`, and the pre-dispatch conflict scan belongs in `subagent-driven-development`, matching each skill's existing role split.
+- **Verification method for markdown/skill-content changes:** this repo has no unit-test framework for skill prose (precedent: `docs/specs/027-.../plan.md`). Each plan task's red/green cycle is a `grep`/`jq` assertion pair — confirm the old text is present before the edit (red) and the new text is present / old text is gone after (green) — the same pattern 027 used.
+- **Visual companion port scope:** port the five `scripts/` files and `visual-companion.md` wholesale from the upstream tarball already fetched to `/home/a5152154/.claude/jobs/525ac86c/tmp/superpowers-v630/skills/brainstorming/`, then diff against our current versions to confirm no sdd-superpowers-specific customization (e.g., any reference to `docs/specs/` or SDD-specific paths) gets clobbered. If none exists, this is a direct copy; if any does, preserve it on top of the ported security model.
+
+## Out of Scope
+
+- Reconsidering whether `subagent-driven-development` should add per-task reviewer subagents (explicitly deferred per your decision — would need its own spec weighing cost/quality trade-offs)
+- Any Codex/Devin/Hermes/Kimi/Windows harness-specific content — sdd-superpowers targets Claude Code only
+- Packaging scripts, eval-harness infrastructure, or `plugin.json`/marketplace manifest changes unrelated to the skill content above
+- Renaming "Claude Search Optimization" to a harness-neutral term
+- Migrating or backfilling any historical spec/plan/design docs to reflect these changes retroactively

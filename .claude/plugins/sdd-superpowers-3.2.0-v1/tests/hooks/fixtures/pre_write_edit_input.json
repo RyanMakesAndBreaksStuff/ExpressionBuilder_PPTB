@@ -1,0 +1,9 @@
+{
+  "hook_event_name": "PreToolUse",
+  "session_id": "test-session-001",
+  "cwd": "__CWD_PLACEHOLDER__",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "__CWD_PLACEHOLDER__/src/example.sh"
+  }
+}

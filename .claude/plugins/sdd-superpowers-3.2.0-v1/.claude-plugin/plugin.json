@@ -1,0 +1,13 @@
+{
+  "name": "sdd-superpowers",
+  "description": "Specification-Driven Development (SDD) for Claude Code: write specs first, generate code from them. Workflow covering brainstorm (with research + ADRs) → specify → plan → execute → sdd-spec-update → review.",
+  "version": "3.2.0",
+  "author": {
+    "name": "hllj",
+    "email": "vanhop3499@gmail.com"
+  },
+  "homepage": "https://github.com/hllj/sdd-superpowers",
+  "repository": "https://github.com/hllj/sdd-superpowers",
+  "license": "MIT",
+  "keywords": ["sdd", "tdd", "specification", "workflow", "skills", "planning"]
+}

@@ -1,0 +1,5 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "test-session-001",
+  "cwd": "__CWD_PLACEHOLDER__"
+}

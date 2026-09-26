@@ -1,0 +1,57 @@
+{
+  "allowedTools": [
+    "Bash(git *)",
+    "Bash(grep *)",
+    "Bash(find *)",
+    "Bash(ls *)",
+    "Bash(cat *)",
+    "Bash(head *)",
+    "Bash(tail *)",
+    "Bash(wc *)",
+    "Bash(python *)",
+    "Bash(python3 *)",
+    "Bash(bash tests/*)",
+    "Bash(echo *)",
+    "Bash(pwd)",
+    "Bash(which *)",
+    "Bash(jq *)"
+  ],
+  "blockedTools": [
+    "Bash(rm -rf *)",
+    "Bash(curl * | bash)",
+    "Bash(curl * | sh)",
+    "Bash(wget * | sh)",
+    "Bash(sudo *)",
+    "Bash(git config --global *)"
+  ],
+  "ignorePatterns": [
+    ".env",
+    ".env.*",
+    "**/.env",
+    "**/.env.*",
+    "**/*.pem",
+    "**/*.key",
+    "**/secrets/**",
+    "**/.ssh/**",
+    "**/.aws/**"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); case \"$FILE\" in *.sh) command -v shellcheck >/dev/null 2>&1 && shellcheck --severity=warning \"$FILE\" ;; esac; true",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); case \"$FILE\" in *scripts/hooks/*.sh|*tests/hooks/*.sh) bash tests/hooks/run_all.sh 2>&1 || true ;; esac",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
