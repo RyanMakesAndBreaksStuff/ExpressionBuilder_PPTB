@@ -32,6 +32,7 @@ dist-ssr
 /tests/e2e/*
 !/tests/e2e/theme-smoke.spec.ts
 !/tests/e2e/short-viewport-canvas.spec.ts
+!/tests/e2e/json-references.spec.ts
 /ui-ux
 /package-lock.json
 /.claude/skills

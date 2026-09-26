@@ -5,6 +5,13 @@ import { describe, expect, it } from 'vitest';
 
 type PackageManifest = {
   scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  description?: string;
+  displayName?: string;
+  keywords?: string[];
+  cspExceptions?: unknown;
+  features?: { minAPI?: string };
 };
 
 function readManifest(relativePath: string): PackageManifest {
@@ -54,6 +61,45 @@ describe('workspace build scripts', () => {
         expect(reference.path, config).toMatch(/\/tsconfig\.json$/);
       }
     }
+  });
+
+  it('keeps the PPTB bundle one self-contained classic script for srcdoc loading (FR-074)', () => {
+    const viteConfig = readFileSync(resolve(process.cwd(), 'apps/pptb/vite.config.ts'), 'utf8');
+
+    expect(viteConfig).toContain("format: 'iife'");
+    expect(viteConfig).toContain('inlineDynamicImports: true');
+  });
+
+  it('keeps the PPTB manifest free of CSP exceptions, at minAPI 1.0.17 (FR-063, FR-075)', () => {
+    const pptbManifest = readManifest('apps/pptb/package.json');
+
+    expect(pptbManifest.cspExceptions).toBeUndefined();
+    expect(pptbManifest.features?.minAPI).toBe('1.0.17');
+  });
+
+  it('adds no runtime dependency; the accessibility scanner is dev-only (CON-001)', () => {
+    const rootManifest = readManifest('package.json');
+    const builderUi = readManifest('packages/builder-ui/package.json');
+
+    expect(Object.keys(rootManifest.dependencies ?? {})).toEqual(['@fluentui/react-components', 'react', 'react-dom']);
+    expect(Object.keys(builderUi.dependencies ?? {}).sort()).toEqual([
+      '@dnd-kit/collision',
+      '@dnd-kit/dom',
+      '@dnd-kit/react',
+      '@fluentui/react-components',
+      '@fluentui/react-icons',
+      '@ryanmakes/eb_engine',
+      '@ryanmakes/eb_platformadapter',
+      'react',
+      'react-dom',
+    ]);
+    expect(rootManifest.devDependencies).toHaveProperty('@axe-core/playwright');
+  });
+
+  it('commits the JSON reference e2e spec despite the tests/e2e ignore rule (D-2)', () => {
+    const gitignore = readFileSync(resolve(process.cwd(), '.gitignore'), 'utf8');
+
+    expect(gitignore).toContain('!/tests/e2e/json-references.spec.ts');
   });
 
   it('keeps PPTB HTML free of remote font URLs so CSP font-src self is respected', () => {

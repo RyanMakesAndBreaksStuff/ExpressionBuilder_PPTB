@@ -23,11 +23,18 @@ After the fix, `npm run test:e2e` no longer fails to load the config; the origin
 
 ## Rendered browser (Phase 12)
 
+This container has no Microsoft Edge (`playwright.config.ts` uses `channel: 'msedge'`, not installed here; `playwright install` is never run in this container). The suite below ran instead through an uncommitted, git-excluded local config (`playwright.local.config.ts`) that swaps in the preinstalled Chromium and is otherwise identical (same `testDir`, `webServer`, specs). All results below are Chromium measurements, not Edge.
+
 | Evidence | Result |
 | --- | --- |
-| `npm run test:e2e` | Not run yet |
-| SC-006 parse timings in Edge (size, values, depth, wide) | Not run yet |
-| SC-006 expand timing in Edge (9,999-member object) | Not run yet |
+| `npm run test:e2e`-equivalent (`npx playwright test -c playwright.local.config.ts`), on Chromium because this container has no Edge | 19 passed (1.6m): 16 new specs in `tests/e2e/json-references.spec.ts` + 3 existing (`short-viewport-canvas.spec.ts`, `theme-smoke.spec.ts` ×2) |
+| SC-006 parse timing, Chromium — size (1,048,576-byte string value) | 240 ms |
+| SC-006 parse timing, Chromium — values (9,999-element array) | 118 ms |
+| SC-006 parse timing, Chromium — depth (65 levels) | 108 ms |
+| SC-006 parse timing, Chromium — wide (9,999-key object) | 315 ms |
+| SC-006 expand timing, Chromium — 9,999-member object | 453 ms |
+| SC-006 parse timings in Edge (size, values, depth, wide) | Not run yet: needs Edge; Chromium result above |
+| SC-006 expand timing in Edge (9,999-member object) | Not run yet: needs Edge; Chromium result above |
 
 ## PPTB host (manual, Phase 14)
 
