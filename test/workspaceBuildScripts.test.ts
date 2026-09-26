@@ -45,6 +45,17 @@ describe('workspace build scripts', () => {
     expect(viteConfig).toContain("apply: 'build'");
   });
 
+  it('references tsconfig files explicitly so Playwright can load the e2e specs', () => {
+    for (const config of ['tsconfig.json', 'packages/builder-ui/tsconfig.json', 'apps/web/tsconfig.json', 'apps/pptb/tsconfig.json']) {
+      const { references = [] } = JSON.parse(readFileSync(resolve(process.cwd(), config), 'utf8')) as {
+        references?: Array<{ path: string }>;
+      };
+      for (const reference of references) {
+        expect(reference.path, config).toMatch(/\/tsconfig\.json$/);
+      }
+    }
+  });
+
   it('keeps PPTB HTML free of remote font URLs so CSP font-src self is respected', () => {
     const html = readFileSync(resolve(process.cwd(), 'apps/pptb/index.html'), 'utf8');
 

@@ -1,10 +1,10 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/engine" },
-    { "path": "./packages/platform" },
-    { "path": "./packages/builder-ui" },
-    { "path": "./apps/web" },
-    { "path": "./apps/pptb" }
+    { "path": "./packages/engine/tsconfig.json" },
+    { "path": "./packages/platform/tsconfig.json" },
+    { "path": "./packages/builder-ui/tsconfig.json" },
+    { "path": "./apps/web/tsconfig.json" },
+    { "path": "./apps/pptb/tsconfig.json" }
   ]
 }
