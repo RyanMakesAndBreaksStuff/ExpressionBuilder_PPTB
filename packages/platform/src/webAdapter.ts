@@ -39,6 +39,11 @@ function showToast(message: string, level: string) {
 export function createWebAdapter(): PlatformAdapter {
   return {
     async copyToClipboard(text) {
+      // Insecure contexts have no navigator.clipboard; name the problem instead
+      // of surfacing a TypeError about reading writeText of undefined.
+      if (!navigator.clipboard) {
+        throw new Error('the browser clipboard is not available here');
+      }
       await navigator.clipboard.writeText(text);
     },
 

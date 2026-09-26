@@ -110,7 +110,12 @@ export function createPptbAdapter(
 
   const adapter: PlatformAdapter = {
     async copyToClipboard(text) {
-      await api?.utils?.copyToClipboard?.(text);
+      // Resolving here would let every caller report a copy that never
+      // happened, so a host without the clipboard API is a failure.
+      if (!api?.utils?.copyToClipboard) {
+        throw new Error('the host does not provide a clipboard API');
+      }
+      await api.utils.copyToClipboard(text);
     },
 
     async notify(message, level) {

@@ -187,7 +187,15 @@ export function ExpressionBuilderShell({
 
   /** Copies the current document as saved-expression JSON to the clipboard. */
   const exportDocument = async () => {
-    await adapter.copyToClipboard(serializeSavedExpression(document));
+    try {
+      await adapter.copyToClipboard(serializeSavedExpression(document));
+    } catch (err) {
+      await adapter.notify(
+        `Could not copy expression JSON: ${err instanceof Error ? err.message : 'clipboard unavailable'}`,
+        'error',
+      );
+      return;
+    }
     await adapter.notify('Expression JSON copied to clipboard.', 'success');
   };
 
