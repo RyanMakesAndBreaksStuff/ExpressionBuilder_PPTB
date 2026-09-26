@@ -2,7 +2,7 @@
 
 **Feature branch**: `json-parse`
 **Created**: 2026-09-26
-**Status**: Final, ready for planning. Results of the live-flow checks (SC-008) can still amend it.
+**Status**: Approved (2026-09-26). Results of the live-flow checks (SC-008) can still amend it.
 **Builds**: the Power Platform ToolBox (PPTB) tool (`apps/pptb`) and the static web build (`apps/web`, published to GitHub Pages). Both render the same shared shell, so every requirement applies to both builds unless it says otherwise.
 **Input**: Finalize the spec from the design handoff, which was derived from the feasibility study. Target both the PPTB build and the static page build.
 
