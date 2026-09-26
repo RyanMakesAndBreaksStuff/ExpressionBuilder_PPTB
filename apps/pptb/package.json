@@ -8,7 +8,7 @@
     "node": ">=24.17.0 <25"
   },
   "displayName": "Expression Builder",
-  "description": "Power Automate Trigger And Array Filter Builder",
+  "description": "Power Automate Trigger And Array Filter Builder, plus JSON references for action and trigger outputs",
   "author": "Ryan Rettinger",
   "main": "dist/index.html",
   "files": [
@@ -20,7 +20,9 @@
     "power-automate",
     "power-platform",
     "power-platform-toolbox",
-    "cloud-flows"
+    "cloud-flows",
+    "expressions",
+    "json-reference"
   ],
   "contributors": [
     {

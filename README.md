@@ -29,6 +29,7 @@ Schema import — Field JSON, a sample payload, JSON Schema, or CSV:
 - **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
 - **Field profiles** — save and reload field sets across sessions
 - **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators)
+- **JSON references** — paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted `outputs()`, `body()`, `triggerOutputs()` or `triggerBody()` reference; see the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references). Pasted JSON is processed locally and is not uploaded or saved.
 - **Graphite theme system** — accessible light/dark semantic tokens on Fluent UI v9
 - **Dockable workspace** — collapsible toolbox/support panes around the central canvas
 

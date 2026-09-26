@@ -102,6 +102,14 @@ describe('workspace build scripts', () => {
     expect(gitignore).toContain('!/tests/e2e/json-references.spec.ts');
   });
 
+  it('lists JSON references in the PPTB manifest and keeps its display name (FR-096)', () => {
+    const pptbManifest = readManifest('apps/pptb/package.json');
+
+    expect(pptbManifest.displayName).toBe('Expression Builder');
+    expect(pptbManifest.description).toMatch(/JSON references/);
+    expect(pptbManifest.keywords).toContain('json-reference');
+  });
+
   it('keeps PPTB HTML free of remote font URLs so CSP font-src self is respected', () => {
     const html = readFileSync(resolve(process.cwd(), 'apps/pptb/index.html'), 'utf8');
 

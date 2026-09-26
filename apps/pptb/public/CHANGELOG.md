@@ -8,16 +8,19 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 
 ### Added
 
+- **JSON reference** builder: paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted reference. Pasted JSON is processed locally and is not uploaded or saved.
 - Screenshots in the tool README — main view, nested AND/OR groups in the dark theme, and the schema import dialog.
 - This changelog, shipped into the tool package at `dist/CHANGELOG.md`.
 
 ### Changed
 
+- Header tabs switch between **Condition builder** and **JSON reference**. The marketplace description and keywords mention JSON references.
 - Rewrote the marketplace README against the [tool maturity model](https://docs.powerplatformtoolbox.com/tool-development/maturity-model): install and run instructions, permissions and external connections, theme and accessibility notes, and maintainer/support details.
 - Documented that the tool declares **no `cspExceptions`** and reaches no external domain. Dataverse access goes through the host `dataverseAPI` for the connection you select, and reads table and attribute metadata only — never records. Persistence is limited to the host `settings` API.
 
 ### Fixed
 
+- Copying in a host without a clipboard API now reports the failure instead of claiming success, for the expression, Export and JSON references.
 - Lint failure that broke CI: unused declarations in the PPTB platform adapter.
 
 ## [1.1.1] — 2026-09-03
