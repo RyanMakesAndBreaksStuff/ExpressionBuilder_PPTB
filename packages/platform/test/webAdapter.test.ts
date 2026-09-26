@@ -20,6 +20,25 @@ describe('createWebAdapter', () => {
     expect(writeText).toHaveBeenCalledWith('@equals(true, true)');
   });
 
+  it('rejects with a readable reason when the browser has no clipboard API', async () => {
+    vi.stubGlobal('navigator', {});
+    stubLocalStorage();
+    stubMatchMedia(false);
+
+    await expect(createWebAdapter().copyToClipboard('text')).rejects.toThrow(
+      'the browser clipboard is not available here',
+    );
+  });
+
+  it('passes a refused clipboard write through to the caller', async () => {
+    const writeText = vi.fn().mockRejectedValue(new DOMException('Write permission denied.', 'NotAllowedError'));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    stubLocalStorage();
+    stubMatchMedia(false);
+
+    await expect(createWebAdapter().copyToClipboard('text')).rejects.toThrow('Write permission denied.');
+  });
+
   it('persists settings in localStorage', async () => {
     const storage = stubLocalStorage();
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn() } });
