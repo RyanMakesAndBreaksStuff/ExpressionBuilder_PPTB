@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<style>body{margin:0;background:#f0eee9;font-family:system-ui,sans-serif}a{color:#155EEF}a:hover{color:#004EEB}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.6)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}.dv-notes{max-width:900px;margin:0 0 24px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.7)}.dv-notes li{margin:2px 0}</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Wilder takes on <a class="dv-oid" href="#1a">1a</a>: new ways to find a value</span></div>
+<ul class="dv-notes">
+<li>Each is still a full workspace reached from the app shell. All three work: <a class="dv-oid" href="#3a">3a</a> moves through columns, <a class="dv-oid" href="#3b">3b</a> changes the path in place, and <a class="dv-oid" href="#3c">3c</a> is typed, with Tab to complete and Enter to copy.</li>
+</ul>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Column browser: each level opens a new column to the right, with a large expression bar above. The header switch slides between builders.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;position:relative;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<div role="tablist" style="position:relative;display:flex;padding:4px;border-radius:14px;background:var(--surface3);border:1px solid var(--border)">
+<span style="position:absolute;top:4px;left:{{ nG.thumbX }};width:174px;height:36px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow-sm);transition:left 220ms cubic-bezier(.3,.7,.2,1)"></span>
+<button onClick="{{ nG.goCond }}" style="position:relative;width:174px;height:36px;border:none;background:transparent;color:{{ nG.condTx }};font:700 13.6px var(--font);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Condition builder</button>
+<button onClick="{{ nG.goJson }}" style="position:relative;width:174px;height:36px;border:none;background:transparent;color:{{ nG.jsonTx }};font:700 13.6px var(--font);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON reference</button>
+</div>
+<sc-if value="{{ nG.isJson }}" hint-placeholder-val="{{ true }}"><div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><button onClick="{{ g.setAction }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ g.actBg }};color:{{ g.actFg }};font:800 12px var(--font);cursor:pointer">Action</button><button onClick="{{ g.setTrigger }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ g.trgBg }};color:{{ g.trgFg }};font:800 12px var(--font);cursor:pointer">Trigger</button></div>
+<sc-if value="{{ g.isAction }}" hint-placeholder-val="{{ true }}"><input value="{{ g.name }}" onChange="{{ g.onName }}" aria-label="Action name" style="width:150px;height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"></sc-if>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ g.setFull }}" style="height:30px;padding:0 10px;border:none;border-radius:9px;background:{{ g.fullBgC }};box-shadow:{{ g.fullSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Full</button><button onClick="{{ g.setBody }}" style="height:30px;padding:0 10px;border:none;border-radius:9px;background:{{ g.bodyBgC }};box-shadow:{{ g.bodySh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Body</button></div>
+<button onClick="{{ g.edit }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2)">Sample JSON</button>
+</div></sc-if>
+</header>
+<sc-if value="{{ nG.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:18px;padding:18px;position:relative">
+<section style="display:flex;align-items:center;gap:18px;padding:20px 22px;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm)">
+<pre style="flex:1;min-width:0;margin:0;font:600 22px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ g.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none"><button onClick="{{ g.onCopy }}" style="height:44px;padding:0 20px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 14px var(--font);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="min-height:16px;font-size:12px;font-weight:700;color:var(--good)">{{ g.copied }}</span></div>
+</section>
+<sc-if value="{{ g.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="margin:-8px 0 0 4px;font-size:12.5px;color:var(--warn);font-weight:700">{{ g.fixedText }}</div></sc-if>
+<section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden;display:flex">
+<div ref="{{ colsRef }}" style="flex:1;min-width:0;display:flex;overflow-x:auto;scroll-behavior:smooth">
+<sc-for list="{{ gc.cols }}" as="col" hint-placeholder-count="4">
+<div style="width:236px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--border)">
+<div style="height:38px;flex:none;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border);background:var(--surface2);font:700 12px var(--mono);color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ col.title }}</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ col.items }}" as="it" hint-placeholder-count="5">
+<button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:8px;min-height:40px;padding:4px 8px 4px 10px;border:none;border-radius:10px;background:{{ it.bg }};text-align:left;cursor:pointer;font-family:var(--font)" style-hover="filter:brightness(.97)">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-family:{{ it.mono }};font-size:13px;font-weight:700;color:{{ it.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.label }}</span><span style="font:11.5px var(--mono);color:{{ it.pfg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.preview }}</span></span>
+<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ it.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ it.t }}</span>
+<svg style="visibility:{{ it.more }};color:{{ it.pfg }}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ gc.isLeaf }}" hint-placeholder-val="{{ true }}">
+<div style="min-width:320px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:32px;background:var(--bg2)">
+<span style="display:flex;align-items:center;gap:8px;font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Sample value<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ gc.leafBadge }};font-size:8px;font-weight:800;line-height:1.4">{{ gc.leafType }}</span></span>
+<span style="font:600 30px/1.25 var(--mono);color:var(--text);word-break:break-word">{{ gc.leafVal }}</span>
+<span style="font-size:12.5px;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</span>
+</div>
+</sc-if>
+</div>
+</section>
+<sc-if value="{{ g.editing }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(24,33,43,.28);display:flex;justify-content:flex-end;padding:18px">
+<section style="width:460px;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-md)">
+<div style="display:flex;align-items:center"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Sample JSON</span><button onClick="{{ g.pick }}" style="margin-left:auto;height:30px;padding:0 10px;border-radius:12px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 12.5px var(--font);cursor:pointer">Done</button></div>
+<textarea value="{{ g.text }}" onChange="{{ g.onText }}" spellcheck="false" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text);font:12.5px/1.6 var(--mono);resize:none"></textarea>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ g.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13.6px var(--font);cursor:pointer">Parse</button><span style="font-size:12.5px;font-weight:700;color:{{ g.statusColor }}">{{ g.status }}</span></div>
+</section>
+</div>
+</sc-if>
+</main>
+</sc-if>
+<sc-if value="{{ nG.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>The expression is the interface. Click any path segment to swap it for a sibling (deeper segments are kept if they still exist). The source is set in a fill-in sentence. Alt+1 / Alt+2 switch builders.</div>
+<div class="dv-card" tabindex="0" onKeyDown="{{ nH.onKey }}" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);outline:none;-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:stretch;gap:16px;padding:0 18px;height:61px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<nav style="display:flex;align-items:stretch;gap:4px;padding-left:16px;border-left:1px solid var(--border)"><button onClick="{{ nH.goCond }}" style="display:flex;align-items:center;gap:8px;padding:0 12px;border:none;border-bottom:3px solid {{ nH.condLine }};background:transparent;color:{{ nH.condTx }};font:700 13.6px var(--font);cursor:pointer">Condition builder<kbd style="padding:1px 5px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);font:600 10.5px var(--mono);color:var(--text3)">Alt 1</kbd></button><button onClick="{{ nH.goJson }}" style="display:flex;align-items:center;gap:8px;padding:0 12px;border:none;border-bottom:3px solid {{ nH.jsonLine }};background:transparent;color:{{ nH.jsonTx }};font:700 13.6px var(--font);cursor:pointer">JSON reference<kbd style="padding:1px 5px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);font:600 10.5px var(--mono);color:var(--text3)">Alt 2</kbd></button></nav>
+<sc-if value="{{ nH.isJson }}" hint-placeholder-val="{{ true }}"><div style="margin-left:auto;display:flex;align-items:center"><button onClick="{{ hp.toggleDrawer }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:8px" style-hover="background:var(--surface2)">{{ hp.drawerLabel }}<span style="font-weight:600;color:var(--text3)">{{ h.count }}</span></button></div></sc-if>
+</header>
+<sc-if value="{{ nH.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:{{ hp.cols }};transition:grid-template-columns 220ms ease">
+<div style="min-width:0;overflow:auto;padding:56px 64px;display:flex;flex-direction:column;gap:34px;background:radial-gradient(ellipse at 50% 0%,var(--surface) 0%,var(--bg) 70%)">
+<p style="margin:0;font-size:24px;line-height:1.6;color:var(--text2);font-weight:400;text-wrap:pretty">Read the
+<select value="{{ hp.shape }}" onChange="{{ hp.onShape }}" style="font:700 24px var(--font);color:var(--accent);background:transparent;border:none;border-bottom:2px dashed var(--accent);padding:0 2px;cursor:pointer"><option value="full">full output</option><option value="body">body</option></select>
+of the
+<select value="{{ hp.src }}" onChange="{{ hp.onSrc }}" style="font:700 24px var(--font);color:var(--accent);background:transparent;border:none;border-bottom:2px dashed var(--accent);padding:0 2px;cursor:pointer"><option value="action">action</option><option value="trigger">trigger</option></select>
+<sc-if value="{{ h.isAction }}" hint-placeholder-val="{{ true }}"> named <input value="{{ h.name }}" onChange="{{ h.onName }}" aria-label="Action name" style="width:170px;font:700 24px var(--font);color:var(--accent);background:transparent;border:none;border-bottom:2px dashed var(--accent);padding:0 2px"></sc-if>, at this path:</p>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+<span style="height:48px;padding:0 16px;border-radius:14px;background:var(--text);color:var(--surface);font:700 18px var(--mono);display:inline-flex;align-items:center">{{ h.fullCode }}</span>
+<sc-for list="{{ hp.segs }}" as="sg" hint-placeholder-count="4">
+<div style="position:relative;display:flex;align-items:center;gap:8px">
+<span style="color:var(--border-strong);font-size:22px">›</span>
+<button onClick="{{ sg.toggle }}" style="height:48px;padding:0 12px 0 16px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:700 18px var(--mono);display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow-sm)" style-hover="border-color:var(--accent)">{{ sg.t }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3)"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+<sc-if value="{{ sg.open }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:54px;left:22px;z-index:5;width:260px;max-height:280px;overflow:auto;padding:6px;border-radius:14px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ sg.options }}" as="it" hint-placeholder-count="4"><button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:8px;min-height:36px;padding:4px 10px;border:none;border-radius:10px;background:{{ it.bg }};text-align:left;cursor:pointer;font-family:var(--font)"><span style="font-family:{{ it.mono }};font-size:13px;font-weight:700;color:{{ it.fg }}">{{ it.label }}</span><span style="flex:1;min-width:0;font:11.5px var(--mono);color:{{ it.pfg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.preview }}</span></button></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ hp.hasNext }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;display:flex;align-items:center;gap:8px"><span style="color:var(--border-strong);font-size:22px">›</span><button onClick="{{ hp.toggleNext }}" style="height:48px;padding:0 16px;border-radius:14px;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--accent);font:700 16px var(--font);cursor:pointer">+ go deeper</button>
+<sc-if value="{{ hp.nextOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:54px;left:22px;z-index:5;width:260px;max-height:280px;overflow:auto;padding:6px;border-radius:14px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ hp.nextOptions }}" as="it" hint-placeholder-count="4"><button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:8px;min-height:36px;padding:4px 10px;border:none;border-radius:10px;background:transparent;text-align:left;cursor:pointer;font-family:var(--font)" style-hover="background:var(--surface2)"><span style="font-family:{{ it.mono }};font-size:13px;font-weight:700;color:var(--text)">{{ it.label }}</span><span style="flex:1;min-width:0;font:11.5px var(--mono);color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.preview }}</span></button></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px;padding:24px 26px;border-radius:24px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+<pre style="margin:0;font:600 24px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ h.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<button onClick="{{ h.onCopy }}" style="height:44px;padding:0 20px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 14px var(--font);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ h.setClean }}" style="height:32px;padding:0 12px;border:none;border-radius:9px;background:{{ h.cleanBg }};box-shadow:{{ h.cleanSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Expression editor</button><button onClick="{{ h.setInline }}" style="height:32px;padding:0 12px;border:none;border-radius:9px;background:{{ h.inlBg }};box-shadow:{{ h.inlSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Inside text @{…}</button></div>
+<span style="font-size:13px;font-weight:700;color:var(--good)">{{ h.copied }}</span>
+<span style="margin-left:auto;font:13px var(--mono);color:var(--text3)">= {{ h.selSummary }}</span>
+</div>
+<sc-if value="{{ h.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--warn);font-weight:700">{{ h.fixedText }} Click the index segment to switch items.</div></sc-if>
+</div>
+</div>
+<aside style="min-width:0;overflow:hidden;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column">
+<div style="flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:348px">
+<span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Sample JSON</span>
+<textarea value="{{ h.text }}" onChange="{{ h.onText }}" spellcheck="false" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text);font:12.5px/1.6 var(--mono);resize:none"></textarea>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ h.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer">Parse</button><span style="font-size:12.5px;font-weight:700;color:{{ h.statusColor }}">{{ h.status }}</span></div>
+<span style="font-size:12px;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</span>
+</div>
+</aside>
+</main>
+</sc-if>
+<sc-if value="{{ nH.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Keyboard-first path console in Graphite Dark. Type <code>body.value[0]…</code>: Tab completes, ↑↓ move through suggestions, Enter copies. Builders sit in a left rail.</div>
+<div class="dv-card" style="--bg:#12161A;--bg2:#161C21;--surface:#1B2228;--surface2:#232D35;--surface3:#2D3943;--panel:rgba(27,34,40,.94);--border:#394955;--border-strong:#526776;--is:#9EADB9;--text:#EDF3F7;--text2:#C8D3DC;--text3:#9EADB9;--accent:#77A7FF;--accent-strong:#5690F4;--ink:#0C1A34;--accent-soft:rgba(119,167,255,.16);--accent-2:#55C5BB;--danger:#FF978D;--warn:#EFC56E;--warn-soft:rgba(239,197,110,.14);--good:#63C99B;--good-soft:rgba(99,201,155,.14);--info:#9ABEFF;--shadow-sm:0 1px 2px rgba(0,0,0,.22);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);border-color:#394955;-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<sc-if value="{{ nI.isCond }}" hint-placeholder-val="{{ false }}"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><span style="height:36px;padding:0 16px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Trigger condition</span><span style="height:36px;padding:0 16px;color:var(--text2);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Filter array</span></div></sc-if>
+<sc-if value="{{ nI.isJson }}" hint-placeholder-val="{{ true }}"><div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--border)"><button onClick="{{ i.setAction }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ i.actBg }};color:{{ i.actFg }};font:800 12px var(--font);cursor:pointer">Action</button><button onClick="{{ i.setTrigger }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ i.trgBg }};color:{{ i.trgFg }};font:800 12px var(--font);cursor:pointer">Trigger</button></div>
+<sc-if value="{{ i.isAction }}" hint-placeholder-val="{{ true }}"><input value="{{ i.name }}" onChange="{{ i.onName }}" aria-label="Action name" style="width:150px;height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font:13.6px var(--font)"></sc-if>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ i.setFull }}" style="height:30px;padding:0 10px;border:none;border-radius:9px;background:{{ i.fullBgC }};box-shadow:{{ i.fullSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Full output</button><button onClick="{{ i.setBody }}" style="height:30px;padding:0 10px;border:none;border-radius:9px;background:{{ i.bodyBgC }};box-shadow:{{ i.bodySh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Body only</button></div>
+</div></sc-if>
+</header>
+<div style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:84px minmax(0,1fr)">
+<nav style="display:flex;flex-direction:column;gap:6px;padding:14px 10px;border-right:1px solid var(--border);background:var(--bg2)">
+<button onClick="{{ nI.goCond }}" style="height:64px;border:none;border-radius:14px;background:{{ nI.condTab }};color:{{ nI.condTx }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:700 11px var(--font);cursor:pointer" style-hover="color:var(--text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Conditions</button>
+<button onClick="{{ nI.goJson }}" style="height:64px;border:none;border-radius:14px;background:{{ nI.jsonTab }};color:{{ nI.jsonTx }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:700 11px var(--font);cursor:pointer" style-hover="color:var(--text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON ref</button>
+</nav>
+<sc-if value="{{ nI.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:18px;padding:18px">
+<section style="position:relative;z-index:2;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border-strong);background:var(--surface);box-shadow:0 0 0 4px var(--accent-soft)">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 18px">
+<span style="font:700 20px var(--mono);color:var(--accent)">›</span>
+<span style="font:600 18px var(--mono);color:var(--accent-2);white-space:nowrap">{{ i.fullCode }}</span>
+<input value="{{ ic.q }}" onChange="{{ ic.onQ }}" onKeyDown="{{ ic.onKey }}" spellcheck="false" autocomplete="off" aria-label="Path" placeholder="body.value[0].Title" style="flex:1;min-width:0;height:36px;border:none;background:transparent;color:var(--text);font:600 18px var(--mono);outline:none;caret-color:var(--accent)">
+<span style="font-size:12px;font-weight:700;color:{{ ic.qColor }};white-space:nowrap">{{ ic.qStatus }}</span>
+</div>
+<sc-if value="{{ ic.hasSug }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:2px;padding:6px 10px 10px;border-top:1px solid var(--border)">
+<sc-for list="{{ ic.sug }}" as="it" hint-placeholder-count="4"><button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:10px;min-height:32px;padding:0 10px;border:none;border-radius:10px;background:{{ it.bg }};text-align:left;cursor:pointer;font-family:var(--font)"><span style="font:700 13px var(--mono);color:{{ it.fg }};min-width:140px">{{ it.label }}</span><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ it.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ it.t }}</span><span style="flex:1;min-width:0;font:12px var(--mono);color:{{ it.pfg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.preview }}</span></button></sc-for>
+</div>
+</sc-if>
+<div style="display:flex;gap:14px;padding:8px 18px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text3)"><span><kbd style="padding:1px 5px;border-radius:5px;border:1px solid var(--border-strong);font:600 10.5px var(--mono)">Tab</kbd> complete</span><span><kbd style="padding:1px 5px;border-radius:5px;border:1px solid var(--border-strong);font:600 10.5px var(--mono)">↑↓</kbd> choose</span><span><kbd style="padding:1px 5px;border-radius:5px;border:1px solid var(--border-strong);font:600 10.5px var(--mono)">Enter</kbd> copy</span><span style="margin-left:auto">Pasted JSON is processed locally and is not uploaded or saved by this feature.</span></div>
+</section>
+<div style="min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px">
+<section style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Sample</span><div style="display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--surface3)"><button onClick="{{ i.pick }}" style="height:24px;padding:0 10px;border:none;border-radius:8px;background:{{ i.pickBg }};color:var(--text);font:700 11.5px var(--font);cursor:pointer">View</button><button onClick="{{ i.edit }}" style="height:24px;padding:0 10px;border:none;border-radius:8px;background:{{ i.editBg }};color:var(--text);font:700 11.5px var(--font);cursor:pointer">Edit</button></div><span style="margin-left:auto;font-size:11.5px;font-weight:700;color:{{ i.statusColor }}">{{ i.status }}</span></div>
+<sc-if value="{{ i.pickMode }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;overflow:auto;padding:8px 0;font:12.5px/1 var(--mono)">
+<sc-for list="{{ i.lines }}" as="l" hint-placeholder-count="18">
+<div onClick="{{ l.select }}" style="display:flex;align-items:center;min-height:22px;padding-right:14px;background:{{ l.bg }};cursor:pointer" style-hover="background:var(--surface2)">
+<span style="width:40px;flex:0 0 40px;text-align:right;padding-right:10px;color:{{ l.numC }};font-size:11px">{{ l.num }}</span>
+<span style="width:{{ l.pad }};flex:none"></span>
+<button onClick="{{ l.toggle }}" aria-label="Fold" style="width:14px;height:14px;padding:0;margin-right:4px;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ l.caretVis }};transform:rotate({{ l.rot }});cursor:pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="color:var(--accent-2);white-space:pre">{{ l.keyTxt }}</span><span style="color:{{ l.valC }};white-space:pre">{{ l.val }}</span><span style="color:var(--text3)">{{ l.tail }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ i.editMode }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:10px"><textarea value="{{ i.text }}" onChange="{{ i.onText }}" spellcheck="false" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font:12.5px/1.6 var(--mono);resize:none"></textarea><div><button onClick="{{ i.onParse }}" style="height:36px;padding:0 14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13px var(--font);cursor:pointer">Parse</button></div></div>
+</sc-if>
+</section>
+<section style="min-height:0;display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:20px;border:1px solid var(--border);background:var(--surface)">
+<span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Expression</span>
+<pre style="margin:0;padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--border);font:600 15px/1.7 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ i.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<sc-if value="{{ i.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--warn);font-weight:700">{{ i.fixedText }}</div></sc-if>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ i.setClean }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ i.cleanBg }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Expression editor</button><button onClick="{{ i.setInline }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ i.inlBg }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Inside text @{…}</button></div>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ i.onCopy }}" style="height:42px;padding:0 18px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 14px var(--font);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="font-size:12.8px;font-weight:700;color:var(--good)">{{ i.copied }}</span></div>
+<div style="margin-top:auto;padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:8px"><span style="display:flex;align-items:center;gap:8px;font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Sample value<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ i.selBadge }};font-size:8px;font-weight:800;line-height:1.4">{{ i.selType }}</span></span><pre style="margin:0;max-height:140px;overflow:auto;font:12.5px/1.6 var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-word">{{ i.valueFull }}</pre></div>
+</section>
+</div>
+</main>
+</sc-if>
+<sc-if value="{{ nI.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr) 300px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 130px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--border-strong);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--border-strong);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--border-strong);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--border-strong);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "add the <a class="dv-oid" href="#3c">3c</a> path console to <a class="dv-oid" href="#3a">3a</a>'s column browser" · "<a class="dv-oid" href="#3b">3b</a> in dark mode with Alt shortcuts on every option" · "build <a class="dv-oid" href="#3a">3a</a> out with a 100-item array"</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Riffs on <a class="dv-oid" href="#1a">1a</a>: JSON reference as its own workspace</span></div>
+<ul class="dv-notes">
+<li>Each option keeps the builder switch in the app header and gives JSON reference a full workspace. Click <b>Condition builder</b> in any header to switch; your rules and the JSON state are both kept.</li>
+<li>They differ in the switch control, how the source is chosen, and how you pick a value (tree, numbered steps, or clicking lines in the JSON).</li>
+</ul>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Three-pane workbench laid out like the condition builder. A pill switch in the header; one 2×2 grid picks the root.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<div role="tablist" aria-label="Builders" style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><button onClick="{{ nD.goCond }}" style="height:36px;padding:0 16px;border:none;border-radius:999px;background:{{ nD.condBg }};color:{{ nD.condFg }};font:700 13.8px var(--font);cursor:pointer">Condition builder</button><button onClick="{{ nD.goJson }}" style="height:36px;padding:0 16px;border:none;border-radius:999px;background:{{ nD.jsonBg }};color:{{ nD.jsonFg }};font:700 13.8px var(--font);cursor:pointer">JSON reference</button></div>
+<sc-if value="{{ nD.isCond }}" hint-placeholder-val="{{ false }}"><div style="display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><span style="height:30px;padding:0 12px;border-radius:9px;background:var(--surface);box-shadow:var(--shadow-sm);font-size:13px;font-weight:700;display:inline-flex;align-items:center">Trigger condition</span><span style="height:30px;padding:0 12px;font-size:13px;font-weight:700;color:var(--text3);display:inline-flex;align-items:center">Filter array</span></div><div style="margin-left:auto;display:flex;gap:8px"><span style="height:38px;padding:0 14px;color:var(--text2);display:inline-flex;align-items:center;font-size:13.6px;font-weight:700">Import</span><span style="height:38px;padding:0 14px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;font-size:13.6px;font-weight:700">Export</span></div></sc-if>
+<sc-if value="{{ nD.isJson }}" hint-placeholder-val="{{ true }}"><span style="margin-left:auto;padding:6px 12px;border-radius:999px;background:var(--good-soft);color:var(--good);font-size:12.5px;font-weight:700">Processed locally · not saved</span></sc-if>
+</header>
+<sc-if value="{{ nD.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 380px;gap:18px;padding:18px">
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Source</span></div>
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:12.2px;font-weight:700;color:var(--text2)">Reference root</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ d.rootCards }}" as="rc" hint-placeholder-count="4"><button onClick="{{ rc.pick }}" style="text-align:left;padding:9px 10px;border-radius:14px;border:1px solid {{ rc.bd }};background:{{ rc.bg }};display:flex;flex-direction:column;gap:4px;cursor:pointer;font-family:var(--font);min-width:0"><span style="font-size:12px;font-weight:700;color:var(--text)">{{ rc.label }}</span><span style="font:11.5px var(--mono);color:var(--accent-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rc.code }}</span></button></sc-for></div>
+<sc-if value="{{ d.isAction }}" hint-placeholder-val="{{ true }}"><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Action name</span><input value="{{ d.name }}" onChange="{{ d.onName }}" style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"></label></sc-if>
+<label style="flex:1;min-height:0;display:flex;flex-direction:column;gap:5px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Sample JSON</span><textarea value="{{ d.text }}" onChange="{{ d.onText }}" spellcheck="false" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:12.5px/1.6 var(--mono);resize:none"></textarea></label>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ d.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2);color:var(--text)">Parse</button><span style="font-size:12.5px;font-weight:700;color:{{ d.statusColor }}">{{ d.status }}</span></div>
+</div>
+</aside>
+<section style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Payload</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">{{ d.count }}</span></div>
+<sc-if value="{{ d.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="margin:12px 14px 0;padding:10px 12px;border-radius:14px;border:1px solid var(--warn);background:var(--warn-soft);font-size:12.5px;color:var(--text2)">This sample has a top-level <code style="font-family:var(--mono)">body</code> key. If you pasted the full output, pick a <b>full output</b> root.</div></sc-if>
+<div style="flex:1;min-height:0;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ d.rows }}" as="row" hint-placeholder-count="12">
+<div onClick="{{ row.select }}" style="display:flex;align-items:center;gap:8px;min-height:30px;padding:0 10px 0 {{ row.pad }};border-radius:10px;border:1px solid {{ row.bd }};background:{{ row.bg }};cursor:pointer" style-hover="border-color:var(--border-strong)">
+<button onClick="{{ row.toggle }}" aria-label="Expand" style="width:20px;height:20px;padding:0;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ row.caretVis }};transform:rotate({{ row.rot }});cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="font-family:{{ row.keyFont }};font-size:12.5px;font-weight:700;color:{{ row.keyColor }};white-space:nowrap">{{ row.label }}</span>
+<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ row.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ row.t }}</span>
+<span style="flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ row.preview }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Reference</span></div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ d.setClean }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ d.cleanBg }};box-shadow:{{ d.cleanSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Expression editor</button><button onClick="{{ d.setInline }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ d.inlBg }};box-shadow:{{ d.inlSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Inside text @{…}</button></div>
+<pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ d.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<sc-if value="{{ d.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--warn);font-weight:700">{{ d.fixedText }}</div></sc-if>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ d.onCopy }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="font-size:12.8px;font-weight:700;color:var(--good)">{{ d.copied }}</span></div>
+<div style="padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:8px"><span style="font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Path</span><div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><sc-for list="{{ d.crumbs }}" as="c" hint-placeholder-count="4"><sc-if value="{{ c.sep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--text3);font-size:12px">›</span></sc-if><span style="padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font:12px var(--mono);color:var(--text2)">{{ c.t }}</span></sc-for></div></div>
+<div style="padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Sample value</span><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ d.selBadge }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ d.selType }}</span></div><pre style="margin:0;font:12.5px/1.6 var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-word">{{ d.valueFull }}</pre></div>
+</div>
+</aside>
+</main>
+</sc-if>
+<sc-if value="{{ nD.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Numbered steps from left to right, with the expression in a dark strip along the bottom. Underline tabs in the header.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:stretch;gap:16px;padding:0 18px;height:61px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<nav style="display:flex;align-items:stretch;gap:4px;padding-left:16px;border-left:1px solid var(--border)"><button onClick="{{ nE.goCond }}" style="padding:0 12px;border:none;border-bottom:3px solid {{ nE.condLine }};background:transparent;color:{{ nE.condTx }};font:700 13.6px var(--font);cursor:pointer" style-hover="color:var(--text)">Condition builder</button><button onClick="{{ nE.goJson }}" style="padding:0 12px;border:none;border-bottom:3px solid {{ nE.jsonLine }};background:transparent;color:{{ nE.jsonTx }};font:700 13.6px var(--font);cursor:pointer" style-hover="color:var(--text)">JSON reference</button></nav>
+<sc-if value="{{ nE.isCond }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><span style="height:36px;padding:0 16px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Trigger condition</span><span style="height:36px;padding:0 16px;color:var(--text2);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Filter array</span></div></div></sc-if>
+</header>
+<sc-if value="{{ nE.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:18px;padding:18px">
+<div style="min-height:0;display:grid;grid-template-columns:270px minmax(0,1fr) minmax(0,1.2fr);gap:18px">
+<section style="min-height:0;display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--ink);font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">1</span><h2 style="margin:0;font-size:15px;font-weight:700">Where is it from?</h2></div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><button onClick="{{ e.setAction }}" style="flex:1;height:30px;border:none;border-radius:999px;background:{{ e.actBg }};color:{{ e.actFg }};font:800 12.2px var(--font);cursor:pointer">Action</button><button onClick="{{ e.setTrigger }}" style="flex:1;height:30px;border:none;border-radius:999px;background:{{ e.trgBg }};color:{{ e.trgFg }};font:800 12.2px var(--font);cursor:pointer">Trigger</button></div>
+<sc-if value="{{ e.isAction }}" hint-placeholder-val="{{ true }}"><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Action name</span><input value="{{ e.name }}" onChange="{{ e.onName }}" style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"></label></sc-if>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">You'll paste the</span>
+<button onClick="{{ e.setFull }}" style="text-align:left;padding:10px 12px;border-radius:14px;border:1px solid {{ e.fullBd }};background:{{ e.fullBg }};display:flex;flex-direction:column;gap:3px;cursor:pointer;font-family:var(--font)"><span style="font-size:13.6px;font-weight:700;color:var(--text)">Full output</span><span style="font:12px var(--mono);color:var(--accent-2)">{{ e.fullCode }}</span></button>
+<button onClick="{{ e.setBody }}" style="text-align:left;padding:10px 12px;border-radius:14px;border:1px solid {{ e.bodyBd }};background:{{ e.bodyBg }};display:flex;flex-direction:column;gap:3px;cursor:pointer;font-family:var(--font)"><span style="font-size:13.6px;font-weight:700;color:var(--text)">Body only</span><span style="font:12px var(--mono);color:var(--accent-2)">{{ e.bodyCode }}</span></button></div>
+<p style="margin:auto 0 0;font-size:12px;line-height:1.5;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</p>
+</section>
+<section style="min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--ink);font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">2</span><h2 style="margin:0;font-size:15px;font-weight:700">Paste a run output</h2></div>
+<textarea value="{{ e.text }}" onChange="{{ e.onText }}" spellcheck="false" aria-label="Sample JSON" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text);font:12.5px/1.6 var(--mono);resize:none"></textarea>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ e.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2);color:var(--text)">Parse</button><span style="font-size:12.5px;font-weight:700;color:{{ e.statusColor }}">{{ e.status }}</span></div>
+</section>
+<section style="min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--ink);font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">3</span><h2 style="margin:0;font-size:15px;font-weight:700">Pick a value</h2><span style="margin-left:auto;font-size:12px;color:var(--text3)">{{ e.count }}</span></div>
+<sc-if value="{{ e.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border-radius:14px;border:1px solid var(--warn);background:var(--warn-soft);font-size:12.5px;color:var(--text2)">Top-level <code style="font-family:var(--mono)">body</code> key found. Pasted the full output? Choose <b>Full output</b> in step 1.</div></sc-if>
+<div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ e.rows }}" as="row" hint-placeholder-count="12">
+<div onClick="{{ row.select }}" style="display:flex;align-items:center;gap:8px;min-height:30px;padding:0 10px 0 {{ row.pad }};border-radius:10px;border:1px solid {{ row.bd }};background:{{ row.bg }};cursor:pointer" style-hover="border-color:var(--border-strong)">
+<button onClick="{{ row.toggle }}" aria-label="Expand" style="width:20px;height:20px;padding:0;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ row.caretVis }};transform:rotate({{ row.rot }});cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="font-family:{{ row.keyFont }};font-size:12.5px;font-weight:700;color:{{ row.keyColor }};white-space:nowrap">{{ row.label }}</span>
+<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ row.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ row.t }}</span>
+<span style="flex:1;min-width:0;font:12px var(--mono);color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ row.preview }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+<section style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:16px 18px;border-radius:20px;background:#12161A;box-shadow:var(--shadow-sm)">
+<div style="min-width:0;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">Expression</span><span style="font-size:12px;color:#9EADB9">{{ e.copyLabel }}</span><sc-if value="{{ e.fixedIdx }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:#EFC56E">{{ e.fixedText }}</span></sc-if></div>
+<pre style="margin:0;font:15px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word;color:#C8D3DC"><sc-for list="{{ e.tokensDark }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><button onClick="{{ e.onCopy }}" style="height:42px;padding:0 18px;border-radius:14px;border:none;background:#77A7FF;color:#0C1A34;display:inline-flex;align-items:center;gap:8px;font:700 14px var(--font);cursor:pointer" style-hover="background:#5690F4"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy expression</button><span style="min-height:16px;font-size:12px;font-weight:700;color:#63C99B">{{ e.copied }}</span></div>
+</section>
+</main>
+</sc-if>
+<sc-if value="{{ nE.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Pick values by clicking lines of the JSON itself (no separate tree). Document-style tabs sit in a strip under the header.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div></div>
+<sc-if value="{{ nF.isCond }}" hint-placeholder-val="{{ false }}"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><span style="height:36px;padding:0 16px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Trigger condition</span><span style="height:36px;padding:0 16px;color:var(--text2);font-size:13.8px;font-weight:700;display:inline-flex;align-items:center">Filter array</span></div><div style="margin-left:auto;display:flex;gap:8px"><span style="height:38px;padding:0 14px;color:var(--text2);display:inline-flex;align-items:center;font-size:13.6px;font-weight:700">Import</span><span style="height:38px;padding:0 14px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;font-size:13.6px;font-weight:700">Export</span></div></sc-if>
+<sc-if value="{{ nF.isJson }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:6px;align-items:center">
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><button onClick="{{ f.setAction }}" style="height:30px;padding:0 14px;border:none;border-radius:999px;background:{{ f.actBg }};color:{{ f.actFg }};font:800 12.2px var(--font);cursor:pointer">Action</button><button onClick="{{ f.setTrigger }}" style="height:30px;padding:0 14px;border:none;border-radius:999px;background:{{ f.trgBg }};color:{{ f.trgFg }};font:800 12.2px var(--font);cursor:pointer">Trigger</button></div>
+<sc-if value="{{ f.isAction }}" hint-placeholder-val="{{ true }}"><input value="{{ f.name }}" onChange="{{ f.onName }}" aria-label="Action name" style="width:170px;height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"></sc-if>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ f.setFull }}" style="height:30px;padding:0 12px;border:none;border-radius:9px;background:{{ f.fullBgC }};box-shadow:{{ f.fullSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Full output</button><button onClick="{{ f.setBody }}" style="height:30px;padding:0 12px;border:none;border-radius:9px;background:{{ f.bodyBgC }};box-shadow:{{ f.bodySh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Body only</button></div>
+</div></sc-if>
+</header>
+<div role="tablist" style="display:flex;align-items:flex-end;gap:4px;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--border);flex:0 0 auto">
+<button onClick="{{ nF.goCond }}" style="height:36px;padding:0 16px;margin-bottom:-1px;border:1px solid {{ nF.condTabBd }};border-bottom-color:{{ nF.condTab }};border-radius:12px 12px 0 0;background:{{ nF.condTab }};color:{{ nF.condTx }};font:700 13.1px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Condition builder<span style="font-size:11.5px;color:var(--text3);font-weight:600">3 rules</span></button>
+<button onClick="{{ nF.goJson }}" style="height:36px;padding:0 16px;margin-bottom:-1px;border:1px solid {{ nF.jsonTabBd }};border-bottom-color:{{ nF.jsonTab }};border-radius:12px 12px 0 0;background:{{ nF.jsonTab }};color:{{ nF.jsonTx }};font:700 13.1px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON reference</button>
+</div>
+<sc-if value="{{ nF.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;padding:18px">
+<section style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Sample JSON</span>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface3)"><button onClick="{{ f.pick }}" style="height:26px;padding:0 12px;border:none;border-radius:9px;background:{{ f.pickBg }};box-shadow:{{ f.pickSh }};color:var(--text);font:700 12px var(--font);cursor:pointer">Pick</button><button onClick="{{ f.edit }}" style="height:26px;padding:0 12px;border:none;border-radius:9px;background:{{ f.editBg }};box-shadow:{{ f.editSh }};color:var(--text);font:700 12px var(--font);cursor:pointer">Edit</button></div>
+<span style="margin-left:auto;font-size:12px;font-weight:700;color:{{ f.statusColor }}">{{ f.status }}</span></div>
+<sc-if value="{{ f.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="margin:12px 14px 0;padding:10px 12px;border-radius:14px;border:1px solid var(--warn);background:var(--warn-soft);font-size:12.5px;color:var(--text2)">Top-level <code style="font-family:var(--mono)">body</code> key found. Pasted the full output? Choose <b>Full output</b> in the header.</div></sc-if>
+<sc-if value="{{ f.pickMode }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;overflow:auto;padding:10px 0;font:13px/1 var(--mono)">
+<sc-for list="{{ f.lines }}" as="l" hint-placeholder-count="18">
+<div onClick="{{ l.select }}" style="display:flex;align-items:center;min-height:24px;padding-right:14px;background:{{ l.bg }};cursor:pointer" style-hover="background:var(--surface2)">
+<span style="width:44px;flex:0 0 44px;text-align:right;padding-right:10px;color:{{ l.numC }};font-size:11.5px">{{ l.num }}</span>
+<span style="width:{{ l.pad }};flex:none"></span>
+<button onClick="{{ l.toggle }}" aria-label="Fold" style="width:16px;height:16px;padding:0;margin-right:4px;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ l.caretVis }};transform:rotate({{ l.rot }});cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="color:var(--accent-2);white-space:pre">{{ l.keyTxt }}</span><span style="color:{{ l.valC }};white-space:pre">{{ l.val }}</span><span style="color:var(--text3)">{{ l.tail }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ f.editMode }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:10px"><textarea value="{{ f.text }}" onChange="{{ f.onText }}" spellcheck="false" aria-label="Sample JSON" style="flex:1;min-height:0;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13px/1.6 var(--mono);resize:none"></textarea><div style="display:flex;align-items:center;gap:10px"><button onClick="{{ f.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13.6px var(--font);cursor:pointer">Parse and pick</button><span style="font-size:12.5px;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</span></div></div>
+</sc-if>
+</section>
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:44px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Reference</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px"><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.selBadge }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.selType }}</span></span></div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><sc-for list="{{ f.crumbs }}" as="c" hint-placeholder-count="4"><sc-if value="{{ c.sep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--text3);font-size:12px">›</span></sc-if><span style="padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font:12px var(--mono);color:var(--text2)">{{ c.t }}</span></sc-for></div>
+<pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:14px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ f.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<sc-if value="{{ f.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--warn);font-weight:700">{{ f.fixedText }}</div></sc-if>
+<div style="display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ f.setClean }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ f.cleanBg }};box-shadow:{{ f.cleanSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Expression editor</button><button onClick="{{ f.setInline }}" style="flex:1;height:30px;border:none;border-radius:9px;background:{{ f.inlBg }};box-shadow:{{ f.inlSh }};color:var(--text);font:700 12.5px var(--font);cursor:pointer">Inside text @{…}</button></div>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ f.onCopy }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="font-size:12.8px;font-weight:700;color:var(--good)">{{ f.copied }}</span></div>
+<div style="margin-top:auto;padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:8px"><span style="font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Sample value</span><pre style="margin:0;font:12.5px/1.6 var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-word">{{ f.valueFull }}</pre></div>
+</div>
+</aside>
+</main>
+</sc-if>
+<sc-if value="{{ nF.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ fields }}" as="f" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div></sc-for></div></aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px"><section style="flex:1;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span></div><div style="padding:14px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div></sc-for></div></section><section style="border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></section></div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden"><div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div><div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "<a class="dv-oid" href="#2a">2a</a> layout with the click-the-JSON picker from <a class="dv-oid" href="#2c">2c</a>" · "put the dark expression strip from <a class="dv-oid" href="#2b">2b</a> into <a class="dv-oid" href="#2a">2a</a>" · "show <a class="dv-oid" href="#2c">2c</a> with a large payload (100+ items)"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">JSON → expression reference: three ways to add it</span></div>
+<ul class="dv-notes">
+<li>Built on the Graphite light tokens, pane chrome, buttons and syntax colours from <code>tokens.css</code>. The feature follows the feasibility doc: a separate utility (not a third mode), explicit Action/Trigger and Full/Body choice, typed paths, doubled apostrophes, clean copy by default, ephemeral state.</li>
+<li>All three are clickable: parse, expand/select tree nodes, change source, copy. Each option shows a different way to move between the two builders.</li>
+</ul>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Header tabs switch the whole workspace. Condition builder keeps its state; the tab shows its rule count.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:stretch;gap:16px;padding:0 18px;height:61px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div>
+</div>
+<nav style="display:flex;align-items:stretch;gap:4px;padding-left:16px;border-left:1px solid var(--border)" aria-label="Builders">
+<button onClick="{{ a1.goCond }}" style="display:flex;align-items:center;gap:8px;padding:0 12px;border:none;border-bottom:3px solid {{ a1.condTabLine }};background:transparent;color:{{ a1.condTabFg }};font:700 13.6px var(--font);cursor:pointer" style-hover="color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Condition builder<span style="min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--surface3);color:var(--text2);font-size:11px;display:inline-flex;align-items:center;justify-content:center">3</span></button>
+<button onClick="{{ a1.goJson }}" style="display:flex;align-items:center;gap:8px;padding:0 12px;border:none;border-bottom:3px solid {{ a1.jsonTabLine }};background:transparent;color:{{ a1.jsonTabFg }};font:700 13.6px var(--font);cursor:pointer" style-hover="color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON reference</button>
+</nav>
+<sc-if value="{{ a1.isCond }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13.8px var(--font)">Trigger condition</button><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:transparent;color:var(--text2);font:700 13.8px var(--font)">Filter array</button></div></div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--text2);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Import</button>
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export</button>
+</div>
+</sc-if>
+<sc-if value="{{ a1.isJson }}" hint-placeholder-val="{{ true }}">
+<div style="margin-left:auto;display:flex;align-items:center;font-size:12.5px;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</div>
+</sc-if>
+</header>
+
+<sc-if value="{{ a1.isJson }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;padding:18px">
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Source</span></div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Output from</span>
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><button onClick="{{ a.setAction }}" style="flex:1;height:30px;border:none;border-radius:999px;background:{{ a.actBg }};color:{{ a.actFg }};font:800 12.2px var(--font);cursor:pointer">Action</button><button onClick="{{ a.setTrigger }}" style="flex:1;height:30px;border:none;border-radius:999px;background:{{ a.trgBg }};color:{{ a.trgFg }};font:800 12.2px var(--font);cursor:pointer">Trigger</button></div></div>
+<sc-if value="{{ a.isAction }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Action name</span><input value="{{ a.name }}" onChange="{{ a.onName }}" style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"><span style="font-size:12px;color:var(--text3)">As shown in the flow designer. Spaces become underscores.</span></label>
+</sc-if>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">The pasted JSON is</span>
+<button onClick="{{ a.setFull }}" style="text-align:left;padding:10px 12px;border-radius:14px;border:1px solid {{ a.fullBd }};background:{{ a.fullBg }};display:flex;flex-direction:column;gap:3px;cursor:pointer;font-family:var(--font)"><span style="font-size:13.6px;font-weight:700;color:var(--text)">Full output</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent-2)">{{ a.fullCode }}</span></button>
+<button onClick="{{ a.setBody }}" style="text-align:left;padding:10px 12px;border-radius:14px;border:1px solid {{ a.bodyBd }};background:{{ a.bodyBg }};display:flex;flex-direction:column;gap:3px;cursor:pointer;font-family:var(--font)"><span style="font-size:13.6px;font-weight:700;color:var(--text)">Body only</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent-2)">{{ a.bodyCode }}</span></button>
+</div>
+<label style="display:flex;flex-direction:column;gap:5px;flex:1;min-height:180px"><span style="font-size:12.2px;font-weight:700;color:var(--text2)">Sample JSON</span><textarea value="{{ a.text }}" onChange="{{ a.onText }}" spellcheck="false" style="flex:1;min-height:160px;padding:12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13px/1.6 var(--mono);resize:none"></textarea></label>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ a.onParse }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2);color:var(--text)">Parse</button><span style="font-size:12.5px;font-weight:700;color:{{ a.statusColor }}">{{ a.status }}</span></div>
+</div>
+</aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px">
+<section style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Payload</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">{{ a.count }}</span></div>
+<sc-if value="{{ a.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="margin:12px 14px 0;padding:10px 12px;border-radius:14px;border:1px solid var(--warn);background:var(--warn-soft);font-size:12.5px;color:var(--text2)">This sample has a top-level <code style="font-family:var(--mono)">body</code> key. If you pasted the full output, choose <b>Full output</b>.</div></sc-if>
+<div style="flex:1;min-height:0;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ a.rows }}" as="row" hint-placeholder-count="12">
+<div onClick="{{ row.select }}" style="display:flex;align-items:center;gap:8px;min-height:30px;padding:0 10px 0 {{ row.pad }};border-radius:10px;border:1px solid {{ row.bd }};background:{{ row.bg }};cursor:pointer" style-hover="border-color:var(--border-strong)">
+<button onClick="{{ row.toggle }}" aria-label="Expand" style="width:20px;height:20px;padding:0;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ row.caretVis }};transform:rotate({{ row.rot }});cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="font-family:{{ row.keyFont }};font-size:12.5px;font-weight:700;color:{{ row.keyColor }};white-space:nowrap">{{ row.label }}</span>
+<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ row.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ row.t }}</span>
+<span style="flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ row.preview }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="flex:0 0 auto;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>Reference</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">{{ a.selSummary }}</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><sc-for list="{{ a.crumbs }}" as="c" hint-placeholder-count="4"><sc-if value="{{ c.sep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--text3);font-size:12px">›</span></sc-if><span style="padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--text2)">{{ c.t }}</span></sc-for></div>
+<pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ a.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<sc-if value="{{ a.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--warn);font-weight:700">{{ a.fixedText }}</div></sc-if>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ a.onCopy }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2);color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="font-size:12.5px;color:var(--text3)">{{ a.copyLabel }}</span><span style="margin-left:auto;font-size:12.8px;font-weight:700;color:var(--good)">{{ a.copied }}</span></div>
+</div>
+</section>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ a1.isCond }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span><button style="margin-left:auto;width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button></div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;padding:4px 2px"><span style="width:8px;height:8px;border-radius:50%;background:#E3C300"></span><span style="font-size:14px;font-weight:600">Sample fields</span><svg style="margin-left:auto;color:var(--text2)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+<div style="height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text3);font-size:13.6px;display:flex;align-items:center">Search fields...</div>
+<div style="display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:14px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>Sample fields</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding-left:10px">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span><span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface2);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="6" r="1.2" fill="currentColor"></circle><circle cx="15" cy="6" r="1.2" fill="currentColor"></circle><circle cx="9" cy="12" r="1.2" fill="currentColor"></circle><circle cx="15" cy="12" r="1.2" fill="currentColor"></circle><circle cx="9" cy="18" r="1.2" fill="currentColor"></circle><circle cx="15" cy="18" r="1.2" fill="currentColor"></circle></svg></span></div>
+</sc-for>
+</div>
+</div>
+</aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px">
+<section style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Condition builder</span><span style="display:inline-flex;align-items:center;gap:6px;padding:0 8px;font-size:13.6px;color:var(--text2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Clear</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">Trigger condition</span></div>
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;border-radius:18px;border:1px solid var(--accent);box-shadow:0 0 0 3px var(--accent);background:var(--surface2);overflow:hidden">
+<div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><span style="height:28px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:12.2px;font-weight:800;letter-spacing:.05em;display:inline-flex;align-items:center">AND</span><span style="height:28px;padding:0 12px;border-radius:999px;color:var(--text3);font-size:12.2px;font-weight:800;letter-spacing:.05em;display:inline-flex;align-items:center">OR</span></div><span style="font-size:11.8px;font-weight:700;color:var(--text3)">Match all of the following</span><span style="font-size:12.8px;font-weight:700;color:var(--text3)">3 rules</span><div style="margin-left:auto;display:flex;gap:8px"><span style="height:30px;padding:0 10px;border-radius:12px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;font-size:12.5px;font-weight:700">+ Rule</span><span style="height:30px;padding:0 10px;border-radius:12px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;font-size:12.5px;font-weight:700">+ Group</span></div></div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+<div style="height:22px;display:flex;align-items:center;opacity:.45"><div style="flex:1;border-top:1px dashed var(--border)"></div></div>
+<div style="display:grid;grid-template-columns:28px 24px minmax(0,1fr) 150px;gap:8px 6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid {{ r.bd }};box-shadow:{{ r.sh }};background:var(--surface)">
+<span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface2);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="6" r="1.2" fill="currentColor"></circle><circle cx="15" cy="6" r="1.2" fill="currentColor"></circle><circle cx="9" cy="12" r="1.2" fill="currentColor"></circle><circle cx="15" cy="12" r="1.2" fill="currentColor"></circle><circle cx="9" cy="18" r="1.2" fill="currentColor"></circle><circle cx="15" cy="18" r="1.2" fill="currentColor"></circle></svg></span>
+<span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span>
+<div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);font-size:13.6px;display:flex;align-items:center;justify-content:space-between">{{ r.field }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+<div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);font-size:13.6px;display:flex;align-items:center;justify-content:space-between">equals<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+<div style="grid-column:3;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div>
+<div style="grid-column:4;display:flex;gap:4px;justify-content:flex-end;color:var(--text3)"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></span><span style="width:22px;display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span><span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);display:inline-flex;align-items:center;justify-content:center;color:var(--text2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10a3 3 0 0 1 0 6H7"></path><path d="m9 11-3 3 3 3"></path></svg></span><span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);display:inline-flex;align-items:center;justify-content:center;color:var(--text2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span><span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);display:inline-flex;align-items:center;justify-content:center;color:var(--text2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+<section style="flex:0 0 auto;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>Expression preview</span><span style="margin-left:auto;width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre><div style="display:flex"><span style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;gap:8px;font-size:13.6px;font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</span></div></div>
+</section>
+</div>
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span><span style="margin-left:auto;width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+<div style="display:flex;gap:8px;padding:10px 12px 0"><span style="height:34px;padding:0 12px;border:1px solid var(--border);border-bottom-color:var(--surface);border-radius:12px 12px 0 0;background:linear-gradient(180deg,var(--surface2),var(--surface));color:var(--text);font-size:13.1px;font-weight:700;display:inline-flex;align-items:center">Diagnostics</span><span style="height:34px;padding:0 12px;color:var(--text3);font-size:13.1px;font-weight:700;display:inline-flex;align-items:center">Mode Context</span></div>
+<div style="padding:14px;border-top:1px solid var(--border)"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><svg style="color:var(--text)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><div><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></div>
+</aside>
+</main>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Workbench dialog (the doc's recommendation). Opened from a header button; closing returns to the untouched builder.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;position:relative;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div>
+</div>
+<div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13.8px var(--font)">Trigger condition</button><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:transparent;color:var(--text2);font:700 13.8px var(--font)">Filter array</button></div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<button onClick="{{ b1.open }}" style="height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font);cursor:pointer" style-hover="background:var(--surface2);color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON reference</button>
+<span style="width:1px;height:24px;background:var(--border)"></span>
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--text2);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Import</button>
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export</button>
+</div>
+</header>
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:286px minmax(0,1fr) 330px;gap:18px;padding:18px">
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span><span style="margin-left:auto;width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></span></div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;padding:4px 2px"><span style="width:8px;height:8px;border-radius:50%;background:#E3C300"></span><span style="font-size:14px;font-weight:600">Sample fields</span></div>
+<div style="height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text3);font-size:13.6px;display:flex;align-items:center">Search fields...</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding-left:10px">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3)">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span><span style="width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface2)"></span></div>
+</sc-for>
+</div>
+</div>
+</aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px">
+<section style="flex:1 1 auto;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">Trigger condition</span></div>
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px 18px 0 0;border:1px solid var(--accent);background:var(--surface2)"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><span style="height:28px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:12.2px;font-weight:800;display:inline-flex;align-items:center">AND</span><span style="height:28px;padding:0 12px;color:var(--text3);font-size:12.2px;font-weight:800;display:inline-flex;align-items:center">OR</span></div><span style="font-size:11.8px;font-weight:700;color:var(--text3)">Match all of the following</span><span style="font-size:12.8px;font-weight:700;color:var(--text3)">3 rules</span></div>
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:24px minmax(0,1fr) 150px;gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.value }}</div></div>
+</sc-for>
+</div>
+</section>
+<section style="flex:0 0 auto;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Expression preview</span></div>
+<div style="padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.8 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></div>
+</section>
+</div>
+<aside style="min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span></div>
+<div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div>
+</aside>
+</main>
+
+<sc-if value="{{ b1.isOpen }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center">
+<div role="dialog" aria-label="JSON reference" style="width:1080px;height:700px;display:flex;flex-direction:column;gap:16px;padding:24px;border-radius:8px;background:var(--surface);box-shadow:var(--shadow-md)">
+<div style="display:flex;align-items:flex-start;gap:16px"><div style="display:flex;flex-direction:column;gap:4px"><h2 style="margin:0;font-size:20px;font-weight:600">JSON reference</h2><p style="margin:0;font-size:14px;color:var(--text2)">Paste a run output, pick a value, copy its expression. Your conditions are not changed.</p></div><button onClick="{{ b1.close }}" aria-label="Close" style="margin-left:auto;width:32px;height:32px;border:none;border-radius:4px;background:transparent;color:var(--text2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg></button></div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px">
+<div style="min-height:0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:16px;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600">Output from</span><div style="display:flex;border:1px solid var(--border-strong);border-radius:4px;overflow:hidden"><button onClick="{{ b.setAction }}" style="height:32px;padding:0 12px;border:none;background:{{ b.actBg }};color:{{ b.actFg }};font:600 13px var(--font);cursor:pointer">Action</button><button onClick="{{ b.setTrigger }}" style="height:32px;padding:0 12px;border:none;border-left:1px solid var(--border-strong);background:{{ b.trgBg }};color:{{ b.trgFg }};font:600 13px var(--font);cursor:pointer">Trigger</button></div></div>
+<sc-if value="{{ b.isAction }}" hint-placeholder-val="{{ true }}"><label style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600">Action name</span><input value="{{ b.name }}" onChange="{{ b.onName }}" style="height:32px;padding:0 10px;border-radius:4px;border:1px solid var(--border);border-bottom-color:var(--text3);background:var(--surface);color:var(--text);font:14px var(--font);min-width:0"></label></sc-if>
+</div>
+<div role="radiogroup" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600">The pasted JSON is</span>
+<button onClick="{{ b.setFull }}" style="display:flex;align-items:center;gap:10px;padding:4px 0;border:none;background:transparent;cursor:pointer;font-family:var(--font);text-align:left"><span style="width:16px;height:16px;border-radius:50%;border:1px solid {{ b.fullRing }};display:inline-flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ b.fullDot }}"></span></span><span style="font-size:14px;color:var(--text)">Full output</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent-2)">{{ b.fullCode }}</span></button>
+<button onClick="{{ b.setBody }}" style="display:flex;align-items:center;gap:10px;padding:4px 0;border:none;background:transparent;cursor:pointer;font-family:var(--font);text-align:left"><span style="width:16px;height:16px;border-radius:50%;border:1px solid {{ b.bodyRing }};display:inline-flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ b.bodyDot }}"></span></span><span style="font-size:14px;color:var(--text)">Body only</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent-2)">{{ b.bodyCode }}</span></button>
+</div>
+<label style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600">Sample JSON</span><textarea value="{{ b.text }}" onChange="{{ b.onText }}" spellcheck="false" style="flex:1;min-height:0;padding:8px 10px;border-radius:4px;border:1px solid var(--border);border-bottom-color:var(--text3);background:var(--surface);color:var(--text);font:12.5px/1.55 var(--mono);resize:none"></textarea></label>
+<div style="display:flex;align-items:center;gap:10px"><button onClick="{{ b.onParse }}" style="height:32px;padding:0 12px;border-radius:4px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font:600 14px var(--font);cursor:pointer" style-hover="background:var(--surface2)">Parse</button><span style="font-size:13px;font-weight:600;color:{{ b.statusColor }}">{{ b.status }}</span></div>
+</div>
+<div style="min-height:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline"><span style="font-size:14px;font-weight:600">Select a value</span><span style="margin-left:auto;font-size:12px;color:var(--text3)">{{ b.count }}</span></div>
+<sc-if value="{{ b.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="padding:8px 10px;border-radius:4px;background:var(--warn-soft);font-size:13px;color:var(--text2)">This sample has a top-level <code style="font-family:var(--mono)">body</code> key. If you pasted the full output, choose <b>Full output</b>.</div></sc-if>
+<div role="tree" style="flex:1;min-height:0;overflow:auto;padding:6px;border-radius:4px;border:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:1px">
+<sc-for list="{{ b.rows }}" as="row" hint-placeholder-count="12">
+<div role="treeitem" onClick="{{ row.select }}" style="display:flex;align-items:center;gap:8px;min-height:28px;padding:0 8px 0 {{ row.pad }};border-radius:4px;background:{{ row.bgF }};cursor:pointer" style-hover="background:var(--surface2)">
+<button onClick="{{ row.toggle }}" aria-label="Expand" style="width:20px;height:20px;padding:0;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ row.caretVis }};transform:rotate({{ row.rot }});cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="font-family:{{ row.keyFont }};font-size:13px;font-weight:600;color:{{ row.keyColor }};white-space:nowrap">{{ row.label }}</span>
+<span style="font-size:11px;color:var(--text3)">{{ row.t }}</span>
+<span style="flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--text2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:right">{{ row.preview }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:600">Expression</span><span style="font-size:12.5px;color:var(--text3)">{{ b.copyLabel }}</span><sc-if value="{{ b.fixedIdx }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:12.5px;font-weight:600;color:var(--warn)">{{ b.fixedText }}</span></sc-if></div>
+<pre style="margin:0;padding:10px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);font:13.3px/1.7 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ b.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--text3)">Pasted JSON is processed locally and is not uploaded or saved by this feature.</span><span style="margin-left:auto;font-size:13px;font-weight:700;color:var(--good)">{{ b.copied }}</span><button onClick="{{ b1.close }}" style="height:32px;padding:0 12px;min-width:96px;border-radius:4px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font:600 14px var(--font);cursor:pointer" style-hover="background:var(--surface2)">Close</button><button onClick="{{ b.onCopy }}" style="height:32px;padding:0 12px;min-width:96px;border-radius:4px;border:none;background:var(--accent);color:#fff;font:600 14px var(--font);cursor:pointer" style-hover="background:var(--accent-strong)">Copy expression</button></div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>A third tab in the Details dock. Both builders stay on screen; the dock widens while the tab is active.</div>
+<div class="dv-card" style="--bg:#F6F8FA;--bg2:#FBFCFD;--surface:#FDFEFF;--surface2:#EEF2F5;--surface3:#E1E7EC;--panel:rgba(253,254,255,.95);--border:#D2DCE5;--border-strong:#AEBDCA;--is:#647484;--text:#18212B;--text2:#41505F;--text3:#55626F;--accent:#155EEF;--accent-strong:#004EEB;--ink:#F7FAFF;--accent-soft:rgba(21,94,239,.12);--accent-2:#087D78;--danger:#BE4540;--warn:#8B6414;--warn-soft:rgba(139,100,20,.12);--good:#237754;--good-soft:rgba(35,119,84,.12);--info:#1E65C2;--shadow-sm:0 1px 2px rgba(0,0,0,.14);--shadow-md:0 18px 48px rgba(0,0,0,.22);--font:'Segoe UI','Segoe UI Web (West European)',-apple-system,BlinkMacSystemFont,system-ui,'Helvetica Neue',sans-serif;--mono:'Cascadia Code','Cascadia Mono',ui-monospace,SFMono-Regular,Consolas,monospace;width:1280px;height:800px;display:flex;flex-direction:column;font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased">
+<header style="display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow-sm)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12M8 12h8M8 17h6"></path><path d="M4 7l2-2-2-2M4 17l2 2-2 2"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:17.3px;font-weight:700;letter-spacing:-.03em;line-height:1.2">Power Automate Expression Builder</h1><p style="margin:0;font-size:13.1px;color:var(--text3);line-height:1.2">For Triggers and Filters</p></div>
+</div>
+<div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--is);background:var(--surface2)"><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 13.8px var(--font)">Trigger condition</button><button style="height:36px;padding:0 16px;border:none;border-radius:999px;background:transparent;color:var(--text2);font:700 13.8px var(--font)">Filter array</button></div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--text2);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Import</button>
+<button style="height:38px;padding:0 14px;border-radius:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);display:inline-flex;align-items:center;gap:8px;font:700 13.6px var(--font)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export</button>
+</div>
+</header>
+<main style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:{{ c1.cols }};gap:18px;padding:18px">
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Toolbox</span></div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;padding:4px 2px"><span style="width:8px;height:8px;border-radius:50%;background:#E3C300"></span><span style="font-size:14px;font-weight:600">Sample fields</span></div>
+<div style="height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--is);background:var(--surface2);color:var(--text3);font-size:13.6px;display:flex;align-items:center">Search fields...</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:4px 8px;border-radius:14px;background:var(--bg2)"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:12.5px;font-weight:700">{{ f.title }}</span><span style="font-size:12.2px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.detail }}</span></div><span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ f.bg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ f.type }}</span></div>
+</sc-for>
+</div>
+</div>
+</aside>
+<div style="min-height:0;display:flex;flex-direction:column;gap:18px">
+<section style="flex:1 1 auto;min-height:0;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Condition builder</span><span style="margin-left:auto;font-size:11.2px;font-weight:700;color:var(--text3)">Trigger condition</span></div>
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:auto">
+<div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;border-radius:18px;border:1px solid var(--border);background:var(--surface2)"><div style="display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface3);border:1px solid var(--is)"><span style="height:28px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font-size:12.2px;font-weight:800;display:inline-flex;align-items:center">AND</span><span style="height:28px;padding:0 12px;color:var(--text3);font-size:12.2px;font-weight:800;display:inline-flex;align-items:center">OR</span></div><span style="font-size:12.8px;font-weight:700;color:var(--text3)">3 rules</span></div>
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,.7fr);gap:6px;align-items:center;padding:6px 8px;border-radius:16px;border:1px solid var(--is);background:var(--surface)"><span style="width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:{{ r.bg }};font:700 10.9px var(--mono)">{{ r.glyph }}</span><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">{{ r.field }}</div><div style="height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center">equals</div><div style="grid-column:2 / 4;height:40px;padding:0 12px;border-radius:14px;border:1px solid var(--is);font-size:13.6px;display:flex;align-items:center;overflow:hidden">{{ r.value }}</div></div>
+</sc-for>
+</div>
+</section>
+<section style="flex:0 0 auto;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Expression preview</span></div>
+<div style="padding:14px"><pre style="margin:0;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font:12.5px/1.7 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2);max-height:120px;overflow:auto"><sc-for list="{{ predTokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre></div>
+</section>
+</div>
+<aside style="min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface2)"><span style="font-size:11.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Details</span><span style="margin-left:auto;width:28px;height:28px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span></div>
+<div role="tablist" style="display:flex;gap:8px;padding:10px 12px 0;border-bottom:1px solid var(--border)">
+<button onClick="{{ c1.tabDiag }}" style="height:34px;padding:0 12px;margin-bottom:-1px;border:1px solid {{ c1.diagBd }};border-bottom-color:{{ c1.diagBb }};border-radius:12px 12px 0 0;background:{{ c1.diagBg }};color:{{ c1.diagFg }};font:700 13.1px var(--font);cursor:pointer">Diagnostics</button>
+<button onClick="{{ c1.tabCtx }}" style="height:34px;padding:0 12px;margin-bottom:-1px;border:1px solid {{ c1.ctxBd }};border-bottom-color:{{ c1.ctxBb }};border-radius:12px 12px 0 0;background:{{ c1.ctxBg }};color:{{ c1.ctxFg }};font:700 13.1px var(--font);cursor:pointer">Mode Context</button>
+<button onClick="{{ c1.tabJson }}" style="height:34px;padding:0 12px;margin-bottom:-1px;border:1px solid {{ c1.jsonBd }};border-bottom-color:{{ c1.jsonBb }};border-radius:12px 12px 0 0;background:{{ c1.jsonBg }};color:{{ c1.jsonFg }};font:700 13.1px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>JSON reference</button>
+</div>
+<sc-if value="{{ c1.isDiag }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;padding:12px;border-radius:16px;border:1px solid var(--good);background:var(--good-soft)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><div><div style="font-size:14px;font-weight:700">Expression is valid</div><div style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--text2)">All rules have values and the tree structure is well-formed.</div></div></div></div>
+</sc-if>
+<sc-if value="{{ c1.isCtx }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px"><div style="padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--bg2)"><div style="font-size:11.8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Field root</div><span style="display:inline-block;margin-top:8px;padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);font:12.5px var(--mono)">triggerBody()?['Field']</span></div></div>
+</sc-if>
+<sc-if value="{{ c1.isJson }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--border)">
+<div style="display:flex;gap:8px;align-items:center">
+<div style="display:flex;gap:4px;padding:3px;border-radius:999px;background:var(--surface3);border:1px solid var(--is);flex:0 0 auto"><button onClick="{{ c.setAction }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ c.actBg }};color:{{ c.actFg }};font:800 12px var(--font);cursor:pointer">Action</button><button onClick="{{ c.setTrigger }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;background:{{ c.trgBg }};color:{{ c.trgFg }};font:800 12px var(--font);cursor:pointer">Trigger</button></div>
+<sc-if value="{{ c.isAction }}" hint-placeholder-val="{{ true }}"><input value="{{ c.name }}" onChange="{{ c.onName }}" aria-label="Action name" placeholder="Action name" style="flex:1;min-width:0;height:36px;padding:0 12px;border-radius:12px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:13.6px var(--font)"></sc-if>
+</div>
+<div style="display:flex;gap:4px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)"><button onClick="{{ c.setFull }}" style="flex:1;padding:5px 8px;border:none;border-radius:9px;background:{{ c.fullBgC }};box-shadow:{{ c.fullSh }};display:flex;flex-direction:column;align-items:flex-start;gap:1px;cursor:pointer;font-family:var(--font)"><span style="font-size:12.5px;font-weight:700;color:var(--text)">Full output</span><span style="font:11px var(--mono);color:var(--accent-2)">{{ c.fullCode }}</span></button><button onClick="{{ c.setBody }}" style="flex:1;padding:5px 8px;border:none;border-radius:9px;background:{{ c.bodyBgC }};box-shadow:{{ c.bodySh }};display:flex;flex-direction:column;align-items:flex-start;gap:1px;cursor:pointer;font-family:var(--font)"><span style="font-size:12.5px;font-weight:700;color:var(--text)">Body only</span><span style="font:11px var(--mono);color:var(--accent-2)">{{ c.bodyCode }}</span></button></div>
+<sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}">
+<textarea value="{{ c.text }}" onChange="{{ c.onText }}" spellcheck="false" aria-label="Sample JSON" style="height:150px;padding:10px;border-radius:14px;border:1px solid var(--is);background:var(--surface);color:var(--text);font:12px/1.55 var(--mono);resize:none"></textarea>
+<div style="display:flex;align-items:center;gap:8px"><button onClick="{{ c.onParse }}" style="height:32px;padding:0 12px;border-radius:12px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:var(--ink);font:700 12.5px var(--font);cursor:pointer">Parse</button><span style="font-size:12px;font-weight:700;color:{{ c.statusColor }}">{{ c.status }}</span></div>
+</sc-if>
+<sc-if value="{{ c.notEditing }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--bg2);border:1px dashed var(--border-strong)"><span style="font-size:12.5px;font-weight:700;color:var(--text2)">Sample JSON</span><span style="font-size:12px;color:var(--text3)">{{ c.count }}</span><button onClick="{{ c.edit }}" style="margin-left:auto;height:28px;padding:0 10px;border-radius:10px;border:1px solid var(--is);background:var(--surface);color:var(--text2);font:700 12px var(--font);cursor:pointer">Edit sample</button></div>
+</sc-if>
+</div>
+<sc-if value="{{ c.bodyHint }}" hint-placeholder-val="{{ false }}"><div style="margin:10px 14px 0;padding:8px 10px;border-radius:12px;border:1px solid var(--warn);background:var(--warn-soft);font-size:12px;color:var(--text2)">Top-level <code style="font-family:var(--mono)">body</code> key found. Pasted the full output? Choose <b>Full output</b>.</div></sc-if>
+<div style="flex:1;min-height:0;overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ c.rows }}" as="row" hint-placeholder-count="12">
+<div onClick="{{ row.select }}" style="display:flex;align-items:center;gap:6px;min-height:28px;padding:0 8px 0 {{ row.padC }};border-radius:10px;border:1px solid {{ row.bd }};background:{{ row.bg }};cursor:pointer" style-hover="border-color:var(--border-strong)">
+<button onClick="{{ row.toggle }}" aria-label="Expand" style="width:18px;height:18px;padding:0;border:none;background:transparent;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;visibility:{{ row.caretVis }};transform:rotate({{ row.rot }});cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span style="font-family:{{ row.keyFont }};font-size:12.5px;font-weight:700;color:{{ row.keyColor }};white-space:nowrap">{{ row.label }}</span>
+<span style="padding:1px 4px;border-radius:4px;color:var(--ink);background:{{ row.badgeBg }};font-size:8px;font-weight:800;line-height:1.4;text-transform:uppercase">{{ row.t }}</span>
+<span style="flex:1;min-width:0;font:11.5px var(--mono);color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ row.preview }}</span>
+</div>
+</sc-for>
+</div>
+<div style="padding:12px 14px;border-top:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;gap:8px">
+<pre style="margin:0;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font:12.5px/1.65 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--text2)"><sc-for list="{{ c.tokens }}" as="k" hint-placeholder-count="6"><span style="color:{{ k.c }};font-weight:{{ k.w }}">{{ k.t }}</span></sc-for></pre>
+<sc-if value="{{ c.fixedIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--warn);font-weight:700">{{ c.fixedText }}</div></sc-if>
+<div style="display:flex;align-items:center;gap:8px"><button onClick="{{ c.onCopy }}" style="height:34px;padding:0 12px;border-radius:12px;border:1px solid var(--is);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;gap:6px;font:700 12.8px var(--font);cursor:pointer" style-hover="color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>Copy</button><span style="font-size:12px;color:var(--text3)">{{ c.copyLabel }}</span><span style="margin-left:auto;font-size:12px;font-weight:700;color:var(--good)">{{ c.copied }}</span></div>
+</div>
+</div>
+</sc-if>
+</aside>
+</main>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "combine the header tabs from <a class="dv-oid" href="#1a">1a</a> with the dock layout from <a class="dv-oid" href="#1c">1c</a>" · "show <a class="dv-oid" href="#1b">1b</a> in dark mode" · "add a Compose / direct-output source option"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;copyForm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clean&quot;,&quot;inline&quot;],&quot;default&quot;:&quot;clean&quot;,&quot;tsType&quot;:&quot;'clean' | 'inline'&quot;}}">
+const SAMPLE = {
+  statusCode: 200,
+  headers: { 'Content-Type': 'application/json; odata.metadata=minimal' },
+  body: {
+    value: [
+      { ID: 14, Title: 'Laptop refresh', Status: 'Approved', Amount: 5000, Urgent: false, Requester: { DisplayName: "Dana O'Brien", Email: 'dana@contoso.com' } },
+      { ID: 15, Title: 'Monitor', Status: 'Pending', Amount: 320, Urgent: true, Requester: { DisplayName: 'Lee Park', Email: 'lee@contoso.com' } }
+    ],
+    '@odata.nextLink': null
+  }
+};
+const SAMPLE_TEXT = JSON.stringify(SAMPLE, null, 2);
+const K = (p) => JSON.stringify(p);
+const FN = 'equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|items|item|triggerOutputs|triggerBody|outputs|body|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection';
+const TOK = new RegExp("('(?:[^']|'')*'|\\b(?:and|or|not|" + FN + ")\\b|\\d+(?:\\.\\d+)?|[(),@\\[\\]?{}])", 'g');
+const BADGE = { string: 'var(--accent-2)', number: 'var(--warn)', boolean: 'var(--info)', object: 'var(--accent)', array: 'var(--accent)', null: 'var(--text3)' };
+const DARK = { 'var(--accent)': '#77A7FF', 'var(--accent-2)': '#55C5BB', 'var(--danger)': '#FF978D', 'var(--warn)': '#EFC56E', 'var(--text3)': '#9EADB9', 'var(--text2)': '#C8D3DC' };
+const PRED = "@and(equals(triggerBody()?['Status'], 'Approved'), equals(triggerBody()?['Amount'], 5000), equals(triggerBody()?['Approver'], 'dana@contoso.com'))";
+
+function tokenize(s) {
+  return s.split(TOK).filter(Boolean).map((t) => {
+    if (/^(and|or|not)$/.test(t)) return { t, c: 'var(--accent)', w: 700 };
+    if (new RegExp('^(' + FN + ')$').test(t)) return { t, c: 'var(--accent-2)', w: 700 };
+    if (/^'/.test(t)) return { t, c: 'var(--danger)', w: 400 };
+    if (/^\d/.test(t)) return { t, c: 'var(--warn)', w: 700 };
+    if (/^[(),@\[\]?{}]$/.test(t)) return { t, c: 'var(--text3)', w: 400 };
+    return { t, c: 'var(--text2)', w: 400 };
+  });
+}
+const typeOf = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
+const count = (v) => { const t = typeOf(v); if (t === 'object') return 1 + Object.values(v).reduce((a, x) => a + count(x), 0); if (t === 'array') return 1 + v.reduce((a, x) => a + count(x), 0); return 1; };
+const at = (v, path) => { let cur = v; for (const s of path) { if (cur === null || typeof cur !== 'object' || !(s in cur)) return undefined; cur = cur[s]; } return cur; };
+const esc = (s) => String(s).replace(/'/g, "''");
+
+function initOpt() {
+  const exp = {};
+  [[], ['body'], ['body', 'value'], ['body', 'value', 0], ['body', 'value', 0, 'Requester']].forEach((p) => (exp[K(p)] = true));
+  return { text: SAMPLE_TEXT, data: SAMPLE, parsedText: SAMPLE_TEXT, error: null, sel: ['body', 'value', 0, 'Requester', 'Email'], exp, src: 'action', shape: 'full', name: 'Get items', copied: false, editing: false };
+}
+
+class Component extends DCLogic {
+  state = { a: initOpt(), b: initOpt(), c: initOpt(), d: initOpt(), e: initOpt(), f: initOpt(), g: initOpt(), h: { ...initOpt(), openSeg: null }, i: { ...initOpt(), q: 'body.value[0].Requester.Email', hi: 0 }, view: 'json', dlg: true, tab: 'json', vd: 'json', ve: 'json', vf: 'json', vg: 'json', vh: 'json', vi: 'json' };
+  colsRef = React.createRef();
+  componentDidUpdate() { const el = this.colsRef.current; if (el) el.scrollLeft = el.scrollWidth; }
+  kids(v) { const t = typeOf(v); return t === 'object' ? Object.keys(v).map((k) => [k, v[k]]) : t === 'array' ? v.map((x, i) => [i, x]) : []; }
+  item(k, x, on, pick) {
+    const t = typeOf(x);
+    const n = this.kids(x).length;
+    return { label: typeof k === 'number' ? `[${k}]` : k, t, badgeBg: BADGE[t], preview: t === 'string' ? `"${x}"` : t === 'object' ? `{${n}}` : t === 'array' ? `${n} items` : String(x), more: n ? 'visible' : 'hidden', bg: on ? 'var(--accent)' : 'transparent', fg: on ? 'var(--ink)' : 'var(--text)', pfg: on ? 'var(--ink)' : 'var(--text3)', pick, mono: typeof k === 'number' ? 'var(--mono)' : 'var(--font)' };
+  }
+  cols(id) {
+    const o = this.state[id];
+    const cols = [];
+    const root = this.rootOf(o)[o.shape];
+    for (let lv = 0; lv <= o.sel.length; lv++) {
+      const node = at(o.data, o.sel.slice(0, lv));
+      if (!this.kids(node).length) break;
+      cols.push({
+        title: lv === 0 ? root : (typeof o.sel[lv - 1] === 'number' ? `[${o.sel[lv - 1]}]` : o.sel[lv - 1]),
+        items: this.kids(node).map(([k, x]) => this.item(k, x, o.sel[lv] === k, () => this.upd(id, { sel: [...o.sel.slice(0, lv), k], copied: false }))),
+      });
+    }
+    const leaf = at(o.data, o.sel);
+    const lt = typeOf(leaf);
+    const isLeaf = leaf !== undefined && lt !== 'object' && lt !== 'array';
+    return { cols, isLeaf, leafVal: isLeaf ? (lt === 'string' ? leaf : String(leaf)) : '', leafType: lt, leafBadge: BADGE[lt] };
+  }
+  pathEd(id) {
+    const o = this.state[id];
+    const segs = o.sel.map((s, i) => {
+      const parent = at(o.data, o.sel.slice(0, i));
+      return {
+        t: typeof s === 'number' ? `[${s}]` : s, open: o.openSeg === i,
+        toggle: () => this.upd(id, (cur) => ({ openSeg: cur.openSeg === i ? null : i })),
+        options: this.kids(parent).map(([k, x]) => this.item(k, x, k === s, () => this.upd(id, (cur) => {
+          let p = [...cur.sel.slice(0, i), k, ...cur.sel.slice(i + 1)];
+          if (at(cur.data, p) === undefined) p = [...cur.sel.slice(0, i), k];
+          return { sel: p, openSeg: null, copied: false };
+        }))),
+      };
+    });
+    const nextKids = this.kids(at(o.data, o.sel));
+    return {
+      segs, hasNext: nextKids.length > 0, nextOpen: o.openSeg === 'next',
+      toggleNext: () => this.upd(id, (cur) => ({ openSeg: cur.openSeg === 'next' ? null : 'next' })),
+      nextOptions: nextKids.map(([k, x]) => this.item(k, x, false, () => this.upd(id, (cur) => ({ sel: [...cur.sel, k], openSeg: cur.openSeg === 'next' && this.kids(x).length ? 'next' : null, copied: false })))),
+      up: () => this.upd(id, (cur) => ({ sel: cur.sel.slice(0, -1), openSeg: null })),
+      closeAll: () => this.upd(id, { openSeg: null }),
+      onSrc: (e) => this.upd(id, { src: e.target.value, copied: false }),
+      onShape: (e) => this.upd(id, { shape: e.target.value, copied: false }),
+      src: o.src, shape: o.shape,
+      toggleDrawer: () => this.upd(id, (cur) => ({ editing: !cur.editing })),
+      drawerLabel: o.editing ? 'Hide sample' : 'Sample JSON',
+      cols: o.editing ? 'minmax(0,1fr) 380px' : 'minmax(0,1fr) 0px',
+    };
+  }
+  consoleV(id) {
+    const o = this.state[id];
+    const q = o.q;
+    const re = /\[(\d+)\]|\["((?:[^"\\]|\\.)*)"\]|([^.\[\]]+)/g;
+    const raw = [];
+    let m;
+    while ((m = re.exec(q))) raw.push(m[1] !== undefined ? Number(m[1]) : m[2] !== undefined ? m[2] : m[3]);
+    let valid = [];
+    for (const s of raw) { if (at(o.data, [...valid, s]) === undefined) break; valid.push(s); }
+    const trailingDot = /[.\[]$/.test(q);
+    const complete = valid.length === raw.length;
+    const partial = complete ? '' : String(raw[valid.length]);
+    const badMid = !complete && valid.length < raw.length - 1;
+    const base = valid;
+    const node = at(o.data, base);
+    let sug = (complete && !trailingDot && this.kids(node).length === 0) ? [] : this.kids(node).filter(([k]) => String(k).toLowerCase().startsWith(partial.toLowerCase().replace(/^\[/, '')));
+    if (complete && !trailingDot && q.length && this.kids(node).length) sug = this.kids(node);
+    sug = sug.slice(0, 8);
+    const toQ = (p) => p.map((s, i) => (typeof s === 'number' ? `[${s}]` : /^[A-Za-z_$][\w$]*$/.test(s) ? (i ? '.' : '') + s : `["${s}"]`)).join('');
+    const hi = Math.min(o.hi, Math.max(sug.length - 1, 0));
+    const accept = (k) => {
+      const p = [...base, k];
+      const x = at(o.data, p);
+      const nq = toQ(p) + (this.kids(x).length && typeOf(x) === 'object' ? '.' : '');
+      this.upd(id, { q: nq, sel: p, hi: 0, copied: false });
+    };
+    return {
+      q, onQ: (e) => {
+        const nq = e.target.value;
+        const r2 = []; let mm; const rr = /\[(\d+)\]|\["((?:[^"\\]|\\.)*)"\]|([^.\[\]]+)/g;
+        while ((mm = rr.exec(nq))) r2.push(mm[1] !== undefined ? Number(mm[1]) : mm[2] !== undefined ? mm[2] : mm[3]);
+        const v = []; for (const s of r2) { if (at(o.data, [...v, s]) === undefined) break; v.push(s); }
+        this.upd(id, { q: nq, sel: v, hi: 0, copied: false });
+      },
+      onKey: (e) => {
+        if (e.key === 'Tab' && sug.length) { e.preventDefault(); accept(sug[hi][0]); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); this.upd(id, { hi: Math.min(hi + 1, sug.length - 1) }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.upd(id, { hi: Math.max(hi - 1, 0) }); }
+        else if (e.key === 'Enter') { e.preventDefault(); this.opt(id).onCopy(); }
+      },
+      sug: sug.map(([k, x], i) => ({ ...this.item(k, x, i === hi, () => accept(k)), key: String(k) })),
+      hasSug: sug.length > 0,
+      qStatus: badMid ? `No key "${raw[valid.length]}" here` : !complete ? (sug.length ? `${sug.length} match${sug.length === 1 ? '' : 'es'}` : `No key starting "${partial}"`) : 'Path resolves',
+      qColor: badMid || (!complete && !sug.length) ? 'var(--danger)' : complete ? 'var(--good)' : 'var(--text3)',
+      setQFromSel: (p) => this.upd(id, { q: toQ(p), sel: p }),
+    };
+  }
+  nav(key) {
+    const j = this.state[key] === 'json';
+    const pill = (on) => on ? 'linear-gradient(135deg,var(--accent),var(--accent-strong))' : 'transparent';
+    return {
+      isJson: j, isCond: !j,
+      goJson: () => this.setState({ [key]: 'json' }), goCond: () => this.setState({ [key]: 'cond' }),
+      jsonBg: pill(j), condBg: pill(!j), jsonFg: j ? 'var(--ink)' : 'var(--text2)', condFg: !j ? 'var(--ink)' : 'var(--text2)',
+      jsonLine: j ? 'var(--accent)' : 'transparent', condLine: !j ? 'var(--accent)' : 'transparent',
+      jsonTx: j ? 'var(--text)' : 'var(--text3)', condTx: !j ? 'var(--text)' : 'var(--text3)',
+      jsonTab: j ? 'var(--surface)' : 'transparent', condTab: !j ? 'var(--surface)' : 'transparent',
+      jsonTabBd: j ? 'var(--border)' : 'transparent', condTabBd: !j ? 'var(--border)' : 'transparent',
+    };
+  }
+  upd(id, patch) { this.setState((s) => ({ [id]: { ...s[id], ...(typeof patch === 'function' ? patch(s[id]) : patch) } })); }
+
+  rootOf(o) {
+    const nm = esc(o.name.trim().replace(/\s+/g, '_'));
+    if (o.src === 'trigger') return { full: 'triggerOutputs()', body: 'triggerBody()' };
+    return { full: `outputs('${nm}')`, body: `body('${nm}')` };
+  }
+
+  opt(id) {
+    const o = this.state[id];
+    const roots = this.rootOf(o);
+    const root = roots[o.shape];
+    const clean = root + o.sel.map((s) => (typeof s === 'number' ? `[${s}]` : `?['${esc(s)}']`)).join('');
+    const inline = (o.form ?? this.props.copyForm ?? 'clean') === 'inline';
+    const lines = [];
+    let ln = 0;
+    const VC = { string: 'var(--danger)', number: 'var(--warn)', boolean: 'var(--info)', null: 'var(--text3)' };
+    const gl = (v, path, depth, k, last) => {
+      const t = typeOf(v);
+      const keyTxt = k === null || typeof k === 'number' ? '' : JSON.stringify(k) + ': ';
+      const comma = last ? '' : ',';
+      const open = !!o.exp[K(path)] || (id === 'i' && K(o.sel.slice(0, path.length)) === K(path) && path.length < o.sel.length);
+      const sel = K(path) === K(o.sel);
+      const anc = !sel && path.length < o.sel.length && K(o.sel.slice(0, path.length)) === K(path);
+      const toQ = (p) => p.map((s, i) => (typeof s === 'number' ? `[${s}]` : /^[A-Za-z_$][\w$]*$/.test(s) ? (i ? '.' : '') + s : `["${s}"]`)).join('');
+      const mk = (val, valC, tail, caret, kt) => ({
+        num: ++ln, pad: 6 + depth * 18 + 'px', keyTxt: kt, val, valC, tail,
+        caretVis: caret ? 'visible' : 'hidden', rot: open ? '90deg' : '0deg',
+        bg: sel ? 'var(--accent-soft)' : anc && id === 'i' ? 'rgba(119,167,255,.06)' : 'transparent', numC: sel ? 'var(--accent)' : anc && id === 'i' ? 'var(--accent)' : 'var(--border-strong)',
+        select: () => this.upd(id, id === 'i' ? { sel: path, q: toQ(path), copied: false } : { sel: path, copied: false }),
+        toggle: (e) => { e.stopPropagation(); this.upd(id, (cur) => ({ exp: { ...cur.exp, [K(path)]: !cur.exp[K(path)] } })); },
+      });
+      if (t === 'object' || t === 'array') {
+        const kids = t === 'object' ? Object.keys(v).map((kk) => [kk, v[kk]]) : v.map((x, i) => [i, x]);
+        const [ob, cb] = t === 'object' ? ['{', '}'] : ['[', ']'];
+        if (open && kids.length) {
+          lines.push(mk(ob, 'var(--text3)', '', true, keyTxt));
+          kids.forEach(([kk, x], i) => gl(x, [...path, kk], depth + 1, kk, i === kids.length - 1));
+          lines.push(mk(cb, 'var(--text3)', comma, false, ''));
+        } else lines.push(mk(`${ob}…${kids.length}${cb}`, 'var(--text3)', comma, kids.length > 0, keyTxt));
+      } else lines.push(mk(JSON.stringify(v), VC[t], comma, false, keyTxt));
+    };
+    if (o.data !== undefined) gl(o.data, [], 0, null, true);
+    const rc = (src, shape, label) => {
+      const r = this.rootOf({ ...o, name: o.name.trim() ? o.name : 'Action', src })[shape];
+      const on = o.src === src && o.shape === shape;
+      return { code: r, label, bd: on ? 'var(--accent)' : 'var(--border)', bg: on ? 'var(--accent-soft)' : 'var(--surface)', pick: () => this.upd(id, { src, shape, copied: false }) };
+    };
+    const expr = inline ? `@{${clean}}` : clean;
+    const rows = [];
+    const walk = (v, path, depth, label, isIdx) => {
+      const t = typeOf(v);
+      const kids = t === 'object' ? Object.keys(v).map((k) => [k, v[k]]) : t === 'array' ? v.map((x, i) => [i, x]) : [];
+      const open = !!o.exp[K(path)];
+      const sel = K(path) === K(o.sel);
+      const preview = t === 'string' ? `"${v}"` : t === 'object' ? `{${kids.length}}` : t === 'array' ? `${kids.length} item${kids.length === 1 ? '' : 's'}` : String(v);
+      rows.push({
+        label, t, preview, badgeBg: BADGE[t],
+        pad: 10 + depth * 18 + 'px', padC: 8 + depth * 14 + 'px',
+        keyFont: isIdx || depth === 0 ? 'var(--mono)' : 'var(--font)',
+        keyColor: depth === 0 ? 'var(--accent-2)' : isIdx ? 'var(--text3)' : 'var(--text)',
+        caretVis: kids.length ? 'visible' : 'hidden', rot: open ? '90deg' : '0deg',
+        bd: sel ? 'var(--accent)' : 'transparent', bg: sel ? 'var(--accent-soft)' : 'transparent', bgF: sel ? 'var(--accent-soft)' : 'transparent',
+        select: () => this.upd(id, { sel: path, copied: false }),
+        toggle: (e) => { e.stopPropagation(); this.upd(id, (cur) => ({ exp: { ...cur.exp, [K(path)]: !cur.exp[K(path)] } })); },
+      });
+      if (open) kids.forEach(([k, x]) => walk(x, [...path, k], depth + 1, typeof k === 'number' ? `[${k}]` : k, typeof k === 'number'));
+    };
+    if (o.data !== undefined) walk(o.data, [], 0, root, false);
+    const selV = at(o.data, o.sel);
+    const idx = o.sel.filter((s) => typeof s === 'number');
+    const dirty = o.text !== o.parsedText;
+    const status = o.error ? o.error : dirty ? 'Sample changed. Parse again.' : `Parsed · ${count(o.data)} values`;
+    const statusColor = o.error ? 'var(--danger)' : dirty ? 'var(--warn)' : 'var(--good)';
+    const on = (a) => a ? { bg: 'linear-gradient(135deg,var(--accent),var(--accent-strong))', fg: 'var(--ink)' } : { bg: 'transparent', fg: 'var(--text3)' };
+    const onF = (a) => a ? { bg: 'var(--accent)', fg: '#fff' } : { bg: 'var(--surface)', fg: 'var(--text)' };
+    const A = id === 'b' ? onF(o.src === 'action') : on(o.src === 'action');
+    const T = id === 'b' ? onF(o.src === 'trigger') : on(o.src === 'trigger');
+    const full = o.shape === 'full';
+    return {
+      rows, lines, tokens: tokenize(expr), tokensDark: tokenize(expr).map((k) => ({ ...k, c: DARK[k.c] || k.c })),
+      rootCards: [rc('action', 'full', 'Action · full output'), rc('action', 'body', 'Action · body'), rc('trigger', 'full', 'Trigger · full output'), rc('trigger', 'body', 'Trigger · body')],
+      valueFull: selV === undefined ? '' : (() => { const s = JSON.stringify(selV, null, 2); return s.length > 420 ? s.slice(0, 420) + '\n…' : s; })(),
+      selType: selV === undefined ? '' : typeOf(selV), selBadge: BADGE[typeOf(selV)],
+      pickMode: !o.editing, editMode: o.editing,
+      pickBg: !o.editing ? 'var(--surface)' : 'transparent', pickSh: !o.editing ? 'var(--shadow-sm)' : 'none',
+      editBg: o.editing ? 'var(--surface)' : 'transparent', editSh: o.editing ? 'var(--shadow-sm)' : 'none',
+      pick: () => this.upd(id, { editing: false }),
+      cleanBg: !inline ? 'var(--surface)' : 'transparent', cleanSh: !inline ? 'var(--shadow-sm)' : 'none',
+      inlBg: inline ? 'var(--surface)' : 'transparent', inlSh: inline ? 'var(--shadow-sm)' : 'none',
+      setClean: () => this.upd(id, { form: 'clean', copied: false }), setInline: () => this.upd(id, { form: 'inline', copied: false }),
+      crumbs: [root, ...o.sel.map((s) => (typeof s === 'number' ? `[${s}]` : s))].map((t, i) => ({ t, sep: i > 0 })),
+      selSummary: selV === undefined ? '' : `${typeOf(selV)}${typeOf(selV) === 'string' || typeOf(selV) === 'number' || typeOf(selV) === 'boolean' ? ' · ' + JSON.stringify(selV) : ''}`,
+      count: o.data === undefined ? '' : `${count(o.data)} values`,
+      fixedIdx: idx.length > 0,
+      fixedText: `Fixed position ${idx.map((i) => `[${i}]`).join('')}: reads that item only, not each item in a loop.`,
+      bodyHint: !full && o.data && typeOf(o.data) === 'object' && 'body' in o.data,
+      copyLabel: inline ? 'Inline text: use inside a string' : 'Paste into the expression editor',
+      copied: o.copied ? 'Expression copied' : '',
+      text: o.text, name: o.name, status, statusColor,
+      isAction: o.src === 'action', editing: o.editing, notEditing: !o.editing,
+      actBg: A.bg, actFg: A.fg, trgBg: T.bg, trgFg: T.fg,
+      fullCode: roots.full, bodyCode: roots.body,
+      fullBd: full ? 'var(--accent)' : 'var(--border)', fullBg: full ? 'var(--accent-soft)' : 'var(--surface)',
+      bodyBd: !full ? 'var(--accent)' : 'var(--border)', bodyBg: !full ? 'var(--accent-soft)' : 'var(--surface)',
+      fullRing: full ? 'var(--accent)' : 'var(--text3)', fullDot: full ? 'var(--accent)' : 'transparent',
+      bodyRing: !full ? 'var(--accent)' : 'var(--text3)', bodyDot: !full ? 'var(--accent)' : 'transparent',
+      fullBgC: full ? 'var(--surface)' : 'transparent', fullSh: full ? 'var(--shadow-sm)' : 'none',
+      bodyBgC: !full ? 'var(--surface)' : 'transparent', bodySh: !full ? 'var(--shadow-sm)' : 'none',
+      setAction: () => this.upd(id, { src: 'action', copied: false }),
+      setTrigger: () => this.upd(id, { src: 'trigger', copied: false }),
+      setFull: () => this.upd(id, { shape: 'full', copied: false }),
+      setBody: () => this.upd(id, { shape: 'body', copied: false }),
+      onName: (e) => this.upd(id, { name: e.target.value, copied: false }),
+      onText: (e) => this.upd(id, { text: e.target.value }),
+      edit: () => this.upd(id, { editing: true }),
+      onParse: () => this.upd(id, (cur) => {
+        try {
+          const data = JSON.parse(cur.text);
+          const sel = at(data, cur.sel) === undefined ? [] : cur.sel;
+          return { data, parsedText: cur.text, error: null, sel, exp: { ...cur.exp, [K([])]: true }, editing: false };
+        } catch (err) { return { error: 'Not valid JSON: ' + err.message }; }
+      }),
+      onCopy: () => {
+        try { navigator.clipboard && navigator.clipboard.writeText(expr).catch(() => {}); } catch (e) {}
+        this.upd(id, { copied: true });
+        clearTimeout(this['t' + id]);
+        this['t' + id] = setTimeout(() => this.upd(id, { copied: false }), 1200);
+      },
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const tab = (on) => ({ Bd: on ? 'var(--border)' : 'transparent', Bb: on ? 'var(--surface)' : 'transparent', Bg: on ? 'linear-gradient(180deg,var(--surface2),var(--surface))' : 'transparent', Fg: on ? 'var(--text)' : 'var(--text3)' });
+    const td = tab(s.tab === 'diag'), tc = tab(s.tab === 'ctx'), tj = tab(s.tab === 'json');
+    return {
+      a: this.opt('a'), b: this.opt('b'), c: this.opt('c'), d: this.opt('d'), e: this.opt('e'), f: this.opt('f'),
+      nD: this.nav('vd'), nE: this.nav('ve'), nF: this.nav('vf'),
+      g: this.opt('g'), h: this.opt('h'), i: this.opt('i'),
+      gc: this.cols('g'), hp: this.pathEd('h'), ic: this.consoleV('i'), colsRef: this.colsRef,
+      nG: { ...this.nav('vg'), thumbX: s.vg === 'json' ? '178px' : '4px' },
+      nH: { ...this.nav('vh'), onKey: (e) => { if (e.altKey && e.key === '1') this.setState({ vh: 'cond' }); if (e.altKey && e.key === '2') this.setState({ vh: 'json' }); } },
+      nI: this.nav('vi'),
+      fields: [
+        ['Status', 'Status · choice', 'choice'], ['Approver', 'Approver · string', 'string'], ['Amount', 'Amount · number', 'number'],
+        ['Region', 'Region · choice', 'choice'], ['Due date', 'DueDate · dateTime', 'dateTime'], ['Submitted', 'Submitted · boolean', 'boolean'],
+        ['Request ID', 'RequestId · string', 'string'], ['Department', 'Department · string', 'string'],
+      ].map(([title, detail, type]) => ({ title, detail, type, bg: { choice: 'var(--accent)', string: 'var(--accent-2)', number: 'var(--warn)', dateTime: 'var(--danger)', boolean: 'var(--info)' }[type] })),
+      rules: [
+        { field: 'Status', value: 'Approved', glyph: 'C', bg: 'var(--accent)', bd: 'var(--is)', sh: 'none' },
+        { field: 'Amount', value: '5000', glyph: '#', bg: 'var(--warn)', bd: 'var(--is)', sh: 'none' },
+        { field: 'Approver', value: 'dana@contoso.com', glyph: 'Aa', bg: 'var(--accent-2)', bd: 'var(--accent)', sh: '0 0 0 3px var(--accent)' },
+      ],
+      predTokens: tokenize(PRED),
+      a1: {
+        isJson: s.view === 'json', isCond: s.view === 'cond',
+        goJson: () => this.setState({ view: 'json' }), goCond: () => this.setState({ view: 'cond' }),
+        jsonTabLine: s.view === 'json' ? 'var(--accent)' : 'transparent', condTabLine: s.view === 'cond' ? 'var(--accent)' : 'transparent',
+        jsonTabFg: s.view === 'json' ? 'var(--text)' : 'var(--text3)', condTabFg: s.view === 'cond' ? 'var(--text)' : 'var(--text3)',
+      },
+      b1: { isOpen: s.dlg, open: () => this.setState({ dlg: true }), close: () => this.setState({ dlg: false }) },
+      c1: {
+        cols: s.tab === 'json' ? '240px minmax(0,1fr) 440px' : '286px minmax(0,1fr) 330px',
+        isDiag: s.tab === 'diag', isCtx: s.tab === 'ctx', isJson: s.tab === 'json',
+        tabDiag: () => this.setState({ tab: 'diag' }), tabCtx: () => this.setState({ tab: 'ctx' }), tabJson: () => this.setState({ tab: 'json' }),
+        diagBd: td.Bd, diagBb: td.Bb, diagBg: td.Bg, diagFg: td.Fg,
+        ctxBd: tc.Bd, ctxBb: tc.Bb, ctxBg: tc.Bg, ctxFg: tc.Fg,
+        jsonBd: tj.Bd, jsonBb: tj.Bb, jsonBg: tj.Bg, jsonFg: tj.Fg,
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
