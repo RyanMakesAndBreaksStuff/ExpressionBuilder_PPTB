@@ -1424,7 +1424,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
 }
 
@@ -2282,19 +2282,21 @@ body {
 }
 
 .eb-json-content {
-  /* legacy wrapper removed; kept so old snapshots don't break external CSS */
-  display: contents;
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .eb-json-payload {
-  flex: 999 1 300px;
+  flex: 1 1 auto;
   min-height: 320px;
   min-width: 0;
 }
 
 .eb-json-reference {
-  flex: 0 1 380px;
-  min-width: 280px;
+  flex: 0 0 auto;
 }
 
 /* Source pane */
@@ -2354,11 +2356,35 @@ body {
 
 .eb-json-copy-block-label {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 600;
   color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.eb-copy-block-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.eb-copy-block-info:hover {
+  color: var(--text2);
+}
+
+.eb-copy-block-info svg {
+  width: 12px;
+  height: 12px;
 }
 
 .eb-json-status,
@@ -2482,7 +2508,8 @@ body {
 }
 
 .eb-choice-cards [role="radio"],
-.eb-choice-grid [role="radio"] {
+.eb-choice-grid [role="radio"],
+.eb-root-grid [role="radio"] {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2498,26 +2525,31 @@ body {
 }
 
 .eb-choice-cards [role="radio"]:hover,
-.eb-choice-grid [role="radio"]:hover {
+.eb-choice-grid [role="radio"]:hover,
+.eb-root-grid [role="radio"]:hover {
   border-color: var(--border-strong);
 }
 
 .eb-choice-cards [aria-checked="true"],
 .eb-choice-cards [aria-checked="true"]:hover,
 .eb-choice-grid [aria-checked="true"],
-.eb-choice-grid [aria-checked="true"]:hover {
+.eb-choice-grid [aria-checked="true"]:hover,
+.eb-root-grid [aria-checked="true"],
+.eb-root-grid [aria-checked="true"]:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 
 .eb-choice-cards .eb-choice-label,
-.eb-choice-grid .eb-choice-label {
+.eb-choice-grid .eb-choice-label,
+.eb-root-grid .eb-choice-label {
   font-size: 0.85rem;
   font-weight: 700;
 }
 
 .eb-choice-cards .eb-choice-detail,
-.eb-choice-grid .eb-choice-detail {
+.eb-choice-grid .eb-choice-detail,
+.eb-root-grid .eb-choice-detail {
   font-family: var(--eb-mono);
   font-size: 12px;
   color: var(--code-fn);
@@ -2525,8 +2557,30 @@ body {
 }
 
 .eb-choice-cards code,
-.eb-choice-grid code {
+.eb-choice-grid code,
+.eb-root-grid code {
   font: inherit;
+}
+
+/* Sectioned reference root grid (replaces flat eb-choice-grid for source pane) */
+.eb-root-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 6px;
+}
+
+.eb-root-section-header {
+  grid-column: 1 / -1;
+  padding-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.eb-root-section-header:first-child {
+  padding-top: 0;
 }
 
 /* Payload tree (FR-031 to FR-036) */
@@ -2565,10 +2619,11 @@ body {
 .eb-tree-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex: 0 0 auto;
   min-height: 32px;
-  padding: 0 10px 0 calc(10px + (var(--eb-tree-level) - 1) * 18px);
+  min-width: max-content;
+  padding: 0 10px 0 calc(10px + (var(--eb-tree-level) - 1) * 9px);
   border: 1px solid transparent;
   border-radius: var(--r-sm);
   color: var(--text);
@@ -2593,8 +2648,8 @@ body {
 }
 
 .eb-tree-chevron {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -2604,8 +2659,8 @@ body {
 }
 
 .eb-tree-chevron svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .eb-tree-chevron.is-expanded {
@@ -2813,6 +2868,22 @@ body {
 
   .eb-json-workspace {
     padding: 12px;
+  }
+}
+
+/* Three-column layout: Source | Payload | Reference side by side. */
+@media (min-width: 1400px) {
+  .eb-json-content {
+    display: contents;
+  }
+
+  .eb-json-payload {
+    flex: 999 1 300px;
+  }
+
+  .eb-json-reference {
+    flex: 0 1 380px;
+    min-width: 280px;
   }
 }
 

@@ -2,7 +2,7 @@ import { useId, type Dispatch } from 'react';
 import { ExpressionPreview } from '../components/ExpressionPreview';
 import { valueAtPath } from '../importExport/jsonPayload';
 import { ActionButton } from './controls/ActionButton';
-import { CodeIcon, CopyIcon } from './icons/BuilderIcons';
+import { CodeIcon, CopyIcon, InfoIcon } from './icons/BuilderIcons';
 import {
   canCopy,
   copyStatusView,
@@ -60,7 +60,12 @@ export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps)
         {ready ? (
           <div className="eb-json-copy-blocks">
             <div className="eb-json-copy-block">
-              <span className="eb-json-copy-block-label">Expression editor</span>
+              <span className="eb-json-copy-block-label">
+                Expression editor
+                <button type="button" className="eb-copy-block-info" title="Paste directly into the Power Automate expression editor (the fx field)." aria-label="Expression editor info">
+                  <InfoIcon aria-hidden />
+                </button>
+              </span>
               <div className="eb-code-copy-wrap">
                 <ExpressionPreview expression={copyText(state, 'bare')!} label="Reference expression" />
                 <button type="button" className="eb-code-copy-btn" aria-label="Copy" onClick={() => onCopy('bare')}>
@@ -69,7 +74,12 @@ export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps)
               </div>
             </div>
             <div className="eb-json-copy-block">
-              <span className="eb-json-copy-block-label">Inline @{'{'}&hellip;{'}'}</span>
+              <span className="eb-json-copy-block-label">
+                Inline @{'{'}&hellip;{'}'}
+                <button type="button" className="eb-copy-block-info" title="Embed inside a text field alongside other text, e.g. &quot;Hello @{expression}&quot;." aria-label="Inline expression info">
+                  <InfoIcon aria-hidden />
+                </button>
+              </span>
               <div className="eb-code-copy-wrap">
                 <ExpressionPreview expression={copyText(state, 'inline')!} label="Inline reference expression" />
                 <button type="button" className="eb-code-copy-btn" aria-label="Copy @{}" onClick={() => onCopy('inline')}>

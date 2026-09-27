@@ -1,6 +1,5 @@
-import { useId, type Dispatch } from 'react';
+import { Fragment, useId, type Dispatch, type KeyboardEvent } from 'react';
 import { ActionButton } from './controls/ActionButton';
-import { ChoiceGroup } from './controls/ChoiceGroup';
 import {
   ACTION_NAME_PLACEHOLDER,
   parseStatus,
@@ -18,6 +17,8 @@ interface JsonSourcePaneProps {
 }
 
 type ReferenceRootKey = `${OutputFrom}-${PayloadShape}`;
+
+const ALL_ROOT_KEYS: readonly ReferenceRootKey[] = ['action-full', 'action-body', 'trigger-full', 'trigger-body'];
 
 // Off for pasted payloads and names: some browsers send spell-check text to a
 // cloud service (FR-062).
@@ -40,16 +41,33 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
   const status = parseStatus(state);
   const rootKey: ReferenceRootKey = `${state.outputFrom}-${state.shape}`;
 
-  const rootOptions = [
-    { value: 'action-full' as ReferenceRootKey, label: 'Action · Full output', detail: <code>{rootExpressionFor(state, 'action', 'full')}</code> },
-    { value: 'action-body' as ReferenceRootKey, label: 'Action · Body only', detail: <code>{rootExpressionFor(state, 'action', 'body')}</code> },
-    { value: 'trigger-full' as ReferenceRootKey, label: 'Trigger · Full output', detail: <code>{rootExpressionFor(state, 'trigger', 'full')}</code> },
-    { value: 'trigger-body' as ReferenceRootKey, label: 'Trigger · Body only', detail: <code>{rootExpressionFor(state, 'trigger', 'body')}</code> },
+  const rootSections = [
+    {
+      heading: 'Action',
+      options: [
+        { key: 'action-full' as ReferenceRootKey, label: 'Full output', ariaLabel: 'Action · Full output', detailId: `${id}-af`, detail: rootExpressionFor(state, 'action', 'full') },
+        { key: 'action-body' as ReferenceRootKey, label: 'Body only', ariaLabel: 'Action · Body only', detailId: `${id}-ab`, detail: rootExpressionFor(state, 'action', 'body') },
+      ],
+    },
+    {
+      heading: 'Trigger',
+      options: [
+        { key: 'trigger-full' as ReferenceRootKey, label: 'Full output', ariaLabel: 'Trigger · Full output', detailId: `${id}-tf`, detail: rootExpressionFor(state, 'trigger', 'full') },
+        { key: 'trigger-body' as ReferenceRootKey, label: 'Body only', ariaLabel: 'Trigger · Body only', detailId: `${id}-tb`, detail: rootExpressionFor(state, 'trigger', 'body') },
+      ],
+    },
   ];
 
-  const handleRootChange = (key: ReferenceRootKey) => {
-    const [outputFrom, shape] = key.split('-') as [OutputFrom, PayloadShape];
+  const handleRootKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (step === undefined) return;
+    event.preventDefault();
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
+    const currentIndex = ALL_ROOT_KEYS.indexOf(rootKey);
+    const nextIndex = (currentIndex + step + ALL_ROOT_KEYS.length) % ALL_ROOT_KEYS.length;
+    const [outputFrom, shape] = ALL_ROOT_KEYS[nextIndex].split('-') as [OutputFrom, PayloadShape];
     dispatch({ type: 'setReferenceRoot', outputFrom, shape });
+    buttons[nextIndex]?.focus();
   };
 
   return (
@@ -60,13 +78,31 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
       <div className="eb-json-card-body">
         <div className="eb-json-field">
           <span className="eb-label" id={rootId}>Reference root</span>
-          <ChoiceGroup
-            className="eb-choice-grid"
-            labelledBy={rootId}
-            options={rootOptions}
-            value={rootKey}
-            onChange={handleRootChange}
-          />
+          <div className="eb-root-grid" role="radiogroup" aria-labelledby={rootId} onKeyDown={handleRootKeyDown}>
+            {rootSections.map(({ heading, options }) => (
+              <Fragment key={heading}>
+                <span className="eb-root-section-header" aria-hidden="true">{heading}</span>
+                {options.map(({ key, label, ariaLabel, detailId, detail }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={key === rootKey}
+                    aria-label={ariaLabel}
+                    aria-describedby={detailId}
+                    tabIndex={key === rootKey ? 0 : -1}
+                    onClick={() => {
+                      const [outputFrom, shape] = key.split('-') as [OutputFrom, PayloadShape];
+                      dispatch({ type: 'setReferenceRoot', outputFrom, shape });
+                    }}
+                  >
+                    <span className="eb-choice-label">{label}</span>
+                    <span id={detailId} className="eb-choice-detail"><code>{detail}</code></span>
+                  </button>
+                ))}
+              </Fragment>
+            ))}
+          </div>
         </div>
 
         {state.outputFrom === 'action' ? (
