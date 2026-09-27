@@ -2,9 +2,9 @@ import { useId, type Dispatch } from 'react';
 import { ExpressionPreview } from '../components/ExpressionPreview';
 import { valueAtPath } from '../importExport/jsonPayload';
 import { ActionButton } from './controls/ActionButton';
-import { ChoiceGroup } from './controls/ChoiceGroup';
 import { CodeIcon, CopyIcon } from './icons/BuilderIcons';
 import {
+  canCopy,
   copyStatusView,
   copyText,
   expressionPlaceholder,
@@ -19,21 +19,16 @@ import { segmentLabel, selectionSummary } from './payloadTreeModel';
 interface ReferencePanelProps {
   state: JsonReferenceState;
   dispatch: Dispatch<JsonReferenceAction>;
-  onCopy: () => void;
+  onCopy: (format: CopyFormat) => void;
 }
-
-const COPY_FORMAT_OPTIONS = [
-  { value: 'bare', label: 'Expression editor' },
-  { value: 'inline', label: 'Inside text @{…}' },
-] as const satisfies ReadonlyArray<{ value: CopyFormat; label: string }>;
 
 export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps) {
   const headingId = useId();
-  const text = copyText(state);
   const note = fixedPositionNote(state);
   const status = copyStatusView(state);
   const selection = state.parsed ? valueAtPath(state.parsed.value, state.selectedPath) : null;
   const crumbs = [rootExpression(state), ...state.selectedPath.map(segmentLabel)];
+  const ready = canCopy(state);
 
   return (
     <section className="eb-json-card eb-json-reference" aria-labelledby={headingId}>
@@ -62,30 +57,39 @@ export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps)
           </nav>
         ) : null}
 
-        {text !== null ? (
-          <ExpressionPreview expression={text} label="Reference expression" />
+        {ready ? (
+          <div className="eb-json-copy-blocks">
+            <div className="eb-json-copy-block">
+              <span className="eb-json-copy-block-label">Expression editor</span>
+              <ExpressionPreview expression={copyText(state, 'bare')!} label="Reference expression" />
+              <div className="eb-json-copy-row">
+                <ActionButton icon={<CopyIcon />} onClick={() => onCopy('bare')}>Copy</ActionButton>
+              </div>
+            </div>
+            <div className="eb-json-copy-block">
+              <span className="eb-json-copy-block-label">Inline @{'{'}&hellip;{'}'}</span>
+              <ExpressionPreview expression={copyText(state, 'inline')!} label="Inline reference expression" />
+              <div className="eb-json-copy-row">
+                <ActionButton icon={<CopyIcon />} onClick={() => onCopy('inline')}>Copy @{'{}'}</ActionButton>
+              </div>
+            </div>
+          </div>
         ) : (
-          <p className="eb-preview eb-json-placeholder">{expressionPlaceholder(state)}</p>
+          <>
+            <p className="eb-preview eb-json-placeholder">{expressionPlaceholder(state)}</p>
+            <div className="eb-json-copy-row">
+              <ActionButton icon={<CopyIcon />} disabled>Copy</ActionButton>
+            </div>
+          </>
         )}
 
         {note ? <p className="eb-json-note">{note}</p> : null}
 
-        <div className="eb-json-copy-row">
-          <ActionButton icon={<CopyIcon />} disabled={text === null} onClick={onCopy}>
-            Copy
-          </ActionButton>
-          <ChoiceGroup
-            className="eb-choice-segmented"
-            ariaLabel="Copy format"
-            options={COPY_FORMAT_OPTIONS}
-            value={state.copyFormat}
-            onChange={(value) => dispatch({ type: 'setCopyFormat', value })}
-          />
-          <span role="status" className={`eb-json-copy-status is-${status.tone}`}>
-            {status.text}
-          </span>
-        </div>
+        <span role="status" className={`eb-json-copy-status is-${status.tone}`}>
+          {status.text}
+        </span>
       </div>
     </section>
   );
 }
+

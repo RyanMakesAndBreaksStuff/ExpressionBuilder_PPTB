@@ -2,12 +2,14 @@ import { useId, type Dispatch } from 'react';
 import { ActionButton } from './controls/ActionButton';
 import { ChoiceGroup } from './controls/ChoiceGroup';
 import {
+  ACTION_NAME_PLACEHOLDER,
   parseStatus,
-  rootExpression,
+  rootExpressionFor,
   showActionNameInvalid,
   type JsonReferenceAction,
   type JsonReferenceState,
   type OutputFrom,
+  type PayloadShape,
 } from './jsonReferenceState';
 
 interface JsonSourcePaneProps {
@@ -15,10 +17,7 @@ interface JsonSourcePaneProps {
   dispatch: Dispatch<JsonReferenceAction>;
 }
 
-const OUTPUT_FROM_OPTIONS = [
-  { value: 'action', label: 'Action' },
-  { value: 'trigger', label: 'Trigger' },
-] as const satisfies ReadonlyArray<{ value: OutputFrom; label: string }>;
+type ReferenceRootKey = `${OutputFrom}-${PayloadShape}`;
 
 // Off for pasted payloads and names: some browsers send spell-check text to a
 // cloud service (FR-062).
@@ -32,14 +31,26 @@ const NO_TEXT_ASSISTANCE = {
 export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
   const id = useId();
   const headingId = `${id}-heading`;
-  const outputFromId = `${id}-output-from`;
+  const rootId = `${id}-root`;
   const nameId = `${id}-name`;
   const nameHelpId = `${id}-name-help`;
-  const shapeId = `${id}-shape`;
   const sampleId = `${id}-sample`;
   const errorId = `${id}-error`;
   const nameInvalid = showActionNameInvalid(state);
   const status = parseStatus(state);
+  const rootKey: ReferenceRootKey = `${state.outputFrom}-${state.shape}`;
+
+  const rootOptions = [
+    { value: 'action-full' as ReferenceRootKey, label: 'Action · Full output', detail: <code>{rootExpressionFor(state, 'action', 'full')}</code> },
+    { value: 'action-body' as ReferenceRootKey, label: 'Action · Body only', detail: <code>{rootExpressionFor(state, 'action', 'body')}</code> },
+    { value: 'trigger-full' as ReferenceRootKey, label: 'Trigger · Full output', detail: <code>{rootExpressionFor(state, 'trigger', 'full')}</code> },
+    { value: 'trigger-body' as ReferenceRootKey, label: 'Trigger · Body only', detail: <code>{rootExpressionFor(state, 'trigger', 'body')}</code> },
+  ];
+
+  const handleRootChange = (key: ReferenceRootKey) => {
+    const [outputFrom, shape] = key.split('-') as [OutputFrom, PayloadShape];
+    dispatch({ type: 'setReferenceRoot', outputFrom, shape });
+  };
 
   return (
     <section className="eb-json-card eb-json-source" aria-labelledby={headingId}>
@@ -48,15 +59,13 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
       </div>
       <div className="eb-json-card-body">
         <div className="eb-json-field">
-          <span className="eb-label" id={outputFromId}>
-            Output from
-          </span>
+          <span className="eb-label" id={rootId}>Reference root</span>
           <ChoiceGroup
-            className="eb-choice-pill"
-            labelledBy={outputFromId}
-            options={OUTPUT_FROM_OPTIONS}
-            value={state.outputFrom}
-            onChange={(value) => dispatch({ type: 'setOutputFrom', value })}
+            className="eb-choice-grid"
+            labelledBy={rootId}
+            options={rootOptions}
+            value={rootKey}
+            onChange={handleRootChange}
           />
         </div>
 
@@ -82,26 +91,6 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
           </div>
         ) : null}
 
-        <div className="eb-json-field">
-          <span className="eb-label" id={shapeId}>
-            The pasted JSON is
-          </span>
-          <ChoiceGroup
-            className="eb-choice-cards"
-            labelledBy={shapeId}
-            value={state.shape}
-            onChange={(value) => dispatch({ type: 'setShape', value })}
-            options={[
-              {
-                value: 'full',
-                label: state.outputFrom === 'action' ? 'Full output (also Compose)' : 'Full output',
-                detail: <code>{rootExpression(state, 'full')}</code>,
-              },
-              { value: 'body', label: 'Body only', detail: <code>{rootExpression(state, 'body')}</code> },
-            ]}
-          />
-        </div>
-
         <div className="eb-json-field eb-json-sample">
           <label className="eb-label" htmlFor={sampleId}>
             Sample JSON
@@ -115,6 +104,12 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
             aria-invalid={state.error !== null}
             aria-describedby={state.error !== null ? errorId : undefined}
             onChange={(event) => dispatch({ type: 'setText', value: event.target.value })}
+            onPaste={(event) => {
+              const pasted = event.clipboardData.getData('text');
+              if (!pasted) return;
+              event.preventDefault();
+              dispatch({ type: 'pasteAndParse', text: pasted, defaultActionName: ACTION_NAME_PLACEHOLDER });
+            }}
           />
         </div>
 

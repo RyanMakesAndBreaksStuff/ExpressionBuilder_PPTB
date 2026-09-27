@@ -190,4 +190,23 @@ describe('JSON reference state', () => {
     expect(copyText(state)).toBe("outputs('Compose')?['matrix'][0][1]");
     expect(fixedPositionNote(state)).toBe('Fixed position [0][1]: reads that item only, not each item in a loop.');
   });
+
+  it('pasteAndParse auto-fills an empty action name with the placeholder and parses in one step', () => {
+    const state = run({ type: 'pasteAndParse', text: fixtureA1, defaultActionName: 'ActionName' });
+
+    expect(state.actionName).toBe('ActionName');
+    expect(state.parsed).not.toBeNull();
+    expect(parseStatus(state)).toEqual({ text: 'Parsed · 25 values', tone: 'good' });
+    expect(copyText(state)).toBe("outputs('ActionName')");
+  });
+
+  it('pasteAndParse keeps an existing action name', () => {
+    const state = run(
+      { type: 'setActionName', value: 'My Action' },
+      { type: 'pasteAndParse', text: fixtureA1, defaultActionName: 'ActionName' },
+    );
+
+    expect(state.actionName).toBe('My Action');
+    expect(copyText(state)).toBe("outputs('My_Action')");
+  });
 });

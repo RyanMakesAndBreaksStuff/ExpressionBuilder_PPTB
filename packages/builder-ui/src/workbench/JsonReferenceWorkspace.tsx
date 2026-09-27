@@ -9,6 +9,7 @@ import {
   jsonReferenceReducer,
   rootExpression,
   showBodyHint,
+  type CopyFormat,
   type JsonReferenceAction,
   type JsonReferenceState,
 } from './jsonReferenceState';
@@ -35,8 +36,8 @@ export function JsonReferenceWorkspace({ active, adapter }: JsonReferenceWorkspa
     dispatch({ type: 'resetCopyStatus' });
   }, [active]);
 
-  const copy = async () => {
-    const text = copyText(state);
+  const copy = async (format: CopyFormat) => {
+    const text = copyText(state, format);
     if (text === null) return;
     clearTimeout(copiedTimer.current);
     try {
@@ -52,10 +53,8 @@ export function JsonReferenceWorkspace({ active, adapter }: JsonReferenceWorkspa
   return (
     <div className="eb-json-workspace">
       <JsonSourcePane state={state} dispatch={dispatch} />
-      <div className="eb-json-content">
-        <PayloadPanel state={state} dispatch={dispatch} />
-        <ReferencePanel state={state} dispatch={dispatch} onCopy={() => void copy()} />
-      </div>
+      <PayloadPanel state={state} dispatch={dispatch} />
+      <ReferencePanel state={state} dispatch={dispatch} onCopy={(format) => void copy(format)} />
     </div>
   );
 }

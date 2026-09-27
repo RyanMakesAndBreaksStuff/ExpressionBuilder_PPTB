@@ -147,9 +147,7 @@ describe('JSON reference workspace', () => {
     await pasteAndParse(user, fixtureA1, 'Get items');
     await selectEmail(user);
 
-    await user.click(screen.getByRole('radio', { name: 'Inside text @{…}' }));
-    expect(copyStatus()).toHaveTextContent('Inline text: use inside a string');
-    await user.click(screen.getByRole('button', { name: 'Copy' }));
+    await user.click(screen.getByRole('button', { name: 'Copy @{}' }));
     expect(adapter.copyToClipboard).toHaveBeenCalledWith(`@{${EMAIL_REFERENCE}}`);
   });
 
@@ -158,7 +156,7 @@ describe('JSON reference workspace', () => {
     render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
     await pasteAndParse(user, fixtureA1, 'Get items');
 
-    await user.click(screen.getByRole('radio', { name: /^Body only/ }));
+    await user.click(screen.getByRole('radio', { name: 'Action · Body only' }));
     expect(screen.getByText(/This sample has a top-level/)).toHaveTextContent(
       'This sample has a top-level body key. If you pasted the full output, choose Full output.',
     );
@@ -170,19 +168,19 @@ describe('JSON reference workspace', () => {
     const user = userEvent.setup();
     render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
 
-    await user.click(screen.getByRole('radio', { name: 'Trigger' }));
+    await user.click(screen.getByRole('radio', { name: 'Trigger · Full output' }));
     expect(screen.queryByLabelText('Action name')).not.toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Full output' })).toHaveAccessibleDescription('triggerOutputs()');
-    expect(screen.getByRole('radio', { name: 'Body only' })).toHaveAccessibleDescription('triggerBody()');
+    expect(screen.getByRole('radio', { name: 'Trigger · Full output' })).toHaveAccessibleDescription('triggerOutputs()');
+    expect(screen.getByRole('radio', { name: 'Trigger · Body only' })).toHaveAccessibleDescription('triggerBody()');
 
-    await user.click(screen.getByRole('radio', { name: /^Body only/ }));
+    await user.click(screen.getByRole('radio', { name: 'Trigger · Body only' }));
     await pasteAndParse(user, triggerBodySample);
     await expand(user, /^customer, object$/);
     await user.click(row(/^name, string/));
     expect(expression()).toHaveTextContent("triggerBody()?['customer']?['name']");
 
     await user.clear(screen.getByLabelText('Sample JSON'));
-    await user.click(screen.getByRole('radio', { name: /^Full output/ }));
+    await user.click(screen.getByRole('radio', { name: 'Trigger · Full output' }));
     await pasteAndParse(user, triggerFullSample);
     await expand(user, /^headers, object$/);
     await user.click(row(/^content-type, string/));
@@ -241,15 +239,16 @@ describe('JSON reference workspace', () => {
 
     expect(name).toHaveAccessibleDescription('As shown in the flow designer. Spaces become underscores.');
     expect(name).toHaveAttribute('aria-invalid', 'false');
-    await pasteAndParse(user, fixtureA1);
+    await pasteAndParse(user, fixtureA1); // paste auto-fills name to 'Action_name'
+    await user.clear(name); // clear to reach the blank-name state
 
     expect(name).toHaveAttribute('aria-invalid', 'true');
     expect(name).toHaveAccessibleDescription('Enter the action name to build the reference.');
     expect(screen.getByText('Enter an action name')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
     expect(row(/^outputs\('Action_name'\), object$/)).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Full output (also Compose)' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Full output (also Compose)' })).toHaveAccessibleDescription(
+    expect(screen.getByRole('radio', { name: 'Action · Full output' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Action · Full output' })).toHaveAccessibleDescription(
       "outputs('Action_name')",
     );
   });
@@ -279,9 +278,7 @@ describe('JSON reference workspace', () => {
       'Payload',
       'Reference',
     ]);
-    expect(screen.getByRole('radiogroup', { name: 'Output from' })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'The pasted JSON is' })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'Copy format' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Reference root' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Payload' })).getByText('No sample yet')).toBeInTheDocument();
   });
 

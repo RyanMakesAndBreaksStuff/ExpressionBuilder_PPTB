@@ -39,6 +39,8 @@ export type JsonReferenceAction =
   | { type: 'setActionName'; value: string }
   | { type: 'setText'; value: string }
   | { type: 'parse' }
+  | { type: 'pasteAndParse'; text: string; defaultActionName: string }
+  | { type: 'setReferenceRoot'; outputFrom: OutputFrom; shape: PayloadShape }
   | { type: 'select'; path: PayloadPath }
   | { type: 'toggleExpanded'; key: string }
   | { type: 'showAll'; key: string }
@@ -81,6 +83,15 @@ export function jsonReferenceReducer(state: JsonReferenceState, action: JsonRefe
       return { ...state, text: action.value };
     case 'parse':
       return parseSample(state);
+    case 'pasteAndParse': {
+      const next: JsonReferenceState = { ...state, text: action.text };
+      if (state.outputFrom === 'action' && state.actionName.trim() === '') {
+        next.actionName = action.defaultActionName;
+      }
+      return parseSample(next);
+    }
+    case 'setReferenceRoot':
+      return { ...state, outputFrom: action.outputFrom, shape: action.shape, copyStatus: IDLE };
     case 'select':
       return { ...state, selectedPath: action.path, copyStatus: IDLE };
     case 'toggleExpanded': {
@@ -153,18 +164,24 @@ export function rootExpression(state: JsonReferenceState, shape: PayloadShape = 
   return formatPayloadRoot(referenceRoot(state, shape, actionName));
 }
 
+/** Root expression for any explicit outputFrom/shape combination. */
+export function rootExpressionFor(state: JsonReferenceState, outputFrom: OutputFrom, shape: PayloadShape): string {
+  const actionName = outputFrom === 'action' && state.actionName.trim() === '' ? ACTION_NAME_PLACEHOLDER : state.actionName;
+  return formatPayloadRoot(referenceRoot({ ...state, outputFrom }, shape, actionName));
+}
+
 export function canCopy(state: JsonReferenceState): boolean {
   return state.parsed !== null && !isActionNameMissing(state);
 }
 
 /** Exactly what Copy writes and the expression area shows (FR-046, FR-050, FR-051). */
-export function copyText(state: JsonReferenceState): string | null {
+export function copyText(state: JsonReferenceState, format: CopyFormat = state.copyFormat): string | null {
   if (!canCopy(state)) return null;
   const reference = formatPayloadReference({
     root: referenceRoot(state, state.shape, state.actionName),
     path: state.selectedPath,
   });
-  return state.copyFormat === 'inline' ? `@{${reference}}` : reference;
+  return format === 'inline' ? `@{${reference}}` : reference;
 }
 
 /** FR-044. */

@@ -2243,20 +2243,19 @@ body {
 }
 
 .eb-json-content {
-  flex: 999 1 520px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  /* legacy wrapper removed; kept so old snapshots don't break external CSS */
+  display: contents;
 }
 
 .eb-json-payload {
-  flex: 1 1 auto;
+  flex: 999 1 300px;
   min-height: 320px;
+  min-width: 0;
 }
 
 .eb-json-reference {
-  flex: 0 0 auto;
+  flex: 0 1 380px;
+  min-width: 280px;
 }
 
 /* Source pane */
@@ -2300,6 +2299,27 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.eb-json-copy-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eb-json-copy-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eb-json-copy-block-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .eb-json-status,
@@ -2416,7 +2436,14 @@ body {
   gap: 8px;
 }
 
-.eb-choice-cards [role="radio"] {
+.eb-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.eb-choice-cards [role="radio"],
+.eb-choice-grid [role="radio"] {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2431,29 +2458,35 @@ body {
   transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
 }
 
-.eb-choice-cards [role="radio"]:hover {
+.eb-choice-cards [role="radio"]:hover,
+.eb-choice-grid [role="radio"]:hover {
   border-color: var(--border-strong);
 }
 
 .eb-choice-cards [aria-checked="true"],
-.eb-choice-cards [aria-checked="true"]:hover {
+.eb-choice-cards [aria-checked="true"]:hover,
+.eb-choice-grid [aria-checked="true"],
+.eb-choice-grid [aria-checked="true"]:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 
-.eb-choice-cards .eb-choice-label {
+.eb-choice-cards .eb-choice-label,
+.eb-choice-grid .eb-choice-label {
   font-size: 0.85rem;
   font-weight: 700;
 }
 
-.eb-choice-cards .eb-choice-detail {
+.eb-choice-cards .eb-choice-detail,
+.eb-choice-grid .eb-choice-detail {
   font-family: var(--eb-mono);
   font-size: 12px;
   color: var(--code-fn);
   overflow-wrap: anywhere;
 }
 
-.eb-choice-cards code {
+.eb-choice-cards code,
+.eb-choice-grid code {
   font: inherit;
 }
 
@@ -2713,8 +2746,7 @@ body {
     flex-direction: column;
   }
 
-  .eb-json-workspace > *,
-  .eb-json-content > * {
+  .eb-json-workspace > * {
     flex: 0 0 auto;
   }
 
@@ -2736,8 +2768,7 @@ body {
 }
 
 @media (max-width: 700px) {
-  .eb-json-workspace,
-  .eb-json-content {
+  .eb-json-workspace {
     gap: 12px;
   }
 
