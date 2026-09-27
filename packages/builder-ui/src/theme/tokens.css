@@ -2370,7 +2370,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 2px;
   border: none;
   background: transparent;
   color: var(--text3);
@@ -2383,8 +2383,8 @@ body {
 }
 
 .eb-copy-block-info svg {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
 }
 
 .eb-json-status,
@@ -2551,7 +2551,7 @@ body {
 .eb-choice-grid .eb-choice-detail,
 .eb-root-grid .eb-choice-detail {
   font-family: var(--eb-mono);
-  font-size: 12px;
+  font-size: 10px;
   color: var(--code-fn);
   overflow-wrap: anywhere;
 }
@@ -2872,7 +2872,7 @@ body {
 }
 
 /* Three-column layout: Source | Payload | Reference side by side. */
-@media (min-width: 1400px) {
+@media (min-width: 1280px) {
   .eb-json-content {
     display: contents;
   }
