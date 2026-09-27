@@ -1405,6 +1405,45 @@ body {
   color: var(--text3);
 }
 
+.eb-code-copy-wrap {
+  position: relative;
+}
+
+.eb-code-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface2);
+  color: var(--text3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+
+.eb-code-copy-wrap:hover .eb-code-copy-btn,
+.eb-code-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.eb-code-copy-btn:hover,
+.eb-code-copy-btn:focus-visible {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.eb-code-copy-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
 /* Copy Row */
 .eb-copy-row {
   display: flex;

@@ -61,16 +61,20 @@ export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps)
           <div className="eb-json-copy-blocks">
             <div className="eb-json-copy-block">
               <span className="eb-json-copy-block-label">Expression editor</span>
-              <ExpressionPreview expression={copyText(state, 'bare')!} label="Reference expression" />
-              <div className="eb-json-copy-row">
-                <ActionButton icon={<CopyIcon />} onClick={() => onCopy('bare')}>Copy</ActionButton>
+              <div className="eb-code-copy-wrap">
+                <ExpressionPreview expression={copyText(state, 'bare')!} label="Reference expression" />
+                <button type="button" className="eb-code-copy-btn" aria-label="Copy" onClick={() => onCopy('bare')}>
+                  <CopyIcon aria-hidden />
+                </button>
               </div>
             </div>
             <div className="eb-json-copy-block">
               <span className="eb-json-copy-block-label">Inline @{'{'}&hellip;{'}'}</span>
-              <ExpressionPreview expression={copyText(state, 'inline')!} label="Inline reference expression" />
-              <div className="eb-json-copy-row">
-                <ActionButton icon={<CopyIcon />} onClick={() => onCopy('inline')}>Copy @{'{}'}</ActionButton>
+              <div className="eb-code-copy-wrap">
+                <ExpressionPreview expression={copyText(state, 'inline')!} label="Inline reference expression" />
+                <button type="button" className="eb-code-copy-btn" aria-label="Copy @{}" onClick={() => onCopy('inline')}>
+                  <CopyIcon aria-hidden />
+                </button>
               </div>
             </div>
           </div>
