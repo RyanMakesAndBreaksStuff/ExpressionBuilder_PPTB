@@ -1,8 +1,18 @@
 {
   "name": "@ryanmakes/eb_engine",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.1",
   "license": "BSD-3-Clause",
+  "contributors": [
+    {
+      "name": "Ryan Rettinger",
+      "url": "https://github.com/RyanMakesAndBreaksStuff"
+    },
+    {
+      "name": "Matt Berg",
+      "url": "https://github.com/MattBerg11"
+    }
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
