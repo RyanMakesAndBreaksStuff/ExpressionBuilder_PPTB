@@ -15,8 +15,6 @@ import {
 } from "./jsonReferenceState";
 import { countLabel } from "./payloadTreeModel";
 
-const COPIED_STATUS_MS = 1200;
-
 interface JsonReferenceWorkspaceProps {
 	adapter: PlatformAdapter;
 	/** False while the Condition builder tab is selected; the workspace stays mounted so its state survives (FR-008). */
