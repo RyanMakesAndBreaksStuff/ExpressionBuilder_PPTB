@@ -1,109 +1,230 @@
-import { useId, type Dispatch } from 'react';
-import { ExpressionPreview } from '../components/ExpressionPreview';
-import { valueAtPath } from '../importExport/jsonPayload';
-import { ActionButton } from './controls/ActionButton';
-import { CodeIcon, CopyIcon, InfoIcon } from './icons/BuilderIcons';
+import { useEffect, useId, useState, type ReactNode } from "react";
+import { ExpressionPreview } from "../components/ExpressionPreview";
+import { CodeIcon, CopyIcon, InfoIcon } from "./icons/BuilderIcons";
 import {
-  canCopy,
-  copyStatusView,
-  copyText,
-  expressionPlaceholder,
-  fixedPositionNote,
-  rootExpression,
-  type CopyFormat,
-  type JsonReferenceAction,
-  type JsonReferenceState,
-} from './jsonReferenceState';
-import { segmentLabel, selectionSummary } from './payloadTreeModel';
+	canCopy,
+	copyText,
+	fixedPositionNote,
+	loopItemExpression,
+	loopItemsExpression,
+	rootExpression,
+	type CopyFormat,
+	type JsonReferenceState,
+} from "./jsonReferenceState";
+import { segmentLabel } from "./payloadTreeModel";
+
+type InfoKey = "bare" | "item" | "items";
+
+function InfoBtn({
+	k,
+	label,
+	children,
+	infoOpen,
+	onToggle,
+	onClose,
+}: {
+	k: InfoKey;
+	label: string;
+	children: ReactNode;
+	infoOpen: InfoKey | null;
+	onToggle: (k: InfoKey) => void;
+	onClose: () => void;
+}) {
+	return (
+		<span className="eb-copy-block-info-wrap">
+			<button
+				type="button"
+				className={`eb-copy-block-info${infoOpen === k ? " is-open" : ""}`}
+				aria-label={label}
+				aria-expanded={infoOpen === k}
+				onClick={() => onToggle(k)}
+				onKeyDown={(e) => e.key === "Escape" && onClose()}>
+				<InfoIcon aria-hidden />
+			</button>
+			{infoOpen === k && (
+				<div className="eb-copy-block-popover" role="tooltip">
+					{children}
+				</div>
+			)}
+		</span>
+	);
+}
+
+// Stable file-level component — prevents unmounting when the parent re-renders.
+function CopyActions({
+	bareLabel = "Copy",
+	inlineLabel = "Copy @{}",
+	onCopyBare,
+	onCopyInline,
+}: {
+	bareLabel?: string;
+	inlineLabel?: string;
+	onCopyBare: () => void;
+	onCopyInline: () => void;
+}) {
+	return (
+		<div className="eb-copy-block-actions">
+			<button
+				type="button"
+				className="eb-copy-action-btn eb-copy-action-inline"
+				aria-label={inlineLabel}
+				title="Paste into a text field (inline expression)"
+				onClick={onCopyInline}>
+				<span aria-hidden>{"@{}"}</span>
+			</button>
+			<button
+				type="button"
+				className="eb-copy-action-btn"
+				aria-label={bareLabel}
+				title="Paste directly into the formula editor"
+				onClick={onCopyBare}>
+				<CopyIcon aria-hidden />
+			</button>
+		</div>
+	);
+}
 
 interface ReferencePanelProps {
-  state: JsonReferenceState;
-  dispatch: Dispatch<JsonReferenceAction>;
-  onCopy: (format: CopyFormat) => void;
+	state: JsonReferenceState;
+	onCopy: (format: CopyFormat) => void;
+	onCopyText: (text: string) => void;
 }
 
-export function ReferencePanel({ dispatch, onCopy, state }: ReferencePanelProps) {
-  const headingId = useId();
-  const note = fixedPositionNote(state);
-  const status = copyStatusView(state);
-  const selection = state.parsed ? valueAtPath(state.parsed.value, state.selectedPath) : null;
-  const crumbs = [rootExpression(state), ...state.selectedPath.map(segmentLabel)];
-  const ready = canCopy(state);
+export function ReferencePanel({
+	onCopy,
+	onCopyText,
+	state,
+}: ReferencePanelProps) {
+	const headingId = useId();
+	const note = fixedPositionNote(state);
+	const crumbs = [
+		rootExpression(state),
+		...state.selectedPath.map(segmentLabel),
+	];
+	const ready = canCopy(state);
+	const itemExpr = loopItemExpression(state);
+	const itemsExpr = loopItemsExpression(state);
+	const wrap = (expr: string) => `@{${expr}}`;
 
-  return (
-    <section className="eb-json-card eb-json-reference" aria-labelledby={headingId}>
-      <div className="eb-json-card-header">
-        <h2 id={headingId}>
-          <CodeIcon aria-hidden="true" />
-          Reference
-        </h2>
-        {selection?.found ? <span className="eb-dock-meta eb-json-summary">{selectionSummary(selection.value)}</span> : null}
-      </div>
-      <div className="eb-json-card-body">
-        {state.parsed ? (
-          <nav className="eb-json-breadcrumb" aria-label="Selected path">
-            <ol>
-              {crumbs.map((crumb, index) => (
-                <li key={index}>
-                  {index > 0 ? (
-                    <span className="eb-json-crumb-separator" aria-hidden="true">
-                      ›
-                    </span>
-                  ) : null}
-                  <span className="eb-json-crumb">{crumb}</span>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        ) : null}
+	const [infoOpen, setInfoOpen] = useState<InfoKey | null>(null);
+	const toggleInfo = (k: InfoKey) => setInfoOpen(infoOpen === k ? null : k);
+	const closeInfo = () => setInfoOpen(null);
 
-        {ready ? (
-          <div className="eb-json-copy-blocks">
-            <div className="eb-json-copy-block">
-              <span className="eb-json-copy-block-label">
-                Expression editor
-                <button type="button" className="eb-copy-block-info" title="Paste directly into the Power Automate expression editor (the fx field)." aria-label="Expression editor info">
-                  <InfoIcon aria-hidden />
-                </button>
-              </span>
-              <div className="eb-code-copy-wrap">
-                <ExpressionPreview expression={copyText(state, 'bare')!} label="Reference expression" />
-                <button type="button" className="eb-code-copy-btn" aria-label="Copy" onClick={() => onCopy('bare')}>
-                  <CopyIcon aria-hidden />
-                </button>
-              </div>
-            </div>
-            <div className="eb-json-copy-block">
-              <span className="eb-json-copy-block-label">
-                Inline @{'{'}&hellip;{'}'}
-                <button type="button" className="eb-copy-block-info" title="Embed inside a text field alongside other text, e.g. &quot;Hello @{expression}&quot;." aria-label="Inline expression info">
-                  <InfoIcon aria-hidden />
-                </button>
-              </span>
-              <div className="eb-code-copy-wrap">
-                <ExpressionPreview expression={copyText(state, 'inline')!} label="Inline reference expression" />
-                <button type="button" className="eb-code-copy-btn" aria-label="Copy @{}" onClick={() => onCopy('inline')}>
-                  <CopyIcon aria-hidden />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <p className="eb-preview eb-json-placeholder">{expressionPlaceholder(state)}</p>
-            <div className="eb-json-copy-row">
-              <ActionButton icon={<CopyIcon />} disabled>Copy</ActionButton>
-            </div>
-          </>
-        )}
+	useEffect(() => {
+		if (!infoOpen) return;
+		const close = (e: MouseEvent) => {
+			if (!(e.target as Element).closest(".eb-copy-block-info-wrap"))
+				setInfoOpen(null);
+		};
+		document.addEventListener("mousedown", close);
+		return () => document.removeEventListener("mousedown", close);
+	}, [infoOpen]);
 
-        {note ? <p className="eb-json-note">{note}</p> : null}
+	// ── Shared sub-views ─────────────────────────────────────────────────────
 
-        <span role="status" className={`eb-json-copy-status is-${status.tone}`}>
-          {status.text}
-        </span>
-      </div>
-    </section>
-  );
+	const infoBtnProps = { infoOpen, onToggle: toggleInfo, onClose: closeInfo };
+
+	return (
+		<section
+			className="eb-json-card eb-json-reference"
+			aria-labelledby={headingId}>
+			<div className="eb-json-card-header">
+				<h2 id={headingId}>
+					<CodeIcon aria-hidden="true" />
+					Reference
+				</h2>
+			</div>
+			<div className="eb-json-card-body">
+				{state.parsed ? (
+					<nav className="eb-json-breadcrumb" aria-label="Selected path">
+						<ol>
+							{crumbs.map((crumb, index) => (
+								<li key={index}>
+									{index > 0 ? (
+										<span
+											className="eb-json-crumb-separator"
+											aria-hidden="true">
+											›
+										</span>
+									) : null}
+									<span className="eb-json-crumb">{crumb}</span>
+								</li>
+							))}
+						</ol>
+					</nav>
+				) : null}
+
+				{ready ? (
+					<div className="eb-json-copy-blocks">
+						<div className="eb-json-copy-block">
+							<div className="eb-copy-block-header">
+								<span className="eb-json-copy-block-label">
+									Reference
+									<InfoBtn k="bare" label="Reference info" {...infoBtnProps}>
+										<strong>Copy</strong> pastes the bare expression into the
+										expression editor. <strong>Copy @{"{}"}</strong> wraps it
+										for embedding inside a text field.
+									</InfoBtn>
+								</span>
+								<CopyActions
+									onCopyBare={() => onCopy("bare")}
+									onCopyInline={() => onCopy("inline")}
+								/>
+							</div>
+							<ExpressionPreview
+								expression={copyText(state, "bare")!}
+								label="Reference expression"
+							/>
+						</div>
+						{note ? <p className="eb-json-note">{note}</p> : null}
+						{itemExpr !== null && (
+							<div className="eb-json-copy-block">
+								<div className="eb-copy-block-header">
+									<span className="eb-json-copy-block-label">
+										Apply to each — item()
+										<InfoBtn k="item" label="item() info" {...infoBtnProps}>
+											Use inside an <strong>Apply to each</strong> loop body.
+										</InfoBtn>
+									</span>
+									<CopyActions
+										bareLabel="Copy item()"
+										inlineLabel="Copy item() @{}"
+										onCopyBare={() => onCopyText(itemExpr)}
+										onCopyInline={() => onCopyText(wrap(itemExpr))}
+									/>
+								</div>
+								<ExpressionPreview
+									expression={itemExpr}
+									label="Loop item() reference"
+								/>
+							</div>
+						)}
+
+						{itemsExpr !== null && (
+							<div className="eb-json-copy-block">
+								<div className="eb-copy-block-header">
+									<span className="eb-json-copy-block-label">
+										Apply to each — items()
+										<InfoBtn k="items" label="items() info" {...infoBtnProps}>
+											<code>items()</code> is scoped to this specific action.
+										</InfoBtn>
+									</span>
+									<CopyActions
+										bareLabel="Copy items()"
+										inlineLabel="Copy items() @{}"
+										onCopyBare={() => onCopyText(itemsExpr)}
+										onCopyInline={() => onCopyText(wrap(itemsExpr))}
+									/>
+								</div>
+								<ExpressionPreview
+									expression={itemsExpr}
+									label="Loop items() reference"
+								/>
+							</div>
+						)}
+					</div>
+				) : null}
+			</div>
+		</section>
+	);
 }
-

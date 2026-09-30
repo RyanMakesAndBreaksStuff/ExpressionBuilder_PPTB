@@ -1,4 +1,4 @@
-import { useEffect, useId, useReducer, useRef, type Dispatch } from "react";
+﻿import { useEffect, useId, useReducer, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
@@ -31,38 +31,64 @@ export function JsonReferenceWorkspace({
 		jsonReferenceReducer,
 		initialJsonReferenceState,
 	);
-	const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	);
+	const prevParsedText = useRef<string | undefined>(undefined);
 
-	useEffect(() => () => clearTimeout(copiedTimer.current), []);
+	useEffect(() => () => clearTimeout(autoParseTimer.current), []);
 
-	// Leaving the builder drops a showing "Expression copied" (spec edge cases).
+	// Notify the host when a parse succeeds with new content.
+	useEffect(() => {
+		if (state.parsed && state.parsed.text !== prevParsedText.current) {
+			prevParsedText.current = state.parsed.text;
+			void adapter.notify(
+				`Parsed · ${countLabel(state.parsed.valueCount, "value")}`,
+				"success",
+			);
+		}
+	}, [adapter, state.parsed]);
+
+	// Auto-parse after a short delay when text is edited manually.
+	useEffect(() => {
+		if (!state.text.trim() || state.text === state.parsed?.text) return;
+		clearTimeout(autoParseTimer.current);
+		autoParseTimer.current = setTimeout(() => dispatch({ type: "parse" }), 600);
+		return () => clearTimeout(autoParseTimer.current);
+	}, [state.text, state.parsed?.text]);
+
+	// Clear any pending auto-parse when leaving the tab.
 	useEffect(() => {
 		if (active) return;
-		clearTimeout(copiedTimer.current);
-		dispatch({ type: "resetCopyStatus" });
+		clearTimeout(autoParseTimer.current);
 	}, [active]);
 
 	const copy = async (format: CopyFormat) => {
 		const text = copyText(state, format);
 		if (text === null) return;
-		clearTimeout(copiedTimer.current);
 		try {
 			await adapter.copyToClipboard(text);
 		} catch (error) {
-			dispatch({
-				type: "copyFailed",
-				reason:
-					error instanceof Error ? error.message : "clipboard unavailable",
-			});
+			void adapter.notify(
+				`Could not copy expression: ${error instanceof Error ? error.message : "clipboard unavailable"}`,
+				"error",
+			);
 			return;
 		}
-		dispatch({ type: "copySucceeded" });
-		copiedTimer.current = setTimeout(
-			() => dispatch({ type: "resetCopyStatus" }),
-			COPIED_STATUS_MS,
-		);
+		void adapter.notify("Expression copied", "success");
+	};
+
+	const copyRaw = async (text: string) => {
+		try {
+			await adapter.copyToClipboard(text);
+		} catch (error) {
+			void adapter.notify(
+				`Could not copy expression: ${error instanceof Error ? error.message : "clipboard unavailable"}`,
+				"error",
+			);
+			return;
+		}
+		void adapter.notify("Expression copied", "success");
 	};
 
 	return (
@@ -72,8 +98,8 @@ export function JsonReferenceWorkspace({
 				<PayloadPanel state={state} dispatch={dispatch} />
 				<ReferencePanel
 					state={state}
-					dispatch={dispatch}
 					onCopy={(format) => void copy(format)}
+					onCopyText={(text) => void copyRaw(text)}
 				/>
 			</div>
 		</div>
