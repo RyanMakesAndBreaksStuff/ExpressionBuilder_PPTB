@@ -52,7 +52,7 @@ describe('JSON reference styles', () => {
   it('scrolls the tree inside its card on wide screens and the workspace as one when stacked (FR-092)', () => {
     expect(rule(css, '.eb-payload-tree')).toMatch(/overflow:\s*auto;/);
     expect(rule(css, '.eb-json-workspace')).toMatch(/overflow-y:\s*auto;/);
-    const stacked = mediaBlocks('max-width: 900px');
+    const stacked = mediaBlocks('max-width: 600px');
     expect(rule(stacked, '.eb-json-workspace')).toMatch(/flex-direction:\s*column;/);
     expect(rule(stacked, '.eb-payload-tree')).toMatch(/overflow-y:\s*hidden;/);
     expect(rule(stacked, '.eb-builder-tabs')).toMatch(/flex:\s*1 1 100%;/);

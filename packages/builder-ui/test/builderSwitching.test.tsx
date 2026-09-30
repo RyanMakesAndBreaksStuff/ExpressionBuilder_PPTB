@@ -223,7 +223,7 @@ describe('builder switching', () => {
 			screen.getByRole('treeitem', { name: /^body, object$/ }),
 		).toHaveAttribute('aria-selected', 'true');
 		expect(screen.getByLabelText('Reference expression')).toHaveTextContent(
-			'outputs("Get_items")?["body"]',
+			"outputs('Get_items')?['body']",
 		);
 		expect(
 			screen.queryByText('Paste into the expression editor'),

@@ -40,7 +40,7 @@ function createAdapter(
 }
 
 const EMAIL_REFERENCE =
-	'outputs("Get_items")?["body"]?["value"][0]?["Requester"]?["Email"]';
+	"outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']";
 
 const row = (name: RegExp) => screen.getByRole('treeitem', { name });
 const expression = () => screen.getByLabelText('Reference expression');
@@ -86,10 +86,10 @@ describe('JSON reference workspace', () => {
 		expect(expression()).toHaveTextContent(EMAIL_REFERENCE);
 		expect(
 			screen.getByRole('navigation', { name: 'Selected path' }),
-		).toHaveTextContent('outputs("Get_items")');
+		).toHaveTextContent("outputs('Get_items')");
 		expect(
 			screen.getByText(
-				'Fixed position [0]: reads that item only.',
+				'Fixed position [0] reads that item only.',
 			),
 		).toBeInTheDocument();
 
@@ -116,12 +116,12 @@ describe('JSON reference workspace', () => {
 		await expand(user, /^body, object$/);
 
 		for (const [name, reference] of [
-			[/^value, array$/, 'outputs("Get_items")?["body"]?["value"]'],
+			[/^value, array$/, "outputs('Get_items')?['body']?['value']"],
 			[
 				/^@odata\.nextLink, null, null$/,
-				'outputs("Get_items")?["body"]?["@odata.nextLink"]',
+				"outputs('Get_items')?['body']?['@odata.nextLink']",
 			],
-			[/^outputs\("Get_items"\), object$/, 'outputs("Get_items")'],
+			[/^outputs\('Get_items'\), object$/, "outputs('Get_items')"],
 		] as const) {
 			await user.click(row(name));
 			expect(expression()).toHaveTextContent(reference);
@@ -136,7 +136,7 @@ describe('JSON reference workspace', () => {
 		await pasteAndParse(user, composeSample, 'Compose');
 
 		await user.click(row(/^customer, object$/));
-		expect(expression()).toHaveTextContent('outputs("Compose")?["customer"]');
+		expect(expression()).toHaveTextContent("outputs('Compose')?['customer']");
 	});
 
 	it('copies the inline form (user story 1, scenario 5)', async () => {
@@ -160,19 +160,19 @@ describe('JSON reference workspace', () => {
 		await selectEmail(user);
 
 		expect(screen.getByLabelText('Loop item() reference')).toHaveTextContent(
-			'item()?["Requester"]?["Email"]',
+			"item()?['Requester']?['Email']",
 		);
 		expect(screen.getByLabelText('Loop items() reference')).toHaveTextContent(
-			'items("Get_items")?["Requester"]?["Email"]',
+			"items('Get_items')?['Requester']?['Email']",
 		);
 
 		await user.click(screen.getByRole('button', { name: 'Copy item()' }));
 		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
-			'item()?["Requester"]?["Email"]',
+			"item()?['Requester']?['Email']",
 		);
 		await user.click(screen.getByRole('button', { name: 'Copy items()' }));
 		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
-			'items("Get_items")?["Requester"]?["Email"]',
+			"items('Get_items')?['Requester']?['Email']",
 		);
 	});
 
@@ -186,7 +186,7 @@ describe('JSON reference workspace', () => {
 			'This sample has a top-level body key. If you pasted the full output, choose Full output.',
 		);
 		await user.click(row(/^body, object$/));
-		expect(expression()).toHaveTextContent('body("Get_items")?["body"]');
+		expect(expression()).toHaveTextContent("body('Get_items')?['body']");
 	});
 
 	it('references trigger payloads without an action name (user story 2)', async () => {
@@ -209,7 +209,7 @@ describe('JSON reference workspace', () => {
 		await expand(user, /^customer, object$/);
 		await user.click(row(/^name, string/));
 		expect(expression()).toHaveTextContent(
-			'triggerBody()?["customer"]?["name"]',
+			"triggerBody()?['customer']?['name']",
 		);
 
 		await user.clear(screen.getByLabelText('Sample JSON'));
@@ -220,7 +220,7 @@ describe('JSON reference workspace', () => {
 		await expand(user, /^headers, object$/);
 		await user.click(row(/^content-type, string/));
 		expect(expression()).toHaveTextContent(
-			'triggerOutputs()?["headers"]?["content-type"]',
+			"triggerOutputs()?['headers']?['content-type']",
 		);
 		expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled();
 	});
@@ -289,13 +289,13 @@ describe('JSON reference workspace', () => {
 		expect(name).toHaveAccessibleDescription(
 			'Enter the action name to build the reference.',
 		);
-		expect(row(/^outputs\("Action"\), object$/)).toBeInTheDocument();
+		expect(row(/^outputs\('Action'\), object$/)).toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
 		).toBeChecked();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
-		).toHaveAccessibleDescription('outputs("Action")');
+		).toHaveAccessibleDescription("outputs('Action')");
 	});
 
 	it('never claims a copy the host refused (user story 4, scenario 6)', async () => {

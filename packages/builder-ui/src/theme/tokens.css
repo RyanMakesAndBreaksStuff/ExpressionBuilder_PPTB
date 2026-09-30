@@ -625,12 +625,8 @@ body {
 	min-height: 0;
 }
 
-.eb-group-card.is-root
-	> .eb-group-children
-	> .eb-condition-drop-target.is-terminal,
-.eb-group-card.is-empty
-	> .eb-group-children
-	> .eb-condition-drop-target.is-terminal {
+.eb-group-card.is-root > .eb-group-children > .eb-condition-drop-target.is-terminal,
+.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal {
 	flex: 1;
 }
 
