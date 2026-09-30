@@ -27,6 +27,10 @@
   "contributors": [
     {
       "name": "Ryan Rettinger"
+    },
+    { 
+      "name": "Matt Berg",
+      "url": "https://github.com/MattBerg11"
     }
   ],
   "license": "BSD-3-Clause",
