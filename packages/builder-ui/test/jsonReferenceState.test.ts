@@ -57,17 +57,17 @@ describe('JSON reference state', () => {
 		});
 		expect(state.selectedPath).toEqual([]);
 		expect(state.expanded).toEqual(new Set([pathKey([])]));
-		expect(copyText(state)).toBe('outputs('Get_items')');
+		expect(copyText(state)).toBe("outputs('Get_items')");
 	});
 
 	it('builds the spec reference for Email and notes the fixed index (user story 1, scenario 1)', () => {
 		const state = run(...parsedA1, { type: 'select', path: email });
 
 		expect(copyText(state)).toBe(
-			'outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']',
+			"outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']",
 		);
 		expect(fixedPositionNote(state)).toBe(
-			'Fixed position [0]: reads that item only.',
+			'Fixed position [0] reads that item only.',
 		);
 	});
 
@@ -79,7 +79,7 @@ describe('JSON reference state', () => {
 		);
 
 		expect(copyText(state)).toBe(
-			'@{outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']}',
+			"@{outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']}",
 		);
 		expect(copyStatusView(state)).toEqual({ text: '', tone: 'muted' });
 	});
@@ -94,8 +94,8 @@ describe('JSON reference state', () => {
 		expect(canCopy(state)).toBe(false);
 		expect(copyText(state)).toBeNull();
 		expect(expressionPlaceholder(state)).toBe('Enter an action name');
-		expect(rootExpression(state)).toBe('outputs('Action')');
-		expect(rootExpression(state, 'body')).toBe('body('Action')');
+		expect(rootExpression(state)).toBe("outputs('Action')");
+		expect(rootExpression(state, 'body')).toBe("body('Action')");
 		expect(showActionNameInvalid(state)).toBe(true);
 	});
 
@@ -129,13 +129,13 @@ describe('JSON reference state', () => {
 		expect(trigger.selectedPath).toBe(selected.selectedPath);
 		expect(trigger.copyStatus).toEqual({ kind: 'idle' });
 		expect(copyText(trigger)).toBe(
-			'triggerOutputs()?['body']?['value'][0]?['Requester']?['Email']',
+			"triggerOutputs()?['body']?['value'][0]?['Requester']?['Email']",
 		);
 		expect(
 			copyText(
 				jsonReferenceReducer(trigger, { type: 'setShape', value: 'body' }),
 			),
-		).toBe('triggerBody()?['body']?['value'][0]?['Requester']?['Email']');
+		).toBe("triggerBody()?['body']?['value'][0]?['Requester']?['Email']");
 	});
 
 	it('keeps the action name when switching to Trigger and back (FR-011)', () => {
@@ -146,7 +146,7 @@ describe('JSON reference state', () => {
 		);
 
 		expect(state.actionName).toBe('Get items');
-		expect(rootExpression(state)).toBe('outputs('Get_items')');
+		expect(rootExpression(state)).toBe("outputs('Get_items')");
 	});
 
 	it('references a Compose output with Action and Full output (user story 1, scenario 4)', () => {
@@ -157,7 +157,7 @@ describe('JSON reference state', () => {
 			{ type: 'select', path: ['customer'] },
 		);
 
-		expect(copyText(state)).toBe('outputs('Compose')?['customer']');
+		expect(copyText(state)).toBe("outputs('Compose')?['customer']");
 	});
 
 	it('hints at a top-level body key under Body only, but never changes the root (FR-015)', () => {
@@ -168,7 +168,7 @@ describe('JSON reference state', () => {
 		);
 
 		expect(showBodyHint(body)).toBe(true);
-		expect(copyText(body)).toBe('body('Get_items')?['body']');
+		expect(copyText(body)).toBe("body('Get_items')?['body']");
 		expect(
 			showBodyHint(
 				jsonReferenceReducer(body, { type: 'setShape', value: 'full' }),
@@ -188,7 +188,7 @@ describe('JSON reference state', () => {
 			tone: 'warn',
 		});
 		expect(copyText(edited)).toBe(
-			'outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']',
+			"outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']",
 		);
 	});
 
@@ -216,13 +216,13 @@ describe('JSON reference state', () => {
 		const kept = run(
 			...parsedA1,
 			{ type: 'select', path: ['statusCode'] },
-			{ type: 'setText', value: '{'statusCode': 201}' },
+			{ type: 'setText', value: '{"statusCode": 201}' },
 			{ type: 'parse' },
 		);
 		const reset = run(
 			...parsedA1,
 			{ type: 'select', path: email },
-			{ type: 'setText', value: '{'statusCode': 201}' },
+			{ type: 'setText', value: '{"statusCode": 201}' },
 			{ type: 'parse' },
 		);
 
@@ -236,7 +236,7 @@ describe('JSON reference state', () => {
 			{ type: 'toggleExpanded', key: pathKey(['body']) },
 			{ type: 'toggleExpanded', key: pathKey(['headers']) },
 			{ type: 'showAll', key: pathKey(['body', 'value']) },
-			{ type: 'setText', value: '{'body': {'value': []}}' },
+			{ type: 'setText', value: '{"body": {"value": []}}' },
 			{ type: 'parse' },
 		);
 
@@ -283,18 +283,18 @@ describe('JSON reference state', () => {
 			{ type: 'select', path: ['matrix', 0, 1] },
 		);
 
-		expect(copyText(state)).toBe('outputs('Compose')?['matrix'][0][1]');
+		expect(copyText(state)).toBe("outputs('Compose')?['matrix'][0][1]");
 		expect(fixedPositionNote(state)).toBe(
-			'Fixed position [0][1]: reads that item only.',
+			'Fixed position [0][1] reads that item only.',
 		);
 	});
 
 	it('builds item() and items() references from a selected array item', () => {
 		const state = run(...parsedA1, { type: 'select', path: email });
 
-		expect(loopItemExpression(state)).toBe('item()?['Requester']?['Email']');
+		expect(loopItemExpression(state)).toBe("item()?['Requester']?['Email']");
 		expect(loopItemsExpression(state)).toBe(
-			'items('Get_items')?['Requester']?['Email']',
+			"items('Get_items')?['Requester']?['Email']",
 		);
 	});
 
@@ -309,7 +309,7 @@ describe('JSON reference state', () => {
 
 		expect(loopItemExpression(noIndex)).toBeNull();
 		expect(loopItemsExpression(noIndex)).toBeNull();
-		expect(loopItemExpression(trigger)).toBe('item()?['Requester']?['Email']');
+		expect(loopItemExpression(trigger)).toBe("item()?['Requester']?['Email']");
 		expect(loopItemsExpression(trigger)).toBeNull();
 	});
 
@@ -326,7 +326,7 @@ describe('JSON reference state', () => {
 			text: 'Parsed · 25 values',
 			tone: 'good',
 		});
-		expect(copyText(state)).toBe('outputs('Action')');
+		expect(copyText(state)).toBe("outputs('Action')");
 	});
 
 	it('pasteAndParse keeps an existing action name', () => {
@@ -336,6 +336,6 @@ describe('JSON reference state', () => {
 		);
 
 		expect(state.actionName).toBe('My Action');
-		expect(copyText(state)).toBe('outputs('My_Action')');
+		expect(copyText(state)).toBe("outputs('My_Action')");
 	});
 });

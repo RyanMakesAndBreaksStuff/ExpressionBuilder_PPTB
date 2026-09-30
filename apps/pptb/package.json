@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.1.1",
+  "version": "1.2.1",
   "engines": {
     "node": ">=24.17.0 <25"
   },
@@ -26,7 +26,8 @@
   ],
   "contributors": [
     {
-      "name": "Ryan Rettinger"
+      "name": "Ryan Rettinger",
+      "url": "https://github.com/RyanMakesAndBreaksStuff"
     },
     { 
       "name": "Matt Berg",
