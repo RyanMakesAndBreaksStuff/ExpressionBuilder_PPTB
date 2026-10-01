@@ -289,28 +289,62 @@ describe('JSON reference state', () => {
 		);
 	});
 
-	it('builds item() and items() references from a selected array item', () => {
-		const state = run(...parsedA1, { type: 'select', path: email });
+	it('roots items() at the loop name, not the source action', () => {
+		const state = run(
+			...parsedA1,
+			{ type: 'select', path: email },
+			{ type: 'setLoopName', value: 'Apply to each' },
+		);
 
+		expect(copyText(state)).toBe(
+			"outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']",
+		);
 		expect(loopItemExpression(state)).toBe("item()?['Requester']?['Email']");
 		expect(loopItemsExpression(state)).toBe(
-			"items('Get_items')?['Requester']?['Email']",
+			"items('Apply_to_each')?['Requester']?['Email']",
+		);
+
+		const renamedSource = jsonReferenceReducer(state, {
+			type: 'setActionName',
+			value: 'Another source',
+		});
+		expect(loopItemsExpression(renamedSource)).toBe(
+			"items('Apply_to_each')?['Requester']?['Email']",
 		);
 	});
 
-	it('does not offer loop references without an array index or for a trigger', () => {
-		const noIndex = run(...parsedA1, { type: 'select', path: ['statusCode'] });
+	it('offers items() only once a loop name is entered', () => {
+		const selected = run(...parsedA1, { type: 'select', path: email });
+
+		expect(selected.loopName).toBe('');
+		expect(loopItemsExpression(selected)).toBeNull();
+		expect(
+			loopItemsExpression(
+				jsonReferenceReducer(selected, { type: 'setLoopName', value: '   ' }),
+			),
+		).toBeNull();
+	});
+
+	it('offers loop references only for array selections, including trigger payloads', () => {
+		const noIndex = run(
+			...parsedA1,
+			{ type: 'select', path: ['statusCode'] },
+			{ type: 'setLoopName', value: 'Apply to each' },
+		);
 		const trigger = run(
 			{ type: 'setOutputFrom', value: 'trigger' },
 			{ type: 'setText', value: fixtureA1 },
 			{ type: 'parse' },
 			{ type: 'select', path: email },
+			{ type: 'setLoopName', value: 'Apply to each' },
 		);
 
 		expect(loopItemExpression(noIndex)).toBeNull();
 		expect(loopItemsExpression(noIndex)).toBeNull();
 		expect(loopItemExpression(trigger)).toBe("item()?['Requester']?['Email']");
-		expect(loopItemsExpression(trigger)).toBeNull();
+		expect(loopItemsExpression(trigger)).toBe(
+			"items('Apply_to_each')?['Requester']?['Email']",
+		);
 	});
 
 	it('pasteAndParse auto-fills an empty action name with the placeholder and parses in one step', () => {
