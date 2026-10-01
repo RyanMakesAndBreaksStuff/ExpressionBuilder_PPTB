@@ -33,6 +33,8 @@ export interface JsonReferenceState {
 	actionName: string;
 	/** Set once the user types a name or selects Parse; a missing name only shows as invalid after that. */
 	actionNameTouched: boolean;
+	/** The enclosing Apply to each's name; only items() uses it, never the source action name. */
+	loopName: string;
 	text: string;
 	parsed: ParsedPayload | null;
 	error: string | null;
@@ -47,6 +49,7 @@ export type JsonReferenceAction =
 	| { type: "setOutputFrom"; value: OutputFrom }
 	| { type: "setShape"; value: PayloadShape }
 	| { type: "setActionName"; value: string }
+	| { type: "setLoopName"; value: string }
 	| { type: "setText"; value: string }
 	| { type: "parse" }
 	| { type: "pasteAndParse"; text: string; defaultActionName: string }
@@ -61,6 +64,15 @@ export type JsonReferenceAction =
 
 export const ACTION_NAME_PLACEHOLDER = "Action";
 
+// Off for pasted payloads and names: some browsers send spell-check text to a
+// cloud service (FR-062).
+export const NO_TEXT_ASSISTANCE = {
+	spellCheck: false,
+	autoComplete: "off",
+	autoCorrect: "off",
+	autoCapitalize: "off",
+} as const;
+
 const IDLE: CopyStatus = { kind: "idle" };
 
 export const initialJsonReferenceState: JsonReferenceState = {
@@ -68,6 +80,7 @@ export const initialJsonReferenceState: JsonReferenceState = {
 	shape: "full",
 	actionName: "",
 	actionNameTouched: false,
+	loopName: "",
 	text: "",
 	parsed: null,
 	error: null,
@@ -96,6 +109,8 @@ export function jsonReferenceReducer(
 				actionNameTouched: true,
 				copyStatus: IDLE,
 			};
+		case "setLoopName":
+			return { ...state, loopName: action.value, copyStatus: IDLE };
 		// Editing keeps the last parsed tree usable; the status turns stale (FR-027).
 		case "setText":
 			return { ...state, text: action.value };
@@ -311,32 +326,21 @@ function pathAfterLastIndex(path: PayloadPath): PayloadPath | null {
 	return path.slice(lastIdx + 1);
 }
 
-function buildPathSuffix(subPath: PayloadPath): string {
-	return subPath.reduce<string>(
-		(expr, seg) =>
-			typeof seg === "number"
-				? `${expr}[${seg}]`
-				: `${expr}?['${(seg as string).replaceAll("'", "''")}']`,
-		"",
-	);
-}
-
 /** item() expression for the selected path in an Apply-to-each loop. Null when no array index. */
 export function loopItemExpression(state: JsonReferenceState): string | null {
 	if (!canCopy(state)) return null;
 	const sub = pathAfterLastIndex(state.selectedPath);
 	if (sub === null) return null;
-	return "item()" + buildPathSuffix(sub);
+	return formatPayloadReference({ root: { kind: "item" }, path: sub });
 }
 
-/** items('action') expression for an Apply-to-each loop. Null when no index or when trigger-scoped. */
+/** items('<loop name>') for the enclosing Apply to each. Null when no array index or no loop name. */
 export function loopItemsExpression(state: JsonReferenceState): string | null {
-	if (!canCopy(state) || state.outputFrom !== "action") return null;
+	if (!canCopy(state) || state.loopName.trim() === "") return null;
 	const sub = pathAfterLastIndex(state.selectedPath);
 	if (sub === null) return null;
-	const name = state.actionName
-		.trim()
-		.replace(/\s+/g, "_")
-		.replaceAll("'", "''");
-	return `items('${name}')` + buildPathSuffix(sub);
+	return formatPayloadReference({
+		root: { kind: "items", actionName: state.loopName },
+		path: sub,
+	});
 }

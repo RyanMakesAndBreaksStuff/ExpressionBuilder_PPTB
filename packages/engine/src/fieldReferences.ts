@@ -16,10 +16,13 @@ export function formatFieldReference(field: FieldDefinition, mode: ExpressionMod
 export type PayloadPathSegment = string | number;
 export type PayloadPath = readonly PayloadPathSegment[];
 
-/** Where the pasted payload came from, which decides the reference's root function. */
+/**
+ * The reference's root function: the pasted payload's source, or the Apply to
+ * each loop that iterates it (item(), or items() with the loop's name).
+ */
 export type PayloadReferenceRoot =
-  | { kind: 'triggerBody' | 'triggerOutputs' }
-  | { kind: 'body' | 'outputs'; actionName: string };
+  | { kind: 'triggerBody' | 'triggerOutputs' | 'item' }
+  | { kind: 'body' | 'outputs' | 'items'; actionName: string };
 
 export interface PayloadReference {
   root: PayloadReferenceRoot;
@@ -35,7 +38,7 @@ function normalizeActionName(name: string): string {
 }
 
 export function formatPayloadRoot(root: PayloadReferenceRoot): string {
-  if (root.kind === 'body' || root.kind === 'outputs') {
+  if ('actionName' in root) {
     return `${root.kind}('${quotePathSegment(normalizeActionName(root.actionName))}')`;
   }
   return `${root.kind}()`;
