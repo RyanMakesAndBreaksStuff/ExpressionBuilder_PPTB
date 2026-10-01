@@ -301,7 +301,7 @@ export function copyStatusView(state: JsonReferenceState): {
 	}
 }
 
-/** Path segments after the last array index — for item()/items() loop references. */
+/** Path segments after the last array index — for item() loop references. */
 function pathAfterLastIndex(path: PayloadPath): PayloadPath | null {
 	let lastIdx = -1;
 	for (let i = 0; i < path.length; i++) {
@@ -327,16 +327,4 @@ export function loopItemExpression(state: JsonReferenceState): string | null {
 	const sub = pathAfterLastIndex(state.selectedPath);
 	if (sub === null) return null;
 	return "item()" + buildPathSuffix(sub);
-}
-
-/** items('action') expression for an Apply-to-each loop. Null when no index or when trigger-scoped. */
-export function loopItemsExpression(state: JsonReferenceState): string | null {
-	if (!canCopy(state) || state.outputFrom !== "action") return null;
-	const sub = pathAfterLastIndex(state.selectedPath);
-	if (sub === null) return null;
-	const name = state.actionName
-		.trim()
-		.replace(/\s+/g, "_")
-		.replaceAll("'", "''");
-	return `items('${name}')` + buildPathSuffix(sub);
 }

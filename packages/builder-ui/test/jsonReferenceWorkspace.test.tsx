@@ -152,28 +152,36 @@ describe('JSON reference workspace', () => {
 		);
 	});
 
-	it('shows and copies item() and items() loop references for array selections', async () => {
+	it('copies item() references without offering items() for the source action', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
 		render(<JsonReferenceWorkspace adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await selectEmail(user);
 
+		expect(expression()).toHaveTextContent(EMAIL_REFERENCE);
 		expect(screen.getByLabelText('Loop item() reference')).toHaveTextContent(
 			"item()?['Requester']?['Email']",
 		);
-		expect(screen.getByLabelText('Loop items() reference')).toHaveTextContent(
-			"items('Get_items')?['Requester']?['Email']",
-		);
+		expect(screen.queryByLabelText('Loop items() reference')).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Copy items()', exact: true }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Copy items() @{}', exact: true }),
+		).not.toBeInTheDocument();
 
-		await user.click(screen.getByRole('button', { name: 'Copy item()' }));
+		await user.click(screen.getByRole('button', { name: 'Copy item()', exact: true }));
 		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
 			"item()?['Requester']?['Email']",
 		);
-		await user.click(screen.getByRole('button', { name: 'Copy items()' }));
-		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
-			"items('Get_items')?['Requester']?['Email']",
+		await user.click(
+			screen.getByRole('button', { name: 'Copy item() @{}', exact: true }),
 		);
+		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
+			"@{item()?['Requester']?['Email']}",
+		);
+		expect(adapter.copyToClipboard).toHaveBeenCalledTimes(2);
 	});
 
 	it('hints at a top-level body key under Body only and still roots at body() (user story 1, scenario 6)', async () => {

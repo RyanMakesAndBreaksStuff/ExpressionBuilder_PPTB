@@ -9,7 +9,6 @@ import {
 	initialJsonReferenceState,
 	jsonReferenceReducer,
 	loopItemExpression,
-	loopItemsExpression,
 	parseStatus,
 	rootExpression,
 	showActionNameInvalid,
@@ -289,16 +288,27 @@ describe('JSON reference state', () => {
 		);
 	});
 
-	it('builds item() and items() references from a selected array item', () => {
+	it('keeps item() relative to the loop while the payload root names the source action', () => {
 		const state = run(...parsedA1, { type: 'select', path: email });
 
+		expect(copyText(state)).toBe(
+			"outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']",
+		);
 		expect(loopItemExpression(state)).toBe("item()?['Requester']?['Email']");
-		expect(loopItemsExpression(state)).toBe(
-			"items('Get_items')?['Requester']?['Email']",
+
+		const renamedSource = jsonReferenceReducer(state, {
+			type: 'setActionName',
+			value: 'Another source',
+		});
+		expect(copyText(renamedSource)).toBe(
+			"outputs('Another_source')?['body']?['value'][0]?['Requester']?['Email']",
+		);
+		expect(loopItemExpression(renamedSource)).toBe(
+			"item()?['Requester']?['Email']",
 		);
 	});
 
-	it('does not offer loop references without an array index or for a trigger', () => {
+	it('offers item() only for array selections, including trigger payloads', () => {
 		const noIndex = run(...parsedA1, { type: 'select', path: ['statusCode'] });
 		const trigger = run(
 			{ type: 'setOutputFrom', value: 'trigger' },
@@ -308,9 +318,7 @@ describe('JSON reference state', () => {
 		);
 
 		expect(loopItemExpression(noIndex)).toBeNull();
-		expect(loopItemsExpression(noIndex)).toBeNull();
 		expect(loopItemExpression(trigger)).toBe("item()?['Requester']?['Email']");
-		expect(loopItemsExpression(trigger)).toBeNull();
 	});
 
 	it('pasteAndParse auto-fills an empty action name with the placeholder and parses in one step', () => {
