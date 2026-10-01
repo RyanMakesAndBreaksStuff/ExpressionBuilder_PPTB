@@ -6,13 +6,14 @@ import {
 	copyText,
 	fixedPositionNote,
 	loopItemExpression,
+	loopItemsExpression,
 	rootExpression,
 	type CopyFormat,
 	type JsonReferenceState,
 } from "./jsonReferenceState";
 import { segmentLabel } from "./payloadTreeModel";
 
-type InfoKey = "bare" | "item";
+type InfoKey = "bare" | "item" | "items";
 
 function InfoBtn({
 	k,
@@ -102,6 +103,7 @@ export function ReferencePanel({
 	];
 	const ready = canCopy(state);
 	const itemExpr = loopItemExpression(state);
+	const itemsExpr = loopItemsExpression(state);
 	const wrap = (expr: string) => `@{${expr}}`;
 
 	const [infoOpen, setInfoOpen] = useState<InfoKey | null>(null);
@@ -198,6 +200,28 @@ export function ReferencePanel({
 							</div>
 						)}
 
+						{itemsExpr !== null && (
+							<div className="eb-json-copy-block">
+								<div className="eb-copy-block-header">
+									<span className="eb-json-copy-block-label">
+										Apply to each — items()
+										<InfoBtn k="items" label="items() info" {...infoBtnProps}>
+											<code>items()</code> is scoped to this specific action.
+										</InfoBtn>
+									</span>
+									<CopyActions
+										bareLabel="Copy items()"
+										inlineLabel="Copy items() @{}"
+										onCopyBare={() => onCopyText(itemsExpr)}
+										onCopyInline={() => onCopyText(wrap(itemsExpr))}
+									/>
+								</div>
+								<ExpressionPreview
+									expression={itemsExpr}
+									label="Loop items() reference"
+								/>
+							</div>
+						)}
 					</div>
 				) : null}
 			</div>
