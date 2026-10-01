@@ -208,6 +208,15 @@ function referenceRoot(
 		return { kind: shape === "full" ? "triggerOutputs" : "triggerBody" };
 	return { kind: shape === "full" ? "outputs" : "body", actionName };
 }
+/**
+ * The reference root the user has chosen, or null while an action name is
+ * still required. Functions' Parsed Value group builds its expressions from
+ * this so both screens emit byte-identical reference text.
+ */
+export function currentReferenceRoot(state: JsonReferenceState): PayloadReferenceRoot | null {
+	if (isActionNameMissing(state)) return null;
+	return referenceRoot(state, state.shape, state.actionName);
+}
 
 /** The root to display for a shape; a missing name shows as Action_name (FR-014). */
 export function rootExpression(
