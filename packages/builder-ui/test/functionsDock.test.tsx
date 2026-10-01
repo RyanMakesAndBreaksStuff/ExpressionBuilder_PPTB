@@ -111,6 +111,3 @@ describe('FunctionsDock', () => {
     expect(screen.queryByText(/Sample result/i)).not.toBeInTheDocument();
   });
 });
-
-
-
