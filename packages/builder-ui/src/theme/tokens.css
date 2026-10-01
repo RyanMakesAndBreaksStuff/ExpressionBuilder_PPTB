@@ -174,77 +174,6 @@ body {
 	background: var(--text3);
 }
 
-/* Header */
-.eb-workbench-header {
-	position: sticky;
-	top: 0;
-	z-index: 30;
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	padding: 12px 18px;
-	border-bottom: 1px solid var(--border);
-	background: var(--panel);
-	backdrop-filter: blur(18px);
-	flex: 0 0 auto;
-}
-
-.eb-header-brand {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	min-width: 0;
-}
-
-.eb-brand-mark {
-	width: 34px;
-	height: 34px;
-	border-radius: 12px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--fg-onbrand);
-	background: linear-gradient(135deg, var(--accent), var(--accent-2));
-	box-shadow: var(--shadow-sm);
-	flex: 0 0 auto;
-}
-
-.eb-brand-mark svg {
-	width: 16px;
-	height: 16px;
-}
-
-.eb-header-titles {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	min-width: 0;
-}
-
-.eb-header-titles h1 {
-	margin: 0;
-	font-size: 1.08rem;
-	font-weight: 700;
-	letter-spacing: -0.03em;
-	line-height: 1.2;
-	color: var(--text);
-}
-
-.eb-header-titles p {
-	margin: 0;
-	font-size: 0.82rem;
-	color: var(--text3);
-	line-height: 1.2;
-}
-
-.eb-header-actions {
-	margin-left: auto;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-
 /* Mode Segmented Control */
 .eb-segmented {
 	display: inline-flex;
@@ -1301,17 +1230,6 @@ body {
 	border-color: transparent;
 }
 
-/* Header ghost buttons follow the active Graphite surface. */
-.eb-workbench-header .eb-action-ghost {
-	color: var(--text2);
-}
-
-.eb-workbench-header .eb-action-ghost:hover {
-	color: var(--text);
-	background: var(--surface2);
-	border-color: var(--interactive-stroke);
-}
-
 /* Touch devices have no hover to reveal faint ghost buttons — keep them visible. */
 @media (hover: none) {
 	.eb-root[data-theme="light"] .eb-action-ghost {
@@ -1950,42 +1868,6 @@ body {
 		overflow: visible;
 	}
 
-	/* Two-row header: brand + Import/Export on the first line, mode switch on
-     the second. flex-wrap was putting the actions on their own row because
-     wrap is decided from max-content, and the title + margin-left:auto
-     actions did not fit 375/768. flex-basis:0 lets the title ellipsis
-     instead. Subtitle hides — at 768 it was wrapping under the h1. */
-	.eb-workbench-header {
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 12px;
-		padding: 8px 14px;
-	}
-
-	.eb-header-brand {
-		flex: 1 1 0;
-		min-width: 0;
-	}
-
-	.eb-header-titles {
-		min-width: 0;
-		overflow: hidden;
-	}
-
-	.eb-header-titles h1 {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.eb-header-titles p {
-		display: none;
-	}
-
-	.eb-header-actions {
-		flex: 0 0 auto;
-	}
-
 	.eb-segmented {
 		order: 3;
 		width: 100%;
@@ -2010,45 +1892,6 @@ body {
 	.eb-workspace {
 		padding: 12px;
 		gap: 12px;
-	}
-
-	/* Header reflows to two rows: brand + actions, then the mode switch
-     stretched across its own line. */
-	.eb-workbench-header {
-		flex-wrap: wrap;
-		gap: 10px 12px;
-		padding: 10px 12px;
-	}
-
-	.eb-header-brand {
-		flex: 1 1 0;
-		min-width: 0;
-		gap: 10px;
-	}
-
-	.eb-header-titles {
-		min-width: 0;
-		overflow: hidden;
-	}
-
-	.eb-brand-mark {
-		width: 30px;
-		height: 30px;
-	}
-
-	.eb-header-titles h1 {
-		font-size: 0.95rem;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.eb-header-titles p {
-		display: none;
-	}
-
-	.eb-header-actions {
-		flex: 0 0 auto;
 	}
 
 	.eb-segmented {
@@ -2121,29 +1964,6 @@ body {
 	}
 }
 
-@media (max-width: 480px) {
-	/* Header Import/Export shrink to icon-only; the clipped (not display:none)
-     label keeps the accessible name for screen readers. */
-	.eb-workbench-header .eb-action-btn > span:not(.eb-action-icon) {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-	}
-
-	.eb-workbench-header .eb-action-btn {
-		padding: 0 10px;
-	}
-
-	.eb-workbench-header {
-		padding: 8px 10px;
-		gap: 8px;
-	}
-}
-
 @media (prefers-reduced-motion: reduce) {
 	.eb-root,
 	.eb-root * {
@@ -2176,80 +1996,6 @@ body {
 	opacity: 0.85;
 	backdrop-filter: blur(1px);
 	cursor: progress;
-}
-
-/* Builder tabs (FR-001, FR-004). The strip spans the header's full height so
-   the selected tab's accent line sits on the header border. min-height is the
-   46px row the mode switch sets plus the 24px of header padding, so the header
-   stays 71px in both views, with or without the mode switch (FR-007). */
-.eb-builder-tabs {
-	display: flex;
-	align-self: stretch;
-	flex: 0 0 auto;
-	margin-block: -12px;
-	min-height: 70px;
-	padding-left: 16px;
-	border-left: 1px solid var(--border);
-}
-
-.eb-builder-tab {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	min-height: 44px;
-	padding: 0 12px;
-	border: 0;
-	border-bottom: 3px solid transparent;
-	border-radius: 0;
-	background: transparent;
-	color: var(--text3);
-	font-size: 0.85rem;
-	font-weight: 700;
-	white-space: nowrap;
-	cursor: pointer;
-	transition:
-		color var(--duration-fast) ease,
-		border-color var(--duration-fast) ease;
-}
-
-.eb-builder-tab:hover {
-	color: var(--text);
-}
-
-.eb-builder-tab[aria-selected="true"] {
-	color: var(--text);
-	border-bottom-color: var(--accent);
-}
-
-.eb-builder-tab svg {
-	width: 15px;
-	height: 15px;
-	flex: 0 0 auto;
-}
-
-.eb-builder-tab-count {
-	min-width: 20px;
-	height: 18px;
-	padding: 0 6px;
-	border-radius: var(--r-circ);
-	background: var(--surface3);
-	color: var(--text2);
-	font-size: 11px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.eb-header-privacy {
-	margin: 0 0 0 auto;
-	flex: 0 1 250px;
-	min-width: 0;
-	font-size: 12.5px;
-	line-height: 1.35;
-	color: var(--text3);
-	text-align: justify;
-	text-wrap: pretty;
-	flex-direction: column;
 }
 
 .eb-builder-panel[hidden] {
@@ -2886,67 +2632,9 @@ body {
 	cursor: not-allowed;
 }
 
-/* Header fit above 900px (FR-007): one row, never taller than today. The title
-   truncates first (it stays whole for assistive technology), and the brand
-   keeps at least its 34px mark plus the 14px gap. */
-@media (min-width: 901px) {
-	.eb-header-brand {
-		flex: 0 999 auto;
-		min-width: 48px;
-	}
-
-	.eb-header-titles {
-		overflow: hidden;
-	}
-
-	.eb-header-titles h1,
-	.eb-header-titles p {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.eb-header-actions {
-		flex: 0 0 auto;
-		flex-wrap: nowrap;
-	}
-}
-
-/* Where truncating the title is not enough, Import and Export go icon-only; the
-   clipped label keeps each button's accessible name. */
-@media (min-width: 901px) and (max-width: 1180px) {
-	.eb-workbench-header .eb-action-btn > span:not(.eb-action-icon) {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-	}
-
-	.eb-workbench-header .eb-action-btn {
-		padding: 0 10px;
-	}
-}
-
-/* Stacked (FR-092): the tabs take their own row under the brand, the JSON
-   panes stack with Source first, and the workspace scrolls as one. */
+/* Stacked (FR-092): the JSON panes stack with Source first, and the
+   workspace scrolls as one. */
 @media (max-width: 600px) {
-	.eb-builder-tabs {
-		order: 2;
-		flex: 1 1 100%;
-		margin-block: 0;
-		min-height: 0;
-		padding-left: 0;
-		border-left: 0;
-	}
-
-	.eb-header-privacy {
-		order: 3;
-		flex: 1 1 100%;
-		margin-left: 0;
-	}
 
 	.eb-json-workspace {
 		flex-direction: column;
@@ -2996,18 +2684,5 @@ body {
 	.eb-json-reference {
 		flex: 0 1 380px;
 		min-width: 280px;
-	}
-}
-
-/* The whole tab strip fits at 375px (FR-092). */
-@media (max-width: 480px) {
-	.eb-builder-tab {
-		flex: 1 1 auto;
-		justify-content: center;
-		padding: 0 8px;
-	}
-
-	.eb-builder-tab svg {
-		display: none;
 	}
 }

@@ -39,23 +39,12 @@ describe('JSON reference styles', () => {
     expect(rule(css, '.eb-builder-panel[hidden]')).toMatch(/display:\s*none;/);
   });
 
-  it('keeps the header one row and 71px tall above 900px (FR-007)', () => {
-    expect(rule(css, '.eb-builder-tabs')).toMatch(/min-height:\s*70px;/);
-    expect(rule(css, '.eb-builder-tabs')).toMatch(/margin-block:\s*-12px;/);
-    const wide = mediaBlocks('min-width: 901px');
-    expect(rule(wide, '.eb-header-actions')).toMatch(/flex-wrap:\s*nowrap;/);
-    expect(rule(wide, '.eb-header-brand')).toMatch(/flex:\s*0 999 auto;/);
-    expect(wide).toMatch(/text-overflow:\s*ellipsis;/);
-    expect(mediaBlocks('min-width: 901px) and (max-width: 1180px')).toMatch(/clip:\s*rect\(0, 0, 0, 0\);/);
-  });
-
   it('scrolls the tree inside its card on wide screens and the workspace as one when stacked (FR-092)', () => {
     expect(rule(css, '.eb-payload-tree')).toMatch(/overflow:\s*auto;/);
     expect(rule(css, '.eb-json-workspace')).toMatch(/overflow-y:\s*auto;/);
     const stacked = mediaBlocks('max-width: 600px');
     expect(rule(stacked, '.eb-json-workspace')).toMatch(/flex-direction:\s*column;/);
     expect(rule(stacked, '.eb-payload-tree')).toMatch(/overflow-y:\s*hidden;/);
-    expect(rule(stacked, '.eb-builder-tabs')).toMatch(/flex:\s*1 1 100%;/);
   });
 
   it('meets text contrast for function names and payload roots in light mode (FR-085)', () => {
