@@ -1,0 +1,122 @@
+/* 11a shared shell: frame, gradient backdrop and the pill header.
+   Imported after tokens.css — .eb-root below overrides it by cascade order. */
+.eb-root {
+	padding: 16px;
+	gap: 14px;
+	background:
+		radial-gradient(circle at 85% 10%, var(--glow-1) 0, transparent 45%),
+		radial-gradient(circle at 15% 85%, var(--glow-2) 0, transparent 45%),
+		var(--bg);
+}
+
+.eb-pill-header {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	height: 48px;
+	padding: 0 18px;
+	border: 1px solid var(--border);
+	border-radius: 24px;
+	background: var(--header-glass);
+	box-shadow: var(--dock-shadow);
+}
+
+.eb-pill-title {
+	flex: none;
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.eb-pill-sep {
+	color: var(--text3);
+}
+
+.eb-pill-spacer {
+	flex: 1;
+}
+
+.eb-mode-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 30px;
+	padding: 0 12px;
+	border: none;
+	border-radius: 15px;
+	background: var(--accent-soft);
+	color: var(--accent);
+	font-size: 14px;
+	cursor: pointer;
+	transition: background-color 120ms ease;
+}
+
+.eb-mode-chip svg {
+	width: 10px;
+	height: 10px;
+	stroke-width: 3;
+}
+
+.eb-pill-overflow {
+	flex: none;
+	width: 30px;
+	height: 30px;
+	border: none;
+	border-radius: 15px;
+	background: transparent;
+	color: var(--text2);
+	cursor: pointer;
+	transition: background-color 120ms ease;
+}
+
+.eb-mode-chip:hover,
+.eb-pill-overflow:hover {
+	background: var(--seg-selected);
+}
+
+.eb-pill-privacy {
+	margin: 0;
+	color: var(--text2);
+	font-size: 12px;
+}
+
+/* FR-6: 2px accent ring at a 2px offset on every header control. */
+.eb-pill-header button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+.eb-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* At 900px and below the pill wraps onto extra rows rather than push the page
+   sideways: the SC-011 e2e checks every viewport down to 375px. Above 900px
+   it stays one 48px row, which that same test also asserts. */
+@media (max-width: 900px) {
+	.eb-pill-header {
+		flex-wrap: wrap;
+		height: auto;
+		min-height: 48px;
+		padding: 8px 18px;
+		row-gap: 8px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.eb-mode-chip,
+	.eb-pill-overflow {
+		transition: none;
+	}
+}
