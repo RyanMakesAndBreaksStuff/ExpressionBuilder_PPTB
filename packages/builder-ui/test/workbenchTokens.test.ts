@@ -156,3 +156,19 @@ describe('11a shell tokens (FR-7)', () => {
     });
   });
 });
+
+
+describe('Functions dark code well', () => {
+  it.each(['graphiteLight', 'graphiteDark'] satisfies PaletteId[])(
+    'keeps code text and syntax readable against the code background in %s',
+    (paletteId) => {
+      const vars: Record<string, string> = graphiteTokens[paletteId].cssVariables;
+      for (const name of ['--code-text', '--code-text2', '--code-text3', '--code-accent', '--code-good', '--code-warn', '--code-danger']) {
+        expect(vars[name], name).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(contrastRatio(vars[name], vars['--code']), name).toBeGreaterThanOrEqual(4.5);
+      }
+      expect(vars['--code-seg-track']).toBeTruthy();
+      expect(vars['--code-seg-selected']).toBeTruthy();
+    },
+  );
+});

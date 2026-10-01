@@ -14,6 +14,19 @@ type GraphiteTokenSet = Partial<Theme> & {
 
 const fontFamilyBase = '"Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", sans-serif';
 
+// The code well is dark in both palettes; its foregrounds must stay readable.
+const codeForegroundVariables = {
+  '--code-text': '#EDF3F7',
+  '--code-text2': '#C8D3DC',
+  '--code-text3': '#9EADB9',
+  '--code-accent': '#77A7FF',
+  '--code-good': '#63C99B',
+  '--code-warn': '#EFC56E',
+  '--code-danger': '#FF978D',
+  '--code-seg-track': 'rgba(237, 243, 247, 0.08)',
+  '--code-seg-selected': 'rgba(237, 243, 247, 0.16)',
+} as const;
+
 export const graphiteTokens = {
   graphiteLight: {
     mode: 'light' as const,
@@ -49,6 +62,7 @@ export const graphiteTokens = {
     colorPaletteBlueBorderActive: '#1E65C2',
     fontFamilyBase,
     cssVariables: {
+      ...codeForegroundVariables,
       '--bg': '#F6F8FA',
       '--bg2': '#FBFCFD',
       '--surface': '#FDFEFF',
@@ -121,6 +135,7 @@ export const graphiteTokens = {
     colorPaletteBlueBorderActive: '#9ABEFF',
     fontFamilyBase,
     cssVariables: {
+      ...codeForegroundVariables,
       '--bg': '#12161A',
       '--bg2': '#161C21',
       '--surface': '#1B2228',
