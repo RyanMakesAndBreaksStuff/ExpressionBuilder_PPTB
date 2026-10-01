@@ -26,28 +26,6 @@ export interface ModeContext {
   note: string;
 }
 
-/** Which builder the header tabs show. Not an ExpressionMode: it is never saved (CON-004). */
-export type BuilderView = 'condition' | 'jsonReference';
-
-export interface BuilderPanelIds {
-  conditionTab: string;
-  conditionPanel: string;
-  jsonTab: string;
-  jsonPanel: string;
-}
-
-export interface WorkbenchHeaderProps {
-  mode: ExpressionMode;
-  onModeChange: (mode: ExpressionMode) => void;
-  onImport: () => void;
-  onExport: () => void;
-  builderView: BuilderView;
-  onBuilderViewChange: (view: BuilderView) => void;
-  /** Rules at every nesting level, groups excluded (FR-003). */
-  ruleCount: number;
-  panelIds: BuilderPanelIds;
-}
-
 export interface FieldToolboxPaneProps {
   fields: FieldDefinition[];
   source: DataSourceDescriptor;

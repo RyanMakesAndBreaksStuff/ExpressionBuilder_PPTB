@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -24,7 +24,7 @@ import {
   type PaletteId,
   type GraphiteThemeMode,
 } from '../theme/workbenchTokens';
-import { countRules, deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
+import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
 import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
@@ -41,10 +41,12 @@ import { SwitchSourceDialog } from '../workbench/SwitchSourceDialog';
 import { SourceUpdatedDialog } from '../workbench/SourceUpdatedDialog';
 import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
-import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
+import { ShellHeader } from '../workbench/ShellHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
 import { JsonReferenceWorkspace } from '../workbench/JsonReferenceWorkspace';
-import type { BuilderPanelIds, BuilderView } from '../workbench/types';
+import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
+import { currentReferenceRoot, initialJsonReferenceState, jsonReferenceReducer } from '../workbench/jsonReferenceState';
+import type { ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
   isStackedViewport,
@@ -52,6 +54,8 @@ import {
   togglePreview,
 } from '../workbench/workbenchState';
 import '../theme/tokens.css';
+import '../theme/shell.css';
+import '../theme/functions.css';
 
 const createRuleSeed = (field: FieldDefinition) => ({
   fieldId: field.id,
@@ -88,23 +92,8 @@ export function ExpressionBuilderShell({
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);
 
-  // Which builder is showing. Never persisted: every load opens on the
-  // Condition builder (FR-002) and a reload drops JSON reference state
-  // (FR-008). The JSON workspace mounts the first time it is opened and then
-  // stays mounted while hidden, so its state survives switching.
-  const [builderView, setBuilderView] = useState<BuilderView>('condition');
-  const [jsonReferenceOpened, setJsonReferenceOpened] = useState(false);
-  const builderIdBase = useId();
-  const panelIds: BuilderPanelIds = {
-    conditionTab: `${builderIdBase}-condition-tab`,
-    conditionPanel: `${builderIdBase}-condition-panel`,
-    jsonTab: `${builderIdBase}-json-tab`,
-    jsonPanel: `${builderIdBase}-json-panel`,
-  };
-  const changeBuilderView = (view: BuilderView) => {
-    setBuilderView(view);
-    if (view === 'jsonReference') setJsonReferenceOpened(true);
-  };
+  const [screen, setScreen] = useState<ScreenId>('condition');
+  const [jsonState, jsonDispatch] = useReducer(jsonReferenceReducer, initialJsonReferenceState);
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the
@@ -169,7 +158,6 @@ export function ExpressionBuilderShell({
   };
 
   const derived = useMemo(() => deriveBuilderState(document), [document]);
-  const ruleCount = useMemo(() => countRules(document.root), [document.root]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
   const theme = graphiteTokens[paletteId].mode;
@@ -430,15 +418,13 @@ export function ExpressionBuilderShell({
   return (
     <FluentProvider theme={createGraphiteFluentTheme(paletteId)}>
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
-        <WorkbenchHeader
+        <ShellHeader
+          screen={screen}
+          onScreenChange={setScreen}
           mode={document.mode}
           onModeChange={updateMode}
-          onExport={() => void exportDocument()}
           onImport={() => setDialog('importExpression')}
-          builderView={builderView}
-          onBuilderViewChange={changeBuilderView}
-          ruleCount={ruleCount}
-          panelIds={panelIds}
+          onExport={() => void exportDocument()}
         />
 
         <BuilderDragDropProvider
@@ -448,13 +434,11 @@ export function ExpressionBuilderShell({
           onReorderNode={reorderConditionNode}
           onMoveNode={moveConditionNode}
         >
-          {/* One main landmark for both builders (FR-005); each builder is a tab panel inside it. */}
+          {/* One main landmark contains every screen. */}
           <main className="eb-builder-main">
             <div
-              id={panelIds.conditionPanel}
-              role="tabpanel"
-              aria-labelledby={panelIds.conditionTab}
-              hidden={builderView !== 'condition'}
+              aria-label="Trigger / Filter"
+              hidden={screen !== 'condition'}
               className="eb-builder-panel eb-workspace"
               style={
                 {
@@ -565,15 +549,28 @@ export function ExpressionBuilderShell({
             </div>
 
             <div
-              id={panelIds.jsonPanel}
-              role="tabpanel"
-              aria-labelledby={panelIds.jsonTab}
-              hidden={builderView !== 'jsonReference'}
+              aria-label="Functions"
+              hidden={screen !== 'functions'}
+              className="eb-builder-panel eb-functions-panel"
+            >
+              <FunctionsWorkspace
+                adapter={adapter}
+                sample={jsonState.parsed?.value ?? null}
+                referenceRoot={currentReferenceRoot(jsonState)}
+              />
+            </div>
+
+            <div
+              aria-label="JSON reference"
+              hidden={screen !== 'jsonReference'}
               className="eb-builder-panel eb-json-panel"
             >
-              {jsonReferenceOpened ? (
-                <JsonReferenceWorkspace adapter={adapter} active={builderView === 'jsonReference'} />
-              ) : null}
+              <JsonReferenceWorkspace
+                adapter={adapter}
+                active={screen === 'jsonReference'}
+                state={jsonState}
+                dispatch={jsonDispatch}
+              />
             </div>
           </main>
         </BuilderDragDropProvider>

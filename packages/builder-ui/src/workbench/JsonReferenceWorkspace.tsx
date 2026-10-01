@@ -1,12 +1,10 @@
-﻿import { useEffect, useId, useReducer, useRef, type Dispatch } from "react";
+import { useEffect, useId, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
-	initialJsonReferenceState,
-	jsonReferenceReducer,
 	rootExpression,
 	showBodyHint,
 	type CopyFormat,
@@ -17,18 +15,18 @@ import { countLabel } from "./payloadTreeModel";
 
 interface JsonReferenceWorkspaceProps {
 	adapter: PlatformAdapter;
-	/** False while the Condition builder tab is selected; the workspace stays mounted so its state survives (FR-008). */
+	/** False while another screen is selected; the workspace stays mounted so its state survives (FR-008). */
 	active: boolean;
+	state: JsonReferenceState;
+	dispatch: Dispatch<JsonReferenceAction>;
 }
 
 export function JsonReferenceWorkspace({
 	active,
 	adapter,
+	state,
+	dispatch,
 }: JsonReferenceWorkspaceProps) {
-	const [state, dispatch] = useReducer(
-		jsonReferenceReducer,
-		initialJsonReferenceState,
-	);
 	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	);
@@ -53,7 +51,7 @@ export function JsonReferenceWorkspace({
 		clearTimeout(autoParseTimer.current);
 		autoParseTimer.current = setTimeout(() => dispatch({ type: "parse" }), 600);
 		return () => clearTimeout(autoParseTimer.current);
-	}, [state.text, state.parsed?.text]);
+	}, [state.text, state.parsed?.text, dispatch]);
 
 	// Clear any pending auto-parse when leaving the tab.
 	useEffect(() => {
