@@ -57,6 +57,8 @@ describe('formatPayloadRoot', () => {
     [getItemsBody, "body('Get_items')"],
     [triggerFull, 'triggerOutputs()'],
     [triggerBody, 'triggerBody()'],
+    [{ kind: 'item' }, 'item()'],
+    [{ kind: 'items', actionName: ' Apply to   each ' }, "items('Apply_to_each')"],
   ])('formats %o', (root, expected) => {
     expect(formatPayloadRoot(root)).toBe(expected);
   });

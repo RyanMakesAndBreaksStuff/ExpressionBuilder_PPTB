@@ -326,22 +326,12 @@ function pathAfterLastIndex(path: PayloadPath): PayloadPath | null {
 	return path.slice(lastIdx + 1);
 }
 
-function buildPathSuffix(subPath: PayloadPath): string {
-	return subPath.reduce<string>(
-		(expr, seg) =>
-			typeof seg === "number"
-				? `${expr}[${seg}]`
-				: `${expr}?['${(seg as string).replaceAll("'", "''")}']`,
-		"",
-	);
-}
-
 /** item() expression for the selected path in an Apply-to-each loop. Null when no array index. */
 export function loopItemExpression(state: JsonReferenceState): string | null {
 	if (!canCopy(state)) return null;
 	const sub = pathAfterLastIndex(state.selectedPath);
 	if (sub === null) return null;
-	return "item()" + buildPathSuffix(sub);
+	return formatPayloadReference({ root: { kind: "item" }, path: sub });
 }
 
 /** items('<loop name>') for the enclosing Apply to each. Null when no array index or no loop name. */
@@ -349,9 +339,8 @@ export function loopItemsExpression(state: JsonReferenceState): string | null {
 	if (!canCopy(state) || state.loopName.trim() === "") return null;
 	const sub = pathAfterLastIndex(state.selectedPath);
 	if (sub === null) return null;
-	const name = state.loopName
-		.trim()
-		.replace(/\s+/g, "_")
-		.replaceAll("'", "''");
-	return `items('${name}')` + buildPathSuffix(sub);
+	return formatPayloadReference({
+		root: { kind: "items", actionName: state.loopName },
+		path: sub,
+	});
 }
