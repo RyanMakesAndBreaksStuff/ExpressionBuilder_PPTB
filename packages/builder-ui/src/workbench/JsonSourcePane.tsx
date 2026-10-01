@@ -2,6 +2,7 @@ import { Fragment, useId, type Dispatch, type KeyboardEvent } from "react";
 import { ActionButton } from "./controls/ActionButton";
 import {
 	ACTION_NAME_PLACEHOLDER,
+	NO_TEXT_ASSISTANCE,
 	rootExpressionFor,
 	showActionNameInvalid,
 	type JsonReferenceAction,
@@ -23,15 +24,6 @@ const ALL_ROOT_KEYS: readonly ReferenceRootKey[] = [
 	"trigger-full",
 	"trigger-body",
 ];
-
-// Off for pasted payloads and names: some browsers send spell-check text to a
-// cloud service (FR-062).
-const NO_TEXT_ASSISTANCE = {
-	spellCheck: false,
-	autoComplete: "off",
-	autoCorrect: "off",
-	autoCapitalize: "off",
-} as const;
 
 export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 	const id = useId();

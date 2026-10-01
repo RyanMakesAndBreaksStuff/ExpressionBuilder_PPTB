@@ -64,6 +64,15 @@ export type JsonReferenceAction =
 
 export const ACTION_NAME_PLACEHOLDER = "Action";
 
+// Off for pasted payloads and names: some browsers send spell-check text to a
+// cloud service (FR-062).
+export const NO_TEXT_ASSISTANCE = {
+	spellCheck: false,
+	autoComplete: "off",
+	autoCorrect: "off",
+	autoCapitalize: "off",
+} as const;
+
 const IDLE: CopyStatus = { kind: "idle" };
 
 export const initialJsonReferenceState: JsonReferenceState = {

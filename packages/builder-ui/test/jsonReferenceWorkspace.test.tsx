@@ -152,18 +152,26 @@ describe('JSON reference workspace', () => {
 		);
 	});
 
-	it('shows and copies item() and items() loop references for array selections', async () => {
+	it('builds items() from the entered loop name, not the source action', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
 		render(<JsonReferenceWorkspace adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await selectEmail(user);
 
+		expect(expression()).toHaveTextContent(EMAIL_REFERENCE);
 		expect(screen.getByLabelText('Loop item() reference')).toHaveTextContent(
 			"item()?['Requester']?['Email']",
 		);
+		expect(screen.queryByLabelText('Loop items() reference')).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Copy items()' }),
+		).not.toBeInTheDocument();
+
+		await user.type(screen.getByLabelText('Loop name'), 'Apply to each');
+
 		expect(screen.getByLabelText('Loop items() reference')).toHaveTextContent(
-			"items('Get_items')?['Requester']?['Email']",
+			"items('Apply_to_each')?['Requester']?['Email']",
 		);
 
 		await user.click(screen.getByRole('button', { name: 'Copy item()' }));
@@ -172,7 +180,13 @@ describe('JSON reference workspace', () => {
 		);
 		await user.click(screen.getByRole('button', { name: 'Copy items()' }));
 		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
-			"items('Get_items')?['Requester']?['Email']",
+			"items('Apply_to_each')?['Requester']?['Email']",
+		);
+		await user.click(
+			screen.getByRole('button', { name: 'Copy items() @{}' }),
+		);
+		expect(adapter.copyToClipboard).toHaveBeenLastCalledWith(
+			"@{items('Apply_to_each')?['Requester']?['Email']}",
 		);
 	});
 

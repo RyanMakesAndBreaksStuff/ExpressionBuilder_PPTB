@@ -367,6 +367,8 @@ The **JSON reference** tab in the header opens a second builder. Paste a sample 
 
 **Fixed positions.** An index such as `[0]` reads that one item, not each item in a loop, and the Reference card says so whenever the path contains one. To act on every item, use an Apply to each or a Filter array.
 
+**Loop references.** When the selected path contains an index, the Reference card also offers the part after the last index as `item()` and `items()` references for use inside an Apply to each over that array. `item()` reads the innermost loop's current item. `items('<loop name>')` reads the named loop's current item, so it still works inside a nested loop; type the Apply to each's name in **Loop name** — not the name of the action that produced the sample. Spaces become underscores.
+
 **Privacy.** Pasted JSON is processed locally and is not uploaded or saved by this feature. The sample is never sent anywhere, written to settings or browser storage, or added to the condition document or its Export, and reloading the app clears it.
 
 **What a reference does not prove.** A reference is built from the sample you pasted. It does not prove that the action exists in your flow, that it has run, or that its output has this shape at run time. Check the expression in the flow.

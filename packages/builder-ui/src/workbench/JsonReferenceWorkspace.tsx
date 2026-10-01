@@ -98,6 +98,7 @@ export function JsonReferenceWorkspace({
 					state={state}
 					onCopy={(format) => void copy(format)}
 					onCopyText={(text) => void copyRaw(text)}
+					onLoopNameChange={(value) => dispatch({ type: "setLoopName", value })}
 				/>
 			</div>
 		</div>

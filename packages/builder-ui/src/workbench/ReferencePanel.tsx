@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { ExpressionPreview } from "../components/ExpressionPreview";
 import { CodeIcon, CopyIcon, InfoIcon } from "./icons/BuilderIcons";
 import {
+	NO_TEXT_ASSISTANCE,
 	canCopy,
 	copyText,
 	fixedPositionNote,
@@ -88,14 +89,17 @@ interface ReferencePanelProps {
 	state: JsonReferenceState;
 	onCopy: (format: CopyFormat) => void;
 	onCopyText: (text: string) => void;
+	onLoopNameChange: (value: string) => void;
 }
 
 export function ReferencePanel({
 	onCopy,
 	onCopyText,
+	onLoopNameChange,
 	state,
 }: ReferencePanelProps) {
 	const headingId = useId();
+	const loopNameId = useId();
 	const note = fixedPositionNote(state);
 	const crumbs = [
 		rootExpression(state),
@@ -200,26 +204,49 @@ export function ReferencePanel({
 							</div>
 						)}
 
-						{itemsExpr !== null && (
+						{itemExpr !== null && (
 							<div className="eb-json-copy-block">
 								<div className="eb-copy-block-header">
 									<span className="eb-json-copy-block-label">
 										Apply to each — items()
 										<InfoBtn k="items" label="items() info" {...infoBtnProps}>
-											<code>items()</code> is scoped to this specific action.
+											<code>items()</code> reads the current item of the named{" "}
+											<strong>Apply to each</strong>, so it still works inside a
+											nested loop.
 										</InfoBtn>
 									</span>
-									<CopyActions
-										bareLabel="Copy items()"
-										inlineLabel="Copy items() @{}"
-										onCopyBare={() => onCopyText(itemsExpr)}
-										onCopyInline={() => onCopyText(wrap(itemsExpr))}
-									/>
+									{itemsExpr !== null && (
+										<CopyActions
+											bareLabel="Copy items()"
+											inlineLabel="Copy items() @{}"
+											onCopyBare={() => onCopyText(itemsExpr)}
+											onCopyInline={() => onCopyText(wrap(itemsExpr))}
+										/>
+									)}
 								</div>
-								<ExpressionPreview
-									expression={itemsExpr}
-									label="Loop items() reference"
-								/>
+								<div className="eb-json-field">
+									<label className="eb-label" htmlFor={loopNameId}>
+										Loop name
+									</label>
+									<input
+										{...NO_TEXT_ASSISTANCE}
+										id={loopNameId}
+										className="eb-input"
+										value={state.loopName}
+										aria-describedby={`${loopNameId}-help`}
+										onChange={(event) => onLoopNameChange(event.target.value)}
+									/>
+									<p id={`${loopNameId}-help`} className="eb-json-help">
+										The Apply to each name as shown in the flow designer, not
+										the source action. Spaces become underscores.
+									</p>
+								</div>
+								{itemsExpr !== null && (
+									<ExpressionPreview
+										expression={itemsExpr}
+										label="Loop items() reference"
+									/>
+								)}
 							</div>
 						)}
 					</div>
