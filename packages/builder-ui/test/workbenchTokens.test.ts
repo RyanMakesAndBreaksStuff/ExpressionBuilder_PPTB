@@ -125,3 +125,34 @@ describe('workbench Graphite tokens', () => {
     expect(builderDarkTheme).toMatchObject(createGraphiteFluentTheme('graphiteDark'));
   });
 });
+
+describe('11a shell tokens (FR-7)', () => {
+  it('defines every new variable in both palettes (AC-7.1)', () => {
+    const names = [
+      '--code', '--header-glass', '--panel-glass', '--glow-1', '--glow-2',
+      '--panel-shadow', '--dock-shadow', '--seg-track', '--seg-selected',
+    ] as const;
+    for (const paletteId of ['graphiteLight', 'graphiteDark'] satisfies PaletteId[]) {
+      for (const name of names) {
+        expect(graphiteTokens[paletteId].cssVariables[name], `${paletteId} ${name}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('uses the handoff values', () => {
+    expect(graphiteTokens.graphiteDark.cssVariables).toMatchObject({
+      '--code': '#0E1216',
+      '--header-glass': 'rgba(35, 45, 53, 0.92)',
+      '--panel-glass': 'rgba(27, 34, 40, 0.85)',
+      '--glow-1': 'rgba(119, 167, 255, 0.2)',
+      '--glow-2': 'rgba(85, 197, 187, 0.16)',
+    });
+    expect(graphiteTokens.graphiteLight.cssVariables).toMatchObject({
+      '--code': '#111820',
+      '--header-glass': 'rgba(238, 242, 245, 0.92)',
+      '--panel-glass': 'rgba(253, 254, 255, 0.85)',
+      '--glow-1': 'rgba(21, 94, 239, 0.14)',
+      '--glow-2': 'rgba(8, 125, 120, 0.12)',
+    });
+  });
+});
