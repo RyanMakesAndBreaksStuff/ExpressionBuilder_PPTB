@@ -68,6 +68,9 @@ vi.mock('@dnd-kit/react', async (importOriginal) => {
   };
 });
 
+const conditionExpression = () =>
+  within(screen.getByLabelText('Trigger / Filter')).getByLabelText('Generated expression');
+
 function createAdapter(): PlatformAdapter {
   return {
     copyToClipboard: vi.fn(),
@@ -297,12 +300,12 @@ describe('shared builder UI', () => {
 
     const triggerMode = screen.getByRole('radio', { name: 'Trigger condition' });
     triggerMode.focus();
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("triggerBody()?['Status']");
+    expect(conditionExpression()).toHaveTextContent("triggerBody()?['Status']");
 
     await user.keyboard('{ArrowRight}');
 
     expect(screen.getByRole('radio', { name: 'Filter array' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("item()?['Status']");
+    expect(conditionExpression()).toHaveTextContent("item()?['Status']");
   });
 
   it('search filters fields by label', async () => {
@@ -382,7 +385,7 @@ describe('shared builder UI', () => {
     );
     expect(routingGroup).toHaveClass('is-focused');
 
-    const expression = screen.getByLabelText('Generated expression').textContent ?? '';
+    const expression = conditionExpression().textContent ?? '';
     expect(expression.indexOf("['DueDate']")).toBeLessThan(expression.indexOf("['Amount']"));
   });
 
@@ -460,7 +463,7 @@ describe('shared builder UI', () => {
         .map((element) => element.getAttribute('data-node-id')),
     ).toEqual(['rule-approver', 'group-routing', 'rule-status']);
 
-    const expression = screen.getByLabelText('Generated expression').textContent ?? '';
+    const expression = conditionExpression().textContent ?? '';
     expect(expression.indexOf("['Approver']")).toBeLessThan(expression.indexOf("['Status']"));
   });
 
@@ -473,7 +476,7 @@ describe('shared builder UI', () => {
     await user.clear(valueInput);
     await user.type(valueInput, 'director');
 
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("'director'");
+    expect(conditionExpression()).toHaveTextContent("'director'");
   });
 
   it('applies a toLower wrapper to both sides of a rule from the per-row menu', async () => {
@@ -486,8 +489,8 @@ describe('shared builder UI', () => {
     await user.click(within(approverRow).getByRole('button', { name: 'Wrappers for Approver' }));
     await user.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
 
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent('toLower(');
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("toLower('finance')");
+    expect(conditionExpression()).toHaveTextContent('toLower(');
+    expect(conditionExpression()).toHaveTextContent("toLower('finance')");
   });
 
   it('import and export round-trip without expression drift', async () => {
@@ -495,7 +498,7 @@ describe('shared builder UI', () => {
     const adapter = createAdapter();
     render(<ExpressionBuilderShell adapter={adapter} initialDocument={sampleDocument} />);
 
-    const expressionBefore = screen.getByLabelText('Generated expression').textContent;
+    const expressionBefore = conditionExpression().textContent;
 
     // Export copies the saved-expression JSON to the clipboard (T-import-export-fix).
     await user.click(screen.getByRole('button', { name: 'Export' }));
@@ -507,13 +510,14 @@ describe('shared builder UI', () => {
     // jsdom (its inert manager relies on real focus/motion events jsdom lacks), so
     // query the surface and its Import button with { hidden: true }. The dialog is
     // fully accessible in the real browser.
-    await user.click(screen.getByRole('button', { name: 'Import' }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Import', hidden: true }));
     const dialog = await screen.findByRole('dialog', { hidden: true });
     await user.click(within(dialog).getByLabelText('Saved expression JSON to import'));
     await user.paste(exportedJson);
     await user.click(within(dialog).getByRole('button', { name: 'Import', hidden: true }));
 
-    expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
+    expect(conditionExpression().textContent).toBe(expressionBefore);
     expect(screen.queryByText(/Import failed/i)).not.toBeInTheDocument();
   });
 
@@ -556,20 +560,22 @@ describe('shared builder UI', () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
 
-    const expressionBefore = screen.getByLabelText('Generated expression').textContent;
+    const expressionBefore = conditionExpression().textContent;
     await user.click(screen.getByRole('button', { name: 'Collapse expression preview' }));
     expect(screen.getByRole('button', { name: 'Expand expression preview' })).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(screen.getByRole('button', { name: 'Expand expression preview' }));
-    expect(screen.getByLabelText('Generated expression').textContent).toBe(expressionBefore);
+    expect(conditionExpression().textContent).toBe(expressionBefore);
   });
 
-  it('keeps import and export commands in the header without the saved JSON panel', () => {
+  it('keeps import and export commands in the header without the saved JSON panel', async () => {
+    const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
-    expect(screen.getByRole('button', { name: /^import$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
     expect(screen.queryByText(/saved expression json/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(await screen.findByRole('menuitem', { name: 'Import' })).toBeInTheDocument();
   });
 
   it('removes the palette bench and the manual theme toggle', async () => {
