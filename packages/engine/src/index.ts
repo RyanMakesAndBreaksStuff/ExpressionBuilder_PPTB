@@ -28,3 +28,5 @@ export { formatLiteral } from './literals';
 export { OPERATORS_BY_FIELD_TYPE, isOperatorSupported } from './operators';
 export type { ArgType, CatalogArg, CatalogFunction, FunctionGroup } from './functionCatalog';
 export { FUNCTION_CATALOG, FUNCTION_GROUPS, findFunction } from './functionCatalog';
+export type { ParsedArgument, ParseArgumentResult } from './argumentParser';
+export { parseArgument } from './argumentParser';
