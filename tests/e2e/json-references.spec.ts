@@ -282,6 +282,8 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   expect(await focusRing()).not.toBe('none');
 
   await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Reference info' })).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: /^Copy @/ }).first()).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(referenceCopy(page)).toBeFocused();
