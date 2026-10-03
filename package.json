@@ -26,6 +26,7 @@
   ],
   "dependencies": {
     "@fluentui/react-components": "9.74.1",
+    "node": "^22.23.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

@@ -1,6 +1,7 @@
 /* 11a shared shell: frame, gradient backdrop and the pill header.
    Imported after tokens.css — .eb-root below overrides it by cascade order. */
 .eb-root {
+	box-sizing: border-box;
 	padding: 16px;
 	gap: 14px;
 	background:

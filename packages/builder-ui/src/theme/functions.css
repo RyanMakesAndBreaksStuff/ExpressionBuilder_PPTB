@@ -1,3 +1,10 @@
+.eb-functions-panel:not([hidden]) {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	flex-direction: column;
+}
+
 .eb-fn-workspace {
 	display: flex;
 	flex: 1;
@@ -125,6 +132,20 @@
 	padding: 22px;
 }
 
+.eb-fn-panel h2 {
+	margin: 0 0 22px;
+	font-size: 26px;
+	font-weight: 600;
+	line-height: 1;
+}
+
+.eb-fn-panel h2 span {
+	color: var(--accent);
+	font-family: var(--eb-mono);
+	font-size: 15px;
+	font-weight: 600;
+}
+
 .eb-fn-card {
 	display: flex;
 	flex-direction: column;
@@ -134,6 +155,27 @@
 	background: var(--panel-glass);
 	box-shadow: var(--panel-shadow);
 	padding: 18px;
+}
+
+.eb-fn-card > span:first-child {
+	color: var(--text2);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.eb-fn-card strong {
+	display: block;
+	font-size: 30px;
+	font-weight: 600;
+}
+
+.eb-fn-card > span:last-child {
+	color: var(--text3);
+	font-size: 12px;
+}
+
+.eb-fn-card[data-tone] > span:last-child {
+	color: var(--text2);
 }
 
 .eb-fn-card[data-tone="good"] {
@@ -161,6 +203,10 @@
 	color: var(--text3);
 	font-size: 14px;
 	font-weight: 400;
+}
+
+.eb-fn-arg + .eb-fn-arg {
+	margin-top: 14px;
 }
 
 .eb-fn-input {
@@ -206,6 +252,47 @@
 	gap: 12px;
 	padding: 16px 20px;
 	background: var(--code);
+	font-family: var(--eb-mono);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.eb-fn-dock-header > span:first-child {
+	color: var(--text3);
+	font-size: 12px;
+	letter-spacing: 0.06em;
+}
+
+.eb-fn-dock .eb-choice-segmented {
+	margin-left: auto;
+	padding: 2px;
+	border-radius: 6px;
+	background: var(--seg-track);
+}
+
+.eb-fn-dock .eb-choice-segmented button {
+	padding: 4px 10px;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: var(--text3);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.eb-fn-dock .eb-choice-segmented button[aria-checked="true"] {
+	background: var(--seg-selected);
+	color: var(--text);
+	font-weight: 600;
+}
+
+.eb-fn-dock-code .eb-preview {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
 	font-family: var(--eb-mono);
 	font-size: 16px;
 	line-height: 1.5;

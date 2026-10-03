@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>html,body{margin:0}body{background:#E1E7EC}a{color:#155EEF}a:hover{color:#004EEB}*{box-sizing:border-box}</style>
+</helmet>
+<section data-screen-label="Turn 11" style="padding:48px;display:flex;flex-direction:column;gap:28px;font-family:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;color:#18212B">
+<div style="display:flex;flex-direction:column;gap:6px;max-width:960px">
+<span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#41505F">Turn 11 · Graphite tokens</span>
+<h1 style="margin:0;font-size:32px;font-weight:600">Functions view only</h1>
+<p style="margin:0;font-size:15px;line-height:1.5;color:#41505F"><a href="#11a">11a</a>: 8a layout in Graphite Dark. <a href="#11b">11b</a>: 10b header and styling on the 8b grid, Graphite Light, without the left nav. Display only. Previous: <a href="Expression Builder v10.dc.html">v10</a>.</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+<div id="11a" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px"><span style="padding:3px 10px;border-radius:999px;background:#18212B;color:#FDFEFF;font:700 13px 'Cascadia Code',Consolas,monospace">11a</span><span style="font-size:15px;font-weight:600">8a · Graphite Dark</span></div>
+<div data-screen-label="11a" style="width:1120px;height:720px;padding:16px;display:flex;flex-direction:column;gap:14px;overflow:hidden;background:radial-gradient(circle at 85% 10%,rgba(119,167,255,.2) 0,transparent 45%),radial-gradient(circle at 15% 85%,rgba(85,197,187,.16) 0,transparent 45%),#12161A;color:#EDF3F7">
+<div style="height:48px;flex:none;padding:0 18px;display:flex;align-items:center;gap:12px;border-radius:24px;background:rgba(35,45,53,.92);border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.35)"><span style="flex:none;white-space:nowrap;font-size:15px;font-weight:600">Expression Builder</span><span style="color:#9EADB9">&#8250;</span><span style="height:30px;padding:0 12px;display:inline-flex;align-items:center;gap:8px;border-radius:15px;background:rgba(119,167,255,.16);color:#77A7FF;font-size:14px">Functions<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#77A7FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span><span style="flex:1"></span><span style="height:30px;padding:0 16px;display:inline-flex;align-items:center;border-radius:15px;background:#77A7FF;color:#0C1A34;font-size:13px;font-weight:600">Insert</span></div>
+<div style="flex:1;min-height:0;display:flex;gap:14px">
+<nav style="width:250px;flex:none;display:flex;flex-direction:column;gap:2px;font-size:14px"><div style="height:34px;margin-bottom:6px;padding:0 10px;display:flex;align-items:center;border-radius:6px;background:#1B2228;border:1px solid #394955;color:#9EADB9">Search functions</div>
+<div style="height:36px;padding:0 10px;display:flex;align-items:center;gap:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EDF3F7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="flex:1;font-weight:600">String</span><span style="font-size:12px;color:#9EADB9">8</span></div>
+<div style="position:relative;height:34px;margin-left:22px;padding:0 12px;display:flex;align-items:center;border-radius:6px;background:rgba(119,167,255,.16);color:#77A7FF;font:600 13px 'Cascadia Code',Consolas,monospace"><span style="position:absolute;left:0;top:7px;width:3px;height:20px;border-radius:2px;background:#77A7FF"></span>concat</div>
+<sc-for list="{{ rest }}" as="f" hint-placeholder-count="3"><div style="height:34px;margin-left:22px;padding:0 12px;display:flex;align-items:center;font:13px 'Cascadia Code',Consolas,monospace;color:#C8D3DC">{{ f.n }}</div></sc-for>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4"><div style="height:36px;padding:0 10px;display:flex;align-items:center;gap:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EDF3F7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="flex:1;font-weight:600">{{ g.g }}</span><span style="font-size:12px;color:#9EADB9">{{ g.c }}</span></div></sc-for></nav>
+<div style="flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) 210px;gap:12px">
+<div style="grid-column:1;grid-row:1 / span 2;padding:22px;display:flex;flex-direction:column;gap:14px;border-radius:10px;background:rgba(27,34,40,.85);border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.3)"><div style="display:flex;align-items:baseline;gap:12px"><span style="font:600 26px/1 'Segoe UI Variable Display','Segoe UI',sans-serif">Arguments</span><span style="font:600 15px 'Cascadia Code',Consolas,monospace;color:#77A7FF">concat</span></div>
+<sc-for list="{{ args }}" as="a" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:5px"><span style="font-size:14px;font-weight:600">{{ a.id }} <span style="font-weight:400;color:#9EADB9">{{ a.req }}</span></span><div style="height:42px;padding:0 14px;display:flex;align-items:center;border-radius:6px;background:#232D35;border:1px solid #394955;font:14px 'Cascadia Code',Consolas,monospace;color:{{ a.c }}">{{ a.v }}</div></div></sc-for></div>
+<div style="grid-column:2;grid-row:1;padding:18px;display:flex;flex-direction:column;justify-content:space-between;border-radius:10px;background:rgba(99,201,155,.14);border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.3)"><span style="font-size:13px;font-weight:600;color:#C8D3DC">Status</span><span style="font:600 30px 'Segoe UI Variable Display','Segoe UI',sans-serif;color:#63C99B">Valid</span><span style="font-size:12px;color:#C8D3DC">2 of 2 required set</span></div>
+<div style="grid-column:2;grid-row:2;padding:18px;display:flex;flex-direction:column;justify-content:space-between;border-radius:10px;background:rgba(27,34,40,.85);border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.3)"><span style="font-size:13px;font-weight:600">Arguments set</span><span style="font:600 30px 'Segoe UI Variable Display','Segoe UI',sans-serif">2 / 3</span><span style="font-size:12px;color:#9EADB9">1 optional left empty</span></div>
+<div style="grid-column:1 / span 2;grid-row:3;display:flex;border-radius:10px;overflow:hidden;border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.35)">
+<div style="flex:1;min-width:0;padding:16px 20px;display:flex;flex-direction:column;gap:12px;background:#0E1216"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">Expression</span><span style="height:18px;padding:0 8px;display:inline-flex;align-items:center;border-radius:9px;background:rgba(99,201,155,.14);color:#63C99B;font-size:11px;font-weight:600">Valid</span><span style="flex:1"></span><div style="display:flex;padding:2px;border-radius:6px;background:rgba(237,243,247,.08);font-size:11px"><span style="padding:3px 8px;border-radius:4px;background:rgba(237,243,247,.16)">Expression</span><span style="padding:3px 8px;color:#9EADB9">@{…}</span></div></div>
+<code style="font:16px/1.5 'Cascadia Code',Consolas,monospace"><span style="color:#77A7FF">concat</span>(<span style="color:#EFC56E">triggerBody()?['Name']</span>, <span style="color:#63C99B">' - '</span>)</code>
+<div style="height:1px;background:#394955"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="height:26px;padding:0 10px;display:inline-flex;align-items:center;border-radius:13px;background:rgba(119,167,255,.16);color:#77A7FF;font:12px 'Cascadia Code',Consolas,monospace">concat</span><span style="color:#9EADB9">&#8250;</span><span style="height:26px;padding:0 10px;display:inline-flex;align-items:center;border-radius:13px;background:rgba(239,197,110,.14);color:#EFC56E;font:12px 'Cascadia Code',Consolas,monospace">JSON reference</span><span style="height:26px;padding:0 10px;display:inline-flex;align-items:center;border-radius:13px;background:rgba(99,201,155,.14);color:#63C99B;font:12px 'Cascadia Code',Consolas,monospace">text</span></div></div>
+<div style="width:280px;flex:none;padding:16px 20px;display:flex;flex-direction:column;justify-content:space-between;background:#232D35;border-left:1px solid #394955"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#C8D3DC">Sample result</span><span style="font:600 19px 'Cascadia Code',Consolas,monospace;color:#77A7FF">Ada Lovelace -</span></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="height:38px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:6px;background:#77A7FF;color:#0C1A34;font-size:14px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Copy expression</span><span style="text-align:center;font-size:12px;color:#C8D3DC">Copy as @{…}</span></div></div>
+</div></div></div></div></div>
+
+<div id="11b" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px"><span style="padding:3px 10px;border-radius:999px;background:#18212B;color:#FDFEFF;font:700 13px 'Cascadia Code',Consolas,monospace">11b</span><span style="font-size:15px;font-weight:600">10b styling · 8b grid · Graphite Light</span></div>
+<div data-screen-label="11b" style="width:1120px;height:720px;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(160deg,rgba(21,94,239,.14) 0%,#F6F8FA 50%,rgba(8,125,120,.12) 100%),#F6F8FA;border-radius:8px;box-shadow:0 0 0 1px #AEBDCA;color:#18212B">
+<div style="height:48px;flex:none;display:flex;align-items:center;gap:14px;padding-left:12px;font-size:12px"><span style="width:16px;height:16px;border-radius:4px;background:#155EEF"></span>Expression Builder
+<div style="margin-left:24px;display:flex;gap:4px;font-size:14px"><span style="position:relative;height:36px;padding:0 14px;display:inline-flex;align-items:center;border-radius:4px;background:rgba(24,33,43,.06);font-weight:600"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:3px;border-radius:2px;background:#155EEF"></span>Functions</span><span style="height:36px;padding:0 14px;display:inline-flex;align-items:center">Trigger / Filter</span><span style="height:36px;padding:0 14px;display:inline-flex;align-items:center">JSON reference</span></div><span style="flex:1"></span><span style="height:32px;padding:0 12px;display:inline-flex;align-items:center;border-radius:4px;font-size:14px">Import</span><span style="height:32px;padding:0 16px;display:inline-flex;align-items:center;border-radius:4px;background:#155EEF;color:#F7FAFF;font-size:14px;font-weight:600">Export</span><span style="width:46px;text-align:center;font-size:14px">&#8211;</span><span style="width:46px;text-align:center;font-size:12px">&#9723;</span><span style="width:46px;text-align:center;font-size:14px">&#10005;</span></div>
+<main style="flex:1;min-height:0;display:flex;flex-direction:column;border-top-left-radius:8px;border-top-right-radius:8px;border-top:1px solid #D2DCE5;background:rgba(253,254,255,.7)">
+<div style="height:52px;flex:none;padding:0 24px;display:flex;align-items:center;gap:12px"><span style="font:600 24px 'Segoe UI Variable Display','Segoe UI',sans-serif">concat</span><span style="font:13px 'Cascadia Code',Consolas,monospace;color:#55626F">concat(text1, text2, ...)</span><span style="flex:1"></span><div style="width:240px;height:32px;padding:0 10px;display:flex;align-items:center;border-radius:4px;border:1px solid #D2DCE5;border-bottom-color:#55626F;background:#FDFEFF;font-size:14px;color:#55626F">Filter functions</div></div>
+<div style="flex:1;min-height:0;padding:0 24px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr) 170px;gap:8px">
+<div style="grid-column:1 / span 2;grid-row:1 / span 2;padding:16px;display:flex;flex-direction:column;gap:6px;border-radius:8px;border:1px solid #D2DCE5;background:#FDFEFF;box-shadow:0 1px 2px rgba(0,0,0,.14)"><span style="font:600 20px 'Segoe UI Variable Display','Segoe UI',sans-serif;margin-bottom:4px">Arguments</span>
+<sc-for list="{{ args2 }}" as="a" hint-placeholder-count="3"><div style="min-height:64px;padding:8px 14px;display:flex;align-items:center;gap:12px;border-radius:4px;border:1px solid #D2DCE5;background:#EEF2F5"><div style="flex:1;display:flex;flex-direction:column"><span style="font-size:14px">{{ a.id }}</span><span style="font-size:12px;color:#55626F">{{ a.req2 }}</span></div><span style="max-width:260px;font:13px 'Cascadia Code',Consolas,monospace;color:{{ a.c }};overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ a.v }}</span></div></sc-for></div>
+<div style="grid-column:3;grid-row:1;padding:16px;display:flex;flex-direction:column;justify-content:space-between;border-radius:8px;background:#155EEF;color:#F7FAFF;box-shadow:0 1px 2px rgba(0,0,0,.14)"><span style="font-size:13px">Sample result</span><span style="font:600 18px 'Cascadia Code',Consolas,monospace">Ada Lovelace -</span><span style="font-size:12px">Valid · 2 of 2 required set</span></div>
+<div style="grid-column:3;grid-row:2;padding:16px;display:flex;flex-direction:column;gap:4px;border-radius:8px;border:1px solid #D2DCE5;background:#FDFEFF;box-shadow:0 1px 2px rgba(0,0,0,.14)"><span style="font-size:13px;font-weight:600">About</span><span style="font-size:13px;line-height:18px;color:#41505F">Combines two or more strings into one string.</span></div>
+<div style="grid-column:1 / span 3;grid-row:3;padding:12px 12px 12px 18px;display:flex;flex-direction:column;gap:8px;border-radius:8px;border:1px solid #D2DCE5;background:#FDFEFF;box-shadow:0 8px 16px rgba(0,0,0,.10),0 0 2px rgba(0,0,0,.10)"><div style="display:flex;align-items:center;gap:4px"><span style="flex:1;font-size:12px;color:#55626F">Expression</span><span style="height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font-size:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg>Undo</span><span style="height:32px;padding:0 10px;display:inline-flex;align-items:center;border-radius:4px;font-size:14px">Copy as @{…}</span><span style="height:32px;padding:0 16px;display:inline-flex;align-items:center;border-radius:4px;background:#155EEF;color:#F7FAFF;font-size:14px;font-weight:600">Copy expression</span></div>
+<code style="font:15px/1.5 'Cascadia Code',Consolas,monospace"><b style="color:#155EEF">concat</b>(<span style="color:#8B6414">triggerBody()?['Name']</span>, <span style="color:#237754">' - '</span>)</code>
+<div style="display:flex;align-items:center;gap:8px"><span style="height:24px;padding:0 10px;display:inline-flex;align-items:center;border-radius:12px;background:rgba(21,94,239,.12);color:#155EEF;font:12px 'Cascadia Code',Consolas,monospace">concat</span><span style="color:#55626F">&#8250;</span><span style="height:24px;padding:0 10px;display:inline-flex;align-items:center;border-radius:12px;background:rgba(139,100,20,.12);color:#8B6414;font:12px 'Cascadia Code',Consolas,monospace">JSON reference</span><span style="height:24px;padding:0 10px;display:inline-flex;align-items:center;border-radius:12px;background:rgba(35,119,84,.12);color:#237754;font:12px 'Cascadia Code',Consolas,monospace">text</span></div></div>
+</div></main></div></div>
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      rest: [{n:'toUpper'},{n:'substring'},{n:'replace'}],
+      groups: [{g:'Collection',c:14},{g:'Logical',c:9},{g:'Date and time',c:18},{g:'Math',c:12}],
+      args: [
+        {id:'text1',req:'required',v:"triggerBody()?['Name']",c:'#EFC56E'},
+        {id:'text2',req:'required',v:"' - '",c:'#63C99B'},
+        {id:'text3',req:'optional',v:'Type a value or pick a function',c:'#9EADB9'}
+      ],
+      args2: [
+        {id:'text1',req2:'Required',v:"triggerBody()?['Name']",c:'#8B6414'},
+        {id:'text2',req2:'Required',v:"' - '",c:'#237754'},
+        {id:'text3',req2:'Optional',v:'Type a value or pick a function',c:'#55626F'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

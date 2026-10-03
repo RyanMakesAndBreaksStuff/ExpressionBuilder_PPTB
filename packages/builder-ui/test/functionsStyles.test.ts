@@ -16,6 +16,15 @@ function rule(selector: string): string {
 }
 
 describe('Functions screen styles', () => {
+  it('fills the available shell height while preserving hidden state', () => {
+    const activePanel = rule('.eb-functions-panel:not([hidden])');
+    expect(activePanel).toMatch(/display:\s*flex;/);
+    expect(activePanel).toMatch(/flex:\s*1;/);
+    expect(activePanel).toMatch(/min-height:\s*0;/);
+    expect(activePanel).toMatch(/flex-direction:\s*column;/);
+    expect(css).not.toMatch(/\.eb-functions-panel\s*\{[^}]*display:\s*flex;/);
+  });
+
   it('lays out nav plus the content grid (FR-8)', () => {
     expect(rule('.eb-fn-workspace')).toMatch(/gap:\s*14px;/);
     expect(rule('.eb-fn-nav')).toMatch(/width:\s*250px;/);
@@ -29,6 +38,53 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-panel')).toMatch(/grid-area:\s*1\s*\/\s*1\s*\/\s*3\s*\/\s*2;/);
     expect(rule('.eb-fn-dock')).toMatch(/grid-area:\s*3\s*\/\s*1\s*\/\s*4\s*\/\s*3;/);
     expect(rule('.eb-fn-dock-side')).toMatch(/width:\s*280px;/);
+  });
+
+  it('keeps the function editor typography and spacing from the handoff', () => {
+    expect(rule('.eb-fn-panel h2')).toMatch(/font-size:\s*26px;/);
+    expect(rule('.eb-fn-panel h2')).toMatch(/font-weight:\s*600;/);
+    expect(rule('.eb-fn-panel h2')).toMatch(/line-height:\s*1;/);
+    expect(rule('.eb-fn-panel h2 span')).toMatch(/font-family:\s*var\(--eb-mono\);/);
+    expect(rule('.eb-fn-panel h2 span')).toMatch(/font-size:\s*15px;/);
+    expect(rule('.eb-fn-panel h2 span')).toMatch(/color:\s*var\(--accent\);/);
+    expect(rule('.eb-fn-arg + .eb-fn-arg')).toMatch(/margin-top:\s*14px;/);
+  });
+
+  it('styles status cards with token-based label and caption text', () => {
+    expect(rule('.eb-fn-card strong')).toMatch(/font-size:\s*30px;/);
+    expect(rule('.eb-fn-card strong')).toMatch(/font-weight:\s*600;/);
+    expect(rule('.eb-fn-card strong')).toMatch(/display:\s*block;/);
+    expect(rule('.eb-fn-card > span:first-child')).toMatch(/font-size:\s*13px;/);
+    expect(rule('.eb-fn-card > span:first-child')).toMatch(/color:\s*var\(--text2\);/);
+    expect(rule('.eb-fn-card > span:last-child')).toMatch(/font-size:\s*12px;/);
+    expect(rule('.eb-fn-card > span:last-child')).toMatch(/color:\s*var\(--text3\);/);
+    expect(rule('.eb-fn-card[data-tone] > span:last-child')).toMatch(/color:\s*var\(--text2\);/);
+  });
+
+  it('keeps argument and optional labels at the approved size', () => {
+    expect(rule('.eb-fn-arg label')).toMatch(/font-size:\s*14px;/);
+    expect(rule('.eb-fn-arg label > span')).toMatch(/font-size:\s*14px;/);
+  });
+
+  it('keeps the expression preview and format selector in the functions code theme', () => {
+    const preview = rule('.eb-fn-dock-code .eb-preview');
+    expect(preview).toMatch(/background:\s*transparent;/);
+    expect(preview).toMatch(/border:\s*0;/);
+    expect(preview).toMatch(/box-shadow:\s*none;/);
+    expect(preview).toMatch(/padding:\s*0;/);
+    expect(preview).toMatch(/font-family:\s*var\(--eb-mono\);/);
+    expect(preview).toMatch(/font-size:\s*16px;/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--seg-track\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/padding:\s*2px;/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/margin-left:\s*auto;/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/font-size:\s*12px;/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--text3\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
+      .toMatch(/background:\s*var\(--seg-selected\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
+      .toMatch(/font-weight:\s*600;/);
+    expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--text3\);/);
+    expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/font-size:\s*12px;/);
   });
 
   it('keeps every color on a token (AC-1.1)', () => {
