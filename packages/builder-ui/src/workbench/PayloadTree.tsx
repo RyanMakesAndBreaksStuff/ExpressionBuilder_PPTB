@@ -95,6 +95,10 @@ export function PayloadTree({
     } else if (row.expandable && (event.target as Element).closest('[data-chevron]')) {
       onToggle(row.key);
       moveFocus(row.key);
+    } else if (row.expandable) {
+      onToggle(row.key);
+      setFocusedKey(row.key);
+      onSelect(row.path);
     } else {
       setFocusedKey(row.key);
       onSelect(row.path);

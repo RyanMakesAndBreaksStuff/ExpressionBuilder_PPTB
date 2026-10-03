@@ -6,7 +6,7 @@ import type { DockSide, ModeContext, WorkbenchState } from './types';
  * three columns become one flex column and a collapsed dock renders as a 38px
  * horizontal bar rather than the desktop vertical rail.
  */
-export const STACKED_LAYOUT_QUERY = '(max-width: 900px)';
+export const STACKED_LAYOUT_QUERY = '(max-width: 600px)';
 
 /**
  * Read once, at mount, by the shell. Deliberately not reactive: a resize
