@@ -73,4 +73,9 @@ describe('ShellHeader', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
   });
+
+  it.each(SCREENS.map((entry) => entry.id))('renders an injected host action on %s', (screenId) => {
+    renderHeader({ screen: screenId, hostActions: <button type="button">Host action</button> });
+    expect(screen.getByRole('button', { name: 'Host action' })).toBeInTheDocument();
+  });
 });

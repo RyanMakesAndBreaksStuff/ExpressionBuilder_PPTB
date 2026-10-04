@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   Menu,
   MenuItem,
@@ -22,9 +23,11 @@ export interface ShellHeaderProps {
   onModeChange: (mode: ExpressionMode) => void;
   onImport: () => void;
   onExport: () => void;
+  hostActions?: ReactNode;
 }
 
 export function ShellHeader({
+  hostActions,
   mode,
   onExport,
   onImport,
@@ -81,13 +84,16 @@ export function ShellHeader({
               </MenuList>
             </MenuPopover>
           </Menu>
-          <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
-            Export
-          </ActionButton>
         </>
       ) : null}
 
       {screen === 'jsonReference' ? <p className="eb-pill-privacy">{JSON_PRIVACY}</p> : null}
+      {hostActions}
+      {screen === 'condition' ? (
+        <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
+          Export
+        </ActionButton>
+      ) : null}
     </header>
   );
 }

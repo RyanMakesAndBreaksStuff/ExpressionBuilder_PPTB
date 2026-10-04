@@ -2,8 +2,18 @@ import type { PlatformAdapter, PlatformTheme } from './PlatformAdapter';
 
 const darkSchemeQuery = '(prefers-color-scheme: dark)';
 
-function getThemeFromMediaQuery(): PlatformTheme {
-  return matchMedia(darkSchemeQuery).matches ? 'dark' : 'light';
+export type WebTheme = 'light' | 'dark';
+
+export interface WebPlatformAdapter extends PlatformAdapter {
+  getThemeSnapshot(): WebTheme;
+  setTheme(theme: WebTheme): void;
+}
+
+const themeOverrideKey = 'eb.web.theme.override.v1';
+
+function readThemeOverride(): WebTheme | null {
+  const value = localStorage.getItem(themeOverrideKey);
+  return value === 'light' || value === 'dark' ? value : null;
 }
 
 const TOAST_COLORS: Record<string, string> = {
@@ -36,7 +46,12 @@ function showToast(message: string, level: string) {
   setTimeout(() => el.remove(), level === 'error' ? 8000 : 4000);
 }
 
-export function createWebAdapter(): PlatformAdapter {
+export function createWebAdapter(): WebPlatformAdapter {
+  const mediaQuery = matchMedia(darkSchemeQuery);
+  const themeHandlers = new Set<(theme: PlatformTheme) => void>();
+  const getThemeSnapshot = (): WebTheme =>
+    readThemeOverride() ?? (mediaQuery.matches ? 'dark' : 'light');
+
   return {
     async copyToClipboard(text) {
       // Insecure contexts have no navigator.clipboard; name the problem instead
@@ -51,19 +66,25 @@ export function createWebAdapter(): PlatformAdapter {
       showToast(message, level);
     },
 
+    getThemeSnapshot,
+
+    setTheme(theme) {
+      localStorage.setItem(themeOverrideKey, theme);
+      themeHandlers.forEach((handler) => handler(theme));
+    },
+
     async getTheme() {
-      return getThemeFromMediaQuery();
+      return getThemeSnapshot();
     },
 
     onThemeChanged(handler) {
-      const mediaQuery = matchMedia(darkSchemeQuery);
-      const listener = (event: MediaQueryListEvent) => {
-        handler(event.matches ? 'dark' : 'light');
+      themeHandlers.add(handler);
+      const listener = () => {
+        if (readThemeOverride() === null) handler(getThemeSnapshot());
       };
-
       mediaQuery.addEventListener('change', listener);
-
       return () => {
+        themeHandlers.delete(handler);
         mediaQuery.removeEventListener('change', listener);
       };
     },

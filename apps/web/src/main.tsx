@@ -1,7 +1,4 @@
 import { createRoot } from 'react-dom/client';
-import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
-import { createWebAdapter } from '@ryanmakes/eb_platformadapter';
+import { WebApp } from './WebApp';
 
-createRoot(document.getElementById('root')!).render(
-  <ExpressionBuilderShell adapter={createWebAdapter()} platform="web" />,
-);
+createRoot(document.getElementById('root')!).render(<WebApp />);

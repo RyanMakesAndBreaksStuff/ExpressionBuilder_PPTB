@@ -93,6 +93,49 @@ describe('createWebAdapter', () => {
     expect(await adapter.getTables?.()).toEqual([]);
     expect(await adapter.discoverFields?.()).toEqual({ fields: [] });
   });
+
+  it('persists manual themes and notifies only subscribed consumers', async () => {
+    const storage = stubLocalStorage();
+    const mediaQuery = stubMatchMedia(false);
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+
+    expect(adapter.getThemeSnapshot()).toBe('light');
+    adapter.setTheme('dark');
+    expect(storage.setItem).toHaveBeenCalledWith('eb.web.theme.override.v1', 'dark');
+    expect(handler).toHaveBeenLastCalledWith('dark');
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+    await expect(createWebAdapter().getTheme()).resolves.toBe('dark');
+
+    mediaQuery.dispatch(true);
+    mediaQuery.dispatch(false);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+
+    adapter.setTheme('light');
+    expect(handler).toHaveBeenLastCalledWith('light');
+    unsubscribe();
+    adapter.setTheme('dark');
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(mediaQuery.removeEventListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses browser preference for absent or invalid overrides', async () => {
+    const storage = stubLocalStorage();
+    const mediaQuery = stubMatchMedia(false);
+    storage.setItem('eb.web.theme.override.v1', 'invalid');
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+
+    expect(adapter.getThemeSnapshot()).toBe('light');
+    mediaQuery.dispatch(true);
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+    await expect(adapter.getTheme()).resolves.toBe('dark');
+    expect(handler).toHaveBeenLastCalledWith('dark');
+    unsubscribe();
+  });
 });
 
 function stubLocalStorage() {
@@ -130,6 +173,7 @@ function stubMatchMedia(matches: boolean) {
       },
     ),
     dispatch(nextMatches: boolean) {
+      mediaQuery.matches = nextMatches;
       for (const listener of listeners) {
         listener({ matches: nextMatches } as MediaQueryListEvent);
       }

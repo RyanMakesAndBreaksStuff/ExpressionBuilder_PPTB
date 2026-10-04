@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -65,6 +65,7 @@ const createRuleSeed = (field: FieldDefinition) => ({
 
 export interface ExpressionBuilderShellProps {
   adapter: PlatformAdapter;
+  hostActions?: ReactNode;
   initialDocument?: QueryDocument;
   /**
    * Which build is hosting the shell. Table connections require a live Dataverse
@@ -77,6 +78,7 @@ export interface ExpressionBuilderShellProps {
 
 export function ExpressionBuilderShell({
   adapter,
+  hostActions,
   initialDocument = emptyStarterDocument,
   platform = 'pptb',
 }: ExpressionBuilderShellProps) {
@@ -425,6 +427,7 @@ export function ExpressionBuilderShell({
           onModeChange={updateMode}
           onImport={() => setDialog('importExpression')}
           onExport={() => void exportDocument()}
+          hostActions={hostActions}
         />
 
         <BuilderDragDropProvider
