@@ -255,6 +255,10 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeFocused();
 
   await page.keyboard.press('Tab');
+  const themeSwitch = page.getByRole('button', { name: /^Switch to .* theme$/ });
+  await expect(themeSwitch).toBeFocused();
+  expect(await focusOutline()).not.toBe('none');
+  await page.keyboard.press('Tab');
   await expect(
     page.getByRole('radiogroup', { name: 'Reference root' }).getByRole('radio', { name: 'Action · Full output' }),
   ).toBeFocused();
@@ -387,7 +391,7 @@ for (const theme of THEMES) {
   }
 }
 
-test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the workspace scrolls (FR-092)', async ({ page }) => {
+test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the reference body scrolls (FR-092)', async ({ page }) => {
   await open(page, 'web');
   await page.setViewportSize({ width: 1280, height: 800 });
   await loadEmailReference(page);
@@ -398,9 +402,12 @@ test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x
 
   await page.setViewportSize({ width: 1280, height: 420 });
   const workspace = page.locator('.eb-json-workspace');
-  expect(await workspace.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  const referenceBody = page.locator('.eb-json-reference > .eb-json-card-body');
+  expect(await workspace.evaluate((element) => element.scrollTop)).toBe(0);
+  expect(await referenceBody.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
   await referenceCopy(page).scrollIntoViewIfNeeded();
   await expect(referenceCopy(page)).toBeInViewport();
+  expect(await workspace.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
 test('samples at the limits parse and expand within 1 second (FR-039, SC-006 guard)', async ({ page }) => {
