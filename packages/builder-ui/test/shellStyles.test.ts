@@ -19,8 +19,8 @@ describe('shell styles', () => {
   it('frames the app with the handoff padding, gap and glow (FR-1)', () => {
     const root = rule('.eb-root');
     expect(root).toMatch(/box-sizing:\s*border-box;/);
-    expect(root).toMatch(/padding:\s*16px;/);
-    expect(root).toMatch(/gap:\s*14px;/);
+    expect(root).toMatch(/padding:\s*12px;/);
+    expect(root).toMatch(/gap:\s*8px;/);
     expect(root).toMatch(/var\(--glow-1\)/);
     expect(root).toMatch(/var\(--glow-2\)/);
     expect(root).toMatch(/var\(--bg\)/);

@@ -2,8 +2,8 @@
    Imported after tokens.css — .eb-root below overrides it by cascade order. */
 .eb-root {
 	box-sizing: border-box;
-	padding: 16px;
-	gap: 14px;
+	padding: 12px;
+	gap: 8px;
 	background:
 		radial-gradient(circle at 85% 10%, var(--glow-1) 0, transparent 45%),
 		radial-gradient(circle at 15% 85%, var(--glow-2) 0, transparent 45%),

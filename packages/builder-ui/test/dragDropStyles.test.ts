@@ -224,7 +224,7 @@ describe('drag-and-drop visual contract', () => {
       '.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal',
     );
 
-    expect(positionTarget).toMatch(/min-height:\s*32px\s*;/);
+    expect(positionTarget).toMatch(/min-height:\s*20px\s*;/);
     expect(positionTarget).not.toMatch(/margin-block\s*:/);
     expect(positionTarget).toMatch(/pointer-events:\s*none\s*;/);
     expect(emptyGroup).toMatch(/display:\s*flex\s*;/);

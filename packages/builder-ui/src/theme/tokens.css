@@ -236,8 +236,8 @@ body {
      computed layout is unchanged; when there is not, overflow-y scrolls the
      workspace instead of crushing the canvas. */
 	grid-template-rows: minmax(var(--eb-workspace-min-height), 1fr);
-	gap: 18px;
-	padding: 18px;
+	gap: 12px;
+	padding: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
 	transition:
@@ -560,7 +560,7 @@ body {
 }
 
 .eb-group-card.nested {
-	margin-top: 12px;
+	margin-top: 0;
 	margin-left: 16px;
 	border-left: 3px solid var(--accent);
 }
@@ -577,7 +577,7 @@ body {
 	flex-wrap: wrap;
 	gap: 10px;
 	row-gap: 8px;
-	padding: 12px 14px;
+	padding: 8px 10px;
 	border-bottom: 1px solid var(--border);
 }
 
@@ -608,10 +608,10 @@ body {
 }
 
 .eb-group-children {
-	padding: 14px;
+	padding: 8px;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 4px;
 	overflow: auto;
 	scrollbar-gutter: stable;
 	/* Rule rows are sized by this list, not by the viewport: the two docks take
@@ -633,7 +633,7 @@ body {
 
 .eb-condition-drop-target {
 	width: 100%;
-	min-height: 32px;
+	min-height: 20px;
 	display: grid;
 	grid-template-columns: minmax(16px, 1fr) auto minmax(16px, 1fr);
 	align-items: center;
@@ -1890,7 +1890,7 @@ body {
 
 @media (max-width: 700px) {
 	.eb-workspace {
-		padding: 12px;
+		padding: 0;
 		gap: 12px;
 	}
 
@@ -2026,8 +2026,8 @@ body {
 	min-width: 0;
 	display: flex;
 	align-items: stretch;
-	gap: 18px;
-	padding: 18px;
+	gap: 12px;
+	padding: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
 }
@@ -2659,6 +2659,14 @@ body {
 		overflow-x: auto;
 		overflow-y: hidden;
 	}
+
+	.eb-json-reference {
+		flex: 0 0 auto;
+	}
+	.eb-json-reference > .eb-json-card-body {
+		flex: 0 0 auto;
+		overflow: visible;
+	}
 }
 
 @media (max-width: 700px) {
@@ -2667,7 +2675,26 @@ body {
 	}
 
 	.eb-json-workspace {
-		padding: 12px;
+		padding: 0;
+	}
+}
+
+@media (min-width: 601px) {
+	.eb-json-source,
+	.eb-json-payload {
+		min-height: 0;
+	}
+	.eb-json-content {
+		min-height: 0;
+	}
+	.eb-json-reference {
+		flex: 1 1 0;
+		min-height: 0;
+	}
+	.eb-json-reference > .eb-json-card-body {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
 	}
 }
 
@@ -2684,5 +2711,6 @@ body {
 	.eb-json-reference {
 		flex: 0 1 380px;
 		min-width: 280px;
+		min-height: 0;
 	}
 }

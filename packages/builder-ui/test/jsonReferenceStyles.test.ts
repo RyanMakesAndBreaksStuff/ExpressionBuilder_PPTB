@@ -62,4 +62,12 @@ describe('JSON reference styles', () => {
   it('animates only through the shared duration token, which reduced motion shortens (FR-093)', () => {
     expect(rule(css, '.eb-tree-chevron')).toMatch(/transition:\s*transform var\(--duration-fast\) ease;/);
   });
+
+  it('bounds each non-stacked Reference body and keeps the stacked body content-sized', () => {
+    const wide = mediaBlocks('min-width: 601px');
+    expect(rule(wide, '.eb-json-reference > .eb-json-card-body')).toMatch(/overflow-y:\s*auto;/);
+    expect(rule(wide, '.eb-json-reference > .eb-json-card-body')).toMatch(/flex:\s*1 1 auto;/);
+    const stacked = mediaBlocks('max-width: 600px');
+    expect(rule(stacked, '.eb-json-reference > .eb-json-card-body')).toMatch(/overflow:\s*visible;/);
+  });
 });
