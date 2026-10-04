@@ -350,21 +350,17 @@ const VIEWPORTS = [
   { width: 1440, height: 900 },
 ];
 
-for (const theme of THEMES) {
-  test(`every viewport keeps all three screens inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
-    await open(page, 'web', { theme });
-    await addTwoRules(page);
-    await loadEmailReference(page);
-    const views = [
-      { name: 'Functions' },
-      { name: 'Trigger / Filter' },
-      { name: 'JSON reference' },
-    ];
+const VIEWS = ['Functions', 'Trigger / Filter', 'JSON reference'] as const;
 
-    for (const viewport of VIEWPORTS) {
+for (const theme of THEMES) {
+  for (const viewport of VIEWPORTS) {
+    test(`every viewport keeps all three screens inside the page width at ${viewport.width}x${viewport.height} in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
+      await open(page, 'web', { theme });
+      await addTwoRules(page);
+      await loadEmailReference(page);
       await page.setViewportSize(viewport);
-      for (const view of views) {
-        await goToScreen(page, view.name);
+      for (const name of VIEWS) {
+        await goToScreen(page, name);
         const layout = await page.evaluate(() => {
           const visible = (element: Element) => (element as HTMLElement).checkVisibility();
           const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')].filter(visible);
@@ -379,7 +375,7 @@ for (const theme of THEMES) {
             headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
           };
         });
-        const where = `${view.name} at ${viewport.width}x${viewport.height}`;
+        const where = `${name} at ${viewport.width}x${viewport.height}`;
         expect(layout.pageScrollsSideways, where).toBe(false);
         expect(layout.controlsCutOff, where).toBe(0);
         if (viewport.width > 900) {
@@ -387,8 +383,8 @@ for (const theme of THEMES) {
           expect(layout.headerHeight, where).toBeLessThanOrEqual(TODAYS_HEADER_HEIGHT);
         }
       }
-    }
-  });
+    });
+  }
 }
 
 test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the workspace scrolls (FR-092)', async ({ page }) => {
