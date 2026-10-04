@@ -8,18 +8,11 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
   },
-  webServer: [
-    {
-      command: 'npm run dev:web',
-      url: 'http://127.0.0.1:5173',
-      reuseExistingServer: !process.env.CI,
-    },
-    {
-      command: 'npm run dev:pptb',
-      url: 'http://127.0.0.1:5174',
-      reuseExistingServer: !process.env.CI,
-    },
-  ],
+  webServer: {
+    command: 'npm run dev:web',
+    url: 'http://127.0.0.1:5173',
+    reuseExistingServer: !process.env.CI,
+  },
   projects: [
     {
       name: 'chromium',

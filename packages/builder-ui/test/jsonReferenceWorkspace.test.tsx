@@ -54,7 +54,6 @@ async function pasteAndParse(
 		await user.type(screen.getByLabelText('Action name'), actionName);
 	await user.click(screen.getByLabelText('Sample JSON'));
 	await user.paste(sample);
-	await user.click(screen.getByRole('button', { name: 'Parse' }));
 }
 
 async function expand(user: UserEvent, name: RegExp) {
@@ -239,15 +238,7 @@ describe('JSON reference workspace', () => {
 		expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled();
 	});
 
-	it('asks for a sample before parsing (user story 4, scenario 1)', async () => {
-		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
 
-		await user.click(screen.getByRole('button', { name: 'Parse' }));
-		expect(screen.getByRole('alert')).toHaveTextContent(
-			'Paste a sample before parsing.',
-		);
-	});
 
 	it('reports invalid JSON and clears the tree (user story 4, scenario 2)', async () => {
 		const user = userEvent.setup();

@@ -200,12 +200,6 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 					/>
 				</div>
 
-				<div className="eb-json-parse-row">
-					<ActionButton onClick={() => dispatch({ type: "parse" })}>
-						Parse
-					</ActionButton>
-				</div>
-
 				{state.error !== null ? (
 					<div id={errorId} role="alert" className="eb-json-error">
 						{state.error}

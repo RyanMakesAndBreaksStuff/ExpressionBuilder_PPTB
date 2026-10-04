@@ -58,6 +58,19 @@ describe('JSON reference styles', () => {
     expect(rule(stacked, '.eb-builder-tabs')).toMatch(/flex:\s*1 1 100%;/);
   });
 
+  it('caps the JSON cards to the host frame so the view never opens needing the workspace to scroll (FR-092)', () => {
+    // 107px = 71px header + 36px workspace padding; vh fallback line first,
+    // dvh override second (the .eb-root pattern).
+    expect(rule(css, '.eb-json-source')).toMatch(
+      /min-height:\s*min\(560px,\s*calc\(100dvh - 107px\)\);/,
+    );
+    expect(rule(css, '.eb-json-payload')).toMatch(
+      /min-height:\s*min\(320px,\s*calc\(100dvh - 107px\)\);/,
+    );
+    expect(rule(css, '.eb-json-reference')).toMatch(/max-height:\s*calc\(100dvh - 107px\);/);
+    expect(rule(css, '.eb-json-reference .eb-json-card-body')).toMatch(/overflow-y:\s*auto;/);
+  });
+
   it('meets text contrast for function names and payload roots in light mode (FR-085)', () => {
     expect(rule(css, '.fn')).toMatch(/color:\s*var\(--code-fn\);/);
     expect(rule(css, '.eb-root[data-theme="light"]')).toMatch(

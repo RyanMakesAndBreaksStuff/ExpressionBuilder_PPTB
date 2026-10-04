@@ -47,6 +47,7 @@ import { JsonReferenceWorkspace } from '../workbench/JsonReferenceWorkspace';
 import type { BuilderPanelIds, BuilderView } from '../workbench/types';
 import {
   getDefaultWorkbenchState,
+  isShortViewport,
   isStackedViewport,
   toggleDock,
   togglePreview,
@@ -69,21 +70,34 @@ export interface ExpressionBuilderShellProps {
    * opt into 'web'.
    */
   platform?: 'web' | 'pptb';
+  /**
+   * Host theme known before first paint. Without it the shell starts on
+   * graphite dark and animates to the real theme, and that in-between frame
+   * fails color contrast.
+   */
+  initialTheme?: PlatformTheme;
 }
 
 export function ExpressionBuilderShell({
   adapter,
   initialDocument = emptyStarterDocument,
+  initialTheme,
   platform = 'pptb',
 }: ExpressionBuilderShellProps) {
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
-  const [paletteId, setPaletteId] = useState<PaletteId>('graphiteDark');
+  const [paletteId, setPaletteId] = useState<PaletteId>(() =>
+    initialTheme ? normalizePalette(initialTheme) : 'graphiteDark',
+  );
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
   const [workbench, setWorkbench] = useState(() =>
-    getDefaultWorkbenchState({ stacked: isStackedViewport(), hasFields: initialDocument.fields.length > 0 }),
+    getDefaultWorkbenchState({
+      stacked: isStackedViewport(),
+      short: isShortViewport(),
+      hasFields: initialDocument.fields.length > 0,
+    }),
   );
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);

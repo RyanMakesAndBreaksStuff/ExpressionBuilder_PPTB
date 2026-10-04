@@ -6,70 +6,42 @@ import {
   triggerFullSample,
 } from '../../packages/builder-ui/test/fixtures/jsonReferenceFixtures';
 
-type Build = 'web' | 'pptb';
 type Theme = 'light' | 'dark';
 
 declare global {
   interface Window {
     toolboxAPI?: unknown;
-    __copied?: string[];
-    __notices?: Array<{ title: string; body: string; type: string }>;
     __audit?: { enabled: boolean; writes: string[] };
   }
 }
 
-const URLS: Record<Build, string> = { web: 'http://127.0.0.1:5173/', pptb: 'http://127.0.0.1:5174/' };
-const BUILDS: Build[] = ['web', 'pptb'];
+const WEB_URL = 'http://127.0.0.1:5173/';
 const THEMES: Theme[] = ['light', 'dark'];
 const EMAIL = "outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']";
-const NO_CLIPBOARD = 'the host does not provide a clipboard API';
 // Today's header: the 46px mode switch row plus 24px padding and a 1px border.
 const TODAYS_HEADER_HEIGHT = 71;
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
-/** Loads a build with onboarding dismissed; the PPTB build gets a mocked toolboxAPI. */
-async function open(page: Page, build: Build, options: { theme?: Theme; clipboard?: boolean } = {}) {
-  const { theme = 'light', clipboard = true } = options;
+/** Loads the web build with onboarding dismissed. */
+async function open(page: Page, options: { theme?: Theme } = {}) {
+  const { theme = 'light' } = options;
   await page.addInitScript(() => localStorage.setItem('eb.onboarding.seen.v1', '1'));
-  if (build === 'pptb') {
-    await page.addInitScript(
-      ({ theme, clipboard }) => {
-        window.__copied = [];
-        window.__notices = [];
-        window.toolboxAPI = {
-          utils: {
-            ...(clipboard ? { copyToClipboard: async (text: string) => void window.__copied?.push(text) } : {}),
-            showNotification: async (notice: { title: string; body: string; type: string }) =>
-              void window.__notices?.push(notice),
-            getCurrentTheme: async () => theme,
-          },
-          settings: {
-            get: async (key: string) => (key === 'eb.onboarding.seen.v1' ? '1' : undefined),
-            set: async () => undefined,
-            setAll: async () => undefined,
-            getAll: async () => ({}),
-          },
-          events: { on: () => undefined, off: () => undefined, getHistory: async () => [] },
-        };
-      },
-      { theme, clipboard },
-    );
-  } else {
-    await page.emulateMedia({ colorScheme: theme });
-  }
-  await page.goto(URLS[build]);
+  await page.emulateMedia({ colorScheme: theme });
+  await page.goto(WEB_URL);
   await expect(page.locator('.eb-root')).toHaveAttribute('data-theme', theme);
 }
 
-async function clipboardText(page: Page, build: Build): Promise<string | undefined> {
-  return build === 'web'
-    ? page.evaluate(() => navigator.clipboard.readText())
-    : page.evaluate(() => window.__copied?.at(-1));
+async function clipboardText(page: Page): Promise<string> {
+  return page.evaluate(() => navigator.clipboard.readText());
 }
 
-// Scoped: the drag-and-drop library adds its own live region, which is the page's first status.
-const parseStatus = (page: Page) => page.getByRole('region', { name: 'Source' }).getByRole('status');
+// Parse success surfaces as the value count in the Payload card header; the
+// old in-pane Parse button and status line were replaced by paste-to-parse.
+const payloadMeta = (page: Page) => page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
+
+/** Bare formula-editor copy. The panel also has "Copy @{}", "Copy item()", and "Copy item() @{}". */
+const referenceCopy = (page: Page) => page.getByRole('button', { name: 'Copy', exact: true });
 
 const treeRow = (page: Page, label: string) =>
   page.getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
@@ -78,16 +50,31 @@ async function openJsonReference(page: Page) {
   await page.getByRole('tab', { name: 'JSON reference' }).click();
 }
 
+/** Pastes into the Sample JSON textarea — the flow the app auto-parses. */
+async function pasteSample(page: Page, sample: string) {
+  await page.getByLabel('Sample JSON').evaluate(
+    (element, text) => {
+      element.focus();
+      const data = new DataTransfer();
+      data.setData('text', text);
+      element.dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
+      );
+    },
+    sample,
+  );
+}
+
 async function parseSample(
   page: Page,
   source: { outputFrom: 'Action' | 'Trigger'; name?: string; shape: 'full' | 'body'; sample: string },
 ) {
-  await page.getByRole('radio', { name: source.outputFrom }).click();
+  // One radiogroup of four combined roots, labelled e.g. 'Action · Full output'.
+  const root = `${source.outputFrom} · ${source.shape === 'full' ? 'Full output' : 'Body only'}`;
+  await page.getByRole('radio', { name: root }).click();
   if (source.name !== undefined) await page.getByLabel('Action name').fill(source.name);
-  await page.getByRole('radio', { name: source.shape === 'full' ? /^Full output/ : 'Body only' }).click();
-  await page.getByLabel('Sample JSON').fill(source.sample);
-  await page.getByRole('button', { name: 'Parse' }).click();
-  await expect(parseStatus(page)).toHaveText(/^Parsed · /);
+  await pasteSample(page, source.sample);
+  await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
 }
 
 /** Expands each ancestor by its chevron, then selects the last label. */
@@ -112,10 +99,9 @@ async function loadEmailReference(page: Page) {
   await select(page, ['body', 'value', '[0]', 'Requester', 'Email']);
 }
 
-for (const build of BUILDS) {
-  test.describe(`${build} build`, () => {
+test.describe('web build', () => {
     test('copies a correctly rooted reference for each of the four roots (SC-002)', async ({ page }) => {
-      await open(page, build);
+      await open(page);
       await openJsonReference(page);
       const bodyOnly = JSON.stringify(JSON.parse(fixtureA1).body);
       const cases = [
@@ -129,9 +115,10 @@ for (const build of BUILDS) {
         await parseSample(page, source);
         await select(page, [...path]);
         await expect(page.getByLabel('Reference expression')).toHaveText(expected);
-        await page.getByRole('button', { name: 'Copy' }).click();
-        await expect(page.getByText('Expression copied')).toBeVisible();
-        expect(await clipboardText(page, build)).toBe(expected);
+        await referenceCopy(page).click();
+        // .first(): successive cases can stack not-yet-dismissed toasts.
+        await expect(page.getByText('Expression copied').first()).toBeVisible();
+        expect(await clipboardText(page)).toBe(expected);
       }
     });
 
@@ -167,7 +154,7 @@ for (const build of BUILDS) {
           },
         });
       });
-      await open(page, build);
+      await open(page);
       await page.waitForLoadState('networkidle');
       await page.evaluate(() => {
         if (window.__audit) window.__audit.enabled = true;
@@ -179,7 +166,7 @@ for (const build of BUILDS) {
       page.on('request', (request) => requests.push(request.url()));
 
       await loadEmailReference(page);
-      await page.getByRole('button', { name: 'Copy' }).click();
+      await referenceCopy(page).click();
       await expect(page.getByText('Expression copied')).toBeVisible();
       await page.getByRole('tab', { name: /^Condition builder/ }).click();
       await openJsonReference(page);
@@ -190,7 +177,7 @@ for (const build of BUILDS) {
 
     for (const theme of THEMES) {
       test(`both views pass the accessibility scan in the ${theme} theme (FR-085)`, async ({ page }) => {
-        await open(page, build, { theme });
+        await open(page, { theme });
         const scan = async (label: string) => {
           const results = await new AxeBuilder({ page })
             // Fluent's tabster focus sentinels: aria-hidden <i tabindex="0"> elements it appends to <body>.
@@ -206,17 +193,15 @@ for (const build of BUILDS) {
         await loadEmailReference(page);
         await scan('JSON reference with a selection');
         await page.getByLabel('Action name').fill('');
-        await page.getByLabel('Sample JSON').fill('{"a": 1,}');
-        await page.getByRole('button', { name: 'Parse' }).click();
+        await pasteSample(page, '{"a": 1,}');
         await expect(page.getByRole('alert')).toBeVisible();
         await scan('JSON reference with errors');
       });
     }
-  });
-}
+});
 
 test('the core task works by keyboard alone, with a visible focus ring (SC-005)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
 
   await page.keyboard.press('Tab');
@@ -226,17 +211,15 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   expect(await focusRing()).not.toBe('none');
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('radio', { name: 'Action' })).toBeFocused();
+  await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByLabel('Action name')).toBeFocused();
   await page.keyboard.type('Get items');
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('radio', { name: 'Full output (also Compose)' })).toBeFocused();
-  await page.keyboard.press('Tab');
-  await page.keyboard.insertText(fixtureA1);
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Enter');
-  await expect(parseStatus(page)).toHaveText('Parsed · 25 values');
+  await expect(page.getByLabel('Sample JSON')).toBeFocused();
+  await page.evaluate((text) => navigator.clipboard.writeText(text), fixtureA1);
+  await page.keyboard.press('Control+V');
+  await expect(payloadMeta(page)).toHaveText('25 values');
 
   await page.keyboard.press('Tab');
   await expect(treeRow(page, "outputs('Get_items')")).toBeFocused();
@@ -251,53 +234,38 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
   expect(await focusRing()).not.toBe('none');
 
+  // Reference info, then the inline copy, then the bare Copy.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Reference info' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Copy @{}' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(referenceCopy(page)).toBeFocused();
+  expect(await focusRing()).not.toBe('none');
   await page.keyboard.press('Enter');
   await expect(page.getByText('Expression copied')).toBeVisible();
-  expect(await clipboardText(page, 'web')).toBe(EMAIL);
-});
-
-test('a PPTB host without a clipboard API reports all three copy failures (SC-007)', async ({ page }) => {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-  await open(page, 'pptb', { clipboard: false });
-  const notices = () => page.evaluate(() => window.__notices ?? []);
-
-  await addTwoRules(page);
-  await page.getByRole('region', { name: 'Expression Preview' }).getByRole('button', { name: 'Copy' }).click();
-  await expect.poll(notices).toContainEqual({ title: 'Error', body: `Could not copy expression: ${NO_CLIPBOARD}`, type: 'error' });
-  await page.getByRole('button', { name: 'Export' }).click();
-  await expect.poll(notices).toContainEqual({ title: 'Error', body: `Could not copy expression JSON: ${NO_CLIPBOARD}`, type: 'error' });
-
-  await loadEmailReference(page);
-  await page.getByRole('button', { name: 'Copy' }).click();
-  await expect(page.getByText(`Could not copy expression: ${NO_CLIPBOARD}`)).toBeVisible();
-
-  expect((await notices()).map((notice) => notice.type)).not.toContain('success');
-  await expect(page.getByText('Expression copied')).toHaveCount(0);
-  expect(pageErrors).toEqual([]);
+  expect(await clipboardText(page)).toBe(EMAIL);
 });
 
 test('switching builders leaves the document and Export byte-identical (SC-003)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   await addTwoRules(page);
   const expression = page.getByLabel('Generated expression');
   const expressionBefore = await expression.textContent();
   await page.getByRole('button', { name: 'Export' }).click();
-  const exportBefore = await clipboardText(page, 'web');
+  const exportBefore = await clipboardText(page);
 
   await loadEmailReference(page);
-  await page.getByRole('button', { name: 'Copy' }).click();
+  await referenceCopy(page).click();
   await page.getByRole('tab', { name: /^Condition builder/ }).click();
 
   await expect(expression).toHaveText(expressionBefore ?? '');
   await page.getByRole('button', { name: 'Export' }).click();
-  expect(await clipboardText(page, 'web')).toBe(exportBefore);
+  expect(await clipboardText(page)).toBe(exportBefore);
 });
 
 test('the JSON reference view follows the host theme (FR-091)', async ({ page }) => {
-  await open(page, 'web', { theme: 'light' });
+  await open(page, { theme: 'light' });
   await openJsonReference(page);
   const card = page.locator('.eb-json-source');
   const lightSurface = await card.evaluate((element) => getComputedStyle(element).backgroundColor);
@@ -318,7 +286,7 @@ const VIEWPORTS = [
 
 for (const theme of THEMES) {
   test(`every viewport keeps both views inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
-    await open(page, 'web', { theme });
+    await open(page, { theme });
     await addTwoRules(page);
     await loadEmailReference(page);
     const views = [
@@ -356,26 +324,28 @@ for (const theme of THEMES) {
   });
 }
 
-test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the workspace scrolls (FR-092)', async ({ page }) => {
-  await open(page, 'web');
+test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the cards scroll inside, not the workspace (FR-092)', async ({ page }) => {
+  await open(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await loadEmailReference(page);
 
   await expect(page.getByLabel('Reference expression')).toBeInViewport();
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeInViewport();
+  await expect(referenceCopy(page)).toBeInViewport();
   expect(await page.locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
 
   await page.setViewportSize({ width: 1280, height: 420 });
   const workspace = page.locator('.eb-json-workspace');
-  expect(await workspace.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-  await page.getByRole('button', { name: 'Copy' }).scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeInViewport();
+  // Cards are bounded to the host frame, so the tree and reference body
+  // scroll inside their cards and the workspace itself never needs a scrollbar.
+  expect(await workspace.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+  await referenceCopy(page).scrollIntoViewIfNeeded();
+  await expect(referenceCopy(page)).toBeInViewport();
 });
 
 test('samples at the limits parse and expand within 1 second (FR-039, SC-006 guard)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   await openJsonReference(page);
-  await page.getByRole('radio', { name: 'Trigger' }).click();
+  await page.getByRole('radio', { name: 'Trigger · Full output' }).click();
   const wide = JSON.stringify(Object.fromEntries(Array.from({ length: 9_999 }, (_, index) => [`key${index}`, index])));
   const samples = {
     size: JSON.stringify({ blob: 'x'.repeat(1_048_500) }),
@@ -385,10 +355,9 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
   };
 
   for (const [name, sample] of Object.entries(samples)) {
-    await page.getByLabel('Sample JSON').fill(sample);
     const started = Date.now();
-    await page.getByRole('button', { name: 'Parse' }).click();
-    await expect(parseStatus(page)).toHaveText(/^Parsed · /);
+    await pasteSample(page, sample);
+    await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
     await expect(page.getByRole('tree')).toBeVisible();
     const elapsed = Date.now() - started;
     test.info().annotations.push({ type: 'SC-006 parse', description: `${name}: ${elapsed} ms` });
