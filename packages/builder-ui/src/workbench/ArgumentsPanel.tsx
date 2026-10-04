@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { argKind, type ArgumentSlot } from './functionsState';
+import { argKind, argTypeLabel, type ArgumentSlot } from './functionsState';
 import { NO_TEXT_ASSISTANCE } from './jsonReferenceState';
 
 export interface ArgumentsPanelProps {
@@ -24,23 +24,27 @@ export function ArgumentsPanel({
       </h2>
       {slots.map((slot, index) => {
         const id = `${idPrefix}-arg-${index}`;
+        const typeId = `${id}-type`;
         return (
           <div className="eb-fn-arg" key={slot.name}>
             <label htmlFor={id}>
               {slot.name}
               {' '}
               <span aria-hidden="true">{slot.required ? 'required' : 'optional'}</span>
+              {' '}
+              <span className="eb-fn-arg-type" id={typeId}>({argTypeLabel(slot.type)})</span>
             </label>
             <input
               {...NO_TEXT_ASSISTANCE}
               id={id}
               aria-label={slot.name}
+              aria-describedby={typeId}
               aria-required={slot.required}
               className="eb-fn-input"
               data-arg={slot.name}
               data-kind={argKind(slot)}
               value={slot.value}
-              placeholder="Type a value or pick a function"
+              placeholder={slot.sample ?? 'Type a value or pick a function'}
               onChange={(event) => onArgChange(slot.name, event.target.value)}
               onFocus={() => onArgFocus(slot.name)}
               onDragOver={(event) => event.preventDefault()}

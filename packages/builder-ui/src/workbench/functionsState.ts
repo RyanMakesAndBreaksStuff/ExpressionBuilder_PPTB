@@ -137,6 +137,8 @@ export interface ArgumentSlot {
 	required: boolean;
 	value: string;
 	parsed: ParseArgumentResult;
+	/** Timestamp example shown as the empty input's placeholder. */
+	sample?: string;
 }
 
 /**
@@ -145,7 +147,7 @@ export interface ArgumentSlot {
  * catalog already orders them that way.
  */
 function buildSlots(fn: CatalogFunction, args: Readonly<Record<string, string>>): ArgumentSlot[] {
-	const slots = fn.args.map((arg) => slotFor(arg.name, arg.type, arg.required, args));
+	const slots = fn.args.map((arg) => slotFor(arg.name, arg.type, arg.required, args, arg.sample));
 
 	const tail = fn.args.at(-1);
 	if (tail?.variadic === true) {
@@ -155,7 +157,7 @@ function buildSlots(fn: CatalogFunction, args: Readonly<Record<string, string>>)
 		if (!Number.isFinite(index)) index = fn.args.length;
 		while ((args[`${base}${index}`] ?? '').trim() !== '') {
 			index += 1;
-			slots.push(slotFor(`${base}${index}`, tail.type, false, args));
+			slots.push(slotFor(`${base}${index}`, tail.type, false, args, tail.sample));
 		}
 	}
 
@@ -167,9 +169,35 @@ function slotFor(
 	type: ArgType,
 	required: boolean,
 	args: Readonly<Record<string, string>>,
+	sample?: string,
 ): ArgumentSlot {
 	const value = args[name] ?? '';
-	return { name, type, required, value, parsed: parseArgument(value) };
+	return {
+		name,
+		type,
+		required,
+		value,
+		parsed: parseArgument(value),
+		...(sample === undefined ? {} : { sample }),
+	};
+}
+
+/** Badge text for an argument's expected type. Integer is the short form from the Functions mock. */
+export function argTypeLabel(type: ArgType): string {
+	switch (type) {
+		case 'string': return 'STRING';
+		case 'integer': return 'INT';
+		case 'number': return 'NUMBER';
+		case 'boolean': return 'BOOLEAN';
+		case 'any': return 'ANY';
+		case 'collection': return 'COLLECTION';
+		case 'object': return 'OBJECT';
+		case 'timestamp': return 'TIMESTAMP';
+		default: {
+			const exhaustive: never = type;
+			return exhaustive;
+		}
+	}
 }
 
 /** Drives the input's `data-kind`, and so its color (FR-14). */

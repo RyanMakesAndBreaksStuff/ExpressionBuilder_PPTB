@@ -14,6 +14,8 @@ export interface CatalogArg {
   required: boolean;
   /** Repeats: the UI offers one more empty slot once this one is filled (D9). */
   variadic: boolean;
+  /** Learn's example literal for a timestamp argument. Absent on every other type. */
+  sample?: string;
 }
 
 export interface CatalogFunction {
@@ -30,6 +32,7 @@ export interface CatalogFunction {
  * ponytail: a 7-line reader keeps 79 uniform signatures at one line each
  * instead of ~900 lines of object literals. If an argument ever needs more
  * than name/type/required/variadic, drop the spec and write the objects out.
+ * Timestamp samples stay out of the spec: convertToUtc's sample contains a space.
  */
 function parseArgs(spec: string): CatalogArg[] {
   if (spec === '') return [];
@@ -48,8 +51,13 @@ function entry(
   spec: string,
   returns: ArgType,
   description: string,
+  samples?: Readonly<Record<string, string>>,
 ): CatalogFunction {
-  return { name, group, description, args: parseArgs(spec), returns };
+  const args = parseArgs(spec).map((arg) => {
+    const sample = samples?.[arg.name];
+    return sample === undefined ? arg : { ...arg, sample };
+  });
+  return { name, group, description, args, returns };
 }
 
 export const FUNCTION_CATALOG: CatalogFunction[] = [
@@ -118,28 +126,28 @@ export const FUNCTION_CATALOG: CatalogFunction[] = [
   entry('Math', 'sub', 'minuend:number subtrahend:number', 'number', 'Subtract the second number from the first.'),
 
   // ---- Date and time (23) ----
-  entry('Date and time', 'addDays', 'timestamp:timestamp days:integer format:string?', 'string', 'Add days to a timestamp.'),
-  entry('Date and time', 'addHours', 'timestamp:timestamp hours:integer format:string?', 'string', 'Add hours to a timestamp.'),
-  entry('Date and time', 'addMinutes', 'timestamp:timestamp minutes:integer format:string?', 'string', 'Add minutes to a timestamp.'),
-  entry('Date and time', 'addSeconds', 'timestamp:timestamp seconds:integer format:string?', 'string', 'Add seconds to a timestamp.'),
-  entry('Date and time', 'addToTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Add a number of time units to a timestamp.'),
-  entry('Date and time', 'convertFromUtc', 'timestamp:timestamp destinationTimeZone:string format:string?', 'string', 'Convert a timestamp from UTC to a time zone.'),
-  entry('Date and time', 'convertTimeZone', 'timestamp:timestamp sourceTimeZone:string destinationTimeZone:string format:string?', 'string', 'Convert a timestamp between time zones.'),
-  entry('Date and time', 'convertToUtc', 'timestamp:timestamp sourceTimeZone:string format:string?', 'string', 'Convert a timestamp from a time zone to UTC.'),
-  entry('Date and time', 'dateDifference', 'startDate:timestamp endDate:timestamp', 'string', 'Difference between two timestamps.'),
-  entry('Date and time', 'dayOfMonth', 'timestamp:timestamp', 'integer', 'Day of the month.'),
-  entry('Date and time', 'dayOfWeek', 'timestamp:timestamp', 'integer', 'Day of the week, Sunday is 0.'),
-  entry('Date and time', 'dayOfYear', 'timestamp:timestamp', 'integer', 'Day of the year.'),
-  entry('Date and time', 'formatDateTime', 'timestamp:timestamp format:string? locale:string?', 'string', 'Format a timestamp.'),
+  entry('Date and time', 'addDays', 'timestamp:timestamp days:integer format:string?', 'string', 'Add days to a timestamp.', { timestamp: '2018-03-15T00:00:00Z' }),
+  entry('Date and time', 'addHours', 'timestamp:timestamp hours:integer format:string?', 'string', 'Add hours to a timestamp.', { timestamp: '2018-03-15T00:00:00Z' }),
+  entry('Date and time', 'addMinutes', 'timestamp:timestamp minutes:integer format:string?', 'string', 'Add minutes to a timestamp.', { timestamp: '2018-03-15T00:10:00Z' }),
+  entry('Date and time', 'addSeconds', 'timestamp:timestamp seconds:integer format:string?', 'string', 'Add seconds to a timestamp.', { timestamp: '2018-03-15T00:00:00Z' }),
+  entry('Date and time', 'addToTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Add a number of time units to a timestamp.', { timestamp: '2018-01-01T00:00:00Z' }),
+  entry('Date and time', 'convertFromUtc', 'timestamp:timestamp destinationTimeZone:string format:string?', 'string', 'Convert a timestamp from UTC to a time zone.', { timestamp: '2018-01-01T08:00:00.0000000Z' }),
+  entry('Date and time', 'convertTimeZone', 'timestamp:timestamp sourceTimeZone:string destinationTimeZone:string format:string?', 'string', 'Convert a timestamp between time zones.', { timestamp: '2018-01-01T08:00:00.0000000Z' }),
+  entry('Date and time', 'convertToUtc', 'timestamp:timestamp sourceTimeZone:string format:string?', 'string', 'Convert a timestamp from a time zone to UTC.', { timestamp: '01/01/2018 00:00:00' }),
+  entry('Date and time', 'dateDifference', 'startDate:timestamp endDate:timestamp', 'string', 'Difference between two timestamps.', { startDate: '2015-02-08', endDate: '2018-07-30' }),
+  entry('Date and time', 'dayOfMonth', 'timestamp:timestamp', 'integer', 'Day of the month.', { timestamp: '2018-03-15T13:27:36Z' }),
+  entry('Date and time', 'dayOfWeek', 'timestamp:timestamp', 'integer', 'Day of the week, Sunday is 0.', { timestamp: '2018-03-15T13:27:36Z' }),
+  entry('Date and time', 'dayOfYear', 'timestamp:timestamp', 'integer', 'Day of the year.', { timestamp: '2018-03-15T13:27:36Z' }),
+  entry('Date and time', 'formatDateTime', 'timestamp:timestamp format:string? locale:string?', 'string', 'Format a timestamp.', { timestamp: '03/15/2018' }),
   entry('Date and time', 'formatTimeSpan', 'timespan:string format:string? locale:string?', 'string', 'Format a time span.'),
   entry('Date and time', 'getFutureTime', 'interval:integer timeUnit:string format:string?', 'string', 'Current timestamp plus an interval.'),
   entry('Date and time', 'getPastTime', 'interval:integer timeUnit:string format:string?', 'string', 'Current timestamp minus an interval.'),
   entry('Date and time', 'parseDateTime', 'timestamp:string locale:string? format:string?', 'string', 'Parse a timestamp from a string.'),
-  entry('Date and time', 'startOfDay', 'timestamp:timestamp format:string?', 'string', 'Start of the day for a timestamp.'),
-  entry('Date and time', 'startOfHour', 'timestamp:timestamp format:string?', 'string', 'Start of the hour for a timestamp.'),
-  entry('Date and time', 'startOfMonth', 'timestamp:timestamp format:string?', 'string', 'Start of the month for a timestamp.'),
-  entry('Date and time', 'subtractFromTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Subtract a number of time units from a timestamp.'),
-  entry('Date and time', 'ticks', 'timestamp:timestamp', 'number', 'Number of 100-nanosecond ticks since 0001-01-01.'),
+  entry('Date and time', 'startOfDay', 'timestamp:timestamp format:string?', 'string', 'Start of the day for a timestamp.', { timestamp: '2018-03-15T13:30:30Z' }),
+  entry('Date and time', 'startOfHour', 'timestamp:timestamp format:string?', 'string', 'Start of the hour for a timestamp.', { timestamp: '2018-03-15T13:30:30Z' }),
+  entry('Date and time', 'startOfMonth', 'timestamp:timestamp format:string?', 'string', 'Start of the month for a timestamp.', { timestamp: '2018-03-15T13:30:30Z' }),
+  entry('Date and time', 'subtractFromTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Subtract a number of time units from a timestamp.', { timestamp: '2018-01-02T00:00:00Z' }),
+  entry('Date and time', 'ticks', 'timestamp:timestamp', 'number', 'Number of 100-nanosecond ticks since 0001-01-01.', { timestamp: '2018-03-15T13:27:36Z' }),
   entry('Date and time', 'utcNow', 'format:string?', 'string', 'Current timestamp in UTC.'),
 ];
 

@@ -65,6 +65,57 @@ describe('ArgumentsPanel', () => {
     });
   });
 
+  it('shows the expected type for each substring argument (AC-12.1)', () => {
+    render(
+      <ArgumentsPanel
+        functionName="substring"
+        slots={[
+          { name: 'text', type: 'string', required: true, value: '', parsed: parseArgument('') },
+          { name: 'startIndex', type: 'integer', required: true, value: '', parsed: parseArgument('') },
+          { name: 'length', type: 'integer', required: false, value: '', parsed: parseArgument('') },
+        ]}
+        onArgChange={vi.fn()}
+        onArgFocus={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('(STRING)')).toBeInTheDocument();
+    expect(screen.getAllByText('(INT)')).toHaveLength(2);
+    const text = screen.getByLabelText('text');
+    const typeId = text.getAttribute('aria-describedby');
+    expect(typeId).toBeTruthy();
+    expect(document.getElementById(typeId ?? '')).toHaveTextContent('(STRING)');
+    for (const input of screen.getAllByRole('textbox')) {
+      expect(input).toHaveAttribute('placeholder', 'Type a value or pick a function');
+    }
+  });
+
+  it('uses the timestamp sample as the placeholder and leaves format generic', () => {
+    render(
+      <ArgumentsPanel
+        functionName="addDays"
+        slots={[
+          {
+            name: 'timestamp',
+            type: 'timestamp',
+            required: true,
+            value: '',
+            sample: '2018-03-15T00:00:00Z',
+            parsed: parseArgument(''),
+          },
+          { name: 'days', type: 'integer', required: true, value: '', parsed: parseArgument('') },
+          { name: 'format', type: 'string', required: false, value: '', parsed: parseArgument('') },
+        ]}
+        onArgChange={vi.fn()}
+        onArgFocus={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('(TIMESTAMP)')).toBeInTheDocument();
+    expect(screen.getByLabelText('timestamp')).toHaveAttribute('placeholder', '2018-03-15T00:00:00Z');
+    expect(screen.getByLabelText('format')).toHaveAttribute('placeholder', 'Type a value or pick a function');
+  });
+
   it('accepts a dropped text/plain reference and enables native dropping (FR-16)', () => {
     const props = renderPanel();
     const input = screen.getByLabelText('text');

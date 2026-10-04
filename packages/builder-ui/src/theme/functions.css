@@ -209,6 +209,12 @@
 	font-weight: 400;
 }
 
+.eb-fn-arg label > .eb-fn-arg-type {
+	color: var(--warn);
+	font-size: 14px;
+	font-weight: 600;
+}
+
 .eb-fn-arg + .eb-fn-arg {
 	margin-top: 14px;
 }

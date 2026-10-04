@@ -69,6 +69,9 @@ describe('Functions screen styles', () => {
   it('keeps argument and optional labels at the approved size', () => {
     expect(rule('.eb-fn-arg label')).toMatch(/font-size:\s*14px;/);
     expect(rule('.eb-fn-arg label > span')).toMatch(/font-size:\s*14px;/);
+    expect(rule('.eb-fn-arg label > .eb-fn-arg-type')).toMatch(/color:\s*var\(--warn\);/);
+    expect(rule('.eb-fn-arg label > .eb-fn-arg-type')).toMatch(/font-size:\s*14px;/);
+    expect(rule('.eb-fn-arg label > .eb-fn-arg-type')).toMatch(/font-weight:\s*600;/);
   });
 
   it('keeps the expression preview and format selector in the functions code theme', () => {

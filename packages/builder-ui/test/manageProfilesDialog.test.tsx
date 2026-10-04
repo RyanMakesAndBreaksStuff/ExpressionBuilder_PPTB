@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlatformSettings } from '@ryanmakes/eb_platformadapter';
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import {
@@ -10,7 +10,16 @@ import {
   type ManageProfilesDialogProps,
 } from '../src/workbench/ManageProfilesDialog';
 
-afterEach(() => cleanup());
+beforeEach(() => {
+  // jsdom has no layout; Tabster treats a zero-sized body as a hidden frame.
+  vi.spyOn(document.body, 'getBoundingClientRect')
+    .mockReturnValue(new DOMRect(0, 0, 1280, 800));
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const fields: FieldDefinition[] = [
   { id: 'Status', label: 'Status', path: 'Status', type: 'string' } as FieldDefinition,
@@ -55,10 +64,10 @@ describe('ManageProfilesDialog', () => {
     expect(await screen.findByText('saved-profile')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Delete saved-profile' }));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
+    expect(await screen.findByText('No saved profiles.')).toBeInTheDocument();
     expect(screen.queryByText('saved-profile')).not.toBeInTheDocument();
-    expect(screen.getByText('No saved profiles.')).toBeInTheDocument();
   });
 
   it('calls onNotify with an error level and keeps the profile listed when delete fails', async () => {
@@ -79,7 +88,7 @@ describe('ManageProfilesDialog', () => {
     expect(await screen.findByText('saved-profile')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Delete saved-profile' }));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     expect(onNotify).toHaveBeenCalledWith(
       'Could not delete profile "saved-profile".',

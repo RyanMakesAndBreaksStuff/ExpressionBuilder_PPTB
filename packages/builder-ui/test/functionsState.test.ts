@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	argKind,
+	argTypeLabel,
 	deriveFunctions,
 	functionsReducer,
 	initialFunctionsState,
@@ -165,6 +166,28 @@ describe('functions state', () => {
 		});
 		expect(unfocused.args.text1).toBe("triggerBody()?['Name']");
 		expect(unfocused.lastFocusedArg).toBe('text1');
+	});
+
+	it('labels each argument type, shortening integer to INT', () => {
+		expect(argTypeLabel('string')).toBe('STRING');
+		expect(argTypeLabel('integer')).toBe('INT');
+		expect(argTypeLabel('number')).toBe('NUMBER');
+		expect(argTypeLabel('boolean')).toBe('BOOLEAN');
+		expect(argTypeLabel('any')).toBe('ANY');
+		expect(argTypeLabel('collection')).toBe('COLLECTION');
+		expect(argTypeLabel('object')).toBe('OBJECT');
+		expect(argTypeLabel('timestamp')).toBe('TIMESTAMP');
+	});
+
+	it('copies a timestamp sample onto its slot and leaves other slots without one', () => {
+		const addDays = deriveFunctions(run({ type: 'selectFunction', name: 'addDays' })).slots;
+		expect(addDays.map((slot) => [slot.name, slot.sample])).toEqual([
+			['timestamp', '2018-03-15T00:00:00Z'],
+			['days', undefined],
+			['format', undefined],
+		]);
+		const substring = deriveFunctions(run({ type: 'selectFunction', name: 'substring' })).slots;
+		expect(substring.every((slot) => slot.sample === undefined)).toBe(true);
 	});
 
 	it('clears arguments and focus when the selection changes', () => {

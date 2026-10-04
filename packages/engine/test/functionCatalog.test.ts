@@ -43,6 +43,45 @@ describe('function catalog', () => {
 
   // findFunction resolves by name, so a twin with its own signature would hand
   // the Collection row the String row's arguments.
+  it('stores a Learn sample on every timestamp argument and nowhere else', () => {
+    const samples: Record<string, Record<string, string>> = {
+      addDays: { timestamp: '2018-03-15T00:00:00Z' },
+      addHours: { timestamp: '2018-03-15T00:00:00Z' },
+      addMinutes: { timestamp: '2018-03-15T00:10:00Z' },
+      addSeconds: { timestamp: '2018-03-15T00:00:00Z' },
+      addToTime: { timestamp: '2018-01-01T00:00:00Z' },
+      convertFromUtc: { timestamp: '2018-01-01T08:00:00.0000000Z' },
+      convertTimeZone: { timestamp: '2018-01-01T08:00:00.0000000Z' },
+      convertToUtc: { timestamp: '01/01/2018 00:00:00' },
+      dateDifference: { startDate: '2015-02-08', endDate: '2018-07-30' },
+      dayOfMonth: { timestamp: '2018-03-15T13:27:36Z' },
+      dayOfWeek: { timestamp: '2018-03-15T13:27:36Z' },
+      dayOfYear: { timestamp: '2018-03-15T13:27:36Z' },
+      formatDateTime: { timestamp: '03/15/2018' },
+      startOfDay: { timestamp: '2018-03-15T13:30:30Z' },
+      startOfHour: { timestamp: '2018-03-15T13:30:30Z' },
+      startOfMonth: { timestamp: '2018-03-15T13:30:30Z' },
+      subtractFromTime: { timestamp: '2018-01-02T00:00:00Z' },
+      ticks: { timestamp: '2018-03-15T13:27:36Z' },
+    };
+    const seen = new Set<string>();
+    for (const fn of FUNCTION_CATALOG) {
+      for (const arg of fn.args) {
+        const expected = samples[fn.name]?.[arg.name];
+        if (arg.type === 'timestamp') {
+          expect(arg.sample, `${fn.group} ${fn.name}.${arg.name}`).toBe(expected);
+          seen.add(`${fn.name}.${arg.name}`);
+        } else {
+          expect(arg.sample, `${fn.group} ${fn.name}.${arg.name}`).toBeUndefined();
+        }
+      }
+    }
+    const declared = Object.entries(samples).flatMap(([name, args]) =>
+      Object.keys(args).map((arg) => `${name}.${arg}`),
+    );
+    expect(seen).toEqual(new Set(declared));
+  });
+
   it('gives a name Learn lists twice one signature, since it is one function', () => {
     for (const fn of FUNCTION_CATALOG) {
       const first = findFunction(fn.name);
