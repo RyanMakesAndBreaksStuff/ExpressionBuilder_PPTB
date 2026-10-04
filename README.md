@@ -1,23 +1,23 @@
 # Power Automate Expression Builder
 
-> **Version**: 1.0.2
+> **Version**: 1.2.1
 
 A visual composer for Power Automate **Trigger Condition** and **Filter Array** advanced-mode expressions. Instead of hand-writing `@and(...)` / `@or(...)` predicates, you build conditions in a UI and the app emits valid Power Automate expression syntax — with live preview and real-time diagnostics.
 
 Ships two ways from one shared codebase: a standalone **web app** and a **Power Platform Toolbox (PPTB)** plugin.
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 <details>
 <summary>More screenshots</summary>
 
 Nested AND/OR groups in the dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 Schema import — Field JSON, a sample payload, JSON Schema, or CSV:
 
-![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 </details>
 
@@ -29,6 +29,7 @@ Schema import — Field JSON, a sample payload, JSON Schema, or CSV:
 - **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
 - **Field profiles** — save and reload field sets across sessions
 - **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators)
+- **JSON references** — paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted `outputs()`, `body()`, `triggerOutputs()` or `triggerBody()` reference; see the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references). Pasted JSON is processed locally and is not uploaded or saved. Samples are strict JSON and parse automatically on paste (or when you pause while typing), up to 1 MiB, 10,000 values and 64 nesting levels.
 - **Graphite theme system** — accessible light/dark semantic tokens on Fluent UI v9
 - **Dockable workspace** — collapsible toolbox/support panes around the central canvas
 

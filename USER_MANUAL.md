@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.2 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.2.1 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -24,7 +24,7 @@
 
 **Power Automate Expression Builder** is a React/TypeScript application for building **Trigger Condition** and **Filter Array** advanced-mode predicates for Power Automate flows. Instead of hand-writing complex `@and(...)` / `@or(...)` expressions, you use a visual composer to build conditions, which the app translates into valid Power Automate expression syntax.
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 ### Two Deployment Targets
 
@@ -41,6 +41,7 @@
 - **Schema import** — Import fields from CSV, JSON, or JSON Schema when you don't have a live connection.
 - **Field profiles** — Save and reload field sets for reuse across sessions.
 - **Diagnostics** — Real-time validation with actionable error messages (type mismatches, unknown fields, unsupported operators).
+- **JSON references** — Paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Title']`. Pasted JSON is processed locally and is not uploaded or saved.
 - **Graphite theme system** — accessible light/dark semantic themes adapted from Fluent UI v9.
 - **Dockable workspace** — Collapsible left toolbox and right support panes around the central canvas.
 
@@ -224,6 +225,8 @@ npm run dev:pptb
 
 ### 5.2 The Workbench Layout
 
+The header's **Condition builder** and **JSON reference** tabs switch between the two builders. The layout below is the Condition builder; JSON reference is described in [5.8](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references).
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  WorkbenchHeader                                                  │
@@ -252,7 +255,7 @@ npm run dev:pptb
 - **Option A — Connect to Dataverse** (PPTB only): Click **Connect Table** → select a table → click **Confirm**. The app discovers all fields and their types.
 - **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste.
 
-  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 - **Option C — Use sample data**: Click **Load Samples** to populate demo fields.
 - **Option D — Add manually**: Click **Add Field** and define fields one by one.
@@ -266,7 +269,7 @@ npm run dev:pptb
 
 Nested AND/OR groups, shown here in the dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 #### Step 3: Review the Expression
 
@@ -348,6 +351,30 @@ Rules and groups can be repositioned within a document two ways:
 
 Both paths call the same `moveNode`/`reorderNode` document actions, so diagnostics and the expression preview stay in sync as you reorder.
 
+### 5.8 JSON References
+
+The **JSON reference** tab in the header opens a second builder. Paste a sample output from a flow run, select any value, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']`. Using it never changes your condition document: when you switch back to **Condition builder**, the rules, mode and Export output are exactly as you left them.
+
+1. **Output from** — choose **Action** and type the action name as the flow designer shows it, or choose **Trigger**. Spaces in the name become underscores and case is kept, because flow expressions match action names exactly.
+2. **The pasted JSON is** — say what you pasted:
+   - **Full output (also Compose)** roots the reference at `outputs('<name>')`, or `triggerOutputs()` for a trigger. Choose it for a run's whole output (`statusCode`, `headers` and `body`), and for Compose and other actions whose output has no `body` wrapper.
+   - **Body only** roots it at `body('<name>')`, or `triggerBody()`. Choose it when you pasted only the body. If the sample still has a top-level `body` key, a hint suggests **Full output**; the builder never changes the choice for you.
+3. **Sample JSON** — paste the output from a flow run. Pasting parses immediately, and **Parse** re-runs it any time. While you type, the sample re-parses automatically when you pause; until a new parse succeeds, the tree keeps showing the last successful sample.
+4. **Select a value** in the Payload tree: a string, number or boolean, or an object, an array, a null or the root itself. Large objects and arrays page with **Show N more**. The Reference card shows the path and the reference.
+5. **Copy**, in one of two formats:
+   - **Expression editor** (the default) copies the bare reference, for the expression editor.
+   - **Inside text @{…}** copies `@{<reference>}`, for use inside a text field. An inline expression always produces text.
+
+**Parsing.** Parsing is strict JSON, checked in order, and the first failure stops it with an inline message: an empty sample, a sample larger than 1 MiB, invalid JSON, more than 10,000 values, or nesting deeper than 64 levels. Comments, trailing commas and single quotes are rejected, and a repeated key keeps its last value. A successful parse replaces the tree, reports the value count in the Payload header and shows a **Parsed · N values** notification.
+
+**Fixed positions.** An index such as `[0]` reads that one item, not each item in a loop, and the Reference card says so whenever the path contains one. To act on every item, use an Apply to each or a Filter array.
+
+**Loop references.** When the selected path contains an index, the Reference card also offers the part after the last index as `item()` and `items()` references for use inside an Apply to each over that array. `item()` reads the innermost loop's current item. `items('<loop name>')` reads the named loop's current item, so it still works inside a nested loop; type the Apply to each's name in **Loop name** — not the name of the action that produced the sample. Spaces become underscores.
+
+**Privacy.** Pasted JSON is processed locally and is not uploaded or saved by this feature. The sample is never sent anywhere, written to settings or browser storage, or added to the condition document or its Export, and reloading the app clears it.
+
+**What a reference does not prove.** A reference is built from the sample you pasted. It does not prove that the action exists in your flow, that it has run, or that its output has this shape at run time. Check the expression in the flow.
+
 ---
 
 ## 6. Package Reference
@@ -375,6 +402,8 @@ const result = formatExpression(astNode, {
 | ------------------------- | ----------------------------------------------------- |
 | `formatExpression`        | AST → Power Automate expression string                |
 | `formatFieldReference`    | Field → `triggerBody()['field']` or `item()['field']` |
+| `formatPayloadReference`  | Root + typed path → payload reference, e.g. `outputs('Get_items')?['body']?['value'][0]` |
+| `formatPayloadRoot`       | Root only: `triggerBody()`, `triggerOutputs()`, `body('<name>')`, `outputs('<name>')` |
 | `formatLiteral`           | Value → quoted/unquoted literal string                |
 | `OPERATORS_BY_FIELD_TYPE` | Which operators each field type supports              |
 | `isOperatorSupported`     | Check whether a field type supports a given operator id |
@@ -401,7 +430,7 @@ const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 
 | Method                            | Purpose                                |
 | --------------------------------- | -------------------------------------- |
-| `copyToClipboard(text)`           | Copy expression to clipboard           |
+| `copyToClipboard(text)`           | Copy text to the clipboard. Rejects when the host cannot copy: the PPTB adapter rejects when the host has no clipboard API, and the web adapter when the browser has none or refuses. |
 | `notify(message, level)`          | Show toast notification                |
 | `getTheme()` / `onThemeChanged()` | Light/dark/high-contrast theme         |
 | `settings.get/set/remove`         | Persistent key-value storage           |
@@ -417,6 +446,8 @@ const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 The main application shell and all visual components.
 
 The package also re-exports the query-document types (`QueryDocument`, `QueryGroup`, `QueryNode`, `QueryRule`, `RulePatch`, `DataSourceDescriptor`, `DataSourceKind`) and document-mutation actions (`addGroup`, `addRule`, `changeGroupConjunction`, `deleteNode`, `duplicateRule`, `moveNode`, `reorderNode`, `selectRule`, `updateRule`) individually — see `packages/builder-ui/src/index.ts` for the exact list.
+
+The header's builder tabs switch between the condition workspace and **JSON reference**. That second builder is `workbench/JsonReferenceWorkspace.tsx` (Source pane, payload tree and Reference card). Its state reducer is `workbench/jsonReferenceState.ts`, and parsing with its limits is `importExport/jsonPayload.ts`. Its state lives in memory only: it is not part of `QueryDocument`, not exported from the package, and gone after a reload.
 
 ```typescript
 import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';

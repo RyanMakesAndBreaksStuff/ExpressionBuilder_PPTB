@@ -1,8 +1,8 @@
 # PPTB Usage
 
-> **Version**: 1.1.1
+> **Version**: 1.2.1
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 ## Install
 
@@ -10,7 +10,7 @@ Install **Expression Builder** from the Power Platform Toolbox marketplace (host
 
 ## Permissions & External Connections
 
-The tool declares **no `cspExceptions`** and contacts no external domain — no telemetry, no backend. Dataverse access goes through the host `dataverseAPI` against the connection you pick, and reads table/attribute **metadata only** (never records). Persistence uses the host `settings` API for field profiles and UI preferences.
+The tool declares **no `cspExceptions`** and contacts no external domain — no telemetry, no backend. Dataverse access goes through the host `dataverseAPI` against the connection you pick, and reads table/attribute **metadata only** (never records). Persistence uses the host `settings` API for field profiles and UI preferences. Pasted JSON in the JSON reference builder is processed locally and is not uploaded or saved by this feature.
 
 ## Building Conditions
 
@@ -22,11 +22,11 @@ The tool declares **no `cspExceptions`** and contacts no external domain — no 
 
 Nested AND/OR groups, in the Toolbox dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 With no Dataverse connection, import fields as Field JSON, a sample payload, JSON Schema, or CSV:
 
-![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 ## Reordering Conditions (Drag-and-Drop)
 
@@ -36,6 +36,17 @@ Rules and groups can be repositioned within the canvas two ways:
 - **Move buttons** — use the up/down chevron buttons next to a condition as a keyboard-accessible alternative to dragging; disabled at the first/last position in its group.
 
 Both paths update the same underlying document via `moveNode`/`reorderNode`, so diagnostics and the expression preview stay in sync as you reorder.
+
+## JSON References
+
+Open the **JSON reference** tab in the header to build a reference into a flow-run output:
+
+1. Choose **Output from** — **Action** (and type its name as the designer shows it) or **Trigger**.
+2. Choose what you pasted — **Full output (also Compose)** for `outputs('<name>')` / `triggerOutputs()`, or **Body only** for `body('<name>')` / `triggerBody()`.
+3. Paste the sample, select **Parse**, and select a value in the tree. Pasting parses automatically, and typing re-parses after a short pause. Samples up to 1 MiB, with up to 10,000 values and 64 nesting levels, are accepted, and only strict JSON — comments, trailing commas and single quotes are rejected. Failures show an inline message.
+4. **Copy** it for the expression editor, or as `@{…}` for use inside text.
+
+An index such as `[0]` reads one fixed item, not each item in a loop. A generated reference does not prove that the action exists, has run, or has this shape at run time. Switching back to **Condition builder** leaves your conditions exactly as they were. See the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references) for details.
 
 ## Shared
 

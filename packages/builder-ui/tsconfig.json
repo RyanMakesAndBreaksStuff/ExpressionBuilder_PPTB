@@ -11,7 +11,7 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../engine" },
-    { "path": "../platform" }
+    { "path": "../engine/tsconfig.json" },
+    { "path": "../platform/tsconfig.json" }
   ]
 }

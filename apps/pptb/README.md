@@ -23,6 +23,7 @@ No Dataverse connection? Import a field schema as Field JSON, a sample payload, 
 - **Field profiles** — save a field set and reload it in a later session.
 - **Real-time diagnostics** — type mismatches, unknown fields, and unsupported operators are flagged before you paste into a flow.
 - **Two expression modes** — Trigger Condition (`triggerBody()`) and Filter array (`item()`).
+- **JSON reference builder** — paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Title']`, bare or as `@{…}` for text.
 
 ## Install
 
@@ -46,6 +47,7 @@ To use Dataverse field discovery, select an environment connection in the Toolbo
 - **`cspExceptions`: none.** The tool declares no CSP exceptions and makes no requests to any external domain. It has no telemetry, no analytics, and no backend of its own.
 - **Dataverse access** is performed entirely through the host's `dataverseAPI`, scoped to the environment connection you select in the Toolbox. The tool reads table and attribute *metadata* only — it never reads, writes, or deletes records.
 - **Storage** is limited to the host's `settings` API (saved field profiles and UI preferences).
+- **Pasted JSON** in the JSON reference builder is processed locally and is not uploaded or saved by this feature. It is never written to the host `settings` API, and it is gone when the tool reloads.
 
 ## Theme & Accessibility
 

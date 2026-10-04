@@ -17,6 +17,12 @@ export type {
   ValueType,
 } from './types';
 export { formatExpression } from './formatter';
-export { formatFieldReference } from './fieldReferences';
+export type {
+  PayloadPath,
+  PayloadPathSegment,
+  PayloadReference,
+  PayloadReferenceRoot,
+} from './fieldReferences';
+export { formatFieldReference, formatPayloadReference, formatPayloadRoot } from './fieldReferences';
 export { formatLiteral } from './literals';
 export { OPERATORS_BY_FIELD_TYPE, isOperatorSupported } from './operators';

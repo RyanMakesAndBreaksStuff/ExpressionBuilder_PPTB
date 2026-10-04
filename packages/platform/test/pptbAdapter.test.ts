@@ -47,12 +47,12 @@ describe('createPptbAdapter', () => {
     expect(api.settings?.set).toHaveBeenCalledWith('draft', 'value');
   });
 
-  it('is a safe no-op off-host (no toolboxAPI at all)', async () => {
+  it('is a safe no-op off-host (no toolboxAPI at all), except that copying fails', async () => {
     const api: PptbToolboxApi = {};
     const adapter = createPptbAdapter(api);
     const observedTheme = vi.fn();
 
-    await expect(adapter.copyToClipboard('text')).resolves.toBeUndefined();
+    await expect(adapter.copyToClipboard('text')).rejects.toThrow('the host does not provide a clipboard API');
     await expect(adapter.notify('Heads up', 'warning')).resolves.toBeUndefined();
     await expect(adapter.getTheme()).resolves.toBe('light');
     const unsubscribe = adapter.onThemeChanged(observedTheme);
@@ -60,6 +60,22 @@ describe('createPptbAdapter', () => {
     await expect(adapter.settings.get('missing')).resolves.toBeNull();
     await expect(adapter.settings.set('draft', 'value')).resolves.toBeUndefined();
     await expect(adapter.settings.remove('draft')).resolves.toBeUndefined();
+  });
+
+  it('rejects a copy when the host utils namespace has no clipboard API', async () => {
+    const api: PptbToolboxApi = { utils: { showNotification: vi.fn().mockResolvedValue(undefined) } };
+
+    await expect(createPptbAdapter(api).copyToClipboard('text')).rejects.toThrow(
+      'the host does not provide a clipboard API',
+    );
+  });
+
+  it('passes a host clipboard rejection through to the caller', async () => {
+    const api: PptbToolboxApi = {
+      utils: { copyToClipboard: vi.fn().mockRejectedValue(new Error('clipboard is busy')) },
+    };
+
+    await expect(createPptbAdapter(api).copyToClipboard('text')).rejects.toThrow('clipboard is busy');
   });
 
   it('falls back to sample fields notification when no Dataverse connection exists', async () => {

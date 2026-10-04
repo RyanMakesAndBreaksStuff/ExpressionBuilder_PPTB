@@ -1,24 +1,36 @@
+const FUNCTION_NAMES =
+  'equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|item|items|triggerBody|triggerOutputs|outputs|body|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection';
+
+const KEYWORD = /^(?:and|or|not)$/;
+const FUNCTION = new RegExp(`^(?:${FUNCTION_NAMES})$`);
+// A doubled apostrophe stays inside its string: 'O''Brien' is one token.
+const STRING = /^'(?:[^']|'')*'$/;
+const NUMBER = /^\d+(?:\.\d+)?$/;
+const SYMBOL = /^[(),@?[\]{}]$/;
+const TOKENS = new RegExp(`(\\b(?:and|or|not|${FUNCTION_NAMES})\\b|'(?:[^']|'')*'|\\d+(?:\\.\\d+)?|[(),@?[\\]{}])`);
+
 function SyntaxPart({ part }: { part: string }) {
-  if (/^(and|or|not)$/.test(part)) {
+  if (KEYWORD.test(part)) {
     return <span className="kw">{part}</span>;
   }
-  if (/^(equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|item|triggerBody|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection)$/.test(part)) {
+  if (FUNCTION.test(part)) {
     return <span className="fn">{part}</span>;
   }
-  if (/^'[^']*'$/.test(part)) {
+  if (STRING.test(part)) {
     return <span className="str">{part}</span>;
   }
-  if (/^\d+$/.test(part) || /^\d+\.\d+$/.test(part)) {
+  if (NUMBER.test(part)) {
     return <span className="num">{part}</span>;
   }
-  if (/^[(),@\]?]$/.test(part)) {
+  if (SYMBOL.test(part)) {
     return <span className="sym">{part}</span>;
   }
   return <span>{part}</span>;
 }
 
+/** Display only: the tokens always join back into exactly the expression text. */
 function tokenizeExpression(expression: string): string[] {
-  return expression.split(/(\b(?:and|or|not|equals|greater|less|greaterOrEquals|lessOrEquals|contains|startsWith|endsWith|empty|notEmpty|addDays|utcNow|item|triggerBody|formatDateTime|toLower|trim|length|coalesce|split|replace|concat|union|intersection)\b|'[^']*'|\d+(?:\.\d+)?|[(),@\]?])/g).filter(Boolean);
+  return expression.split(TOKENS).filter(Boolean);
 }
 
 interface ExpressionPreviewProps {

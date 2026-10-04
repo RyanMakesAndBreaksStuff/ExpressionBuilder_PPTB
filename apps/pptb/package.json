@@ -3,12 +3,12 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.1.1",
+  "version": "1.2.1",
   "engines": {
     "node": ">=24.17.0 <25"
   },
   "displayName": "Expression Builder",
-  "description": "Power Automate Trigger And Array Filter Builder",
+  "description": "Power Automate Trigger And Array Filter Builder, plus JSON references for action and trigger outputs",
   "author": "Ryan Rettinger",
   "main": "dist/index.html",
   "files": [
@@ -20,11 +20,18 @@
     "power-automate",
     "power-platform",
     "power-platform-toolbox",
-    "cloud-flows"
+    "cloud-flows",
+    "expressions",
+    "json-reference"
   ],
   "contributors": [
     {
-      "name": "Ryan Rettinger"
+      "name": "Ryan Rettinger",
+      "url": "https://github.com/RyanMakesAndBreaksStuff"
+    },
+    { 
+      "name": "Matt Berg",
+      "url": "https://github.com/MattBerg11"
     }
   ],
   "license": "BSD-3-Clause",

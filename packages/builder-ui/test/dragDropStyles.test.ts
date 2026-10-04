@@ -333,11 +333,19 @@ describe('drag-and-drop visual contract', () => {
     // behind a width breakpoint. .eb-canvas-card is the only flexible item in
     // .eb-center-col, so without a floor it absorbs the whole shortfall.
     const workspace = declarationBlock('.eb-workspace');
-    expect(workspace).toMatch(
-      /grid-template-rows:\s*minmax\(var\(--eb-workspace-min-height\),\s*1fr\)\s*;/,
-    );
     expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
     expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
+
+    // The floor must also fit the host: a bare 320px floor plus the workspace's
+    // own 18px×2 padding overflowed a ~420px PPTB frame by ~7px, so the
+    // workspace scrolled dead space on launch. min() caps the floor at the
+    // viewport's actual supply (vh fallback first, dvh override second).
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100vh - 107px\)\),\s*1fr\s*\)\s*;/,
+    );
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100dvh - 107px\)\),\s*1fr\s*\)\s*;/,
+    );
 
     // A real floor, not a placeholder, but low enough that a short host (PPTB
     // routinely gives ~420px total, ~350px after the header) can show the
@@ -351,7 +359,7 @@ describe('drag-and-drop visual contract', () => {
   });
 
   it('lets the centre column scroll on a short host instead of crushing the canvas', () => {
-    const short = mediaBlock('min-width: 901px) and (max-height: 620px');
+    const short = mediaBlock('min-width: 601px) and (max-height: 620px');
 
     expect(short).toMatch(/\.eb-canvas-card\s*\{[^}]*flex:\s*0 0 auto\s*;/);
     expect(short).toMatch(/\.eb-canvas-card\s*\{[^}]*min-height:\s*220px\s*;/);
