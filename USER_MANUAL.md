@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.2 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.2.1 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -24,7 +24,7 @@
 
 **Power Automate Expression Builder** is a React/TypeScript application for building **Trigger Condition** and **Filter Array** advanced-mode predicates for Power Automate flows. Instead of hand-writing complex `@and(...)` / `@or(...)` expressions, you use a visual composer to build conditions, which the app translates into valid Power Automate expression syntax.
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 ### Two Deployment Targets
 
@@ -255,7 +255,7 @@ The header's **Condition builder** and **JSON reference** tabs switch between th
 - **Option A — Connect to Dataverse** (PPTB only): Click **Connect Table** → select a table → click **Confirm**. The app discovers all fields and their types.
 - **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste.
 
-  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 - **Option C — Use sample data**: Click **Load Samples** to populate demo fields.
 - **Option D — Add manually**: Click **Add Field** and define fields one by one.
@@ -269,7 +269,7 @@ The header's **Condition builder** and **JSON reference** tabs switch between th
 
 Nested AND/OR groups, shown here in the dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 #### Step 3: Review the Expression
 
@@ -359,11 +359,13 @@ The **JSON reference** tab in the header opens a second builder. Paste a sample 
 2. **The pasted JSON is** — say what you pasted:
    - **Full output (also Compose)** roots the reference at `outputs('<name>')`, or `triggerOutputs()` for a trigger. Choose it for a run's whole output (`statusCode`, `headers` and `body`), and for Compose and other actions whose output has no `body` wrapper.
    - **Body only** roots it at `body('<name>')`, or `triggerBody()`. Choose it when you pasted only the body. If the sample still has a top-level `body` key, a hint suggests **Full output**; the builder never changes the choice for you.
-3. **Sample JSON** — paste the output and select **Parse**. Samples up to 1 MiB, with up to 10,000 values and 64 levels of nesting, are accepted. If you edit the sample afterwards, the status says so, and the previous tree stays usable until you parse again.
-4. **Select a value** in the Payload tree: a string, number or boolean, or an object, an array, a null or the root itself. The Reference card shows the path and the reference.
+3. **Sample JSON** — paste the output from a flow run. Pasting parses immediately, and **Parse** re-runs it any time. While you type, the sample re-parses automatically when you pause; until a new parse succeeds, the tree keeps showing the last successful sample.
+4. **Select a value** in the Payload tree: a string, number or boolean, or an object, an array, a null or the root itself. Large objects and arrays page with **Show N more**. The Reference card shows the path and the reference.
 5. **Copy**, in one of two formats:
    - **Expression editor** (the default) copies the bare reference, for the expression editor.
    - **Inside text @{…}** copies `@{<reference>}`, for use inside a text field. An inline expression always produces text.
+
+**Parsing.** Parsing is strict JSON, checked in order, and the first failure stops it with an inline message: an empty sample, a sample larger than 1 MiB, invalid JSON, more than 10,000 values, or nesting deeper than 64 levels. Comments, trailing commas and single quotes are rejected, and a repeated key keeps its last value. A successful parse replaces the tree, reports the value count in the Payload header and shows a **Parsed · N values** notification.
 
 **Fixed positions.** An index such as `[0]` reads that one item, not each item in a loop, and the Reference card says so whenever the path contains one. To act on every item, use an Apply to each or a Filter array.
 

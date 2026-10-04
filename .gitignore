@@ -35,7 +35,6 @@ tests
 !/tests/e2e/short-viewport-canvas.spec.ts
 !/tests/e2e/json-references.spec.ts
 /ui-ux
-/package-lock.json
 /.claude/skills
 /icons
 /.lean-ctx.toml

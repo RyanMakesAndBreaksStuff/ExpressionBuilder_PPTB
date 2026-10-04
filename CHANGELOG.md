@@ -8,7 +8,7 @@ This file tracks the workspace as a whole (engine, platform, builder-ui, and bot
 
 ### Added
 
-- **JSON reference** builder, a second header tab next to **Condition builder**: paste an action or trigger output, select a value, and copy a correctly rooted reference, either bare or inside `@{…}`. It runs locally, saves nothing and never changes the condition document.
+- **JSON reference** builder, a second header tab next to **Condition builder**: paste an action or trigger output, select a value, and copy a correctly rooted reference, either bare or inside `@{…}`. It runs locally, saves nothing and never changes the condition document. Sample parsing is strict JSON, runs automatically on paste and after a typing pause, and checks its limits in order — 1 MiB, 10,000 values, 64 nesting levels — with a specific inline error for each failure.
 - `tests/e2e/json-references.spec.ts`: both builds, all four roots, a privacy audit and an axe accessibility scan of both builders in both themes (`@axe-core/playwright`, dev-only).
 - Three product screenshots (main view, nested AND/OR groups in dark theme, schema import dialog), captured from the running app and embedded across the README, user manual, and PPTB docs.
 - `CHANGELOG.md` at the workspace root and in `apps/pptb` (the latter ships to `dist` on build).
