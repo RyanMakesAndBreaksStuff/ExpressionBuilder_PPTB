@@ -252,13 +252,24 @@
 	gap: 12px;
 	padding: 16px 20px;
 	background: var(--code);
+	color: var(--text);
+	--text: var(--code-text);
+	--text2: var(--code-text2);
+	--text3: var(--code-text3);
+	--accent: var(--code-accent);
+	--good: var(--code-good);
+	--warn: var(--code-warn);
+	--danger: var(--code-danger);
+	--code-fn: var(--code-accent);
+	--seg-track: var(--code-seg-track);
+	--seg-selected: var(--code-seg-selected);
 	font-family: var(--eb-mono);
 	font-size: 16px;
 	line-height: 1.5;
 }
 
 .eb-fn-dock-header > span:first-child {
-	color: var(--text3);
+	color: var(--code-text3);
 	font-size: 12px;
 	letter-spacing: 0.06em;
 }
@@ -267,7 +278,7 @@
 	margin-left: auto;
 	padding: 2px;
 	border-radius: 6px;
-	background: var(--seg-track);
+	background: var(--code-seg-track);
 }
 
 .eb-fn-dock .eb-choice-segmented button {
@@ -275,15 +286,15 @@
 	border: 0;
 	border-radius: 4px;
 	background: transparent;
-	color: var(--text3);
+	color: var(--code-text3);
 	font: inherit;
 	font-size: 12px;
 	cursor: pointer;
 }
 
 .eb-fn-dock .eb-choice-segmented button[aria-checked="true"] {
-	background: var(--seg-selected);
-	color: var(--text);
+	background: var(--code-seg-selected);
+	color: var(--code-text);
 	font-weight: 600;
 }
 
@@ -293,9 +304,22 @@
 	border: 0;
 	background: transparent;
 	box-shadow: none;
+	color: var(--code-text2);
 	font-family: var(--eb-mono);
 	font-size: 16px;
 	line-height: 1.5;
+}
+
+.eb-fn-dock-code .str {
+	color: var(--code-good);
+}
+
+.eb-fn-dock-code .num {
+	color: var(--code-good);
+}
+
+.eb-fn-dock-code .sym {
+	color: var(--code-text);
 }
 
 .eb-fn-dock-side {
@@ -308,6 +332,17 @@
 	padding: 16px 20px;
 	border-left: 1px solid var(--border);
 	background: var(--surface2);
+}
+
+.eb-fn-dock-side > button:last-child {
+	padding: 4px 0;
+	border: 0;
+	background: transparent;
+	color: var(--text2);
+	font: inherit;
+	font-size: 12px;
+	text-align: center;
+	cursor: pointer;
 }
 
 .eb-fn-crumb {

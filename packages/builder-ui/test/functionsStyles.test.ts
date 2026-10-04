@@ -48,6 +48,11 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-panel h2 span')).toMatch(/font-size:\s*15px;/);
     expect(rule('.eb-fn-panel h2 span')).toMatch(/color:\s*var\(--accent\);/);
     expect(rule('.eb-fn-arg + .eb-fn-arg')).toMatch(/margin-top:\s*14px;/);
+    const secondaryCopy = rule('.eb-fn-dock-side > button:last-child');
+    expect(secondaryCopy).toMatch(/background:\s*transparent;/);
+    expect(secondaryCopy).toMatch(/border:\s*0;/);
+    expect(secondaryCopy).toMatch(/color:\s*var\(--text2\);/);
+    expect(secondaryCopy).toMatch(/font-size:\s*12px;/);
   });
 
   it('styles status cards with token-based label and caption text', () => {
@@ -67,6 +72,8 @@ describe('Functions screen styles', () => {
   });
 
   it('keeps the expression preview and format selector in the functions code theme', () => {
+    const code = rule('.eb-fn-dock-code');
+    expect(code).toMatch(/color:\s*var\(--text\);/);
     const preview = rule('.eb-fn-dock-code .eb-preview');
     expect(preview).toMatch(/background:\s*transparent;/);
     expect(preview).toMatch(/border:\s*0;/);
@@ -74,17 +81,47 @@ describe('Functions screen styles', () => {
     expect(preview).toMatch(/padding:\s*0;/);
     expect(preview).toMatch(/font-family:\s*var\(--eb-mono\);/);
     expect(preview).toMatch(/font-size:\s*16px;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--seg-track\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--code-seg-track\);/);
     expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/padding:\s*2px;/);
     expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/margin-left:\s*auto;/);
     expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/font-size:\s*12px;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--text3\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--code-text3\);/);
     expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
-      .toMatch(/background:\s*var\(--seg-selected\);/);
+      .toMatch(/background:\s*var\(--code-seg-selected\);/);
     expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
       .toMatch(/font-weight:\s*600;/);
-    expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--text3\);/);
+    expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--code-text3\);/);
     expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/font-size:\s*12px;/);
+  });
+
+  it('binds the code well to its dark-surface foreground tokens in both palettes', () => {
+    expect(rule('.eb-fn-search')).toMatch(/color:\s*var\(--text\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/color:\s*var\(--text\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--text:\s*var\(--code-text\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--text2:\s*var\(--code-text2\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--text3:\s*var\(--code-text3\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--accent:\s*var\(--code-accent\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--good:\s*var\(--code-good\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--warn:\s*var\(--code-warn\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--danger:\s*var\(--code-danger\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--code-fn:\s*var\(--code-accent\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--seg-track:\s*var\(--code-seg-track\);/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/--seg-selected:\s*var\(--code-seg-selected\);/);
+    expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--code-text3\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--code-seg-track\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--code-text3\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
+      .toMatch(/background:\s*var\(--code-seg-selected\);/);
+    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
+      .toMatch(/color:\s*var\(--code-text\);/);
+    expect(rule('.eb-fn-dock-code .eb-preview')).toMatch(/color:\s*var\(--code-text2\);/);
+    expect(rule('.eb-fn-dock-code .str')).toMatch(/color:\s*var\(--code-good\);/);
+    expect(rule('.eb-fn-dock-code .num')).toMatch(/color:\s*var\(--code-good\);/);
+    expect(rule('.eb-fn-dock-code .sym')).toMatch(/color:\s*var\(--code-text\);/);
+    expect(rule('.eb-fn-crumb[data-tone="fn"]')).toMatch(/color:\s*var\(--accent\);/);
+    expect(rule('.eb-fn-crumb[data-tone="ref"]')).toMatch(/color:\s*var\(--warn\);/);
+    expect(rule('.eb-fn-crumb[data-tone="value"]')).toMatch(/color:\s*var\(--good\);/);
+    expect(rule('.eb-fn-crumb[data-tone="error"]')).toMatch(/color:\s*var\(--danger\);/);
   });
 
   it('keeps every color on a token (AC-1.1)', () => {
@@ -105,6 +142,7 @@ describe('Functions screen styles', () => {
     expect(stacked).toMatch(/\.eb-fn-workspace\s*\{[^}]*flex-direction:\s*column;[^}]*overflow-y:\s*auto;/);
     expect(stacked).toMatch(/\.eb-fn-workspace > \*\s*\{[^}]*flex:\s*0 0 auto;/);
     expect(stacked).toMatch(/\.eb-fn-nav\s*\{[^}]*width:\s*auto;[^}]*max-height:\s*40vh;/);
+    expect(rule('.eb-fn-nav')).toMatch(/overflow-y:\s*auto;/);
     expect(stacked).toMatch(/\.eb-fn-grid\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/);
     expect(stacked).toMatch(/\.eb-fn-dock\s*\{[^}]*flex-direction:\s*column;/);
     expect(stacked).toMatch(/\.eb-fn-dock-side\s*\{[^}]*width:\s*auto;/);

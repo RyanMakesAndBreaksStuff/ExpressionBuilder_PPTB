@@ -5,10 +5,10 @@ Plan: [function-update.md](function-update.md). Specification: [Functions screen
 
 ## Current checkpoint
 
-**19 of 21 planned tasks are complete and committed: T1–T17, T19, and T20.**
-T18 is partly implemented but has failing browser checks; T21 has not completed.
-The user-requested responsive layout, independent function-list scrolling, and theme-consumer repairs have uncommitted changes that still need browser verification.
-The overall implementation is **not complete**. No subagents are active at the time this record was written.
+**20 of 21 planned tasks are complete and committed: T1–T20.**
+T18 passed 16/16 and was committed as 26d20fe. T21 remains open for final integration verification.
+Responsive viewport and independent function-list scrolling passed browser checks. Final theme styling passed 19/19 style/audit checks; the last fixes remain uncommitted.
+The overall implementation is **not complete**. Final regression and complete two-palette Quickstart verification remain pending; the coordinator is taking over after the GPT-6-Luna/high verification delegate hit its usage limit.
 
 This file consolidates recorded progress; historical test results below were not rerun for this documentation update.
 Continue updating this root file as work advances, alongside the task checkboxes in the plan.
@@ -59,7 +59,7 @@ An initial execution gate found contradictions around live focus, retained argum
 | T15 Shell wiring | Complete: three mounted screens, hoisted JSON reducer, old header/tab components removed | `d83fc09` | Contract red 4/4; contract/state green 26/26; TypeScript, full lint and whitespace passed |
 | T16 Builder switching tests | Complete: switch through the chip; preserve state, copy reset, document and Export assertions | `103ad52` | 5 tests, scoped lint and staged whitespace passed |
 | T17 Retired CSS removal | Complete: remove old header/tab rules and obsolete assertions | `90d6368` | 6 style/audit tests, scoped lint, zero stale selectors and staged whitespace passed |
-| T18 Browser spec | Incomplete: chip/JSON/copy locator updates in working tree; no commit yet | — | Latest recorded full run: 5 passed / 11 failed, 16 total |
+| T18 Browser spec | Complete: chip switching and keyboard focus sequence verified | `26d20fe` | Resumed baseline 15/16; focused keyboard 1/1, full suite 16/16, scoped lint and whitespace passed |
 | T19 JSON workspace harness | Complete: reducer host replaces standalone renders; all assertions preserved | `8b4f5d5` | 16/16 tests, scoped lint and staged whitespace passed |
 | T20 Overflow Import tests | Complete: Import menu entry and affected mounted-screen/Copy locators | `bd8e8e4` | Final 25/25 unit tests and 2/2 browser tests; scoped lint and staged whitespace passed |
 | T21 Integration verification | Pending: full regression, build, browser quickstart and final review | — | Structural preliminary checks passed; final full validation still required |
@@ -141,7 +141,7 @@ Next diagnosis must:
 ## Remaining integration gate
 
 - [ ] Complete and review responsive/token-consumer repairs with real browser evidence.
-- [ ] Pass T18's complete 16-case suite and commit the bounded spec update.
+- [x] Pass T18's complete 16-case suite and commit the bounded spec update.
 - [ ] Run `npm test`; only documented CON-001 may remain.
 - [ ] Run `npm run typecheck`.
 - [ ] Run full `npm run lint`.
@@ -188,3 +188,26 @@ This progress-record update changes documentation only; it does not certify or c
 T18 and T21 can run in a cloud workspace with the current source snapshot, Node >=24.17.0 <25, installed dependencies, Microsoft Edge and its Playwright system dependencies, and both Vite services on ports 5173/5174. The current Playwright project explicitly uses channel msedge. Complete responsive/token-consumer repairs before the final T21 run; run T18 first, then T21. Transfer uncommitted style/spec changes and the untracked plan/progress files through a deliberate checkpoint or equivalent handoff; a fresh remote checkout does not contain local-only work. Preserve the documented CON-001 exception and existing test thresholds. Browser-based palette, viewport, clipboard and quickstart checks can be performed remotely; these do not establish integration with the real PPTB host. Cloud feasibility has been assessed, but no cloud task has been launched.
 
 Official setup guidance: https://learn.chatgpt.com/docs/environments/cloud-environments
+
+### Execution resumed — 2026-10-03
+
+User requested continuation. Current session remains attached to the Windows workspace; no cloud-launch tool is available. Two bounded GPT-6-Luna/high delegates are investigating the responsive/theme integration and T18 respectively. Pre-edit shell/functions/color-audit baseline passed 18/18 (archive 7efd88e5c1c34624). T18 baseline is running with two workers before any source changes. Preserve the user’s newly staged package, research and documentation files; task commits must be path-limited.
+
+Pre-edit T18 baseline completed: **15 passed / 1 failed** in 1.8 minutes (archive af319d461663187a). The only failure is the keyboard-only Copy focus assertion at spec line285; Reference info precedes CopyActions in the actual tab order. Both palette viewport sweeps, all web/PPTB root-copy/network/accessibility checks, SC003/SC007, short-desktop scrolling and one-second performance guards passed. Responsive owner is completing code-token bindings; T18 owner is preserving the keyboard-only path while aligning its focus assertions. T21 delegate is preparing read-only verification and will run after integration settles.
+
+A user checkpoint commit appeared during this resumed run: **80750d9 — Add Functions screen and pill-style header**. It records the previously staged plan/progress, style/spec changes, research, audit document and package.json. Preserve this checkpoint; no amend or rollback. The package path audit must distinguish this user-owned checkpoint from bounded coordinator task commits. Subsequent responsive and T18 repairs will be committed separately by exact owned paths.
+
+### T18 accepted — 2026-10-03
+
+Committed **26d20fe** after coordinator review: two added assertions stop at Reference info before the inline and bare copy controls. Focused keyboard 1/1 and full16/16 passed (ac3c75530368a77e); scoped spec/style-test lint and staged whitespace exit0. CSS source is not linted by ESLint (ignored configuration warnings), so style/audit tests and the final build provide its verification. Final style/audit checks passed19/19 (272741ca39119845); dock aliases are local, search keeps page-theme text. T21 checks are now running; real nav-scroll/palette proof is pending owner report.
+
+T21 full unit regression completed: **529 passed / 1 failed (530 total), 64 files passed / 1 failed**, exit1, archive595f680b59818fd6. The sole failure is documented CON-001 at test/workspaceBuildScripts.test.ts:84: user runtime dependencies include node. The earlier profile-delete confirmation flake passed both cases in this full run. TypeScript exit0; full lint, build, e2e and browser Quickstart remain in progress.
+
+Responsive browser proof: at1280×800 nav706pxclient/962pxcontent moved250px with argument/card/dock rectangles unchanged; at1280×420 nav326/962 moved200px independently, copy y312–350. At375×667 nav267px (~40vh)/962pxcontent moved~695px; the content workspace scrolled545px to bring copy fromy1104 toy559. Document/window overflow remained0 and inactive panelsdisplay:none. Root inspected the mobile screenshot and found an unthemed native secondary-copy button; handoff typography check failed1/11 on its missing rule, then passed19/19 after the transparent text2/12px caption repair. Scoped style-test lint and whitespace passed. Final two-palette color/screenshot verification is underway.
+
+T21 full browser run:21passed/2failed (23total), archivec457ec2dfcec61b1. All16T18 cases passed. Additional failures are the boundary scanner rejecting navigator.clipboard in browser-test instrumentation and PPTB smoke targeting the retired Copy expression label. Added two bounded verification-repair prerequisites in docs/plans/10-03-2026-functions-browser-regression-repairs.md before implementation; production boundaries remain enforced and clipboard assertions remain unchanged.
+
+
+### Latest status checkpoint — 2026-10-03
+
+T1–T20 are complete and committed; T21 remains open. Full TypeScript, lint and build passed before the last caption-selector correction. Responsive width/height and independent nav scrolling have real browser evidence; final style/audit tests passed19/19 after limiting the secondary-caption rule to the last button. Boundary repair (TypeScript parser/printer comment removal with regex regression coverage) passed2/2 focused browser tests; PPTB preview Copy locator repair passed1/1. These repairs still require exact-path commits and a final complete regression run. Full unit baseline remains529passed/1knownCON-001 failure caused by the user-owned node runtime dependency. The verification delegate stopped on a usage limit before supplying complete Quickstart evidence; do not markT21 complete.

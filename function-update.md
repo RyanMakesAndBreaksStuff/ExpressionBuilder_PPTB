@@ -9,7 +9,7 @@
 
 **User-directed integration repairs:** responsive layout at everyviewport, Functions nav independentoverflow, and visiblycorrect theme tokens. Dedicated codeforegrounds added in both palettes (31083ff): contrasttest2red beforeimplementation, 11token/auditchecks/types/scopedlintgreen after (bc9008f3c47c1fd2,706564644571b3f8). ResponsiveCSS integration repair remains pending actualbrowser evidence.
 
-**Execution checkpoint (2026-10-01): T1–T17, T19 and T20 complete; T18 and responsive integration repair active.** T19 8b4f5d5 (16unchangedchecks), T20 bd8e8e4 (25unit+2e2e), codeforeground31083ff (11token/auditchecks/types/lint); reviewed/committed. T18 repairs stale root/parse/copy locators to actual unchanged JSONbody and verifies responsive sweep, without weakening assertions. ResponsiveCSS owner verifies nav independentoverflow and token-consumer typography. T21 final fullchecks/Quickstart pending. Coordinator serialfallback used forT19/T20 afterthreadlimit failures; everydelegate GPT-6-Luna/high. Themecontrolsappswebonly; package/lock/researchpreserved.
+**Execution checkpoint (2026-10-01): T1–T20 complete; responsive integration verification and T21 active.** T19 8b4f5d5 (16unchangedchecks), T20 bd8e8e4 (25unit+2e2e), codeforeground31083ff (11token/auditchecks/types/lint); reviewed/committed. T18 repairs stale root/parse/copy locators to actual unchanged JSONbody and verifies responsive sweep, without weakening assertions. ResponsiveCSS owner verifies nav independentoverflow and token-consumer typography. T21 final fullchecks/Quickstart pending. Coordinator serialfallback used forT19/T20 afterthreadlimit failures; everydelegate GPT-6-Luna/high. Themecontrolsappswebonly; package/lock/researchpreserved.
 
 Expression Builder today has two screens (Trigger / Filter, JSON reference) switched by a WAI-ARIA tab strip inside a full-width header. The approved 11a design replaces that header on every screen with a 48px pill carrying a **mode chip** menu, and adds a third screen — **Functions** — where a user picks a Workflow Definition Language function, fills its arguments, and copies the resulting expression.
 
@@ -2346,7 +2346,7 @@ Paired deliberately: the rules and the assertions about them must go in one comm
 **Files:** `tests/e2e/json-references.spec.ts`
 **Interfaces:** Consumes: the shipped header (T15). Produces: nothing other phases read.
 
-- [ ] Add a local helper and use it at lines 78, 184 and 292. At lines 325–326, turn `views` into `[{ name: 'Functions' }, { name: 'Trigger / Filter' }, { name: 'JSON reference' }]` (adding Functions is AC-26.1), replace `await view.tab.click()` with `await goToScreen(page, view.name)`, and change the test title's "both views" to "all three screens". The loop plan does not touch this file, but locate by content if lines have moved.
+- [x] Add a local helper and use it at lines 78, 184 and 292. At lines 325–326, turn `views` into `[{ name: 'Functions' }, { name: 'Trigger / Filter' }, { name: 'JSON reference' }]` (adding Functions is AC-26.1), replace `await view.tab.click()` with `await goToScreen(page, view.name)`, and change the test title's "both views" to "all three screens". The loop plan does not touch this file, but locate by content if lines have moved.
 
 ```ts
 async function goToScreen(page: Page, label: string) {
@@ -2355,10 +2355,12 @@ async function goToScreen(page: Page, label: string) {
 }
 ```
 
-- [ ] Replace the focus-order assertions at lines 223–225 (two tab locators, `toBeFocused` and `aria-selected`) with the single chip button: it is focused, and its accessible name reads `Screen: JSON reference` after the switch.
-- [ ] In the viewport sweep, change `document.querySelector('.eb-workbench-header')` (line 336) to `'.eb-pill-header'`. **Leave `[role="tab"]` in the controls selector at line 335** — the Trigger / Filter support pane's diagnostics tabs still use it. Keep `TODAYS_HEADER_HEIGHT` and the one-row assertion above 900px: the 48px pill satisfies both, and T5's `max-width: 900px` wrap keeps 375px free of sideways scroll.
-- [ ] Run: `npm run test:e2e -- tests/e2e/json-references.spec.ts` — expect: PASS
-- [ ] Commit: `test(e2e): switch screens through the mode chip`
+- [x] Replace the focus-order assertions at lines 223–225 (two tab locators, `toBeFocused` and `aria-selected`) with the single chip button: it is focused, and its accessible name reads `Screen: JSON reference` after the switch.
+- [x] In the viewport sweep, change `document.querySelector('.eb-workbench-header')` (line 336) to `'.eb-pill-header'`. **Leave `[role="tab"]` in the controls selector at line 335** — the Trigger / Filter support pane's diagnostics tabs still use it. Keep `TODAYS_HEADER_HEIGHT` and the one-row assertion above 900px: the 48px pill satisfies both, and T5's `max-width: 900px` wrap keeps 375px free of sideways scroll.
+- [x] Run: `npm run test:e2e -- tests/e2e/json-references.spec.ts` — expect: PASS
+- [x] Commit: `test(e2e): switch screens through the mode chip`
+
+**Execution evidence (2026-10-03):** Current checkpoint baseline 15/16 passed (af319d461663187a), only the keyboard Copy focus assertion failed. Reference info precedes the copy buttons; two keyboard-only assertions restore the actual tab sequence without changing copy, focus-ring or clipboard expectations. Focused keyboard 1/1, full T18 16/16 (ac3c75530368a77e), scoped TS/spec ESLint exit0 and staged whitespace passed. The full run overlapped final semantic CSS bindings; T21 full browser regression covers settled integration. Coordinator reviewed the two-line diff and committed 26d20fe.
 
 ---
 
