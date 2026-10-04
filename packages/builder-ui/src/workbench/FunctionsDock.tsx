@@ -53,9 +53,17 @@ export function FunctionsDock({
   return (
     <div className="eb-fn-dock">
       <div className="eb-fn-dock-code" style={{ minWidth: 0 }}>
-        <div className="eb-fn-dock-header" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div
+          className="eb-fn-dock-header"
+          role="group"
+          aria-label="Expression controls"
+          style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}
+        >
           <span style={{ textTransform: 'uppercase' }}>Expression</span>
-          <span className={`eb-json-status ${derived.valid ? 'is-good' : 'is-danger'}`} data-tone={derived.valid ? 'good' : 'danger'}>
+          <span
+            className={`eb-json-status ${derived.valid ? 'is-good' : 'is-danger'}`}
+            data-tone={derived.valid ? 'good' : 'danger'}
+          >
             {derived.valid ? 'Valid' : 'Invalid'}
           </span>
           <div className="eb-choice-segmented" role="radiogroup" aria-label="Expression format">
@@ -74,6 +82,24 @@ export function FunctionsDock({
               </button>
             ))}
           </div>
+          <div className="eb-fn-dock-actions">
+            <ActionButton
+              variant="primary"
+              icon={<CopyIcon />}
+              disabled={!derived.valid}
+              onClick={() => onCopy(copyFormat)}
+            >
+              {copyState === 'copied' ? 'Copied' : 'Copy expression'}
+            </ActionButton>
+            <button
+              className="eb-fn-copy-wrapped"
+              type="button"
+              disabled={!derived.valid}
+              onClick={() => onCopy('wrapped')}
+            >
+              Copy as @{'{…}'}
+            </button>
+          </div>
         </div>
         <div style={{ minHeight: 0, overflow: 'auto' }}>
           <ExpressionPreview
@@ -84,25 +110,12 @@ export function FunctionsDock({
         <hr aria-hidden="true" style={{ border: 0, borderTop: '1px solid var(--border)', margin: 0 }} />
         <div>
           {derived.crumbs.map((crumb, index) => (
-            <span key={`${crumb.label}-${index}`}>
+            <span key={crumb.label + '-' + index}>
               {index > 0 ? <span aria-hidden="true">›</span> : null}
               <span className="eb-fn-crumb" data-tone={crumb.tone}>{crumb.label}</span>
             </span>
           ))}
         </div>
-      </div>
-      <div className="eb-fn-dock-side">
-        <ActionButton
-          variant="primary"
-          icon={<CopyIcon />}
-          disabled={!derived.valid}
-          onClick={() => onCopy(copyFormat)}
-        >
-          {copyState === 'copied' ? 'Copied' : 'Copy expression'}
-        </ActionButton>
-        <button type="button" disabled={!derived.valid} onClick={() => onCopy('wrapped')}>
-          Copy as @{'{…}'}
-        </button>
       </div>
     </div>
   );

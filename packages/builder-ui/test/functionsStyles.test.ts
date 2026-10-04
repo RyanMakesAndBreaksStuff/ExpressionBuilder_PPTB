@@ -29,15 +29,15 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-workspace')).toMatch(/gap:\s*14px;/);
     expect(rule('.eb-fn-nav')).toMatch(/width:\s*250px;/);
     expect(rule('.eb-fn-grid')).toMatch(
-      /grid-template-columns:\s*minmax\(0,\s*3fr\)\s*minmax\(0,\s*2fr\);/,
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*minmax\(180px,\s*240px\);/,
     );
     expect(rule('.eb-fn-grid')).toMatch(
-      /grid-template-rows:\s*minmax\(0,\s*1fr\)\s*minmax\(0,\s*1fr\)\s*210px;/,
+      /grid-template-rows:\s*minmax\(0,\s*1fr\)\s*minmax\(0,\s*1fr\)\s*auto;/,
     );
     expect(rule('.eb-fn-grid')).toMatch(/gap:\s*12px;/);
     expect(rule('.eb-fn-panel')).toMatch(/grid-area:\s*1\s*\/\s*1\s*\/\s*3\s*\/\s*2;/);
     expect(rule('.eb-fn-dock')).toMatch(/grid-area:\s*3\s*\/\s*1\s*\/\s*4\s*\/\s*3;/);
-    expect(rule('.eb-fn-dock-side')).toMatch(/width:\s*280px;/);
+    expect(css).not.toContain('.eb-fn-dock-side');
   });
 
   it('keeps the function editor typography and spacing from the handoff', () => {
@@ -48,10 +48,10 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-panel h2 span')).toMatch(/font-size:\s*15px;/);
     expect(rule('.eb-fn-panel h2 span')).toMatch(/color:\s*var\(--accent\);/);
     expect(rule('.eb-fn-arg + .eb-fn-arg')).toMatch(/margin-top:\s*14px;/);
-    const secondaryCopy = rule('.eb-fn-dock-side > button:last-child');
+    const secondaryCopy = rule('.eb-fn-copy-wrapped');
     expect(secondaryCopy).toMatch(/background:\s*transparent;/);
     expect(secondaryCopy).toMatch(/border:\s*0;/);
-    expect(secondaryCopy).toMatch(/color:\s*var\(--text2\);/);
+    expect(secondaryCopy).toMatch(/color:\s*var\(--code-text2\);/);
     expect(secondaryCopy).toMatch(/font-size:\s*12px;/);
   });
 
@@ -145,7 +145,6 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-nav')).toMatch(/overflow-y:\s*auto;/);
     expect(stacked).toMatch(/\.eb-fn-grid\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/);
     expect(stacked).toMatch(/\.eb-fn-dock\s*\{[^}]*flex-direction:\s*column;/);
-    expect(stacked).toMatch(/\.eb-fn-dock-side\s*\{[^}]*width:\s*auto;/);
   });
 
   it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
@@ -153,5 +152,27 @@ describe('Functions screen styles', () => {
       .toMatch(/transition:\s*background-color 120ms ease, border-color 120ms ease;/);
     const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
+  });
+
+  it('gives the editor the remaining width beside a bounded summary column', () => {
+    expect(rule('.eb-fn-grid')).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*minmax\(180px,\s*240px\);/,
+    );
+    expect(rule('.eb-fn-grid')).toMatch(
+      /grid-template-rows:\s*minmax\(0,\s*1fr\)\s*minmax\(0,\s*1fr\)\s*auto;/,
+    );
+  });
+
+  it('bounds summary scrolling and preserves full-width dock controls and disclosure focus', () => {
+    expect(rule('.eb-fn-panel')).toMatch(/min-height:\s*0;/);
+    expect(rule('.eb-fn-card')).toMatch(/min-height:\s*0;/);
+    expect(rule('.eb-fn-card')).toMatch(/overflow-y:\s*auto;/);
+    expect(css).not.toContain('.eb-fn-dock-side');
+    expect(rule('.eb-fn-dock-code')).toMatch(/flex:\s*1;/);
+    expect(rule('.eb-fn-dock-actions')).toMatch(/flex-wrap:\s*wrap;/);
+    expect(rule('.eb-fn-dock-actions .eb-action-primary')).toMatch(/color:\s*var\(--fg-onbrand\);/);
+    expect(rule('.eb-fn-copy-wrapped')).toMatch(/color:\s*var\(--code-text2\);/);
+    expect(rule('.eb-fn-dock-actions button:focus-visible')).toMatch(/outline:\s*2px solid var\(--accent\);/);
+    expect(rule('.eb-pv-item > summary')).toMatch(/overflow-wrap:\s*anywhere;/);
   });
 });

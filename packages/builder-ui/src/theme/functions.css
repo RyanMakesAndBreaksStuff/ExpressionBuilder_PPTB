@@ -117,13 +117,15 @@
 	display: grid;
 	flex: 1;
 	min-width: 0;
-	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-	grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) 210px;
+	min-height: 0;
+	grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+	grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
 	gap: 12px;
 }
 
 .eb-fn-panel {
 	grid-area: 1 / 1 / 3 / 2;
+	min-height: 0;
 	overflow-y: auto;
 	border: 1px solid var(--border);
 	border-radius: 10px;
@@ -149,6 +151,8 @@
 .eb-fn-card {
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
+	overflow-y: auto;
 	justify-content: space-between;
 	border: 1px solid var(--border);
 	border-radius: 10px;
@@ -322,27 +326,49 @@
 	color: var(--code-text);
 }
 
-.eb-fn-dock-side {
-	display: flex;
-	width: 280px;
-	flex: none;
-	flex-direction: column;
-	justify-content: flex-end;
-	gap: 12px;
-	padding: 16px 20px;
-	border-left: 1px solid var(--border);
-	background: var(--surface2);
+.eb-fn-dock-actions {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	max-width: 100%;
+	font-family: var(--eb-font);
 }
 
-.eb-fn-dock-side > button:last-child {
+.eb-fn-dock-actions .eb-action-primary {
+	background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+	color: var(--fg-onbrand);
+}
+
+.eb-fn-copy-wrapped {
 	padding: 4px 0;
 	border: 0;
 	background: transparent;
-	color: var(--text2);
+	color: var(--code-text2);
 	font: inherit;
 	font-size: 12px;
-	text-align: center;
 	cursor: pointer;
+}
+
+.eb-pv-item > summary {
+	min-height: 30px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	color: var(--text2);
+	font-size: 12px;
+	cursor: pointer;
+	overflow-wrap: anywhere;
+}
+
+.eb-pv-item > summary:focus-visible,
+.eb-fn-dock-actions button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.eb-pv-item .eb-pv-row {
+	padding-inline-start: 16px;
+	overflow-wrap: anywhere;
 }
 
 .eb-fn-crumb {
@@ -418,12 +444,6 @@
 
 	.eb-fn-dock {
 		flex-direction: column;
-	}
-
-	.eb-fn-dock-side {
-		width: auto;
-		border-top: 1px solid var(--border);
-		border-left: 0;
 	}
 }
 

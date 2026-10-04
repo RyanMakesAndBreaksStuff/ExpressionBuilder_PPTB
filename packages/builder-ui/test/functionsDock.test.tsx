@@ -110,4 +110,16 @@ describe('FunctionsDock', () => {
 
     expect(screen.queryByText(/Sample result/i)).not.toBeInTheDocument();
   });
+
+  it('keeps both copy controls inline with the expression format', () => {
+    renderDock();
+    const controls = screen.getByRole('group', { name: 'Expression controls' });
+    expect(within(controls).getByRole('radiogroup', { name: 'Expression format' }))
+      .toBeInTheDocument();
+    expect(within(controls).getByRole('button', { name: 'Copy expression' }))
+      .toBeEnabled();
+    expect(within(controls).getByRole('button', { name: 'Copy as @{…}' }))
+      .toBeEnabled();
+    expect(document.querySelector('.eb-fn-dock-side')).toBeNull();
+  });
 });
