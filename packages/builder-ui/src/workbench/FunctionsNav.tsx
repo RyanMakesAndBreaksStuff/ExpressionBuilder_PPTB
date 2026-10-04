@@ -1,8 +1,9 @@
-import { Fragment, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { ChevronRightRegular } from '@fluentui/react-icons';
 import type { FunctionGroup } from '@ryanmakes/eb_engine';
 import type { NavGroup } from './functionsState';
 import type { ParsedValueList } from './parsedValueModel';
+import { ParsedValueEntries } from './ParsedValueEntries';
 
 export interface FunctionsNavProps {
   groups: NavGroup[];
@@ -101,28 +102,11 @@ export function FunctionsNav({
         </button>
         {parsedValueExpanded ? (
           <div>
-            {parsedValue.rows.map((row, index) => {
-              const descriptionId = baseId + '-' + index;
-              return (
-                <Fragment key={descriptionId}>
-                  <button
-                    className="eb-pv-row"
-                    type="button"
-                    aria-describedby={descriptionId}
-                    onDoubleClick={() => onInsertReference(row.expression)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        onInsertReference(row.expression);
-                      }
-                    }}
-                  >
-                    {row.label}
-                  </button>
-                  <span id={descriptionId} className="eb-visually-hidden">{row.expression}</span>
-                </Fragment>
-              );
-            })}
+            <ParsedValueEntries
+              entries={parsedValue.entries}
+              baseId={baseId}
+              onInsertReference={onInsertReference}
+            />
             {parsedValue.emptyMessage ? <div>{parsedValue.emptyMessage}</div> : null}
             {parsedValue.hiddenCount > 0
               ? <div>+{parsedValue.hiddenCount} more — narrow with search</div>

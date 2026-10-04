@@ -59,4 +59,64 @@ describe('parsed value model', () => {
     expect(currentReferenceRoot(state)).toEqual({ kind: 'outputs', actionName: 'Get items' });
     expect(currentReferenceRoot(initialJsonReferenceState)).toBeNull();
   });
+
+  it('groups each array item while preserving source references and search', () => {
+    const sample = { body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } };
+    const root = { kind: 'outputs', actionName: 'Get items' } as const;
+    const list = buildParsedValueList(sample, root, '');
+    expect(list).toMatchObject({
+      entries: [
+        {
+          kind: 'arrayItem', key: '["body","value",0]', label: 'body.value[0]',
+          entries: [{
+            kind: 'row',
+            row: {
+              label: 'body.value[0].Name',
+              expression: "outputs('Get_items')?['body']?['value'][0]?['Name']",
+              path: ['body', 'value', 0, 'Name'],
+            },
+          }],
+        },
+        { kind: 'arrayItem', key: '["body","value",1]', label: 'body.value[1]' },
+      ],
+    });
+    expect(buildParsedValueList(sample, root, '[1]')).toMatchObject({
+      entries: [{ kind: 'arrayItem', label: 'body.value[1]' }],
+    });
+    expect(buildParsedValueList(sample, root, '').entries).toHaveLength(2);
+  });
+
+  it('groups nested, primitive and empty array items without grouping string keys', () => {
+    const list = buildParsedValueList(
+      { rows: [[{ value: 1 }], 2, {}, []], '2024.[x]': { value: 3 } }, triggerBody, '',
+    );
+    expect(list.entries).toMatchObject([
+      { kind: 'arrayItem', label: 'rows[0]', entries: [
+        { kind: 'arrayItem', label: 'rows[0][0]', entries: [
+          { kind: 'row', row: {
+            label: 'rows[0][0].value', path: ['rows', 0, 0, 'value'],
+            expression: "triggerBody()?['rows'][0][0]?['value']",
+          } },
+        ] },
+      ] },
+      ...[1, 2, 3].map((index) => ({
+        kind: 'arrayItem', label: 'rows[' + index + ']', entries: [
+          { kind: 'row', row: {
+            path: ['rows', index], expression: "triggerBody()?['rows'][" + index + ']',
+          } },
+        ],
+      })),
+      { kind: 'row', row: { path: ['2024.[x]', 'value'] } },
+    ]);
+  });
+
+  it('caps visible leaves globally before grouping items', () => {
+    const item = Object.fromEntries(Array.from({ length: 125 }, (_, index) => ['key' + index, index]));
+    const list = buildParsedValueList({ items: [item, item] }, triggerBody, '');
+    expect(list.rows).toHaveLength(MAX_PARSED_VALUE_ROWS);
+    expect(list.hiddenCount).toBe(50);
+    expect(list.entries).toHaveLength(2);
+    expect(list.entries.map((entry) => entry.kind === 'arrayItem' ? entry.entries.length : -1))
+      .toEqual([125, 75]);
+  });
 });

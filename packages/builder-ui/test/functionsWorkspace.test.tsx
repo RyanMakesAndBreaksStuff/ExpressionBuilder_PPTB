@@ -74,6 +74,35 @@ describe('FunctionsWorkspace', () => {
     expect(text2).toHaveFocus();
   });
 
+  it('inserts an expanded array leaf and returns focus for both activation paths', async () => {
+    const user = userEvent.setup();
+    render(<FunctionsWorkspace
+      adapter={createAdapter()}
+      sample={{ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }}
+      referenceRoot={referenceRoot}
+    />);
+    await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
+    const first = screen.getByText('body.value[0]', { selector: 'summary' });
+    const second = screen.getByText('body.value[1]', { selector: 'summary' });
+    expect((first.parentElement as HTMLDetailsElement).open).toBe(false);
+    expect((second.parentElement as HTMLDetailsElement).open).toBe(false);
+    await user.click(first);
+    expect((second.parentElement as HTMLDetailsElement).open).toBe(false);
+
+    const text2 = screen.getByLabelText('text2');
+    const leaf = screen.getByRole('button', { name: 'body.value[0].Name', exact: true });
+    const expression = "triggerBody()?['body']?['value'][0]?['Name']";
+    await user.click(text2);
+    await user.dblClick(leaf);
+    expect(text2).toHaveValue(expression);
+    expect(text2).toHaveFocus();
+    await user.clear(text2);
+    await user.click(leaf);
+    await user.keyboard('{Enter}');
+    expect(text2).toHaveValue(expression);
+    expect(text2).toHaveFocus();
+  });
+
   it('wraps the focused argument repeatedly, while searching selects without wrapping', async () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace adapter={createAdapter()} sample={null} referenceRoot={null} />);

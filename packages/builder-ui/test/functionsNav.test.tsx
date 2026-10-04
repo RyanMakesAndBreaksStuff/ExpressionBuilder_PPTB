@@ -6,16 +6,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { navGroups, initialFunctionsState } from '../src/workbench/functionsState';
 import { FunctionsNav } from '../src/workbench/FunctionsNav';
-import type { ParsedValueList } from '../src/workbench/parsedValueModel';
+import { buildParsedValueList } from '../src/workbench/parsedValueModel';
 
-const parsedValue: ParsedValueList = {
-  rows: [
-    { label: 'Name', expression: "triggerBody()?['Name']", path: ['Name'] },
-    { label: 'tags[0]', expression: "triggerBody()?['tags'][0]", path: ['tags', 0] },
-  ],
-  hiddenCount: 0,
-  emptyMessage: null,
-};
+const parsedValue = buildParsedValueList(
+  { Name: 'Ada', tags: ['a'] }, { kind: 'triggerBody' }, '',
+);
 
 function renderNav(overrides: Partial<ComponentProps<typeof FunctionsNav>> = {}) {
   const props: ComponentProps<typeof FunctionsNav> = {
@@ -171,23 +166,51 @@ describe('FunctionsNav', () => {
     );
     expect(screen.getByRole('button', { name: 'Name' })).toBeInTheDocument();
   });
-  it('renders Parsed Value rows with their expression as the accessible description', () => {
+  it('renders Parsed Value rows with their expression as the accessible description', async () => {
+    const user = userEvent.setup();
     renderNav();
     expect(screen.getByRole('button', { name: 'Name' }))
       .toHaveAccessibleDescription("triggerBody()?['Name']");
-    expect(screen.getByRole('button', { name: 'tags[0]' }))
-      .toHaveAccessibleDescription("triggerBody()?['tags'][0]");
+    const summary = screen.getByText('tags[0]', { selector: 'summary' });
+    await user.click(summary);
+    const leaf = summary.parentElement!.querySelector<HTMLButtonElement>('.eb-pv-row')!;
+    expect(leaf).toHaveAccessibleDescription("triggerBody()?['tags'][0]");
+  });
+
+  it('starts every item closed and toggles sibling and nested items independently', async () => {
+    const user = userEvent.setup();
+    renderNav({ parsedValue: buildParsedValueList(
+      { rows: [{ Name: 'Ada', tags: ['a'] }, { Name: 'Grace' }] }, { kind: 'triggerBody' }, '',
+    ) });
+    const first = screen.getByText('rows[0]', { selector: 'summary' });
+    const second = screen.getByText('rows[1]', { selector: 'summary' });
+    const firstDetails = first.parentElement as HTMLDetailsElement;
+    const secondDetails = second.parentElement as HTMLDetailsElement;
+    const nested = firstDetails.querySelector<HTMLDetailsElement>('details')!;
+    expect(firstDetails.open).toBe(false);
+    expect(secondDetails.open).toBe(false);
+    expect(nested.open).toBe(false);
+    await user.click(first);
+    expect(firstDetails.open).toBe(true);
+    expect(secondDetails.open).toBe(false);
+    expect(nested.open).toBe(false);
+    await user.click(nested.querySelector('summary')!);
+    expect(nested.open).toBe(true);
+    expect(firstDetails.open).toBe(true);
+    await user.click(first);
+    expect(firstDetails.open).toBe(false);
+    expect(secondDetails.open).toBe(false);
   });
 
   it('renders the Parsed Value empty message and hidden row count', () => {
     const { rerender } = renderNav({
-      parsedValue: { rows: [], hiddenCount: 0, emptyMessage: 'No paths match this search' },
+      parsedValue: { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'No paths match this search' },
     });
     expect(screen.getByText('No paths match this search')).toBeInTheDocument();
     rerender(
       <FunctionsNav
         groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
-        parsedValue={{ rows: [parsedValue.rows[0]], hiddenCount: 3, emptyMessage: null }}
+        parsedValue={{ rows: [parsedValue.rows[0]], entries: [{ kind: 'row', row: parsedValue.rows[0] }], hiddenCount: 3, emptyMessage: null }}
         parsedValueExpanded
         onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
         onSelectFunction={vi.fn()} onInsertReference={vi.fn()}

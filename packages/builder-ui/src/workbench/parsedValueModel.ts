@@ -13,8 +13,18 @@ export interface ParsedValueRow {
   path: PayloadPath;
 }
 
+export type ParsedValueEntry =
+  | { kind: 'row'; row: ParsedValueRow }
+  | {
+      kind: 'arrayItem';
+      key: string;
+      label: string;
+      entries: ParsedValueEntry[];
+    };
+
 export interface ParsedValueList {
   rows: ParsedValueRow[];
+  entries: ParsedValueEntry[];
   /** Matching leaves past the cap. */
   hiddenCount: number;
   /** Set when `rows` is empty, explaining why. */
@@ -59,17 +69,66 @@ function walk(
   leaf();
 }
 
+function parsedPathLabel(path: PayloadPath): string {
+  return path.reduce<string>(
+    (label, segment) => typeof segment === 'number'
+      ? label + '[' + segment + ']'
+      : label === '' ? segment : label + '.' + segment,
+    '',
+  );
+}
+
+function buildParsedValueEntries(
+  rows: readonly ParsedValueRow[],
+  parentPath: PayloadPath = [],
+): ParsedValueEntry[] {
+  type PendingItem = {
+    kind: 'pendingArrayItem';
+    key: string;
+    label: string;
+    path: PayloadPath;
+    rows: ParsedValueRow[];
+  };
+  const ordered: Array<ParsedValueEntry | PendingItem> = [];
+  const items = new Map<string, PendingItem>();
+
+  for (const row of rows) {
+    const index = row.path.findIndex(
+      (segment, position) => position >= parentPath.length && typeof segment === 'number',
+    );
+    if (index === -1) {
+      ordered.push({ kind: 'row', row });
+      continue;
+    }
+    const path = row.path.slice(0, index + 1);
+    const key = JSON.stringify(path);
+    let item = items.get(key);
+    if (!item) {
+      item = { kind: 'pendingArrayItem', key, label: parsedPathLabel(path), path, rows: [] };
+      items.set(key, item);
+      ordered.push(item);
+    }
+    item.rows.push(row);
+  }
+  return ordered.map<ParsedValueEntry>((entry) => entry.kind === 'pendingArrayItem'
+    ? {
+        kind: 'arrayItem', key: entry.key, label: entry.label,
+        entries: buildParsedValueEntries(entry.rows, entry.path),
+      }
+    : entry);
+}
+
 export function buildParsedValueList(
   sample: unknown,
   root: PayloadReferenceRoot | null,
   search: string,
 ): ParsedValueList {
   if (sample === null || sample === undefined) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'Parse a sample in JSON reference' };
+    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'Parse a sample in JSON reference' };
   }
 
   if (root === null) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'Set an action name in JSON reference' };
+    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'Set an action name in JSON reference' };
   }
 
   const all: ParsedValueRow[] = [];
@@ -81,11 +140,13 @@ export function buildParsedValueList(
     : all.filter((row) => row.label.toLowerCase().includes(needle));
 
   if (matched.length === 0) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'No paths match this search' };
+    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'No paths match this search' };
   }
 
+  const rows = matched.slice(0, MAX_PARSED_VALUE_ROWS);
   return {
-    rows: matched.slice(0, MAX_PARSED_VALUE_ROWS),
+    rows,
+    entries: buildParsedValueEntries(rows),
     hiddenCount: Math.max(0, matched.length - MAX_PARSED_VALUE_ROWS),
     emptyMessage: null,
   };
