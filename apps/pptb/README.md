@@ -1,18 +1,18 @@
 # Power Automate Expression Builder
 
-> **Version**: 1.1.1 · **License**: BSD-3-Clause · **Maintainer**: Ryan Rettinger
+> **Version**: 1.2.1 · **License**: BSD-3-Clause · **Maintainer**: Ryan Rettinger
 
 Build Power Automate **Trigger Condition** and **Filter array** advanced-mode expressions visually, inside the Power Platform Toolbox — instead of hand-writing `@and(...)` / `@or(...)` predicates and discovering the syntax errors at runtime.
 
-![The Expression Builder tool: field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![The Expression Builder tool: field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 Nested AND/OR groups, in the Toolbox dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 No Dataverse connection? Import a field schema as Field JSON, a sample payload, JSON Schema, or CSV:
 
-![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 ## What It Does
 
