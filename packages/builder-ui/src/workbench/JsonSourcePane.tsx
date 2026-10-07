@@ -1,5 +1,4 @@
 import { Fragment, useId, type Dispatch, type KeyboardEvent } from "react";
-import { ActionButton } from "./controls/ActionButton";
 import {
 	ACTION_NAME_PLACEHOLDER,
 	NO_TEXT_ASSISTANCE,
@@ -192,18 +191,12 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 							if (!pasted) return;
 							event.preventDefault();
 							dispatch({
-								type: "pasteAndParse",
+							type: "pasteAndParse",
 								text: pasted,
 								defaultActionName: ACTION_NAME_PLACEHOLDER,
 							});
 						}}
 					/>
-				</div>
-
-				<div className="eb-json-parse-row">
-					<ActionButton onClick={() => dispatch({ type: "parse" })}>
-						Parse
-					</ActionButton>
 				</div>
 
 				{state.error !== null ? (

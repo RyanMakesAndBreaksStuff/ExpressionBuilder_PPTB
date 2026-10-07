@@ -15,7 +15,6 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
-!.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
@@ -23,25 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-/.agents/skills
+.agents
+.claude
 /.vs
-/docs/
-!/docs/images/
-!/docs/source-data/
-/test-results
-/tests/e2e/*
+docs
+research
+tasks
+ui-ux
+test-results
+tests
 !/tests/e2e/theme-smoke.spec.ts
 !/tests/e2e/short-viewport-canvas.spec.ts
 !/tests/e2e/json-references.spec.ts
 /ui-ux
-/package-lock.json
 /.claude/skills
 /icons
 /.lean-ctx.toml
 /.nvmrc
-/icon-concepts-batch2.html
-/icon-concepts.html
-! \docs\superpowers\plans\2026-06-25-expression-builder-enhancements.md
 AGENTS.md.bak
 LEAN-CTX.md
 /.codex
@@ -50,7 +47,6 @@ LEAN-CTX.md
 stylesheet*/
 AGENTS.md
 tasks/lessons.md
-apps/pptb/ryanmakes-expressionbuilder_pptb-1.1.0.tgz
 *.db
 .rm-frontend-review/
 /.playwright-mcp

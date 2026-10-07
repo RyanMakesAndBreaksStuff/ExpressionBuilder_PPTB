@@ -40,7 +40,6 @@ async function exerciseJsonReference(user: UserEvent) {
 	await user.type(screen.getByLabelText('Action name'), 'Get items');
 	await user.click(screen.getByLabelText('Sample JSON'));
 	await user.paste(fixtureA1);
-	await user.click(screen.getByRole('button', { name: 'Parse' }));
 	await user.click(screen.getByRole('treeitem', { name: /^body, object$/ }));
 	await user.click(screen.getByRole('button', { name: 'Copy @{}' }));
 }

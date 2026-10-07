@@ -145,10 +145,7 @@ function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 			) : (
 				<div className="eb-json-empty">
 					<p className="eb-json-empty-title">No sample yet</p>
-					<p>
-						Paste an action or trigger output from a flow run, then select
-						Parse.
-					</p>
+					<p>Paste an action or trigger output from a flow run to parse it.</p>
 				</div>
 			)}
 		</section>

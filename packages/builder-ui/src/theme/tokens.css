@@ -38,10 +38,11 @@ body {
 	--r-panel: 20px;
 	--duration-fast: 160ms;
 	--duration-med: 220ms;
-	/* Floor for the workspace's single grid row. Low enough that a short host
-     frame (PPTB routinely gives ~420px total, ~350px after the header) shows
-     the empty-state canvas without an immediate scrollbar; still tall enough
-     to keep the canvas and preview from collapsing to nothing. */
+	/* Floor for the workspace's single row. Keeps the canvas and preview from
+     collapsing to nothing in short hosts (PPTB routinely gives ~420px total).
+     The row itself is bounded to the viewport in .eb-workspace (see
+     grid-template-rows there) so this floor never demands more height than
+     the host frame can supply. */
 	--eb-workspace-min-height: 320px;
 	/* dvh tracks the visible viewport as mobile browser chrome shows/hides;
      the vh line is the fallback for engines without dvh support. */
@@ -2082,7 +2083,14 @@ body {
 
 .eb-json-source {
 	flex: 1 1 300px;
-	min-height: 560px;
+	/* 560px gives the textarea room on tall hosts, but a bare floor overflows
+	   short hosts (PPTB routinely gives ~420px): the JSON view opened already
+	   needing a vertical scrollbar. Cap the floor at what the frame supplies
+	   (107px = 71px header + 36px workspace padding) so the card body scrolls
+	   internally instead. vh line first, dvh override second (the .eb-root
+	   pattern). */
+	min-height: min(560px, calc(100vh - 107px));
+	min-height: min(560px, calc(100dvh - 107px));
 }
 
 .eb-json-source .eb-json-card-body {
@@ -2101,12 +2109,24 @@ body {
 
 .eb-json-payload {
 	flex: 1 1 auto;
-	min-height: 320px;
+	/* Same host-frame cap as .eb-json-source: the tree scrolls inside the
+	   card on short hosts rather than pushing the workspace into a scrollbar. */
+	min-height: min(320px, calc(100vh - 107px));
+	min-height: min(320px, calc(100dvh - 107px));
 	min-width: 0;
 }
 
 .eb-json-reference {
 	flex: 0 0 auto;
+	/* Bounded to the host frame so a short host scrolls this card's body
+	   internally instead of opening the workspace with a scrollbar. */
+	max-height: calc(100vh - 107px);
+	max-height: calc(100dvh - 107px);
+}
+
+.eb-json-reference .eb-json-card-body {
+	flex: 1 1 auto;
+	overflow-y: auto;
 }
 
 /* Source pane */
