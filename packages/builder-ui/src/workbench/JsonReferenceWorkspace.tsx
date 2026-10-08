@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
+import type { PayloadReveal } from "./jsonPayloadSession";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
@@ -20,6 +21,7 @@ interface JsonReferenceWorkspaceProps {
 	active: boolean;
 	state: JsonReferenceState;
 	dispatch: Dispatch<JsonReferenceAction>;
+	reveal?: PayloadReveal | null;
 }
 
 export function JsonReferenceWorkspace({
@@ -27,6 +29,7 @@ export function JsonReferenceWorkspace({
 	adapter,
 	state,
 	dispatch,
+	reveal,
 }: JsonReferenceWorkspaceProps) {
 	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
@@ -44,7 +47,7 @@ export function JsonReferenceWorkspace({
 		)
 			return;
 		autoParseTimer.current = setTimeout(
-			() => dispatch({ type: "autoParse" }),
+			() => dispatch({ type: "autoParse", expectedText: state.text }),
 			600,
 		);
 		return () => clearTimeout(autoParseTimer.current);
@@ -88,7 +91,7 @@ export function JsonReferenceWorkspace({
 		<div className="eb-json-workspace">
 			<JsonSourcePane state={state} dispatch={dispatch} />
 			<div className="eb-json-content">
-				<PayloadPanel state={state} dispatch={dispatch} />
+				<PayloadPanel state={state} dispatch={dispatch} reveal={reveal} />
 				<ReferencePanel
 					state={state}
 					onCopy={(format) => void copy(format)}
@@ -103,9 +106,10 @@ export function JsonReferenceWorkspace({
 interface PayloadPanelProps {
 	state: JsonReferenceState;
 	dispatch: Dispatch<JsonReferenceAction>;
+	reveal?: PayloadReveal | null;
 }
 
-function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
+function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
 	const status = parseStatus(state);
@@ -140,6 +144,7 @@ function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 					onSelect={(path) => dispatch({ type: "select", path })}
 					onToggle={(key) => dispatch({ type: "toggleExpanded", key })}
 					onShowAll={(key) => dispatch({ type: "showAll", key })}
+					reveal={reveal}
 				/>
 			) : (
 				<div className="eb-json-empty">

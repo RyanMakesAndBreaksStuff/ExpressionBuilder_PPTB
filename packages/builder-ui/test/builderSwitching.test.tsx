@@ -54,14 +54,17 @@ async function goTo(user: UserEvent, label: string) {
 	await user.click(screen.getByRole('menuitemradio', { name: label }));
 }
 
+const sampleBox = () =>
+	screen.getByRole('textbox', { name: 'Sample JSON', exact: true });
+
 function editSample(text: string) {
-	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+	fireEvent.input(sampleBox(), {
 		target: { value: text },
 	});
 }
 
 function pasteSample(text: string) {
-	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+	fireEvent.input(sampleBox(), {
 		target: { value: text },
 		inputType: 'insertFromPaste',
 	});
@@ -74,7 +77,7 @@ async function advanceParse(ms = 600) {
 async function exerciseJsonReference(user: UserEvent) {
 	await goTo(user, 'JSON reference');
 	await user.type(screen.getByLabelText('Action name'), 'Get items');
-	await user.click(screen.getByLabelText('Sample JSON'));
+	await user.click(sampleBox());
 	await user.paste(fixtureA1);
 	await user.click(screen.getByRole('treeitem', { name: /^body, object$/ }));
 	await user.click(screen.getByRole('button', { name: 'Copy @{}' }));
@@ -145,7 +148,7 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 
 		expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue(fixtureA1);
+		expect(sampleBox()).toHaveValue(fixtureA1);
 		expect(
 			screen.getByRole('treeitem', { name: /^body, object$/ }),
 		).toHaveAttribute('aria-selected', 'true');
@@ -205,7 +208,7 @@ describe('builder switching', () => {
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
 		expect(screenChip()).toHaveAccessibleName('Screen: Trigger / Filter');
 		await goTo(user, 'JSON reference');
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue('');
+		expect(sampleBox()).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
 	});
 
@@ -248,7 +251,7 @@ describe('builder switching', () => {
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		editSample('{"a":1}');
 		await advanceParse();
-		expect(screen.getByLabelText('Sample JSON')).toHaveAttribute('aria-invalid', 'false');
+		expect(sampleBox()).toHaveAttribute('aria-invalid', 'false');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 	});
 
@@ -279,11 +282,16 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		pasteSample('{"a":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		pasteSample('{"b":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		workspaceMount.key += 1;
 		view.rerender(tree(adapter));
-		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		const replacement = createAdapter();
 		view.rerender(tree(replacement));
+		expect(replacement.notify).not.toHaveBeenCalled();
+		await user.click(screen.getByRole('tab', { name: /^Action, payload 1$/ }));
 		expect(replacement.notify).not.toHaveBeenCalled();
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		editSample('{"a":2}');
@@ -312,5 +320,49 @@ describe('builder switching', () => {
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		await advanceParse(1);
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
+	});
+
+	it('cancels pending validation on switching and restarts on return', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":1}');
+		await advanceParse(300);
+
+		fireEvent.click(screen.getByRole('button', {
+			name: 'New payload',
+			exact: true,
+		}));
+		await advanceParse(600);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('tab', {
+			name: /^Payload 1, payload 1$/,
+		}));
+		await advanceParse(599);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		await advanceParse(1);
+		expect(screen.getByRole('tree')).toBeInTheDocument();
+		expect(adapter.notify).toHaveBeenCalledWith(
+			'Parsed · 2 values',
+			'success',
+		);
+	});
+
+	it('drops stale search results once a payload changes', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"email":1}');
+		const search = screen.getByRole('combobox', { name: 'Search all payloads' });
+		await user.type(search, 'email');
+		expect(screen.getAllByRole('option')).toHaveLength(1);
+		pasteSample('{"other":1}');
+		expect(screen.queryByRole('option')).not.toBeInTheDocument();
+		expect(screen.getByText('No matches in parsed payloads.')).toBeInTheDocument();
 	});
 });

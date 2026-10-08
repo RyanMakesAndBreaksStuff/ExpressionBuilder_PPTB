@@ -10,6 +10,10 @@ import {
   jsonReferenceReducer,
   type JsonReferenceState,
 } from '../src/workbench/jsonReferenceState';
+import {
+  createJsonPayloadSession,
+  jsonPayloadSessionReducer,
+} from '../src/workbench/jsonPayloadSession';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
 afterEach(() => cleanup());
@@ -175,5 +179,60 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
       'constructor, number, 2',
       'hasOwnProperty, number, 3',
     ]);
+  });
+
+  it('focuses and selects a revealed row past the array page, once per sequence', () => {
+    const initial = createJsonPayloadSession();
+    const pasted = jsonPayloadSessionReducer(initial, {
+      type: 'edit',
+      payloadId: initial.activeId,
+      action: {
+        type: 'pasteAndParse',
+        defaultActionName: 'Action',
+        text: JSON.stringify(Array.from({ length: 30 }, (_, index) => index)),
+      },
+    });
+    const parsed = pasted.payloads[0].state.parsed!;
+    const session = jsonPayloadSessionReducer(pasted, {
+      type: 'reveal',
+      match: {
+        payloadId: initial.activeId,
+        parsed,
+        path: [24],
+        payloadLabel: 'Payload 1',
+        pathLabel: '[24]',
+        preview: '24',
+      },
+    });
+    const state = session.payloads[0].state;
+    const tree = (reveal: typeof session.reveal) => (
+      <>
+        <button type="button">Elsewhere</button>
+        <h2 id="payload-heading">Payload</h2>
+        <PayloadTree
+          labelledBy="payload-heading"
+          value={parsed.value}
+          rootLabel="triggerBody()"
+          expanded={state.expanded}
+          showAll={state.showAll}
+          selectedPath={state.selectedPath}
+          onSelect={() => undefined}
+          onToggle={() => undefined}
+          onShowAll={() => undefined}
+          reveal={reveal}
+        />
+      </>
+    );
+    const view = render(tree(null));
+    const row = () => item(/^\[24\], number, 24$/);
+    expect(row()).toHaveAttribute('aria-selected', 'true');
+    expect(row()).not.toHaveFocus();
+
+    view.rerender(tree(session.reveal));
+    expect(row()).toHaveFocus();
+
+    screen.getByRole('button', { name: 'Elsewhere' }).focus();
+    view.rerender(tree(session.reveal));
+    expect(row()).not.toHaveFocus();
   });
 });

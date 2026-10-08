@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -11,6 +12,7 @@ import {
 } from 'react';
 import type { PayloadPath } from '@ryanmakes/eb_engine';
 import { pathKey } from '../importExport/jsonPayload';
+import type { PayloadReveal } from './jsonPayloadSession';
 import {
   ROOT_KEY,
   buildVisibleRows,
@@ -32,6 +34,7 @@ interface PayloadTreeProps {
   onSelect: (path: PayloadPath) => void;
   onToggle: (key: string) => void;
   onShowAll: (key: string) => void;
+  reveal?: PayloadReveal | null;
 }
 
 /**
@@ -45,6 +48,7 @@ export function PayloadTree({
   onSelect,
   onShowAll,
   onToggle,
+  reveal,
   rootLabel,
   selectedPath,
   showAll,
@@ -56,6 +60,18 @@ export function PayloadTree({
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const rowElements = useRef(new Map<string, HTMLDivElement>());
   const focusPending = useRef(false);
+  const handledReveal = useRef(0);
+
+  useLayoutEffect(() => {
+    if (!reveal || handledReveal.current === reveal.sequence) return;
+    const key = pathKey(reveal.path);
+    const row = rowElements.current.get(key);
+    if (!row) return;
+    handledReveal.current = reveal.sequence;
+    setFocusedKey(key);
+    row.focus();
+    row.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [reveal, rows]);
 
   const tabStopKey =
     focusedKey !== null && indexByKey.has(focusedKey) ? focusedKey : nearestVisibleKey(indexByKey, selectedPath);

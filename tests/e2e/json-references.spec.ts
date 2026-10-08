@@ -226,6 +226,13 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeVisible();
 
+  // Payload strip: the selected tab, New payload, then search, before the root radios.
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'New payload' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
   await page.keyboard.press('Tab');
