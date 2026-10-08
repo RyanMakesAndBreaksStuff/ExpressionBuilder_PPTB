@@ -1,4 +1,19 @@
-import { expect, test, type Locator } from 'playwright/test';
+import { expect, test, type Locator, type Page } from 'playwright/test';
+
+test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
+async function pasteSample(page: Page, text: string): Promise<void> {
+  await page.evaluate(
+    (value) => navigator.clipboard.writeText(value),
+    text,
+  );
+  const editor = page.getByRole('textbox', {
+    name: 'Sample JSON',
+    exact: true,
+  });
+  await editor.focus();
+  await editor.press('Control+V');
+}
 
 const sample = {
   statusCode: 200,
@@ -36,8 +51,10 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: /^Screen:/ }).click();
       await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
       await page.getByLabel('Action name').fill('List Rows');
-      await page.getByLabel('Sample JSON').fill(JSON.stringify(sample));
-      await page.getByRole('button', { name: 'Parse', exact: true }).click();
+      await pasteSample(page, JSON.stringify(sample));
+      await expect(
+        page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'),
+      ).toHaveText(/^\d+ values?$/);
 
       for (const name of [/^body, object$/, /^value, array$/, /^\[0\], object$/]) {
         const row = page.getByRole('treeitem', { name });
@@ -60,7 +77,7 @@ for (const theme of ['light', 'dark'] as const) {
         page.locator('.eb-json-reference > .eb-json-card-body'),
       ];
       const targets = [
-        page.getByRole('button', { name: 'Parse', exact: true }),
+        page.getByRole('textbox', { name: 'Sample JSON', exact: true }),
         page.getByRole('treeitem').last(),
         page.getByLabel('Loop items() reference'),
       ];
