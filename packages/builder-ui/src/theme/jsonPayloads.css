@@ -140,6 +140,10 @@
   .eb-json-session .eb-json-payload { min-height: 0; }
   .eb-json-session .eb-json-reference { max-height: 100%; }
 }
+/* Stacked Payload/Reference share the height (Reference is already 1 1 0), so a tall tree scrolls inside Payload. */
+@media (min-width: 601px) and (max-width: 999px) {
+  .eb-json-session .eb-json-payload { flex: 1 1 0; }
+}
 @media (max-width: 900px) {
   .eb-payload-strip {
     grid-template-columns: minmax(0, 1fr) auto auto;
