@@ -19,6 +19,50 @@ export interface FunctionsNavProps {
   onInsertReference: (expression: string) => void;
 }
 
+function ParsedValueSources({
+  list,
+  baseId,
+  onInsertReference,
+}: {
+  list: ParsedValueList;
+  baseId: string;
+  onInsertReference: (expression: string) => void;
+}) {
+  return (
+    <>
+      {list.emptyMessage ? <div>{list.emptyMessage}</div> : null}
+      {list.sources.map((source) => {
+        const content = (
+          <>
+            <ParsedValueEntries
+              entries={source.entries}
+              baseId={`${baseId}-${source.id}`}
+              descriptionPrefix={list.sources.length > 1
+                ? `${source.label}, ${source.rootCaption}`
+                : undefined}
+              onInsertReference={onInsertReference}
+            />
+            {source.emptyMessage ? <div>{source.emptyMessage}</div> : null}
+          </>
+        );
+        return list.sources.length === 1
+          ? <div key={source.id}>{content}</div>
+          : (
+            <details key={source.id} className="eb-pv-item eb-pv-source">
+              <summary>
+                {source.label} · {source.rootCaption} · {source.matchingCount}
+              </summary>
+              {content}
+            </details>
+          );
+      })}
+      {list.hiddenCount > 0
+        ? <div>+{list.hiddenCount} more — narrow with search</div>
+        : null}
+    </>
+  );
+}
+
 export function FunctionsNav({
   groups,
   selectedFunction,
@@ -93,25 +137,19 @@ export function FunctionsNav({
           className="eb-fn-group-row"
           type="button"
           aria-expanded={parsedValueExpanded}
-          aria-label={'Parsed Value ' + parsedValue.rows.length}
+          aria-label={'Parsed Value ' + parsedValue.visibleCount}
           onClick={onToggleParsedValue}
         >
           <ChevronRightRegular aria-hidden="true" />
           <span>Parsed Value</span>
-          <span>{parsedValue.rows.length}</span>
+          <span>{parsedValue.visibleCount}</span>
         </button>
         {parsedValueExpanded ? (
-          <div>
-            <ParsedValueEntries
-              entries={parsedValue.entries}
-              baseId={baseId}
-              onInsertReference={onInsertReference}
-            />
-            {parsedValue.emptyMessage ? <div>{parsedValue.emptyMessage}</div> : null}
-            {parsedValue.hiddenCount > 0
-              ? <div>+{parsedValue.hiddenCount} more — narrow with search</div>
-              : null}
-          </div>
+          <ParsedValueSources
+            list={parsedValue}
+            baseId={baseId}
+            onInsertReference={onInsertReference}
+          />
         ) : null}
       </div>
     </nav>

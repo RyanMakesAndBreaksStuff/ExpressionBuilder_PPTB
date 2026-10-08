@@ -365,4 +365,40 @@ describe('builder switching', () => {
 		expect(screen.queryByRole('option')).not.toBeInTheDocument();
 		expect(screen.getByText('No matches in parsed payloads.')).toBeInTheDocument();
 	});
+
+	it('keeps inserted Functions argument text after the JSON source is renamed, re-rooted or closed', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		await user.type(screen.getByLabelText('Action name'), 'Get items');
+		pasteSample('{"a":1}');
+
+		await goTo(user, 'Functions');
+		await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
+		const text1 = screen.getByLabelText('text1');
+		await user.click(text1);
+		await user.dblClick(screen.getByRole('button', { name: 'a' }));
+		const inserted = "outputs('Get_items')?['a']";
+		expect(text1).toHaveValue(inserted);
+
+		await goTo(user, 'JSON reference');
+		await user.clear(screen.getByLabelText('Action name'));
+		await user.type(screen.getByLabelText('Action name'), 'Renamed');
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Parsed Value 1' })).toBeInTheDocument();
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('radio', { name: /Trigger.*Full output/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Parsed Value 0' })).toBeInTheDocument();
+	});
 });
