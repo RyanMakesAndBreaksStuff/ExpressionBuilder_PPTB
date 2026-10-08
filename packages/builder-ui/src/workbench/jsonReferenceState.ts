@@ -64,7 +64,7 @@ export type JsonReferenceAction =
 	| { type: "setLoopName"; value: string }
 	| { type: "setText"; value: string }
 	| { type: "parse" }
-	| { type: "autoParse" }
+	| { type: "autoParse"; expectedText?: string }
 	| { type: "pasteAndParse"; text: string; defaultActionName: string }
 	| { type: "setReferenceRoot"; outputFrom: OutputFrom; shape: PayloadShape }
 	| { type: "select"; path: PayloadPath }
@@ -292,7 +292,7 @@ export function rootExpression(
 	shape: PayloadShape = state.shape,
 ): string {
 	const actionName = isActionNameMissing(state)
-		? ACTION_NAME_PLACEHOLDER
+		? "Action_name"
 		: state.actionName;
 	return formatPayloadRoot(referenceRoot(state, shape, actionName));
 }
@@ -305,7 +305,7 @@ export function rootExpressionFor(
 ): string {
 	const actionName =
 		outputFrom === "action" && state.actionName.trim() === ""
-			? ACTION_NAME_PLACEHOLDER
+			? "Action_name"
 			: state.actionName;
 	return formatPayloadRoot(
 		referenceRoot({ ...state, outputFrom }, shape, actionName),

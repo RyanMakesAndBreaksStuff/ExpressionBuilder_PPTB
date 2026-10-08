@@ -347,13 +347,13 @@ describe('JSON reference workspace', () => {
 		expect(name).toHaveAccessibleDescription(
 			'Enter the action name to build the reference.',
 		);
-		expect(row(/^outputs\('Action'\), object$/)).toBeInTheDocument();
+		expect(row(/^outputs\('Action_name'\), object$/)).toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
 		).toBeChecked();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
-		).toHaveAccessibleDescription("outputs('Action')");
+		).toHaveAccessibleDescription("outputs('Action_name')");
 	});
 
 	it('never claims a copy the host refused (user story 4, scenario 6)', async () => {
