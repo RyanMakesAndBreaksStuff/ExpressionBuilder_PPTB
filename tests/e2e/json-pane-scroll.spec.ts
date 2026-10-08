@@ -38,10 +38,12 @@ async function expectInside(owner: Locator, target: Locator): Promise<void> {
 
 for (const theme of ['light', 'dark'] as const) {
   for (const size of [
-    { width: 1280, height: 420 },
-    { width: 1280, height: 800 },
-    { width: 768, height: 1024 },
     { width: 375, height: 667 },
+    { width: 768, height: 1024 },
+    { width: 900, height: 700 },
+    { width: 1280, height: 420 },
+    { width: 1280, height: 860 },
+    { width: 1440, height: 900 },
   ]) {
     test('JSON pane end content is reachable: ' + theme + ' ' + size.width + 'x' + size.height, async ({ page }) => {
       await page.setViewportSize(size);
@@ -50,36 +52,41 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('http://127.0.0.1:5173/');
       await page.getByRole('button', { name: /^Screen:/ }).click();
       await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
-      await page.getByLabel('Action name').fill('List Rows');
+      // Only the active payload's tabpanel is visible; a second, empty payload
+      // proves every query below stays inside the visible panel.
+      const panel = page.getByRole('tabpanel');
+      await panel.getByLabel('Action name').fill('List Rows');
       await pasteSample(page, JSON.stringify(sample));
-      await expect(
-        page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'),
-      ).toHaveText(/^\d+ values?$/);
+      await expect(panel.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'))
+        .toHaveText(/^\d+ values?$/);
+      await page.getByRole('button', { name: 'New payload', exact: true }).click();
+      await page.getByRole('tab', { name: /^List Rows, payload 1$/ }).click();
+      await expect(panel).toHaveCount(1);
 
       for (const name of [/^body, object$/, /^value, array$/, /^\[0\], object$/]) {
-        const row = page.getByRole('treeitem', { name });
+        const row = panel.getByRole('treeitem', { name });
         if (await row.getAttribute('aria-expanded') === 'false') {
           await row.locator('[data-chevron]').click();
         }
       }
-      await page.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
-      await page.getByLabel('Loop name').fill('Check it');
+      await panel.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
+      await panel.getByLabel('Loop name').fill('Check it');
 
-      const workspace = page.locator('.eb-json-workspace');
+      const workspace = panel.locator('.eb-json-workspace');
       const cards = [
-        page.locator('.eb-json-source'),
-        page.locator('.eb-json-payload'),
-        page.locator('.eb-json-reference'),
+        panel.locator('.eb-json-source'),
+        panel.locator('.eb-json-payload'),
+        panel.locator('.eb-json-reference'),
       ];
       const owners = [
-        page.locator('.eb-json-source > .eb-json-card-body'),
-        page.locator('.eb-payload-tree'),
-        page.locator('.eb-json-reference > .eb-json-card-body'),
+        panel.locator('.eb-json-source > .eb-json-card-body'),
+        panel.locator('.eb-payload-tree'),
+        panel.locator('.eb-json-reference > .eb-json-card-body'),
       ];
       const targets = [
-        page.getByRole('textbox', { name: 'Sample JSON', exact: true }),
-        page.getByRole('treeitem').last(),
-        page.getByLabel('Loop items() reference'),
+        panel.getByRole('textbox', { name: 'Sample JSON', exact: true }),
+        panel.getByRole('treeitem').last(),
+        panel.getByLabel('Loop items() reference'),
       ];
 
       if (size.width > 600) {

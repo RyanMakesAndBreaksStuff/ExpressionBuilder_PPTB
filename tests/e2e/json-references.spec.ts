@@ -36,13 +36,14 @@ async function clipboardText(page: Page): Promise<string> {
 
 // Parse success surfaces as the value count in the Payload card header; the
 // old in-pane Parse button and status line were replaced by paste-to-parse.
-const payloadMeta = (page: Page) => page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
+const jsonPanel = (page: Page) => page.getByRole('tabpanel');
+const payloadMeta = (page: Page) => jsonPanel(page).getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
 
 /** Bare formula-editor copy. The panel also has "Copy @{}", "Copy item()", and "Copy item() @{}". */
-const referenceCopy = (page: Page) => page.getByRole('button', { name: 'Copy', exact: true });
+const referenceCopy = (page: Page) => jsonPanel(page).getByRole('button', { name: 'Copy', exact: true });
 
 const treeRow = (page: Page, label: string) =>
-  page.getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
+  jsonPanel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
 async function openJsonReference(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^Screen:/ }).click();
@@ -50,6 +51,11 @@ async function openJsonReference(page: Page): Promise<void> {
     name: 'JSON reference',
     exact: true,
   }).click();
+}
+
+async function openFunctions(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^Screen:/ }).click();
+  await page.getByRole('menuitemradio', { name: 'Functions', exact: true }).click();
 }
 
 async function openConditionBuilder(page: Page): Promise<void> {
@@ -66,7 +72,7 @@ async function pasteSample(page: Page, text: string): Promise<void> {
     (value) => navigator.clipboard.writeText(value),
     text,
   );
-  const editor = page.getByRole('textbox', {
+  const editor = jsonPanel(page).getByRole('textbox', {
     name: 'Sample JSON',
     exact: true,
   });
@@ -80,8 +86,8 @@ async function parseSample(
 ) {
   // One radiogroup of four combined roots, labelled e.g. 'Action · Full output'.
   const root = `${source.outputFrom} · ${source.shape === 'full' ? 'Full output' : 'Body only'}`;
-  await page.getByRole('radio', { name: root }).click();
-  if (source.name !== undefined) await page.getByLabel('Action name').fill(source.name);
+  await jsonPanel(page).getByRole('radio', { name: root }).click();
+  if (source.name !== undefined) await jsonPanel(page).getByLabel('Action name').fill(source.name);
   await pasteSample(page, source.sample);
   await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
 }
@@ -123,7 +129,7 @@ test.describe('web build', () => {
       for (const { source, path, expected } of cases) {
         await parseSample(page, source);
         await select(page, [...path]);
-        await expect(page.getByLabel('Reference expression')).toHaveText(expected);
+        await expect(jsonPanel(page).getByLabel('Reference expression')).toHaveText(expected);
         await referenceCopy(page).click();
         // .first(): successive cases can stack not-yet-dismissed toasts.
         await expect(page.getByText('Expression copied').first()).toBeVisible();
@@ -201,9 +207,9 @@ test.describe('web build', () => {
         await scan('Condition builder with rules');
         await loadEmailReference(page);
         await scan('JSON reference with a selection');
-        await page.getByLabel('Action name').fill('');
+        await jsonPanel(page).getByLabel('Action name').fill('');
         await pasteSample(page, '{"a": 1,}');
-        await expect(page.getByRole('alert')).toBeVisible();
+        await expect(jsonPanel(page).getByRole('alert')).toBeVisible();
         await scan('JSON reference with errors');
       });
     }
@@ -234,12 +240,12 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await page.keyboard.press('Tab');
   await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Action name')).toBeFocused();
+  await expect(jsonPanel(page).getByLabel('Action name')).toBeFocused();
   await page.keyboard.type('Get items');
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Sample JSON')).toBeFocused();
+  await expect(jsonPanel(page).getByLabel('Sample JSON')).toBeFocused();
   await page.evaluate((text) => navigator.clipboard.writeText(text), fixtureA1);
   await page.keyboard.press('Control+V');
   await expect(payloadMeta(page)).toHaveText('25 values');
@@ -259,9 +265,9 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
 
   // Reference info, then the inline copy, then the bare Copy.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Reference info' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('button', { name: 'Reference info' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Copy @{}' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('button', { name: 'Copy @{}' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(referenceCopy(page)).toBeFocused();
   expect(await focusRing()).not.toBe('none');
@@ -291,7 +297,7 @@ test('switching builders leaves the document and Export byte-identical (SC-003)'
 test('the JSON reference view follows the host theme (FR-091)', async ({ page }) => {
   await open(page, { theme: 'light' });
   await openJsonReference(page);
-  const card = page.locator('.eb-json-source');
+  const card = jsonPanel(page).locator('.eb-json-source');
   const lightSurface = await card.evaluate((element) => getComputedStyle(element).backgroundColor);
 
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -304,17 +310,26 @@ const VIEWPORTS = [
   { width: 768, height: 1024 },
   { width: 900, height: 700 },
   { width: 1280, height: 420 },
-  { width: 1280, height: 800 },
+  { width: 1280, height: 860 },
   { width: 1440, height: 900 },
 ];
 
 for (const theme of THEMES) {
-  test(`every viewport keeps both views inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
+  test(`every viewport keeps all three screens inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
+    test.setTimeout(120_000);
     await open(page, { theme });
     await addTwoRules(page);
     await loadEmailReference(page);
+    // A second, parsed payload so the strip, tabs and hidden panel are present.
+    await page.getByRole('button', { name: 'New payload', exact: true }).click();
+    await jsonPanel(page).getByLabel('Action name').fill('Get manager');
+    await pasteSample(page, '{"Email":"boss@example.com"}');
+    await expect(payloadMeta(page)).toHaveText('2 values');
+    await page.getByRole('tab', { name: /^Get items, payload 1$/ }).click();
+    await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
     const views = [
-      { name: 'Condition builder', open: openConditionBuilder },
+      { name: 'Trigger / Filter', open: openConditionBuilder },
+      { name: 'Functions', open: openFunctions },
       { name: 'JSON reference', open: openJsonReference },
     ];
 
@@ -329,9 +344,18 @@ for (const theme of THEMES) {
           const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
           return {
             pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+            // A control past the edge is reachable when a horizontally scrolling owner (the payload tab strip) that fits the page holds it.
             controlsCutOff: controls
-              .map((control) => control.getBoundingClientRect())
-              .filter((box) => box.width > 0 && (box.left < 0 || box.right > window.innerWidth + 0.5)).length,
+              .filter((control) => {
+                const box = control.getBoundingClientRect();
+                if (box.width === 0 || (box.left >= 0 && box.right <= window.innerWidth + 0.5)) return false;
+                for (let owner = control.parentElement; owner; owner = owner.parentElement) {
+                  if (!/auto|scroll/.test(getComputedStyle(owner).overflowX)) continue;
+                  const bounds = owner.getBoundingClientRect();
+                  return !(bounds.left >= 0 && bounds.right <= window.innerWidth + 0.5);
+                }
+                return true;
+              }).length,
             headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
           };
         });
@@ -341,22 +365,38 @@ for (const theme of THEMES) {
         if (viewport.width > 900) {
           expect(layout.headerRows, where).toBe(1);
         }
+
+        if (view.name === 'JSON reference') {
+          // Final Source, Payload and Reference content is reachable through its owning region.
+          const reach = [
+            { owner: 'Source', control: jsonPanel(page).getByRole('textbox', { name: 'Sample JSON', exact: true }) },
+            { owner: 'Payload', control: jsonPanel(page).getByRole('treeitem').last() },
+            { owner: 'Reference', control: jsonPanel(page).getByRole('button', { name: 'Copy item() @{}', exact: true }) },
+          ];
+          for (const { owner, control } of reach) {
+            await control.scrollIntoViewIfNeeded();
+            await expect.soft(control, `${owner} end content at ${viewport.width}x${viewport.height}`).toBeInViewport({ ratio: 0.9, timeout: 1500 });
+          }
+          // The strip stays one local row of controls; five-tab overflow scrolls inside .eb-payload-tabs.
+          await expect.soft(page.locator('.eb-payload-strip'), where).toBeInViewport();
+          await expect.soft(page.getByRole('combobox', { name: 'Search all payloads' }), where).toBeInViewport();
+        }
       }
     }
   });
 }
 
-test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the cards scroll inside, not the workspace (FR-092)', async ({ page }) => {
+test('at 1280x860 the reference and Copy are visible without scrolling; at 1280x420 the cards scroll inside, not the workspace (FR-092)', async ({ page }) => {
   await open(page);
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: 1280, height: 860 });
   await loadEmailReference(page);
 
-  await expect(page.getByLabel('Reference expression')).toBeInViewport();
+  await expect(jsonPanel(page).getByLabel('Reference expression')).toBeInViewport();
   await expect(referenceCopy(page)).toBeInViewport();
-  expect(await page.locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
+  expect(await jsonPanel(page).locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
 
   await page.setViewportSize({ width: 1280, height: 420 });
-  const workspace = page.locator('.eb-json-workspace');
+  const workspace = jsonPanel(page).locator('.eb-json-workspace');
   // Cards are bounded to the host frame, so the tree and reference body
   // scroll inside their cards and the workspace itself never needs a scrollbar.
   expect(await workspace.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
@@ -367,7 +407,7 @@ test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x
 test('samples at the limits parse and expand within 1 second (FR-039, SC-006 guard)', async ({ page }) => {
   await open(page);
   await openJsonReference(page);
-  await page.getByRole('radio', { name: 'Trigger · Full output' }).click();
+  await jsonPanel(page).getByRole('radio', { name: 'Trigger · Full output' }).click();
   const wide = JSON.stringify(Object.fromEntries(Array.from({ length: 9_999 }, (_, index) => [`key${index}`, index])));
   const samples = {
     size: JSON.stringify({ blob: 'x'.repeat(1_048_500) }),
@@ -380,7 +420,7 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
     const started = Date.now();
     await pasteSample(page, sample);
     await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
-    await expect(page.getByRole('tree')).toBeVisible();
+    await expect(jsonPanel(page).getByRole('tree')).toBeVisible();
     const elapsed = Date.now() - started;
     test.info().annotations.push({ type: 'SC-006 parse', description: `${name}: ${elapsed} ms` });
     expect(elapsed, `${name} parse`).toBeLessThan(1_000);
@@ -391,7 +431,7 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
   await root.locator('[data-chevron]').click();
   const started = Date.now();
   await root.locator('[data-chevron]').click();
-  await expect(page.getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
+  await expect(jsonPanel(page).getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
   const elapsed = Date.now() - started;
   test.info().annotations.push({ type: 'SC-006 expand', description: `9,999-member object: ${elapsed} ms` });
   expect(elapsed).toBeLessThan(1_000);
