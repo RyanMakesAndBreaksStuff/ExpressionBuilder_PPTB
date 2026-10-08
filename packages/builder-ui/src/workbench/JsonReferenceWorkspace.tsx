@@ -5,6 +5,7 @@ import { PayloadTree } from "./PayloadTree";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
+	parseStatus,
 	rootExpression,
 	showBodyHint,
 	type CopyFormat,
@@ -30,34 +31,30 @@ export function JsonReferenceWorkspace({
 	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	);
-	const prevParsedText = useRef<string | undefined>(undefined);
 
 	useEffect(() => () => clearTimeout(autoParseTimer.current), []);
 
-	// Notify the host when a parse succeeds with new content.
+	// Auto-parse an unvalidated edit after a short delay, only while visible.
 	useEffect(() => {
-		if (state.parsed && state.parsed.text !== prevParsedText.current) {
-			prevParsedText.current = state.parsed.text;
-			void adapter.notify(
-				`Parsed · ${countLabel(state.parsed.valueCount, "value")}`,
-				"success",
-			);
-		}
-	}, [adapter, state.parsed]);
-
-	// Auto-parse after a short delay when text is edited manually.
-	useEffect(() => {
-		if (!state.text.trim() || state.text === state.parsed?.text) return;
 		clearTimeout(autoParseTimer.current);
-		autoParseTimer.current = setTimeout(() => dispatch({ type: "parse" }), 600);
+		if (
+			!active ||
+			state.text === state.lastAttemptedText ||
+			(!state.text.trim() && state.lastSuccessfulPayload === null)
+		)
+			return;
+		autoParseTimer.current = setTimeout(
+			() => dispatch({ type: "autoParse" }),
+			600,
+		);
 		return () => clearTimeout(autoParseTimer.current);
-	}, [state.text, state.parsed?.text, dispatch]);
-
-	// Clear any pending auto-parse when leaving the tab.
-	useEffect(() => {
-		if (active) return;
-		clearTimeout(autoParseTimer.current);
-	}, [active]);
+	}, [
+		active,
+		state.text,
+		state.lastAttemptedText,
+		state.lastSuccessfulPayload,
+		dispatch,
+	]);
 
 	const copy = async (format: CopyFormat) => {
 		const text = copyText(state, format);
@@ -111,6 +108,7 @@ interface PayloadPanelProps {
 function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
+	const status = parseStatus(state);
 
 	return (
 		<section
@@ -124,6 +122,7 @@ function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 					</span>
 				) : null}
 			</div>
+			<p className="eb-json-help">{status.text}</p>
 			{showBodyHint(state) ? (
 				<p className="eb-json-hint">
 					This sample has a top-level <code>body</code> key. If you pasted the

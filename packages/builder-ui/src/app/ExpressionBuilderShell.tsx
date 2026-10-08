@@ -110,6 +110,14 @@ export function ExpressionBuilderShell({
 
   const [screen, setScreen] = useState<ScreenId>('condition');
   const [jsonState, jsonDispatch] = useReducer(jsonReferenceReducer, initialJsonReferenceState);
+  // Each parse notice reaches the host once, even across workspace remounts or adapter swaps.
+  const lastNotifiedParseId = useRef(0);
+  useEffect(() => {
+    const notice = jsonState.parseNotice;
+    if (!notice || notice.id <= lastNotifiedParseId.current) return;
+    lastNotifiedParseId.current = notice.id;
+    void adapter.notify(notice.message, 'success');
+  }, [adapter, jsonState.parseNotice]);
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the

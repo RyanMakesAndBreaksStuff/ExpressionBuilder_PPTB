@@ -102,10 +102,7 @@ describe('JSON reference workspace', () => {
 		render(<WorkspaceHarness adapter={adapter} active />);
 
 		await pasteAndParse(user, fixtureA1, 'Get items');
-		expect(adapter.notify).toHaveBeenCalledWith(
-			'Parsed · 25 values',
-			'success',
-		);
+		expect(adapter.notify).not.toHaveBeenCalled();
 		expect(screen.getByText('25 values')).toBeInTheDocument();
 
 		await selectEmail(user);

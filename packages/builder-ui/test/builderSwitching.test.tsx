@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -8,7 +9,25 @@ import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
 import { sampleDocument } from '../src/app/sampleData';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
-afterEach(() => cleanup());
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+	workspaceMount.key = 0;
+});
+
+const workspaceMount = vi.hoisted(() => ({ key: 0 }));
+
+vi.mock('../src/workbench/JsonReferenceWorkspace', async (importOriginal) => {
+	const actual = await importOriginal<
+		typeof import('../src/workbench/JsonReferenceWorkspace')
+	>();
+	return {
+		...actual,
+		JsonReferenceWorkspace: (
+			props: Parameters<typeof actual.JsonReferenceWorkspace>[0],
+		) => <actual.JsonReferenceWorkspace key={workspaceMount.key} {...props} />,
+	};
+});
 
 function createAdapter(): PlatformAdapter {
 	return {
@@ -33,6 +52,23 @@ const screenChip = () => screen.getByRole('button', { name: /^Screen:/ });
 async function goTo(user: UserEvent, label: string) {
 	await user.click(screenChip());
 	await user.click(screen.getByRole('menuitemradio', { name: label }));
+}
+
+function editSample(text: string) {
+	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+		target: { value: text },
+	});
+}
+
+function pasteSample(text: string) {
+	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+		target: { value: text },
+		inputType: 'insertFromPaste',
+	});
+}
+
+async function advanceParse(ms = 600) {
+	await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
 }
 
 async function exerciseJsonReference(user: UserEvent) {
@@ -171,5 +207,110 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		expect(screen.getByLabelText('Sample JSON')).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
+	});
+
+	it('announces valid auto changes at 600ms and keeps formatting quiet', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":1}');
+		await advanceParse(599);
+		expect(adapter.notify).not.toHaveBeenCalled();
+		await advanceParse(1);
+		expect(adapter.notify).toHaveBeenCalledExactlyOnceWith('Parsed · 2 values', 'success');
+		editSample('{ "a": 1 }');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		expect(screen.getByText('Parsed · 2 values')).toBeInTheDocument();
+		editSample('{"a":2}');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		expect(adapter.notify).toHaveBeenLastCalledWith('Payload updated · 2 values', 'success');
+		expect(screen.getByRole('treeitem', { name: /^a, number, 2$/ })).toBeInTheDocument();
+	});
+
+	it('retains good output during invalid auto input without notifying on recovery', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		await user.click(screen.getByRole('treeitem', { name: /^a, number, 1$/ }));
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":');
+		await advanceParse();
+		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toHaveAttribute('aria-selected', 'true');
+		expect(screen.getByText(
+			'Could not parse. Showing last successful payload.',
+		)).toBeInTheDocument();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		editSample('{"a":1}');
+		await advanceParse();
+		expect(screen.getByLabelText('Sample JSON')).toHaveAttribute('aria-invalid', 'false');
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+	});
+
+	it('announces each successful paste once and cancels pending automatic work', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":0}');
+		await advanceParse(300);
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledExactlyOnceWith('Parsed · 2 values', 'success');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		expect(adapter.notify).toHaveBeenLastCalledWith('Parsed · 2 values', 'success');
+	});
+
+	it('does not replay across a real workspace remount or adapter replacement in StrictMode', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		const tree = (target: PlatformAdapter) => (
+			<StrictMode><ExpressionBuilderShell adapter={target} /></StrictMode>
+		);
+		const view = render(tree(adapter));
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		workspaceMount.key += 1;
+		view.rerender(tree(adapter));
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		const replacement = createAdapter();
+		view.rerender(tree(replacement));
+		expect(replacement.notify).not.toHaveBeenCalled();
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":2}');
+		await advanceParse();
+		expect(replacement.notify).toHaveBeenCalledExactlyOnceWith(
+			'Payload updated · 2 values', 'success',
+		);
+	});
+
+	it('cancels automatic work while inactive and resumes an unvalidated edit on return', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":2}');
+		await advanceParse(300);
+		fireEvent.click(screenChip());
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Trigger / Filter' }));
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		fireEvent.click(screenChip());
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
+		await advanceParse(599);
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		await advanceParse(1);
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
 	});
 });
