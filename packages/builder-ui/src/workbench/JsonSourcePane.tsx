@@ -183,18 +183,18 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 						value={state.text}
 						aria-invalid={state.error !== null}
 						aria-describedby={state.error !== null ? errorId : undefined}
-						onChange={(event) =>
-							dispatch({ type: "setText", value: event.target.value })
-						}
+						onInput={(event) => {
+							const { value } = event.currentTarget;
+							dispatch(
+								(event.nativeEvent as InputEvent).inputType === "insertFromPaste"
+									? { type: "pasteAndParse", text: value, defaultActionName: ACTION_NAME_PLACEHOLDER }
+									: { type: "setText", value },
+							);
+						}}
 						onPaste={(event) => {
 							const pasted = event.clipboardData.getData("text");
 							if (!pasted) return;
-							event.preventDefault();
-							dispatch({
-							type: "pasteAndParse",
-								text: pasted,
-								defaultActionName: ACTION_NAME_PLACEHOLDER,
-							});
+							event.currentTarget.select();
 						}}
 					/>
 				</div>

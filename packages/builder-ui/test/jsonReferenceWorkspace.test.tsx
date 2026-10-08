@@ -3,6 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { useReducer } from 'react';
 import {
 	cleanup,
+	fireEvent,
 	render,
 	screen,
 	within,
@@ -302,6 +303,35 @@ describe('JSON reference workspace', () => {
 		await user.type(screen.getByLabelText('Sample JSON'), ' ');
 		expect(screen.getByRole('tree')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled();
+	});
+
+	it('replaces the whole sample on paste despite a partial selection', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const sample = screen.getByLabelText('Sample JSON') as HTMLTextAreaElement;
+		await user.click(sample);
+		await user.paste('{"old": 1}');
+		sample.setSelectionRange(0, 3);
+
+		await user.paste('{"a": 2}');
+
+		expect(sample.value).toBe('{"a": 2}');
+	});
+
+	it('still parses when the pasted JSON equals the typed JSON', () => {
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const sample = screen.getByLabelText('Sample JSON');
+		const json = '{"a": 1}';
+		fireEvent.input(sample, { target: { value: json } });
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		fireEvent.input(sample, {
+			target: { value: json },
+			inputType: 'insertFromPaste',
+		});
+
+		expect(screen.getByRole('tree')).toBeInTheDocument();
+		expect(screen.getByLabelText('Action name')).toHaveValue('Action');
 	});
 
 	it('blocks Copy and flags the field when the action name is blank (user story 4, scenario 5)', async () => {
