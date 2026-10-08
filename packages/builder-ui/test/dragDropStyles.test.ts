@@ -336,15 +336,16 @@ describe('drag-and-drop visual contract', () => {
     expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
     expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
 
-    // The floor must also fit the host: a bare 320px floor plus the workspace's
-    // own 18px×2 padding overflowed a ~420px PPTB frame by ~7px, so the
-    // workspace scrolled dead space on launch. min() caps the floor at the
-    // viewport's actual supply (vh fallback first, dvh override second).
+    // The floor must also fit the host: a bare 320px floor overflows a short
+    // (~420px) PPTB frame once the shell chrome is subtracted, so the workspace
+    // scrolled dead space on launch. min() caps the floor at the viewport's
+    // actual supply (vh fallback first, dvh override second). 80px = 48px pill
+    // header + 8px root gap + 2×12px root padding.
     expect(workspace).toMatch(
-      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100vh - 107px\)\),\s*1fr\s*\)\s*;/,
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100vh - 80px\)\),\s*1fr\s*\)\s*;/,
     );
     expect(workspace).toMatch(
-      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100dvh - 107px\)\),\s*1fr\s*\)\s*;/,
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100dvh - 80px\)\),\s*1fr\s*\)\s*;/,
     );
 
     // A real floor, not a placeholder, but low enough that a short host (PPTB

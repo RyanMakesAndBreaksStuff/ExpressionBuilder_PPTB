@@ -235,8 +235,21 @@ body {
      iframe that is routinely wide but short — so it is fixed here rather than
      behind a width breakpoint. When there is ample height 1fr wins and the
      computed layout is unchanged; when there is not, overflow-y scrolls the
-     workspace instead of crushing the canvas. */
-	grid-template-rows: minmax(var(--eb-workspace-min-height), 1fr);
+     workspace instead of crushing the canvas.
+
+     The floor must also fit the host: min() caps it at the viewport's actual
+     supply, so a short frame never gets a floor taller than the space it has
+     (80px = 48px pill header + 8px root gap + 2×12px root padding). The vh
+     line is the fallback for engines without dvh support, matching the
+     .eb-root pattern. */
+	grid-template-rows: minmax(
+		min(var(--eb-workspace-min-height), calc(100vh - 80px)),
+		1fr
+	);
+	grid-template-rows: minmax(
+		min(var(--eb-workspace-min-height), calc(100dvh - 80px)),
+		1fr
+	);
 	gap: 12px;
 	padding: 0;
 	overflow-x: hidden;
@@ -2086,11 +2099,11 @@ body {
 	/* 560px gives the textarea room on tall hosts, but a bare floor overflows
 	   short hosts (PPTB routinely gives ~420px): the JSON view opened already
 	   needing a vertical scrollbar. Cap the floor at what the frame supplies
-	   (107px = 71px header + 36px workspace padding) so the card body scrolls
+	   (80px = 48px pill header + 8px root gap + 2×12px root padding) so the card body scrolls
 	   internally instead. vh line first, dvh override second (the .eb-root
 	   pattern). */
-	min-height: min(560px, calc(100vh - 107px));
-	min-height: min(560px, calc(100dvh - 107px));
+	min-height: min(560px, calc(100vh - 80px));
+	min-height: min(560px, calc(100dvh - 80px));
 }
 
 .eb-json-source .eb-json-card-body {
@@ -2111,8 +2124,8 @@ body {
 	flex: 1 1 auto;
 	/* Same host-frame cap as .eb-json-source: the tree scrolls inside the
 	   card on short hosts rather than pushing the workspace into a scrollbar. */
-	min-height: min(320px, calc(100vh - 107px));
-	min-height: min(320px, calc(100dvh - 107px));
+	min-height: min(320px, calc(100vh - 80px));
+	min-height: min(320px, calc(100dvh - 80px));
 	min-width: 0;
 }
 
@@ -2120,8 +2133,8 @@ body {
 	flex: 0 0 auto;
 	/* Bounded to the host frame so a short host scrolls this card's body
 	   internally instead of opening the workspace with a scrollbar. */
-	max-height: calc(100vh - 107px);
-	max-height: calc(100dvh - 107px);
+	max-height: calc(100vh - 80px);
+	max-height: calc(100dvh - 80px);
 }
 
 .eb-json-reference .eb-json-card-body {

@@ -48,15 +48,15 @@ describe('JSON reference styles', () => {
   });
 
   it('caps the JSON cards to the host frame so the view never opens needing the workspace to scroll (FR-092)', () => {
-    // 107px = 71px header + 36px workspace padding; vh fallback line first,
+    // 80px = 48px pill header + 8px root gap + 2×12px root padding; vh fallback line first,
     // dvh override second (the .eb-root pattern).
     expect(rule(css, '.eb-json-source')).toMatch(
-      /min-height:\s*min\(560px,\s*calc\(100dvh - 107px\)\);/,
+      /min-height:\s*min\(560px,\s*calc\(100dvh - 80px\)\);/,
     );
     expect(rule(css, '.eb-json-payload')).toMatch(
-      /min-height:\s*min\(320px,\s*calc\(100dvh - 107px\)\);/,
+      /min-height:\s*min\(320px,\s*calc\(100dvh - 80px\)\);/,
     );
-    expect(rule(css, '.eb-json-reference')).toMatch(/max-height:\s*calc\(100dvh - 107px\);/);
+    expect(rule(css, '.eb-json-reference')).toMatch(/max-height:\s*calc\(100dvh - 80px\);/);
     expect(rule(css, '.eb-json-reference .eb-json-card-body')).toMatch(/overflow-y:\s*auto;/);
   });
 
