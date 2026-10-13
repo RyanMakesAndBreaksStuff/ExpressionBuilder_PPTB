@@ -774,7 +774,7 @@ Expected: one commit containing only this task’s verified paths. Preserve othe
 
 Ownership: JSON integration and new controls. Existing pane internals retain their responsibilities.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Add this to `builderSwitching.test.tsx`, reusing its current adapter/navigation/timer helpers. Scope `editSample` and `pasteSample` to the visible textbox.
 
@@ -813,7 +813,7 @@ it('cancels pending validation on switching and restarts on return', async () =>
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/builderSwitching.test.tsx -t "cancels pending validation on switching and restarts on return"
@@ -823,7 +823,7 @@ Expected: exit 1 because `New payload` is absent. The fake timer test must finis
 
 Add focused tests for roving tab focus, focused close replacement, arrow wrapping in search, Escape, stale results, revealing item 24, and notice deduplication across StrictMode/workspace recreation/adapter replacement in the owned `builderSwitching.test.tsx`. The existing baseline tests already cover each presentation case; extend them to two payloads rather than replacing them.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 ### Complete new focused control tests
 
@@ -1515,7 +1515,7 @@ Create `jsonPayloads.css` and import it after existing theme CSS:
 
 Verified palette owner: `workbenchTokens.ts` defines `--surface`, `--surface2`, `--text`, `--text2`, `--border`, `--accent`, `--accent-soft`, `--good`, `--warn`, `--danger`, `--header-glass`, `--seg-selected`, and `--shadow-sm` in both palettes; `tokens.css` defines `--eb-mono`. existing palette roles remain the source of colors. The new flex sizing accounts for the actual strip height rather than adding another fixed viewport subtraction. Existing pane widths and stacking rules remain intact. At widths <=600px preserve the existing workspace-owned vertical scroll and Source/Payload/Reference order. At widths >600px verify Source body, tree and Reference body scroll independently after removing the old pane min-height floors; the strip height is absorbed by flex layout, not another fixed 80px allowance.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/builderSwitching.test.tsx -t "cancels pending validation on switching and restarts on return"
@@ -1533,7 +1533,7 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts tests/e2e/json-pane-scr
 
 Expected: exit 0, with native paste/undo evidence from the browser test. Resolve failures before committing.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/JsonPayloadWorkspace.tsx packages/builder-ui/src/workbench/PayloadStrip.tsx packages/builder-ui/src/workbench/PayloadSearch.tsx packages/builder-ui/src/theme/jsonPayloads.css packages/builder-ui/test/payloadStrip.test.tsx packages/builder-ui/test/payloadSearch.test.tsx packages/builder-ui/src/app/ExpressionBuilderShell.tsx packages/builder-ui/src/workbench/JsonReferenceWorkspace.tsx packages/builder-ui/src/workbench/PayloadTree.tsx packages/builder-ui/test/builderSwitching.test.tsx packages/builder-ui/test/payloadTree.test.tsx tests/e2e/json-multi-payload.spec.ts
