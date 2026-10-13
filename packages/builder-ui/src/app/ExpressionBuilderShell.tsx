@@ -43,9 +43,10 @@ import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
 import { ShellHeader } from '../workbench/ShellHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
-import { JsonReferenceWorkspace } from '../workbench/JsonReferenceWorkspace';
+import { JsonPayloadWorkspace } from '../workbench/JsonPayloadWorkspace';
 import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
-import { currentReferenceRoot, initialJsonReferenceState, jsonReferenceReducer } from '../workbench/jsonReferenceState';
+import { currentReferenceRoot } from '../workbench/jsonReferenceState';
+import { createJsonPayloadSession, jsonPayloadSessionReducer } from '../workbench/jsonPayloadSession';
 import type { ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
@@ -57,6 +58,7 @@ import {
 import '../theme/tokens.css';
 import '../theme/shell.css';
 import '../theme/functions.css';
+import '../theme/jsonPayloads.css';
 
 const createRuleSeed = (field: FieldDefinition) => ({
   fieldId: field.id,
@@ -109,15 +111,24 @@ export function ExpressionBuilderShell({
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);
 
   const [screen, setScreen] = useState<ScreenId>('condition');
-  const [jsonState, jsonDispatch] = useReducer(jsonReferenceReducer, initialJsonReferenceState);
-  // Each parse notice reaches the host once, even across workspace remounts or adapter swaps.
-  const lastNotifiedParseId = useRef(0);
+  const [jsonSession, jsonDispatch] = useReducer(
+    jsonPayloadSessionReducer,
+    undefined,
+    createJsonPayloadSession,
+  );
+  // Each payload's parse notice reaches the host once, even across workspace remounts or adapter swaps.
+  const deliveredNotices = useRef(new Map<string, number>());
   useEffect(() => {
-    const notice = jsonState.parseNotice;
-    if (!notice || notice.id <= lastNotifiedParseId.current) return;
-    lastNotifiedParseId.current = notice.id;
-    void adapter.notify(notice.message, 'success');
-  }, [adapter, jsonState.parseNotice]);
+    for (const payload of jsonSession.payloads) {
+      const notice = payload.state.parseNotice;
+      const delivered = deliveredNotices.current.get(payload.id) ?? 0;
+      if (!notice || notice.id <= delivered) continue;
+      deliveredNotices.current.set(payload.id, notice.id);
+      void adapter.notify(notice.message, 'success');
+    }
+  }, [adapter, jsonSession.payloads]);
+  // Transitional: Functions still takes one source. Task 3 replaces this with the full source list.
+  const jsonState = jsonSession.payloads.find((payload) => payload.id === jsonSession.activeId)!.state;
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the
@@ -590,10 +601,10 @@ export function ExpressionBuilderShell({
               hidden={screen !== 'jsonReference'}
               className="eb-builder-panel eb-json-panel"
             >
-              <JsonReferenceWorkspace
+              <JsonPayloadWorkspace
                 adapter={adapter}
                 active={screen === 'jsonReference'}
-                state={jsonState}
+                session={jsonSession}
                 dispatch={jsonDispatch}
               />
             </div>

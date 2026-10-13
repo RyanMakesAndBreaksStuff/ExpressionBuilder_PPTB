@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,6 +10,7 @@ import {
   jsonReferenceReducer,
   type JsonReferenceState,
 } from '../src/workbench/jsonReferenceState';
+import { createJsonPayloadSession, jsonPayloadSessionReducer } from '../src/workbench/jsonPayloadSession';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
 afterEach(() => cleanup());
@@ -175,5 +176,58 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
       'constructor, number, 2',
       'hasOwnProperty, number, 3',
     ]);
+  });
+
+  it('focuses and selects a revealed row beyond the first page', () => {
+    let session = createJsonPayloadSession();
+    session = jsonPayloadSessionReducer(session, {
+      type: 'edit',
+      payloadId: session.activeId,
+      action: {
+        type: 'pasteAndParse',
+        defaultActionName: 'Action',
+        text: JSON.stringify(Array.from({ length: 30 }, (_, index) => index)),
+      },
+    });
+    const payload = session.payloads[0];
+    const view = (current: typeof session) => {
+      const state = current.payloads[0].state;
+      return (
+        <>
+          <h2 id="payload-heading">Payload</h2>
+          <PayloadTree
+            labelledBy="payload-heading"
+            value={state.parsed!.value}
+            rootLabel="triggerBody()"
+            expanded={state.expanded}
+            showAll={state.showAll}
+            selectedPath={state.selectedPath}
+            reveal={current.reveal}
+            onSelect={() => undefined}
+            onToggle={() => undefined}
+            onShowAll={() => undefined}
+          />
+        </>
+      );
+    };
+    const { rerender } = render(view(session));
+    expect(screen.queryByRole('treeitem', { name: /^\[24\], number, 24$/ })).toBeNull();
+
+    session = jsonPayloadSessionReducer(session, {
+      type: 'reveal',
+      match: {
+        payloadId: payload.id,
+        parsed: payload.state.parsed!,
+        path: [24],
+        payloadLabel: 'Action',
+        pathLabel: '[24]',
+        preview: '24',
+      },
+    });
+    act(() => rerender(view(session)));
+
+    const row = item(/^\[24\], number, 24$/);
+    expect(row).toHaveFocus();
+    expect(row).toHaveAttribute('aria-selected', 'true');
   });
 });

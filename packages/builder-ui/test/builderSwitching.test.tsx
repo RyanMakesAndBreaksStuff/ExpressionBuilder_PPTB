@@ -54,14 +54,17 @@ async function goTo(user: UserEvent, label: string) {
 	await user.click(screen.getByRole('menuitemradio', { name: label }));
 }
 
+const sampleBox = () =>
+	screen.getByRole('textbox', { name: 'Sample JSON', exact: true });
+
 function editSample(text: string) {
-	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+	fireEvent.input(sampleBox(), {
 		target: { value: text },
 	});
 }
 
 function pasteSample(text: string) {
-	fireEvent.input(screen.getByLabelText('Sample JSON'), {
+	fireEvent.input(sampleBox(), {
 		target: { value: text },
 		inputType: 'insertFromPaste',
 	});
@@ -312,5 +315,90 @@ describe('builder switching', () => {
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		await advanceParse(1);
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
+	});
+
+	it('cancels pending validation on switching and restarts on return', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+
+		await goTo(user, 'JSON reference');
+		// Fake timers start after navigation and use fireEvent: RTL's async
+		// wrapper awaits a real setTimeout(0), which hangs user-event under vitest.
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":1}');
+		await advanceParse(300);
+
+		fireEvent.click(screen.getByRole('button', {
+			name: 'New payload',
+			exact: true,
+		}));
+		await advanceParse(600);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('tab', {
+			name: /^Payload 1, payload 1$/,
+		}));
+		await advanceParse(599);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		await advanceParse(1);
+		expect(screen.getByRole('tree')).toBeInTheDocument();
+		expect(adapter.notify).toHaveBeenCalledWith(
+			'Parsed · 2 values',
+			'success',
+		);
+	});
+
+	it('delivers each payload notice once across StrictMode, workspace recreation and adapter replacement', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		const tree = (target: PlatformAdapter) => (
+			<StrictMode><ExpressionBuilderShell adapter={target} /></StrictMode>
+		);
+		const view = render(tree(adapter));
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
+		pasteSample('{"b":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+
+		workspaceMount.key += 1;
+		view.rerender(tree(adapter));
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+
+		const replacement = createAdapter();
+		view.rerender(tree(replacement));
+		expect(replacement.notify).not.toHaveBeenCalled();
+
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"b":2}');
+		await advanceParse();
+		expect(replacement.notify).toHaveBeenCalledExactlyOnceWith(
+			'Payload updated · 2 values', 'success',
+		);
+		fireEvent.click(screen.getByRole('tab', { name: 'Action, payload 1' }));
+		editSample('{"a":2}');
+		await advanceParse();
+		expect(replacement.notify).toHaveBeenCalledTimes(2);
+	});
+
+	it('cancels a closed payload\'s pending validation', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"b":1}');
+		await advanceParse(300);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Close Payload 2, payload 2' }));
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		expect(screen.queryByRole('tab', { name: 'Payload 2, payload 2' })).not.toBeInTheDocument();
+		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toBeInTheDocument();
+		expect(sampleBox()).toHaveValue('{"a":1}');
 	});
 });

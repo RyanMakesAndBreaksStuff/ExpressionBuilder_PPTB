@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -19,6 +20,7 @@ import {
   type PayloadTreeRow,
 } from './payloadTreeModel';
 import { ChevronRightIcon } from './icons/BuilderIcons';
+import type { PayloadReveal } from './jsonPayloadSession';
 
 interface PayloadTreeProps {
   /** Id of the Payload heading, which names the tree (FR-084). */
@@ -29,6 +31,7 @@ interface PayloadTreeProps {
   expanded: ReadonlySet<string>;
   showAll: ReadonlySet<string>;
   selectedPath: PayloadPath;
+  reveal?: PayloadReveal | null;
   onSelect: (path: PayloadPath) => void;
   onToggle: (key: string) => void;
   onShowAll: (key: string) => void;
@@ -45,6 +48,7 @@ export function PayloadTree({
   onSelect,
   onShowAll,
   onToggle,
+  reveal,
   rootLabel,
   selectedPath,
   showAll,
@@ -56,6 +60,18 @@ export function PayloadTree({
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const rowElements = useRef(new Map<string, HTMLDivElement>());
   const focusPending = useRef(false);
+  const handledReveal = useRef(0);
+
+  useLayoutEffect(() => {
+    if (!reveal || handledReveal.current === reveal.sequence) return;
+    const key = pathKey(reveal.path);
+    const row = rowElements.current.get(key);
+    if (!row) return;
+    handledReveal.current = reveal.sequence;
+    setFocusedKey(key);
+    row.focus();
+    row.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [reveal, rows]);
 
   const tabStopKey =
     focusedKey !== null && indexByKey.has(focusedKey) ? focusedKey : nearestVisibleKey(indexByKey, selectedPath);
