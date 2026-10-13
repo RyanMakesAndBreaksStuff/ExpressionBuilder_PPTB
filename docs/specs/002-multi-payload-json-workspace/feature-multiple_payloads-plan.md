@@ -1584,7 +1584,7 @@ export interface ParsedValueList {
 }
 ```
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 ```ts
 import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
@@ -1632,7 +1632,7 @@ it('filters before one shared cap and supports a null root', () => {
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
@@ -1640,7 +1640,7 @@ npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
 
 Expected before implementation: exit 1, because the current three-argument builder cannot consume source arrays or return `.sources`/`.visibleCount`. Existing tests must still pass before this new test is added.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Update existing fixtures to explicit source arrays. In each of `parsedValueModel.test.ts`, `functionsNav.test.tsx` and `functionsWorkspace.test.tsx`, import `parsePayload`, `ParsedValueSource`, and `PayloadReferenceRoot`; construct each fixture's `parsed` through a checked `parsePayload(JSON.stringify(value))` result. Preserve each original root object, id `fixture-1`, a stable label, and the root caption from `formatPayloadRoot(root)`; use `referenceRoot: null` only for the missing-name case. Replace old `buildParsedValueList(sample, root, search)` calls with `buildParsedValueList([source], search)`. Replace absent-data cases with `buildParsedValueList([], search)`; a successful JSON null source remains a one-element array. Replace assertions on `.rows`/`.entries` with `.sources[0].rows`/`.sources[0].entries`, guarding absent-source cases explicitly. Replace Functions JSX `sample`/`referenceRoot` props with `sources`, including rerender cases. In `functionsNav.test.tsx`, migrate the hand-built old list object using `sources: [{ id: "fixture-1", label: "Fixture", rootCaption: "triggerBody()", matchingCount: rows.length, rows, entries, emptyMessage: null }]` with `visibleCount: rows.length`, preserving its existing row/entry data and hidden count. Preserve all existing argument-targeting, array, clipboard and validation assertions. An empty array means absent data; a source whose `parsed.value` is `null` means valid JSON null.
 
@@ -1815,7 +1815,7 @@ const parsedSources = useMemo(
 
 Replace both old `sample`/`referenceRoot` props with `sources={parsedSources}` in the continuously mounted Functions workspace. Retain its existing argument reducer and insertion handlers.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
@@ -1832,7 +1832,7 @@ npm run typecheck
 
 Expected: exit 0. Verify equal-path source insertion, independent array accordions, missing-name exclusion from the budget, and unchanged inserted argument text after rename/root change/close.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/parsedValueModel.ts packages/builder-ui/src/workbench/FunctionsWorkspace.tsx packages/builder-ui/src/workbench/FunctionsNav.tsx packages/builder-ui/src/workbench/ParsedValueEntries.tsx packages/builder-ui/src/app/ExpressionBuilderShell.tsx packages/builder-ui/test/parsedValueModel.test.ts packages/builder-ui/test/functionsNav.test.tsx packages/builder-ui/test/functionsWorkspace.test.tsx packages/builder-ui/test/builderSwitching.test.tsx
