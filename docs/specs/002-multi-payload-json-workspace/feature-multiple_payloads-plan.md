@@ -70,7 +70,7 @@ The final execution report must separate baseline failures, intentional red feat
 
 Ownership: test fixtures and harnesses only.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Capture the baseline before writing tests:
 
@@ -84,7 +84,7 @@ git diff --stat
 
 Expected at this review: HEAD `491145121949ce1676e9a275c9422d368c3e55ae`, branch `functions-prep-for-release`, no pre-existing staged or dirty application files. The revised plan is the only authorized documentation edit. Re-record any later changes before implementation.
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 2. Run the focused baseline:
 
    ```powershell
@@ -101,7 +101,7 @@ Expected at this review: HEAD `491145121949ce1676e9a275c9422d368c3e55ae`, branch
 
    Source inspection identified obsolete Parse-button assertions, old screen-navigation selectors and synthetic paste helpers. Record their observed failures, then update those affected helpers to current behavior.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Use real clipboard insertion for browser paste tests:
 
@@ -204,7 +204,7 @@ In `json-pane-scroll.spec.ts`, add `test.use({ permissions: ['clipboard-read', '
    });
    ```
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test:e2e -- tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
@@ -213,7 +213,7 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
 
 Expected: existing JSON browser tests exit 0 after their obsolete harness assertions are corrected; the new contract exits 1 at the missing `New payload` control. Browser launch failure is a prerequisite failure, not a feature signal. Keep the failing feature test uncommitted until Task 2 passes it.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
@@ -312,7 +312,7 @@ Extend the existing automatic-parse action to carry its captured text:
 
 The existing single-payload reducer retains its parsing behavior. The session reducer uses this field to reject obsolete delayed work.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -412,7 +412,7 @@ describe('payload session', () => {
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
@@ -420,7 +420,7 @@ npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
 
 Expected before implementation: failure from missing session/search exports.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 ### Implement the session reducer
 
@@ -724,7 +724,7 @@ export function rootExpressionFor(
 
 In `jsonReferenceState.test.ts`, change only `rootExpression` and `rootExpressionFor` blank-name expectations from `Action` to `Action_name`. In `jsonReferenceWorkspace.test.tsx`, change the empty-name root-preview and hint expectations likewise. Retain all paste/default/copy expectations for `Action`; retain `ACTION_NAME_PLACEHOLDER`, which is also used by the paste handler.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
@@ -741,7 +741,7 @@ npm run typecheck
 
 Expected: exit 0. Extend the session tests for close selection, duplicate labels, per-payload settings, retained successful data, scalar roots and the eight-result/count contract.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/jsonPayloadSession.ts packages/builder-ui/src/workbench/payloadSearchModel.ts packages/builder-ui/test/jsonPayloadSession.test.ts packages/builder-ui/src/workbench/payloadTreeModel.ts packages/builder-ui/test/payloadTreeModel.test.ts packages/builder-ui/src/workbench/jsonReferenceState.ts packages/builder-ui/test/jsonReferenceState.test.ts packages/builder-ui/test/jsonReferenceWorkspace.test.tsx
