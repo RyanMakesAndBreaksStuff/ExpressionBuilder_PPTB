@@ -25,15 +25,10 @@ dist-ssr
 .agents
 .claude
 /.vs
-docs
 research
 tasks
 ui-ux
 test-results
-tests
-!/tests/e2e/theme-smoke.spec.ts
-!/tests/e2e/short-viewport-canvas.spec.ts
-!/tests/e2e/json-references.spec.ts
 /ui-ux
 /.claude/skills
 /icons
