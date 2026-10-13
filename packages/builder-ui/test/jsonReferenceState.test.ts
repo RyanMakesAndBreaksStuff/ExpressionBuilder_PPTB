@@ -84,7 +84,7 @@ describe('JSON reference state', () => {
 		expect(copyStatusView(state)).toEqual({ text: '', tone: 'muted' });
 	});
 
-	it('blocks Copy for a blank name and shows Action as the root (Appendix A case 24)', () => {
+	it('blocks Copy for a blank name and shows Action_name as the root (Appendix A case 24)', () => {
 		const state = run(
 			{ type: 'setText', value: fixtureA1 },
 			{ type: 'parse' },
@@ -94,8 +94,8 @@ describe('JSON reference state', () => {
 		expect(canCopy(state)).toBe(false);
 		expect(copyText(state)).toBeNull();
 		expect(expressionPlaceholder(state)).toBe('Enter an action name');
-		expect(rootExpression(state)).toBe("outputs('Action')");
-		expect(rootExpression(state, 'body')).toBe("body('Action')");
+		expect(rootExpression(state)).toBe("outputs('Action_name')");
+		expect(rootExpression(state, 'body')).toBe("body('Action_name')");
 		expect(showActionNameInvalid(state)).toBe(true);
 	});
 

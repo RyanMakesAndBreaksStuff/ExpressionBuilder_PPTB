@@ -5,6 +5,7 @@ import {
   OBJECT_PAGE_SIZE,
   ROOT_KEY,
   buildVisibleRows,
+  collectPayloadLeaves,
   firstHiddenChildKey,
   previewValue,
   selectionSummary,
@@ -108,5 +109,33 @@ describe('previews and summaries', () => {
     expect(selectionSummary(null)).toBe('null');
     expect(selectionSummary({})).toBe('object');
     expect(selectionSummary([])).toBe('array');
+  });
+});
+
+describe('collectPayloadLeaves', () => {
+  it('walks nested arrays and objects in document order with path labels', () => {
+    const leaves = collectPayloadLeaves({ a: [1, { b: 'x' }], c: null });
+
+    expect(leaves).toEqual([
+      { path: ['a', 0], label: 'a[0]', value: 1 },
+      { path: ['a', 1, 'b'], label: 'a[1].b', value: 'x' },
+      { path: ['c'], label: 'c', value: null },
+    ]);
+  });
+
+  it('labels an empty-string key as "" and treats empty containers as leaves', () => {
+    expect(collectPayloadLeaves({ '': 1, e: {}, f: [] })).toEqual([
+      { path: [''], label: '""', value: 1 },
+      { path: ['e'], label: 'e', value: {} },
+      { path: ['f'], label: 'f', value: [] },
+    ]);
+  });
+
+  it('yields one (root) leaf for a scalar or empty-container root', () => {
+    for (const root of ['text', 3, null, {}, []]) {
+      expect(collectPayloadLeaves(root)).toEqual([
+        { path: [], label: '(root)', value: root },
+      ]);
+    }
   });
 });
