@@ -2,10 +2,12 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { PayloadReferenceRoot } from '@ryanmakes/eb_engine';
+import { formatPayloadRoot, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FunctionsWorkspace } from '../src/workbench/FunctionsWorkspace';
+import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
+import { parsePayload } from '../src/importExport/jsonPayload';
 
 afterEach(() => {
   cleanup();
@@ -27,13 +29,25 @@ function createAdapter(): PlatformAdapter {
   };
 }
 
-const sample = { Name: 'Ada' };
+function fixture(value: unknown, root: PayloadReferenceRoot): ParsedValueSource[] {
+  const result = parsePayload(JSON.stringify(value));
+  if (!result.ok) throw new Error(result.message);
+  return [{
+    id: 'fixture-1',
+    label: 'Fixture',
+    rootCaption: formatPayloadRoot(root),
+    parsed: result.payload,
+    referenceRoot: root,
+  }];
+}
+
 const referenceRoot: PayloadReferenceRoot = { kind: 'triggerBody' };
+const sources = fixture({ Name: 'Ada' }, referenceRoot);
 
 describe('FunctionsWorkspace', () => {
   it('starts on concat, validates typed arguments, and shows the expression', async () => {
     const user = userEvent.setup();
-    render(<FunctionsWorkspace adapter={createAdapter()} sample={null} referenceRoot={null} />);
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
 
     expect(screen.getByRole('button', { name: 'String 20' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'concat' })).toHaveAttribute('aria-current', 'true');
@@ -55,8 +69,7 @@ describe('FunctionsWorkspace', () => {
     render(
       <FunctionsWorkspace
         adapter={createAdapter()}
-        sample={sample}
-        referenceRoot={referenceRoot}
+        sources={sources}
       />
     );
     await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
@@ -78,8 +91,7 @@ describe('FunctionsWorkspace', () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace
       adapter={createAdapter()}
-      sample={{ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }}
-      referenceRoot={referenceRoot}
+      sources={fixture({ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }, referenceRoot)}
     />);
     await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
     const first = screen.getByText('body.value[0]', { selector: 'summary' });
@@ -105,7 +117,7 @@ describe('FunctionsWorkspace', () => {
 
   it('wraps the focused argument repeatedly, while searching selects without wrapping', async () => {
     const user = userEvent.setup();
-    render(<FunctionsWorkspace adapter={createAdapter()} sample={null} referenceRoot={null} />);
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
     const text1 = screen.getByLabelText('text1');
     fireEvent.change(text1, { target: { value: "triggerBody()?['Name']" } });
     await user.click(text1);
@@ -128,7 +140,7 @@ describe('FunctionsWorkspace', () => {
   it('copies bare and wrapped expressions', async () => {
     const user = userEvent.setup();
     const adapter = createAdapter();
-    render(<FunctionsWorkspace adapter={adapter} sample={null} referenceRoot={null} />);
+    render(<FunctionsWorkspace adapter={adapter} sources={[]} />);
     fireEvent.change(screen.getByLabelText('text1'), { target: { value: "triggerBody()?['Name']" } });
     await user.type(screen.getByLabelText('text2'), "' - '");
 
@@ -144,7 +156,7 @@ describe('FunctionsWorkspace', () => {
     const user = userEvent.setup();
     const adapter = createAdapter();
     vi.mocked(adapter.copyToClipboard).mockRejectedValue(new Error('denied'));
-    render(<FunctionsWorkspace adapter={adapter} sample={null} referenceRoot={null} />);
+    render(<FunctionsWorkspace adapter={adapter} sources={[]} />);
     fireEvent.change(screen.getByLabelText('text1'), { target: { value: "triggerBody()?['Name']" } });
     await user.type(screen.getByLabelText('text2'), "' - '");
 
@@ -157,7 +169,7 @@ describe('FunctionsWorkspace', () => {
     vi.useFakeTimers();
     const adapter = createAdapter();
     const { unmount } = render(
-      <FunctionsWorkspace adapter={adapter} sample={null} referenceRoot={null} />
+      <FunctionsWorkspace adapter={adapter} sources={[]} />
     );
     fireEvent.change(screen.getByLabelText('text1'), { target: { value: "triggerBody()?['Name']" } });
     fireEvent.change(screen.getByLabelText('text2'), { target: { value: "' - '" } });

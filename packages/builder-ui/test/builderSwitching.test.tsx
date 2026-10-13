@@ -401,4 +401,32 @@ describe('builder switching', () => {
 		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toBeInTheDocument();
 		expect(sampleBox()).toHaveValue('{"a":1}');
 	});
+
+	it('keeps inserted Functions argument text after payload rename, root change and close', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		await user.type(screen.getByRole('textbox', { name: 'Action name' }), 'First');
+		pasteSample('{"a":1}');
+		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
+		await user.type(screen.getByRole('textbox', { name: 'Action name' }), 'Second');
+		pasteSample('{"a":1}');
+
+		await goTo(user, 'Functions');
+		await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
+		const groups = screen.getAllByText(/ · \d+$/, { selector: 'summary' });
+		expect(groups).toHaveLength(2);
+		await user.click(groups[1]);
+		const text1 = screen.getByLabelText('text1');
+		await user.click(text1);
+		await user.dblClick(screen.getAllByRole('button', { name: 'a', exact: true })[1]);
+		const inserted = (text1 as HTMLInputElement).value;
+		expect(inserted).toContain('Second');
+
+		await goTo(user, 'JSON reference');
+		await user.type(screen.getByRole('textbox', { name: 'Action name' }), ' renamed');
+		fireEvent.click(screen.getByRole('button', { name: /^Close .*payload 2$/ }));
+		await goTo(user, 'Functions');
+		expect(screen.getByLabelText('text1')).toHaveValue(inserted);
+	});
 });

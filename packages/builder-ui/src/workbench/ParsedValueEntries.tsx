@@ -4,11 +4,12 @@ import type { ParsedValueEntry } from './parsedValueModel';
 export interface ParsedValueEntriesProps {
   entries: readonly ParsedValueEntry[];
   baseId: string;
+  descriptionPrefix?: string;
   onInsertReference: (expression: string) => void;
 }
 
 export function ParsedValueEntries({
-  entries, baseId, onInsertReference,
+  entries, baseId, descriptionPrefix, onInsertReference,
 }: ParsedValueEntriesProps) {
   return (
     <>
@@ -20,6 +21,7 @@ export function ParsedValueEntries({
               <ParsedValueEntries
                 entries={entry.entries}
                 baseId={baseId}
+                descriptionPrefix={descriptionPrefix}
                 onInsertReference={onInsertReference}
               />
             </details>
@@ -43,6 +45,7 @@ export function ParsedValueEntries({
               {entry.row.label}
             </button>
             <span id={descriptionId} className="eb-visually-hidden">
+              {descriptionPrefix ? `${descriptionPrefix}. ` : ''}
               {entry.row.expression}
             </span>
           </Fragment>

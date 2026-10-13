@@ -45,8 +45,7 @@ import { ShellHeader } from '../workbench/ShellHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
 import { JsonPayloadWorkspace } from '../workbench/JsonPayloadWorkspace';
 import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
-import { currentReferenceRoot } from '../workbench/jsonReferenceState';
-import { createJsonPayloadSession, jsonPayloadSessionReducer } from '../workbench/jsonPayloadSession';
+import { createJsonPayloadSession, getParsedSources, jsonPayloadSessionReducer } from '../workbench/jsonPayloadSession';
 import type { ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
@@ -127,8 +126,10 @@ export function ExpressionBuilderShell({
       void adapter.notify(notice.message, 'success');
     }
   }, [adapter, jsonSession.payloads]);
-  // Transitional: Functions still takes one source. Task 3 replaces this with the full source list.
-  const jsonState = jsonSession.payloads.find((payload) => payload.id === jsonSession.activeId)!.state;
+  const parsedSources = useMemo(
+    () => getParsedSources(jsonSession.payloads),
+    [jsonSession.payloads],
+  );
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the
@@ -591,8 +592,7 @@ export function ExpressionBuilderShell({
             >
               <FunctionsWorkspace
                 adapter={adapter}
-                sample={jsonState.parsed?.value ?? null}
-                referenceRoot={currentReferenceRoot(jsonState)}
+                sources={parsedSources}
               />
             </div>
 

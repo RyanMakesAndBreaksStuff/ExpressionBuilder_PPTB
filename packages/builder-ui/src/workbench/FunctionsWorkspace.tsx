@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react';
-import type { PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import {
   deriveFunctions,
@@ -8,6 +7,7 @@ import {
   insertTarget,
   navGroups,
 } from './functionsState';
+import type { ParsedValueSource } from './jsonPayloadSession';
 import { buildParsedValueList } from './parsedValueModel';
 import { ArgumentsPanel } from './ArgumentsPanel';
 import { FunctionsDock } from './FunctionsDock';
@@ -16,21 +16,18 @@ import { FunctionsStatusCards } from './FunctionsStatusCards';
 
 export interface FunctionsWorkspaceProps {
   adapter: PlatformAdapter;
-  /** Parsed JSON reference sample, or null before a successful parse. */
-  sample: unknown;
-  /** Reference root from JSON reference, or null while an action name is needed. */
-  referenceRoot: PayloadReferenceRoot | null;
+  sources: readonly ParsedValueSource[];
 }
 
-export function FunctionsWorkspace({ adapter, sample, referenceRoot }: FunctionsWorkspaceProps) {
+export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps) {
   const [state, dispatch] = useReducer(functionsReducer, initialFunctionsState);
   const rootRef = useRef<HTMLDivElement>(null);
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const derived = useMemo(() => deriveFunctions(state), [state]);
   const groups = useMemo(() => navGroups(state), [state]);
   const parsedValue = useMemo(
-    () => buildParsedValueList(sample, referenceRoot, state.search),
-    [sample, referenceRoot, state.search],
+    () => buildParsedValueList(sources, state.search),
+    [sources, state.search],
   );
 
   useEffect(() => () => {

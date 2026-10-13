@@ -1,9 +1,6 @@
-import {
-  formatPayloadReference,
-  type PayloadPath,
-  type PayloadReferenceRoot,
-} from '@ryanmakes/eb_engine';
-import { isJsonObject } from '../importExport/jsonPayload';
+import { formatPayloadReference, type PayloadPath } from '@ryanmakes/eb_engine';
+import type { ParsedValueSource } from './jsonPayloadSession';
+import { collectPayloadLeaves } from './payloadTreeModel';
 
 export interface ParsedValueRow {
   /** Dotted/bracketed path, e.g. `Name`, `tags[0]`, `a.b.c`. */
@@ -22,52 +19,24 @@ export type ParsedValueEntry =
       entries: ParsedValueEntry[];
     };
 
-export interface ParsedValueList {
+export interface ParsedValueGroup {
+  id: string;
+  label: string;
+  rootCaption: string;
+  matchingCount: number;
   rows: ParsedValueRow[];
   entries: ParsedValueEntry[];
-  /** Matching leaves past the cap. */
+  emptyMessage: string | null;
+}
+
+export interface ParsedValueList {
+  sources: ParsedValueGroup[];
+  visibleCount: number;
   hiddenCount: number;
-  /** Set when `rows` is empty, explaining why. */
   emptyMessage: string | null;
 }
 
 export const MAX_PARSED_VALUE_ROWS = 200;
-
-/**
- * A sample is capped at 10,000 values upstream (MAX_VALUE_COUNT), so a full
- * walk is cheap; the row cap is about how many are useful to show, not about
- * the cost of finding them.
- */
-function walk(
-  value: unknown,
-  path: PayloadPath,
-  label: string,
-  root: PayloadReferenceRoot,
-  out: ParsedValueRow[],
-): void {
-  const leaf = () => {
-    out.push({ label, expression: formatPayloadReference({ root, path }), path });
-  };
-
-  if (isJsonObject(value)) {
-    const keys = Object.keys(value);
-    if (keys.length === 0) return leaf();
-    for (const key of keys) {
-      walk(value[key], [...path, key], label === '' ? key : `${label}.${key}`, root, out);
-    }
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return leaf();
-    value.forEach((item, index) => {
-      walk(item, [...path, index], `${label}[${index}]`, root, out);
-    });
-    return;
-  }
-
-  leaf();
-}
 
 function parsedPathLabel(path: PayloadPath): string {
   return path.reduce<string>(
@@ -119,35 +88,59 @@ function buildParsedValueEntries(
 }
 
 export function buildParsedValueList(
-  sample: unknown,
-  root: PayloadReferenceRoot | null,
+  sources: readonly ParsedValueSource[],
   search: string,
 ): ParsedValueList {
-  if (sample === null || sample === undefined) {
-    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'Parse a sample in JSON reference' };
-  }
-
-  if (root === null) {
-    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'Set an action name in JSON reference' };
-  }
-
-  const all: ParsedValueRow[] = [];
-  walk(sample, [], '', root, all);
-
   const needle = search.trim().toLowerCase();
-  const matched = needle === ''
-    ? all
-    : all.filter((row) => row.label.toLowerCase().includes(needle));
+  let remaining = MAX_PARSED_VALUE_ROWS;
+  let matchingCount = 0;
+  let visibleCount = 0;
 
-  if (matched.length === 0) {
-    return { rows: [], entries: [], hiddenCount: 0, emptyMessage: 'No paths match this search' };
-  }
+  const groups = sources.map<ParsedValueGroup>((source) => {
+    if (source.referenceRoot === null) {
+      return {
+        id: source.id,
+        label: source.label,
+        rootCaption: source.rootCaption,
+        matchingCount: 0,
+        rows: [],
+        entries: [],
+        emptyMessage: 'Set an action name in JSON reference',
+      };
+    }
 
-  const rows = matched.slice(0, MAX_PARSED_VALUE_ROWS);
+    const root = source.referenceRoot;
+    const matched = collectPayloadLeaves(source.parsed.value)
+      .filter((leaf) => needle === '' ||
+        leaf.label.toLowerCase().includes(needle));
+    const rows = matched.slice(0, remaining).map((leaf) => ({
+      label: leaf.label,
+      path: leaf.path,
+      expression: formatPayloadReference({ root, path: leaf.path }),
+    }));
+
+    remaining -= rows.length;
+    matchingCount += matched.length;
+    visibleCount += rows.length;
+    return {
+      id: source.id,
+      label: source.label,
+      rootCaption: source.rootCaption,
+      matchingCount: matched.length,
+      rows,
+      entries: buildParsedValueEntries(rows),
+      emptyMessage: matched.length === 0
+        ? 'No paths match this search'
+        : null,
+    };
+  });
+
   return {
-    rows,
-    entries: buildParsedValueEntries(rows),
-    hiddenCount: Math.max(0, matched.length - MAX_PARSED_VALUE_ROWS),
-    emptyMessage: null,
+    sources: groups,
+    visibleCount,
+    hiddenCount: matchingCount - visibleCount,
+    emptyMessage: sources.length === 0
+      ? 'Parse a sample in JSON reference'
+      : null,
   };
 }
