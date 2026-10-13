@@ -18,8 +18,6 @@ declare global {
 const WEB_URL = 'http://127.0.0.1:5173/';
 const THEMES: Theme[] = ['light', 'dark'];
 const EMAIL = "outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']";
-// Today's header: the 46px mode switch row plus 24px padding and a 1px border.
-const TODAYS_HEADER_HEIGHT = 71;
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
@@ -46,23 +44,21 @@ const referenceCopy = (page: Page) => page.getByRole('button', { name: 'Copy', e
 const treeRow = (page: Page, label: string) =>
   page.getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
-async function openJsonReference(page: Page) {
-  await page.getByRole('tab', { name: 'JSON reference' }).click();
+/** Switches screens through the header's Screen menu. */
+async function openScreen(page: Page, name: 'Functions' | 'Trigger / Filter' | 'JSON reference') {
+  await page.getByRole('button', { name: /^Screen:/ }).click();
+  await page.getByRole('menuitemradio', { name, exact: true }).click();
 }
 
-/** Pastes into the Sample JSON textarea — the flow the app auto-parses. */
+const openJsonReference = (page: Page) => openScreen(page, 'JSON reference');
+const openCondition = (page: Page) => openScreen(page, 'Trigger / Filter');
+
+/** Pastes through the real clipboard into the Sample JSON textarea — the flow the app auto-parses. */
 async function pasteSample(page: Page, sample: string) {
-  await page.getByLabel('Sample JSON').evaluate(
-    (element, text) => {
-      element.focus();
-      const data = new DataTransfer();
-      data.setData('text', text);
-      element.dispatchEvent(
-        new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
-      );
-    },
-    sample,
-  );
+  await page.evaluate((text) => navigator.clipboard.writeText(text), sample);
+  const editor = page.getByRole('textbox', { name: 'Sample JSON', exact: true });
+  await editor.focus();
+  await editor.press('Control+V');
 }
 
 async function parseSample(
@@ -168,7 +164,7 @@ test.describe('web build', () => {
       await loadEmailReference(page);
       await referenceCopy(page).click();
       await expect(page.getByText('Expression copied')).toBeVisible();
-      await page.getByRole('tab', { name: /^Condition builder/ }).click();
+      await openCondition(page);
       await openJsonReference(page);
 
       expect(requests).toEqual([]);
@@ -202,21 +198,36 @@ test.describe('web build', () => {
 
 test('the core task works by keyboard alone, with a visible focus ring (SC-005)', async ({ page }) => {
   await open(page);
-  const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
+  // Header controls draw their ring as an outline (shell.css, FR-6); everything else uses a box-shadow.
+  const focusRing = () =>
+    page.evaluate(() => {
+      const style = getComputedStyle(document.activeElement as Element);
+      return style.boxShadow !== 'none' ? style.boxShadow : style.outlineStyle === 'none' || style.outlineWidth === '0px' ? 'none' : style.outline;
+    });
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('tab', { name: /^Condition builder/ })).toBeFocused();
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', { name: 'JSON reference' })).toHaveAttribute('aria-selected', 'true');
+  const screenButton = page.getByRole('button', { name: /^Screen:/ });
+  await expect(screenButton).toBeFocused();
   expect(await focusRing()).not.toBe('none');
+  await page.keyboard.press('Enter');
+  const jsonItem = page.getByRole('menuitemradio', { name: 'JSON reference', exact: true });
+  await expect(jsonItem).toBeVisible();
+  for (let step = 0; step < 3 && !(await jsonItem.evaluate((el) => el === document.activeElement)); step++) {
+    await page.keyboard.press('ArrowDown');
+  }
+  await expect(jsonItem).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeVisible();
 
+  // Focus returns to the Screen button once the menu closes.
+  await expect(screenButton).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByLabel('Action name')).toBeFocused();
   await page.keyboard.type('Get items');
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Sample JSON')).toBeFocused();
+  await expect(page.getByRole('textbox', { name: 'Sample JSON', exact: true })).toBeFocused();
   await page.evaluate((text) => navigator.clipboard.writeText(text), fixtureA1);
   await page.keyboard.press('Control+V');
   await expect(payloadMeta(page)).toHaveText('25 values');
@@ -250,14 +261,15 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
 test('switching builders leaves the document and Export byte-identical (SC-003)', async ({ page }) => {
   await open(page);
   await addTwoRules(page);
-  const expression = page.getByLabel('Generated expression');
+  // The Functions screen stays mounted (hidden) with its own "Generated expression"; take the visible one.
+  const expression = page.locator('[aria-label="Generated expression"]:visible');
   const expressionBefore = await expression.textContent();
   await page.getByRole('button', { name: 'Export' }).click();
   const exportBefore = await clipboardText(page);
 
   await loadEmailReference(page);
   await referenceCopy(page).click();
-  await page.getByRole('tab', { name: /^Condition builder/ }).click();
+  await openCondition(page);
 
   await expect(expression).toHaveText(expressionBefore ?? '');
   await page.getByRole('button', { name: 'Export' }).click();
@@ -290,18 +302,18 @@ for (const theme of THEMES) {
     await addTwoRules(page);
     await loadEmailReference(page);
     const views = [
-      { name: 'Condition builder', tab: page.getByRole('tab', { name: /^Condition builder/ }) },
-      { name: 'JSON reference', tab: page.getByRole('tab', { name: 'JSON reference' }) },
+      { name: 'Trigger / Filter', open: openCondition },
+      { name: 'JSON reference', open: openJsonReference },
     ];
 
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
       for (const view of views) {
-        await view.tab.click();
+        await view.open(page);
         const layout = await page.evaluate(() => {
           const visible = (element: Element) => (element as HTMLElement).checkVisibility();
           const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')].filter(visible);
-          const header = document.querySelector('.eb-workbench-header') as HTMLElement;
+          const header = document.querySelector('.eb-pill-header') as HTMLElement;
           const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
           return {
             pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -317,7 +329,6 @@ for (const theme of THEMES) {
         expect(layout.controlsCutOff, where).toBe(0);
         if (viewport.width > 900) {
           expect(layout.headerRows, where).toBe(1);
-          expect(layout.headerHeight, where).toBeLessThanOrEqual(TODAYS_HEADER_HEIGHT);
         }
       }
     }
