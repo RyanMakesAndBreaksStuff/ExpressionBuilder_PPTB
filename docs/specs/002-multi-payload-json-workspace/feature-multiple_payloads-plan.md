@@ -1854,11 +1854,11 @@ Expected: one commit containing only this task’s verified paths. Preserve othe
 
 **Interfaces:** Consumes the completed session, JSON workspace, Functions source list and unchanged platform adapter. Produces acceptance evidence.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Use the native editing test created by Task 0 as the integration signal; do not add a second duplicate feature implementation. Preserve the baseline exceptions recorded below.
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
@@ -1866,11 +1866,13 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
 
 Expected after Tasks 1–3: exit 0. A failure blocks acceptance and returns to the owning implementation task; Task 4 owns only the three browser paths listed above.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Extend the browser contract with the viewport and keyboard scenarios below. If a failure requires production changes, return it to Task 1, 2 or 3 with its exact path and check; do not expand Task 4 ownership.
 
 - [ ] **Step 4: Confirm the signal changed, and nothing else did**
+
+> Pending: item 6 (actual Toolbox clipboard and notification evidence in both host palettes) awaits manual verification. Items 1–5 and 7 verified on the web build: lint, typecheck, test (610), test:e2e (46, with `dev:pptb` running for pptb-smoke), build and `git diff --check` exit 0. Layout fixes for 375×667 tabs and the 900×700 Reference card landed in 63aebf3.
 
 Run checks sequentially:
 
@@ -1908,7 +1910,7 @@ Run checks sequentially:
 
 7. Confirm condition documents/exports and Functions arguments survive navigation unchanged. Reload must restore one empty JSON payload.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add tests/e2e/json-multi-payload.spec.ts tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
