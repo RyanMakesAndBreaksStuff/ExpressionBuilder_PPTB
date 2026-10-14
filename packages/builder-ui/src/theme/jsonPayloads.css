@@ -37,14 +37,15 @@
   position: relative;
   display: flex;
   flex: 0 0 auto;
-  max-width: 220px;
+  max-width: min(220px, 100%);
 }
 .eb-payload-tab > [role="tab"] {
   display: flex;
   align-items: center;
   gap: 8px;
   height: 42px;
-  max-width: 220px;
+  min-width: 0;
+  max-width: min(220px, 100%);
   padding: 0 34px 0 12px;
   border: 1px solid transparent;
   border-radius: 21px;
