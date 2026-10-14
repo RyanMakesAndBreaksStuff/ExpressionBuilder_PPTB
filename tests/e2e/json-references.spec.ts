@@ -386,6 +386,183 @@ for (const theme of THEMES) {
   });
 }
 
+const longName = (position: number) => `Very long payload source name number ${position} for layout checks`;
+
+/**
+ * Controls the user cannot reach by scrolling their owning regions. Each control (and each extra
+ * element) is scrolled into view the way a user would have to; a scroll that only an
+ * `overflow: hidden` ancestor performed, or one that still leaves it outside the window, is a failure.
+ */
+function findUnreachable(extraSelectors: string[]): string[] {
+  const controls = [...document.querySelectorAll('button, input, textarea, select, summary, [role="radio"], [role="tab"], [role="treeitem"]')];
+  const extras = extraSelectors.flatMap((selector) => [...document.querySelectorAll(selector)]);
+  const failures: string[] = [];
+  for (const element of new Set([...controls, ...extras])) {
+    const target = element as HTMLElement;
+    if (!target.checkVisibility() || target.closest('[aria-hidden="true"], .eb-visually-hidden')) continue;
+    const box = target.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) continue;
+    const chain: Element[] = [];
+    for (let ancestor = target.parentElement; ancestor; ancestor = ancestor.parentElement) chain.push(ancestor);
+    const before = chain.map((ancestor) => [ancestor.scrollLeft, ancestor.scrollTop]);
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    const rect = target.getBoundingClientRect();
+    const clipped = chain.some((ancestor, index) => {
+      const style = getComputedStyle(ancestor);
+      const lockedX = ['hidden', 'clip'].includes(style.overflowX) && ancestor.scrollLeft !== before[index][0];
+      const lockedY = ['hidden', 'clip'].includes(style.overflowY) && ancestor.scrollTop !== before[index][1];
+      return lockedX || lockedY;
+    });
+    const outside = rect.right <= 0 || rect.left >= innerWidth || rect.bottom <= 0 || rect.top >= innerHeight;
+    chain.forEach((ancestor, index) => {
+      ancestor.scrollLeft = before[index][0];
+      ancestor.scrollTop = before[index][1];
+    });
+    if (clipped || outside) {
+      failures.push(`${target.tagName.toLowerCase()} "${target.getAttribute('aria-label') ?? target.textContent?.trim().slice(0, 40)}" ${clipped ? 'needs a scroll its container does not allow' : 'stays outside the window'}`);
+    }
+  }
+  return failures;
+}
+
+/** Page-level overflow and header geometry; payload tabs scroll inside their own strip, so only the strip must fit. */
+const measureLayout = (page: Page) =>
+  page.evaluate(() => {
+    const visible = (element: Element) => (element as HTMLElement).checkVisibility();
+    const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')]
+      .filter((control) => visible(control) && !control.closest('.eb-payload-tabs'));
+    const header = document.querySelector('.eb-pill-header') as HTMLElement;
+    const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
+    return {
+      pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      bodyScrollsSideways: document.body.scrollWidth > document.body.clientWidth,
+      controlsCutOff: controls
+        .map((control) => control.getBoundingClientRect())
+        .filter((box) => box.width > 0 && (box.left < 0 || box.right > window.innerWidth + 0.5)).length,
+      headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
+    };
+  });
+
+/** Source, Payload and Reference positions inside the workspace's own scroll space. */
+const paneArrangement = (page: Page) =>
+  page.evaluate(() => {
+    const pane = document.querySelector('.eb-json-session [role="tabpanel"]:not([hidden])')!;
+    const workspace = pane.querySelector('.eb-json-workspace') as HTMLElement;
+    const origin = workspace.getBoundingClientRect();
+    return ['.eb-json-source', '.eb-json-payload', '.eb-json-reference'].map((selector) => {
+      const box = pane.querySelector(selector)!.getBoundingClientRect();
+      return {
+        left: Math.round(box.left - origin.left + workspace.scrollLeft),
+        top: Math.round(box.top - origin.top + workspace.scrollTop),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      };
+    });
+  });
+
+// One viewport per layout class (stacked, two-column, short desktop, wide desktop); the others share a class and are covered above.
+const LAYOUT_CLASSES = ['375x667', '900x700', '1280x420', '1440x900'];
+
+for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.includes(`${width}x${height}`))) {
+  const size = `${viewport.width}x${viewport.height}`;
+  test(`five long-named payloads stay reachable, scroll their tabs locally and keep the pane arrangement at ${size} (AC-5.2 to AC-5.4)`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await open(page, { theme: 'dark' });
+    await openJsonReference(page);
+    // A small sample: the Reference card's own height at 900x700 is covered by the end-content checks above.
+    const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
+    for (let position = 1; position <= 5; position++) {
+      if (position > 1) await page.getByRole('button', { name: 'New payload', exact: true }).click();
+      await jsonPanel(page).getByLabel('Action name').fill(longName(position));
+      await pasteSample(page, layoutSample);
+      await expect(payloadMeta(page)).toHaveText('5 values');
+    }
+    // The active (last) payload shows its named-loop block, the tallest Reference content.
+    await select(page, ['value', '[0]', 'Title']);
+    await jsonPanel(page).getByLabel('Loop name').fill('Check it');
+    const tabAt = (position: number) => page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
+    const strip = page.locator('.eb-payload-tabs');
+
+    await test.step('JSON reference fits and every control is reachable', async () => {
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, size).toBe(false);
+      expect(layout.bodyScrollsSideways, size).toBe(false);
+      expect(layout.controlsCutOff, size).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, size).toBe(1);
+      expect(
+        await page.evaluate(findUnreachable, ['.eb-json-session [role="tabpanel"]:not([hidden]) [aria-label="Loop items() reference"]']),
+        `${size}: every control reachable`,
+      ).toEqual([]);
+    });
+
+    await test.step('panes keep their arrangement per width class, with or without search open', async () => {
+      await tabAt(5).click();
+      const arranged = await paneArrangement(page);
+      const [source, payload, reference] = arranged;
+      if (viewport.width <= 600) {
+        expect(source.top + source.height, `${size}: stacked`).toBeLessThanOrEqual(payload.top);
+        expect(payload.top + payload.height, `${size}: stacked`).toBeLessThanOrEqual(reference.top);
+        expect([payload.left, reference.left], size).toEqual([source.left, source.left]);
+      } else if (viewport.width <= 900) {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.top + payload.height, size).toBeLessThanOrEqual(reference.top);
+        expect(reference.left, size).toBe(payload.left);
+      } else {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.left + payload.width, size).toBeLessThanOrEqual(reference.left);
+        expect([payload.top, reference.top], size).toEqual([source.top, source.top]);
+      }
+
+      // Five long names overflow the strip, which scrolls on its own and keeps the focused tab in view.
+      const overflow = await strip.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+      expect(overflow.scroll, `${size}: tabs overflow`).toBeGreaterThan(overflow.client);
+      for (const [from, key, position] of [[1, 'End', 5], [5, 'Home', 1]] as const) {
+        await tabAt(from).click();
+        await tabAt(from).press(key);
+        await expect(tabAt(position)).toBeFocused();
+        await expect(async () => {
+          const [bounds, box, close] = await Promise.all([
+            strip.boundingBox(),
+            tabAt(position).boundingBox(),
+            page.locator('.eb-payload-tab').nth(position - 1).locator('.eb-payload-close').boundingBox(),
+          ]);
+          for (const inner of [box, close]) {
+            expect(inner).not.toBeNull();
+            expect(inner!.x).toBeGreaterThanOrEqual(bounds!.x - 1);
+            expect(inner!.x + inner!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width + 1);
+          }
+        }, `${size}: tab ${position} and its Close fully in the strip`).toPass({ timeout: 5_000 });
+      }
+      expect((await measureLayout(page)).pageScrollsSideways, size).toBe(false);
+
+      await tabAt(5).click();
+      const search = page.getByRole('combobox', { name: 'Search all payloads' });
+      await search.fill('email');
+      await expect(page.locator('.eb-payload-search-popup')).toBeVisible();
+      await search.press('Escape');
+      await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+      expect(await paneArrangement(page), `${size}: arrangement unchanged`).toEqual(arranged);
+    });
+
+    await test.step('Functions with five expanded source groups fits and stays reachable', async () => {
+      await openFunctions(page);
+      await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
+      for (const summary of await page.locator('details.eb-pv-source > summary').all()) await summary.click();
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.bodyScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.controlsCutOff, `Functions at ${size}`).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, `Functions at ${size}`).toBe(1);
+      expect(await page.evaluate(findUnreachable, ['[aria-label="Generated expression"]']), `Functions at ${size}: every control reachable`).toEqual([]);
+      for (const name of ['Copy expression', 'Copy as @{…}']) {
+        const button = page.getByRole('button', { name });
+        await button.scrollIntoViewIfNeeded();
+        await expect(button, `Functions at ${size}`).toBeInViewport();
+      }
+    });
+  });
+}
+
 test('at 1280x860 the reference and Copy are visible without scrolling; at 1280x420 the cards scroll inside, not the workspace (FR-092)', async ({ page }) => {
   await open(page);
   await page.setViewportSize({ width: 1280, height: 860 });

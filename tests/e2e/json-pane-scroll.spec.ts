@@ -36,6 +36,24 @@ async function expectInside(owner: Locator, target: Locator): Promise<void> {
   expect(item!.y + item!.height).toBeLessThanOrEqual(port!.y + port!.height + 1);
 }
 
+/** Names the active payload, pastes the sample, then selects the first item and names its loop. */
+async function loadSample(page: Page, name: string): Promise<void> {
+  const panel = page.getByRole('tabpanel');
+  await panel.getByLabel('Action name').fill(name);
+  await pasteSample(page, JSON.stringify(sample));
+  await expect(panel.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'))
+    .toHaveText(/^\d+ values?$/);
+
+  for (const label of [/^body, object$/, /^value, array$/, /^\[0\], object$/]) {
+    const row = panel.getByRole('treeitem', { name: label });
+    if (await row.getAttribute('aria-expanded') === 'false') {
+      await row.locator('[data-chevron]').click();
+    }
+  }
+  await panel.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
+  await panel.getByLabel('Loop name').fill('Check it');
+}
+
 for (const theme of ['light', 'dark'] as const) {
   for (const size of [
     { width: 375, height: 667 },
@@ -52,73 +70,66 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('http://127.0.0.1:5173/');
       await page.getByRole('button', { name: /^Screen:/ }).click();
       await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
-      // Only the active payload's tabpanel is visible; a second, empty payload
-      // proves every query below stays inside the visible panel.
-      const panel = page.getByRole('tabpanel');
-      await panel.getByLabel('Action name').fill('List Rows');
-      await pasteSample(page, JSON.stringify(sample));
-      await expect(panel.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'))
-        .toHaveText(/^\d+ values?$/);
+      // Two loaded payloads: only the active tabpanel is visible, so each check below is scoped to it.
+      await loadSample(page, 'List Rows');
       await page.getByRole('button', { name: 'New payload', exact: true }).click();
-      await page.getByRole('tab', { name: /^List Rows, payload 1$/ }).click();
-      await expect(panel).toHaveCount(1);
+      await loadSample(page, 'List Rows Again');
 
-      for (const name of [/^body, object$/, /^value, array$/, /^\[0\], object$/]) {
-        const row = panel.getByRole('treeitem', { name });
-        if (await row.getAttribute('aria-expanded') === 'false') {
-          await row.locator('[data-chevron]').click();
-        }
-      }
-      await panel.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
-      await panel.getByLabel('Loop name').fill('Check it');
+      for (const position of [2, 1]) await test.step('payload ' + position + ' is active', async () => {
+        await page.getByRole('tab', { name: new RegExp(', payload ' + position + '$') }).click();
+        const panel = page.getByRole('tabpanel');
+        await expect(panel).toHaveCount(1);
+        await expect(panel.getByLabel('Action name')).toHaveValue(position === 1 ? 'List Rows' : 'List Rows Again');
 
-      const workspace = panel.locator('.eb-json-workspace');
-      const cards = [
-        panel.locator('.eb-json-source'),
-        panel.locator('.eb-json-payload'),
-        panel.locator('.eb-json-reference'),
-      ];
-      const owners = [
-        panel.locator('.eb-json-source > .eb-json-card-body'),
-        panel.locator('.eb-payload-tree'),
-        panel.locator('.eb-json-reference > .eb-json-card-body'),
-      ];
-      const targets = [
-        panel.getByRole('textbox', { name: 'Sample JSON', exact: true }),
-        panel.getByRole('treeitem').last(),
-        panel.getByLabel('Loop items() reference'),
-      ];
+        const workspace = panel.locator('.eb-json-workspace');
+        const cards = [
+          panel.locator('.eb-json-source'),
+          panel.locator('.eb-json-payload'),
+          panel.locator('.eb-json-reference'),
+        ];
+        const owners = [
+          panel.locator('.eb-json-source > .eb-json-card-body'),
+          panel.locator('.eb-payload-tree'),
+          panel.locator('.eb-json-reference > .eb-json-card-body'),
+        ];
+        const targets = [
+          panel.getByRole('textbox', { name: 'Sample JSON', exact: true }),
+          panel.getByRole('treeitem').last(),
+          panel.getByLabel('Loop items() reference'),
+        ];
 
-      if (size.width > 600) {
-        const before = await Promise.all(cards.map((card) => card.boundingBox()));
-        for (let index = 0; index < owners.length; index++) {
-          await owners[index].evaluate((element) => { element.scrollTop = element.scrollHeight; });
-          const scroll = await owners[index].evaluate((element) => ({
-            top: element.scrollTop, max: element.scrollHeight - element.clientHeight,
-            overflowY: getComputedStyle(element).overflowY,
-          }));
-          expect(['auto', 'scroll']).toContain(scroll.overflowY);
-          expect(Math.abs(scroll.top - Math.max(0, scroll.max))).toBeLessThanOrEqual(1);
-          if (size.height === 420) {
-            expect(scroll.max).toBeGreaterThan(0);
-            expect(scroll.top).toBeGreaterThan(0);
+        if (size.width > 600) {
+          const before = await Promise.all(cards.map((card) => card.boundingBox()));
+          for (let index = 0; index < owners.length; index++) {
+            await owners[index].evaluate((element) => { element.scrollTop = element.scrollHeight; });
+            const scroll = await owners[index].evaluate((element) => ({
+              top: element.scrollTop, max: element.scrollHeight - element.clientHeight,
+              overflowY: getComputedStyle(element).overflowY,
+            }));
+            expect(['auto', 'scroll']).toContain(scroll.overflowY);
+            expect(Math.abs(scroll.top - Math.max(0, scroll.max))).toBeLessThanOrEqual(1);
+            if (size.height === 420) {
+              expect(scroll.max).toBeGreaterThan(0);
+              expect(scroll.top).toBeGreaterThan(0);
+            }
+            await expectInside(cards[index], owners[index]);
+            await expectInside(owners[index], targets[index]);
+            const end = await targets[index].boundingBox();
+            expect(end!.y).toBeGreaterThanOrEqual(0);
+            expect(end!.y + end!.height).toBeLessThanOrEqual(size.height + 1);
+            expect(await Promise.all(cards.map((card) => card.boundingBox()))).toEqual(before);
           }
-          await expectInside(cards[index], owners[index]);
-          await expectInside(owners[index], targets[index]);
-          const end = await targets[index].boundingBox();
-          expect(end!.y).toBeGreaterThanOrEqual(0);
-          expect(end!.y + end!.height).toBeLessThanOrEqual(size.height + 1);
-          expect(await Promise.all(cards.map((card) => card.boundingBox()))).toEqual(before);
+          expect(await workspace.evaluate((element) => element.scrollTop)).toBe(0);
+        } else {
+          for (const target of targets) {
+            await target.scrollIntoViewIfNeeded();
+            await expectInside(workspace, target);
+          }
+          await workspace.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+          await expectInside(workspace, targets[2]);
         }
-        expect(await workspace.evaluate((element) => element.scrollTop)).toBe(0);
-      } else {
-        for (const target of targets) {
-          await target.scrollIntoViewIfNeeded();
-          await expectInside(workspace, target);
-        }
-        await workspace.evaluate((element) => { element.scrollTop = element.scrollHeight; });
-        await expectInside(workspace, targets[2]);
-      }
+      });
+
       const bounds = await page.evaluate(() => {
         const root = document.querySelector('.eb-root')!.getBoundingClientRect();
         return {
