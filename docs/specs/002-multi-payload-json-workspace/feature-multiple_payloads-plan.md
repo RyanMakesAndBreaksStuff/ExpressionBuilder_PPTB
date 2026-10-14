@@ -70,7 +70,7 @@ The final execution report must separate baseline failures, intentional red feat
 
 Ownership: test fixtures and harnesses only.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Capture the baseline before writing tests:
 
@@ -84,7 +84,7 @@ git diff --stat
 
 Expected at this review: HEAD `491145121949ce1676e9a275c9422d368c3e55ae`, branch `functions-prep-for-release`, no pre-existing staged or dirty application files. The revised plan is the only authorized documentation edit. Re-record any later changes before implementation.
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 2. Run the focused baseline:
 
    ```powershell
@@ -101,7 +101,7 @@ Expected at this review: HEAD `491145121949ce1676e9a275c9422d368c3e55ae`, branch
 
    Source inspection identified obsolete Parse-button assertions, old screen-navigation selectors and synthetic paste helpers. Record their observed failures, then update those affected helpers to current behavior.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Use real clipboard insertion for browser paste tests:
 
@@ -204,7 +204,7 @@ In `json-pane-scroll.spec.ts`, add `test.use({ permissions: ['clipboard-read', '
    });
    ```
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test:e2e -- tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
@@ -213,7 +213,7 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
 
 Expected: existing JSON browser tests exit 0 after their obsolete harness assertions are corrected; the new contract exits 1 at the missing `New payload` control. Browser launch failure is a prerequisite failure, not a feature signal. Keep the failing feature test uncommitted until Task 2 passes it.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
@@ -312,7 +312,7 @@ Extend the existing automatic-parse action to carry its captured text:
 
 The existing single-payload reducer retains its parsing behavior. The session reducer uses this field to reject obsolete delayed work.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -412,7 +412,7 @@ describe('payload session', () => {
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
@@ -420,7 +420,7 @@ npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
 
 Expected before implementation: failure from missing session/search exports.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 ### Implement the session reducer
 
@@ -724,7 +724,7 @@ export function rootExpressionFor(
 
 In `jsonReferenceState.test.ts`, change only `rootExpression` and `rootExpressionFor` blank-name expectations from `Action` to `Action_name`. In `jsonReferenceWorkspace.test.tsx`, change the empty-name root-preview and hint expectations likewise. Retain all paste/default/copy expectations for `Action`; retain `ACTION_NAME_PLACEHOLDER`, which is also used by the paste handler.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/jsonPayloadSession.test.ts
@@ -741,7 +741,7 @@ npm run typecheck
 
 Expected: exit 0. Extend the session tests for close selection, duplicate labels, per-payload settings, retained successful data, scalar roots and the eight-result/count contract.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/jsonPayloadSession.ts packages/builder-ui/src/workbench/payloadSearchModel.ts packages/builder-ui/test/jsonPayloadSession.test.ts packages/builder-ui/src/workbench/payloadTreeModel.ts packages/builder-ui/test/payloadTreeModel.test.ts packages/builder-ui/src/workbench/jsonReferenceState.ts packages/builder-ui/test/jsonReferenceState.test.ts packages/builder-ui/test/jsonReferenceWorkspace.test.tsx
@@ -774,7 +774,7 @@ Expected: one commit containing only this task’s verified paths. Preserve othe
 
 Ownership: JSON integration and new controls. Existing pane internals retain their responsibilities.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Add this to `builderSwitching.test.tsx`, reusing its current adapter/navigation/timer helpers. Scope `editSample` and `pasteSample` to the visible textbox.
 
@@ -813,7 +813,7 @@ it('cancels pending validation on switching and restarts on return', async () =>
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/builderSwitching.test.tsx -t "cancels pending validation on switching and restarts on return"
@@ -823,7 +823,7 @@ Expected: exit 1 because `New payload` is absent. The fake timer test must finis
 
 Add focused tests for roving tab focus, focused close replacement, arrow wrapping in search, Escape, stale results, revealing item 24, and notice deduplication across StrictMode/workspace recreation/adapter replacement in the owned `builderSwitching.test.tsx`. The existing baseline tests already cover each presentation case; extend them to two payloads rather than replacing them.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 ### Complete new focused control tests
 
@@ -1515,7 +1515,7 @@ Create `jsonPayloads.css` and import it after existing theme CSS:
 
 Verified palette owner: `workbenchTokens.ts` defines `--surface`, `--surface2`, `--text`, `--text2`, `--border`, `--accent`, `--accent-soft`, `--good`, `--warn`, `--danger`, `--header-glass`, `--seg-selected`, and `--shadow-sm` in both palettes; `tokens.css` defines `--eb-mono`. existing palette roles remain the source of colors. The new flex sizing accounts for the actual strip height rather than adding another fixed viewport subtraction. Existing pane widths and stacking rules remain intact. At widths <=600px preserve the existing workspace-owned vertical scroll and Source/Payload/Reference order. At widths >600px verify Source body, tree and Reference body scroll independently after removing the old pane min-height floors; the strip height is absorbed by flex layout, not another fixed 80px allowance.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/builderSwitching.test.tsx -t "cancels pending validation on switching and restarts on return"
@@ -1533,7 +1533,7 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts tests/e2e/json-pane-scr
 
 Expected: exit 0, with native paste/undo evidence from the browser test. Resolve failures before committing.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/JsonPayloadWorkspace.tsx packages/builder-ui/src/workbench/PayloadStrip.tsx packages/builder-ui/src/workbench/PayloadSearch.tsx packages/builder-ui/src/theme/jsonPayloads.css packages/builder-ui/test/payloadStrip.test.tsx packages/builder-ui/test/payloadSearch.test.tsx packages/builder-ui/src/app/ExpressionBuilderShell.tsx packages/builder-ui/src/workbench/JsonReferenceWorkspace.tsx packages/builder-ui/src/workbench/PayloadTree.tsx packages/builder-ui/test/builderSwitching.test.tsx packages/builder-ui/test/payloadTree.test.tsx tests/e2e/json-multi-payload.spec.ts
@@ -1584,7 +1584,7 @@ export interface ParsedValueList {
 }
 ```
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 ```ts
 import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
@@ -1632,7 +1632,7 @@ it('filters before one shared cap and supports a null root', () => {
 });
 ```
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
@@ -1640,7 +1640,7 @@ npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
 
 Expected before implementation: exit 1, because the current three-argument builder cannot consume source arrays or return `.sources`/`.visibleCount`. Existing tests must still pass before this new test is added.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Update existing fixtures to explicit source arrays. In each of `parsedValueModel.test.ts`, `functionsNav.test.tsx` and `functionsWorkspace.test.tsx`, import `parsePayload`, `ParsedValueSource`, and `PayloadReferenceRoot`; construct each fixture's `parsed` through a checked `parsePayload(JSON.stringify(value))` result. Preserve each original root object, id `fixture-1`, a stable label, and the root caption from `formatPayloadRoot(root)`; use `referenceRoot: null` only for the missing-name case. Replace old `buildParsedValueList(sample, root, search)` calls with `buildParsedValueList([source], search)`. Replace absent-data cases with `buildParsedValueList([], search)`; a successful JSON null source remains a one-element array. Replace assertions on `.rows`/`.entries` with `.sources[0].rows`/`.sources[0].entries`, guarding absent-source cases explicitly. Replace Functions JSX `sample`/`referenceRoot` props with `sources`, including rerender cases. In `functionsNav.test.tsx`, migrate the hand-built old list object using `sources: [{ id: "fixture-1", label: "Fixture", rootCaption: "triggerBody()", matchingCount: rows.length, rows, entries, emptyMessage: null }]` with `visibleCount: rows.length`, preserving its existing row/entry data and hidden count. Preserve all existing argument-targeting, array, clipboard and validation assertions. An empty array means absent data; a source whose `parsed.value` is `null` means valid JSON null.
 
@@ -1815,7 +1815,7 @@ const parsedSources = useMemo(
 
 Replace both old `sample`/`referenceRoot` props with `sources={parsedSources}` in the continuously mounted Functions workspace. Retain its existing argument reducer and insertion handlers.
 
-- [ ] **Step 4: Confirm the signal changed, and nothing else did**
+- [x] **Step 4: Confirm the signal changed, and nothing else did**
 
 ```bash
 npm run test -- packages/builder-ui/test/parsedValueModel.test.ts
@@ -1832,7 +1832,7 @@ npm run typecheck
 
 Expected: exit 0. Verify equal-path source insertion, independent array accordions, missing-name exclusion from the budget, and unchanged inserted argument text after rename/root change/close.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add packages/builder-ui/src/workbench/parsedValueModel.ts packages/builder-ui/src/workbench/FunctionsWorkspace.tsx packages/builder-ui/src/workbench/FunctionsNav.tsx packages/builder-ui/src/workbench/ParsedValueEntries.tsx packages/builder-ui/src/app/ExpressionBuilderShell.tsx packages/builder-ui/test/parsedValueModel.test.ts packages/builder-ui/test/functionsNav.test.tsx packages/builder-ui/test/functionsWorkspace.test.tsx packages/builder-ui/test/builderSwitching.test.tsx
@@ -1854,11 +1854,11 @@ Expected: one commit containing only this task’s verified paths. Preserve othe
 
 **Interfaces:** Consumes the completed session, JSON workspace, Functions source list and unchanged platform adapter. Produces acceptance evidence.
 
-- [ ] **Step 1: Establish the observable pre-change signal**
+- [x] **Step 1: Establish the observable pre-change signal**
 
 Use the native editing test created by Task 0 as the integration signal; do not add a second duplicate feature implementation. Preserve the baseline exceptions recorded below.
 
-- [ ] **Step 2: Capture the current signal**
+- [x] **Step 2: Capture the current signal**
 
 ```bash
 npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
@@ -1866,11 +1866,13 @@ npm run test:e2e -- tests/e2e/json-multi-payload.spec.ts
 
 Expected after Tasks 1–3: exit 0. A failure blocks acceptance and returns to the owning implementation task; Task 4 owns only the three browser paths listed above.
 
-- [ ] **Step 3: Implement the minimum fix**
+- [x] **Step 3: Implement the minimum fix**
 
 Extend the browser contract with the viewport and keyboard scenarios below. If a failure requires production changes, return it to Task 1, 2 or 3 with its exact path and check; do not expand Task 4 ownership.
 
 - [ ] **Step 4: Confirm the signal changed, and nothing else did**
+
+   > Execution 2026-10-08/14: items 1–5 and 7 verified (lint/typecheck/build/`git diff --check` exit 0; unit 68 files/611 tests; e2e passes except `pptb-smoke`, which needs `dev:pptb` on 5174 that `playwright.config.ts` does not start). 900×700 Reference collapse fixed in `jsonPayloads.css` (`e88b333`). A parallel remote implementation was superseded by merge `7ef9b87`; its 375px tab-width cap and broader AC scenarios were ported. **Item 6 (actual Toolbox load) is pending, so this step stays unchecked.**
 
 Run checks sequentially:
 
@@ -1908,7 +1910,7 @@ Run checks sequentially:
 
 7. Confirm condition documents/exports and Functions arguments survive navigation unchanged. Reload must restore one empty JSON payload.
 
-- [ ] **Step 5: Commit the coherent change**
+- [x] **Step 5: Commit the coherent change**
 
 ```bash
 git add tests/e2e/json-multi-payload.spec.ts tests/e2e/json-references.spec.ts tests/e2e/json-pane-scroll.spec.ts
