@@ -475,6 +475,18 @@ test('the multi-payload workspace works by keyboard alone (AC-2.5, AC-3.4, AC-5.
     await press('Enter');
     await expectFocused(page, first);
     await expect(first).toHaveValue("body('Get_manager')?['value'][0]?['Email']");
+
+    // Alt+ArrowDown keeps the second argument as the target, so the list is reachable from it.
+    await press('Tab');
+    const second = page.locator('input[data-arg]').nth(1);
+    await expectFocused(page, second);
+    await expect(second).toHaveAttribute('aria-keyshortcuts', 'Alt+ArrowDown');
+    await press('Alt+ArrowDown');
+    await expectFocused(page, page.getByRole('button', { name: 'value[0].Email' }).first());
+    await press('Enter');
+    await expectFocused(page, second);
+    await expect(second).toHaveValue("body('Get_customer')?['value'][0]?['Email']");
+    await expect(first).toHaveValue("body('Get_manager')?['value'][0]?['Email']");
   });
 
   await test.step('closing and adding payloads keeps focus on a surviving tab (AC-5.5)', async () => {

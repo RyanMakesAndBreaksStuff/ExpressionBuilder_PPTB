@@ -115,6 +115,62 @@ describe('FunctionsWorkspace', () => {
     expect(text2).toHaveFocus();
   });
 
+  describe('Alt+ArrowDown from an argument', () => {
+    it('expands Parsed Value, focuses the first reference and inserts into the held argument', async () => {
+      const user = userEvent.setup();
+      render(<FunctionsWorkspace adapter={createAdapter()} sources={sources} />);
+      const toggle = screen.getByRole('button', { name: 'Parsed Value 1' });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      const text1 = screen.getByLabelText('text1');
+      const text2 = screen.getByLabelText('text2');
+      expect(text2).toHaveAttribute('aria-keyshortcuts', 'Alt+ArrowDown');
+      expect(text2).toHaveAccessibleDescription(/Alt\+Down to pick a parsed value/);
+
+      await user.click(text2);
+      await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Name' })).toHaveFocus();
+
+      await user.keyboard('{Enter}');
+      expect(text2).toHaveValue("triggerBody()?['Name']");
+      expect(text1).toHaveValue('');
+      expect(text2).toHaveFocus();
+
+      // Already expanded: focuses the reference straight away.
+      await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+      expect(screen.getByRole('button', { name: 'Name' })).toHaveFocus();
+    });
+
+    it('focuses the Parsed Value toggle when there is nothing to insert', async () => {
+      const user = userEvent.setup();
+      render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+      await user.click(screen.getByLabelText('text2'));
+      await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+      const toggle = screen.getByRole('button', { name: 'Parsed Value 0' });
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(toggle).toHaveFocus();
+    });
+
+    it('focuses the summary of a closed source group instead of a hidden button', async () => {
+      const user = userEvent.setup();
+      const two = [...sources, { ...sources[0], id: 'fixture-2', label: 'Other' }];
+      render(<FunctionsWorkspace adapter={createAdapter()} sources={two} />);
+      await user.click(screen.getByLabelText('text2'));
+      await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+      expect(screen.getAllByText(/^Fixture ·/, { selector: 'summary' })[0]).toHaveFocus();
+    });
+
+    it('leaves plain ArrowDown alone', async () => {
+      const user = userEvent.setup();
+      render(<FunctionsWorkspace adapter={createAdapter()} sources={sources} />);
+      const text2 = screen.getByLabelText('text2');
+      await user.click(text2);
+      await user.keyboard('{ArrowDown}');
+      expect(screen.getByRole('button', { name: 'Parsed Value 1' })).toHaveAttribute('aria-expanded', 'false');
+      expect(text2).toHaveFocus();
+    });
+  });
+
   it('wraps the focused argument repeatedly, while searching selects without wrapping', async () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);

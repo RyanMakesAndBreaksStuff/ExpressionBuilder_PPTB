@@ -7,6 +7,8 @@ export interface ArgumentsPanelProps {
   slots: ArgumentSlot[];
   onArgChange: (name: string, value: string) => void;
   onArgFocus: (name: string) => void;
+  /** Alt+ArrowDown: keep `name` as the insert target and move focus into Parsed Value. */
+  onPickParsedValue: (name: string) => void;
 }
 
 export function ArgumentsPanel({
@@ -14,6 +16,7 @@ export function ArgumentsPanel({
   slots,
   onArgChange,
   onArgFocus,
+  onPickParsedValue,
 }: ArgumentsPanelProps) {
   const idPrefix = useId();
 
@@ -25,6 +28,7 @@ export function ArgumentsPanel({
       {slots.map((slot, index) => {
         const id = `${idPrefix}-arg-${index}`;
         const typeId = `${id}-type`;
+        const hintId = `${id}-hint`;
         return (
           <div className="eb-fn-arg" key={slot.name}>
             <label htmlFor={id}>
@@ -38,7 +42,8 @@ export function ArgumentsPanel({
               {...NO_TEXT_ASSISTANCE}
               id={id}
               aria-label={slot.name}
-              aria-describedby={typeId}
+              aria-describedby={`${typeId} ${hintId}`}
+              aria-keyshortcuts="Alt+ArrowDown"
               aria-required={slot.required}
               className="eb-fn-input"
               data-arg={slot.name}
@@ -47,6 +52,12 @@ export function ArgumentsPanel({
               placeholder={slot.sample ?? 'Type a value or pick a function'}
               onChange={(event) => onArgChange(slot.name, event.target.value)}
               onFocus={() => onArgFocus(slot.name)}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown' && event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                  event.preventDefault();
+                  onPickParsedValue(slot.name);
+                }
+              }}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 const text = event.dataTransfer.getData('text/plain');
@@ -56,6 +67,7 @@ export function ArgumentsPanel({
                 }
               }}
             />
+            <span id={hintId} className="eb-visually-hidden">Alt+Down to pick a parsed value</span>
           </div>
         );
       })}

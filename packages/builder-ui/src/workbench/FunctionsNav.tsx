@@ -94,6 +94,7 @@ export function FunctionsNav({
           type="button"
           aria-expanded={parsedValueExpanded}
           aria-label={'Parsed Value ' + parsedValue.visibleCount}
+          data-pv-toggle=""
           onClick={onToggleParsedValue}
         >
           <ChevronRightRegular aria-hidden="true" />

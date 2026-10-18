@@ -82,7 +82,7 @@ describe('ArgumentsPanel', () => {
     expect(screen.getByText('(STRING)')).toBeInTheDocument();
     expect(screen.getAllByText('(INT)')).toHaveLength(2);
     const text = screen.getByLabelText('text');
-    const typeId = text.getAttribute('aria-describedby');
+    const typeId = text.getAttribute('aria-describedby')?.split(' ')[0];
     expect(typeId).toBeTruthy();
     expect(document.getElementById(typeId ?? '')).toHaveTextContent('(STRING)');
     for (const input of screen.getAllByRole('textbox')) {
