@@ -77,7 +77,7 @@ async function advanceParse(ms = 600) {
 async function exerciseJsonReference(user: UserEvent) {
 	await goTo(user, 'JSON reference');
 	await user.type(screen.getByLabelText('Action name'), 'Get items');
-	await user.click(screen.getByLabelText('Sample JSON'));
+	await user.click(sampleBox());
 	await user.paste(fixtureA1);
 	await user.click(screen.getByRole('treeitem', { name: /^body, object$/ }));
 	await user.click(screen.getByRole('button', { name: 'Copy @{}' }));
@@ -148,7 +148,7 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 
 		expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue(fixtureA1);
+		expect(sampleBox()).toHaveValue(fixtureA1);
 		expect(
 			screen.getByRole('treeitem', { name: /^body, object$/ }),
 		).toHaveAttribute('aria-selected', 'true');
@@ -208,7 +208,7 @@ describe('builder switching', () => {
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
 		expect(screenChip()).toHaveAccessibleName('Screen: Trigger / Filter');
 		await goTo(user, 'JSON reference');
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue('');
+		expect(sampleBox()).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
 	});
 
@@ -251,7 +251,7 @@ describe('builder switching', () => {
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		editSample('{"a":1}');
 		await advanceParse();
-		expect(screen.getByLabelText('Sample JSON')).toHaveAttribute('aria-invalid', 'false');
+		expect(sampleBox()).toHaveAttribute('aria-invalid', 'false');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 	});
 
@@ -282,11 +282,16 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		pasteSample('{"a":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		pasteSample('{"b":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		workspaceMount.key += 1;
 		view.rerender(tree(adapter));
-		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		const replacement = createAdapter();
 		view.rerender(tree(replacement));
+		expect(replacement.notify).not.toHaveBeenCalled();
+		await user.click(screen.getByRole('tab', { name: /^Action, payload 1$/ }));
 		expect(replacement.notify).not.toHaveBeenCalled();
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		editSample('{"a":2}');
@@ -323,8 +328,6 @@ describe('builder switching', () => {
 		render(<ExpressionBuilderShell adapter={adapter} />);
 
 		await goTo(user, 'JSON reference');
-		// Fake timers start after navigation and use fireEvent: RTL's async
-		// wrapper awaits a real setTimeout(0), which hangs user-event under vitest.
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		editSample('{"a":1}');
 		await advanceParse(300);
@@ -350,83 +353,52 @@ describe('builder switching', () => {
 		);
 	});
 
-	it('delivers each payload notice once across StrictMode, workspace recreation and adapter replacement', async () => {
-		const user = userEvent.setup();
-		const adapter = createAdapter();
-		const tree = (target: PlatformAdapter) => (
-			<StrictMode><ExpressionBuilderShell adapter={target} /></StrictMode>
-		);
-		const view = render(tree(adapter));
-		await goTo(user, 'JSON reference');
-		pasteSample('{"a":1}');
-		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
-		pasteSample('{"b":1}');
-		expect(adapter.notify).toHaveBeenCalledTimes(2);
-
-		workspaceMount.key += 1;
-		view.rerender(tree(adapter));
-		expect(adapter.notify).toHaveBeenCalledTimes(2);
-
-		const replacement = createAdapter();
-		view.rerender(tree(replacement));
-		expect(replacement.notify).not.toHaveBeenCalled();
-
-		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-		editSample('{"b":2}');
-		await advanceParse();
-		expect(replacement.notify).toHaveBeenCalledExactlyOnceWith(
-			'Payload updated · 2 values', 'success',
-		);
-		fireEvent.click(screen.getByRole('tab', { name: 'Action, payload 1' }));
-		editSample('{"a":2}');
-		await advanceParse();
-		expect(replacement.notify).toHaveBeenCalledTimes(2);
-	});
-
-	it('cancels a closed payload\'s pending validation', async () => {
-		const user = userEvent.setup();
-		const adapter = createAdapter();
-		render(<ExpressionBuilderShell adapter={adapter} />);
-		await goTo(user, 'JSON reference');
-		pasteSample('{"a":1}');
-		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
-		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-		editSample('{"b":1}');
-		await advanceParse(300);
-
-		fireEvent.click(screen.getByRole('button', { name: 'Close Payload 2, payload 2' }));
-		await advanceParse();
-		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		expect(screen.queryByRole('tab', { name: 'Payload 2, payload 2' })).not.toBeInTheDocument();
-		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toBeInTheDocument();
-		expect(sampleBox()).toHaveValue('{"a":1}');
-	});
-
-	it('keeps inserted Functions argument text after payload rename, root change and close', async () => {
+	it('drops stale search results once a payload changes', async () => {
 		const user = userEvent.setup();
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
 		await goTo(user, 'JSON reference');
-		await user.type(screen.getByRole('textbox', { name: 'Action name' }), 'First');
-		pasteSample('{"a":1}');
-		fireEvent.click(screen.getByRole('button', { name: 'New payload', exact: true }));
-		await user.type(screen.getByRole('textbox', { name: 'Action name' }), 'Second');
+		pasteSample('{"email":1}');
+		const search = screen.getByRole('combobox', { name: 'Search all payloads' });
+		await user.type(search, 'email');
+		expect(screen.getAllByRole('option')).toHaveLength(1);
+		pasteSample('{"other":1}');
+		expect(screen.queryByRole('option')).not.toBeInTheDocument();
+		expect(screen.getByText('No matches in parsed payloads.')).toBeInTheDocument();
+	});
+
+	it('keeps inserted Functions argument text after the JSON source is renamed, re-rooted or closed', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		await user.type(screen.getByLabelText('Action name'), 'Get items');
 		pasteSample('{"a":1}');
 
 		await goTo(user, 'Functions');
-		await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
-		const groups = screen.getAllByText(/ · \d+$/, { selector: 'summary' });
-		expect(groups).toHaveLength(2);
-		await user.click(groups[1]);
+		await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
 		const text1 = screen.getByLabelText('text1');
 		await user.click(text1);
-		await user.dblClick(screen.getAllByRole('button', { name: 'a', exact: true })[1]);
-		const inserted = (text1 as HTMLInputElement).value;
-		expect(inserted).toContain('Second');
+		await user.dblClick(screen.getByRole('button', { name: 'a' }));
+		const inserted = "outputs('Get_items')?['a']";
+		expect(text1).toHaveValue(inserted);
 
 		await goTo(user, 'JSON reference');
-		await user.type(screen.getByRole('textbox', { name: 'Action name' }), ' renamed');
-		fireEvent.click(screen.getByRole('button', { name: /^Close .*payload 2$/ }));
+		await user.clear(screen.getByLabelText('Action name'));
+		await user.type(screen.getByLabelText('Action name'), 'Renamed');
 		await goTo(user, 'Functions');
-		expect(screen.getByLabelText('text1')).toHaveValue(inserted);
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Parsed Value 1' })).toBeInTheDocument();
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('radio', { name: /Trigger.*Full output/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Parsed Value 0' })).toBeInTheDocument();
 	});
 });

@@ -2717,11 +2717,6 @@ body {
 	.eb-json-payload {
 		min-height: 0;
 	}
-	/* Same zero basis as .eb-json-reference below, so the two cards split the
-	   column and each scrolls internally; an auto basis let a tall tree take it all. */
-	.eb-json-payload {
-		flex: 1 1 0;
-	}
 	.eb-json-content {
 		min-height: 0;
 	}

@@ -1,895 +1,1036 @@
-import { expect, test, type Page } from 'playwright/test';
+import { expect, test, type Locator, type Page } from 'playwright/test';
 
 test.use({
   permissions: ['clipboard-read', 'clipboard-write'],
 });
 
-type Screen = 'Functions' | 'Trigger / Filter' | 'JSON reference';
+type Toasts = { __toasts: string[] };
 
-/** Loads the web build with onboarding dismissed and every host notification recorded. */
-async function start(page: Page): Promise<void> {
+const ARIA_BUTTON = (name: string) => ({ name, exact: true });
+
+async function start(page: Page, size?: { width: number; height: number }): Promise<void> {
+  // The web adapter renders notices as fixed, auto-expiring toasts; record every
+  // one so assertions count delivered notices rather than race their removal.
   await page.addInitScript(() => {
     localStorage.setItem('eb.onboarding.seen.v1', '1');
-    const log: string[] = [];
-    Object.assign(window, { __toasts: log });
-    // The web adapter's notify() appends a fixed-position status/alert element to <body>.
+    const seen: string[] = [];
+    (window as unknown as Toasts).__toasts = seen;
     new MutationObserver((records) => {
       for (const record of records) {
         for (const node of record.addedNodes) {
-          if (
-            node instanceof HTMLElement &&
-            node.parentElement === document.body &&
-            node.style.position === 'fixed' &&
-            ['status', 'alert'].includes(node.getAttribute('role') ?? '')
-          ) log.push(node.textContent ?? '');
+          if (node instanceof HTMLElement && node.parentElement === document.body &&
+              node.style.position === 'fixed' && node.style.zIndex === '9999') {
+            seen.push(node.textContent ?? '');
+          }
         }
       }
     }).observe(document, { childList: true, subtree: true });
   });
+  if (size) await page.setViewportSize(size);
   await page.goto('/');
+  await openScreen(page, 'JSON reference');
 }
 
-/** Every notice the web adapter has been asked to show, in order, even after the toast is gone. */
-const toasts = (page: Page): Promise<string[]> =>
-  page.evaluate(() => (window as unknown as { __toasts: string[] }).__toasts.slice());
+const toasts = (page: Page) =>
+  page.evaluate(() => (window as unknown as Toasts).__toasts.slice());
 
-/** Lets a just-committed notice reach the adapter before asserting it did not. */
-const settle = (page: Page) => page.waitForTimeout(150);
-
-async function openScreen(page: Page, name: Screen): Promise<void> {
+async function openScreen(
+  page: Page,
+  name: 'Functions' | 'Trigger / Filter' | 'JSON reference',
+): Promise<void> {
   await page.getByRole('button', { name: /^Screen:/ }).click();
   await page.getByRole('menuitemradio', { name, exact: true }).click();
 }
 
-const openJsonReference = (page: Page) => openScreen(page, 'JSON reference');
+const panel = (page: Page) => page.getByRole('tabpanel');
+const editorOf = (page: Page) =>
+  panel(page).getByRole('textbox', { name: 'Sample JSON', exact: true });
+const nameOf = (page: Page) => panel(page).getByLabel('Action name');
+const statusOf = (page: Page) => panel(page).locator('.eb-json-payload > .eb-json-help');
+const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('New payload'));
+const treeRow = (page: Page, label: string) =>
+  panel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
-/** Leaves the 600ms window intact: the menu item's own click waits for animation to settle. */
-async function openScreenPromptly(page: Page, name: Screen): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name, exact: true }).dispatchEvent('click');
+async function writeClipboard(page: Page, text: string): Promise<void> {
+  await page.evaluate((value) => navigator.clipboard.writeText(value), text);
 }
 
-const editorOf = (page: Page) =>
-  page.getByRole('textbox', { name: 'Sample JSON', exact: true });
-const nameOf = (page: Page) => page.getByRole('textbox', { name: 'Action name' });
-const payloadStatus = (page: Page) =>
-  page.getByRole('region', { name: 'Payload' }).locator('.eb-json-help');
-const reference = (page: Page) =>
-  page.locator('[aria-label="Reference expression"]:visible');
-const tabAt = (page: Page, position: number) =>
-  page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
-const newPayload = (page: Page) =>
-  page.getByRole('button', { name: 'New payload', exact: true });
-const addPayload = (page: Page) => newPayload(page).click();
-const treeRow = (page: Page, label: string) =>
-  page.getByRole('treeitem', {
-    name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `),
-  });
-
-/** Pastes through the real clipboard into the visible Sample JSON textarea. */
+/** Native whole-field paste: real clipboard plus Control+V, never a synthetic event. */
 async function pasteSample(page: Page, text: string): Promise<void> {
-  await page.evaluate((value) => navigator.clipboard.writeText(value), text);
+  await writeClipboard(page, text);
   const editor = editorOf(page);
   await editor.focus();
   await editor.press('Control+V');
 }
 
-/** Ordinary typing (not a paste): the automatic-validation route. */
-const typeSample = (page: Page, text: string) => editorOf(page).fill(text);
+/** Appends a payload (which activates) and names it. */
+async function addPayload(page: Page, name: string, sample?: string): Promise<void> {
+  await newPayload(page).click();
+  await nameOf(page).fill(name);
+  if (sample !== undefined) await pasteSample(page, sample);
+}
 
-/** Waits for the active payload's automatic validation to land. */
-const validated = (page: Page, text: string | RegExp) =>
-  expect(payloadStatus(page)).toHaveText(text, { timeout: 3_000 });
+const items = (count: number) => JSON.stringify({
+  items: Array.from({ length: count }, (_, id) => ({ id, Email: `user${id}@x.com` })),
+});
 
-/** One round trip, so "immediately after" is not stretched by several awaits. */
-const snapshot = (page: Page) =>
-  page.evaluate(() => {
-    const pane = [...document.querySelectorAll('[role="tabpanel"]')]
-      .find((candidate) => !(candidate as HTMLElement).hidden)!;
-    const label = [...pane.querySelectorAll('label')]
-      .find((candidate) => candidate.textContent === 'Action name');
+const emails = (domain: string, count: number) => JSON.stringify({
+  value: Array.from({ length: count }, (_, index) => ({ Email: `e${index}@${domain}` })),
+});
+
+const tabAt = (page: Page, position: number) =>
+  page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
+const referenceOf = (page: Page) => panel(page).getByLabel('Reference expression');
+const chooseRoot = (page: Page, root: string) => panel(page).getByRole('radio', { name: root }).click();
+const parsedValue = (page: Page) => page.getByRole('button', { name: /^Parsed Value \d+$/ });
+const sources = (page: Page) => page.locator('details.eb-pv-source');
+
+/** Freezes the page clock so the 600ms debounce only advances through runFor(). */
+async function pauseClock(page: Page): Promise<void> {
+  const now = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(now + 100);
+}
+
+async function expectInside(inner: Locator, outer: Locator): Promise<void> {
+  const [a, b] = await Promise.all([inner.boundingBox(), outer.boundingBox()]);
+  expect(a).not.toBeNull();
+  expect(b).not.toBeNull();
+  expect(a!.x).toBeGreaterThanOrEqual(b!.x - 1);
+  expect(a!.x + a!.width).toBeLessThanOrEqual(b!.x + b!.width + 1);
+}
+
+async function expectVisibleFocusRing(page: Page): Promise<void> {
+  const ring = await page.evaluate(() => {
+    const style = getComputedStyle(document.activeElement as Element);
     return {
-      text: pane.querySelector('textarea')!.value,
-      name: (document.getElementById(label!.htmlFor) as HTMLInputElement).value,
-      rows: [...pane.querySelectorAll('[role="treeitem"]')]
-        .map((row) => row.getAttribute('aria-label')),
-      reference: pane.querySelector('[aria-label="Reference expression"]')
-        ?.textContent ?? null,
+      outline: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0,
+      shadow: style.boxShadow !== 'none',
     };
   });
-
-/** Presses a native history key and returns the first view in which the textarea shows `text`. */
-async function history(page: Page, key: string, text: string) {
-  await editorOf(page).press(key);
-  let view = await snapshot(page);
-  await expect.poll(async () => (view = await snapshot(page)).text).toBe(text);
-  return view;
+  expect(ring.outline || ring.shadow).toBe(true);
 }
 
-const sampleOf = (domain: string, count: number, extra: object = {}) =>
-  JSON.stringify({
-    ...extra,
-    value: Array.from({ length: count }, (_, index) => ({
-      Email: `e${index}@${domain}`,
-    })),
-  });
-
-/** Names the active payload and parses a sample into it through a native paste. */
-async function seed(
-  page: Page,
-  { name, root, sample }: { name?: string; root?: string; sample: string },
-): Promise<void> {
-  if (root) await page.getByRole('radio', { name: root }).click();
-  if (name !== undefined) await nameOf(page).fill(name);
-  await pasteSample(page, sample);
-  await expect(payloadStatus(page)).toHaveText(/^Parsed · \d+ values?$/);
-}
-
-test('keeps samples independent and preserves native paste undo (AC-4.1, AC-4.2)', async ({
+test('keeps samples independent and preserves native paste undo', async ({
   page,
 }) => {
   await start(page);
-  await openJsonReference(page);
+
+  await pasteSample(page, '{"old":1}');
   const editor = editorOf(page);
 
-  await test.step('a paste replaces the whole field, parses at once and names a blank action', async () => {
-    await pasteSample(page, '{"old":1}');
-    await expect(editor).toHaveValue('{"old":1}');
-    await expect(nameOf(page)).toHaveValue('Action');
-    await expect(treeRow(page, 'old')).toBeVisible();
-    await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values']);
-  });
+  await editor.evaluate((element) =>
+    (element as HTMLTextAreaElement).setSelectionRange(2, 5),
+  );
+  await pasteSample(page, '{"new":2}');
+  await expect(editor).toHaveValue('{"new":2}');
 
-  await test.step('a partial selection is replaced as a whole by the next paste', async () => {
-    await editor.evaluate((element) =>
-      (element as HTMLTextAreaElement).setSelectionRange(2, 5),
-    );
-    await pasteSample(page, '{"new":2}');
-    await expect(editor).toHaveValue('{"new":2}');
-    await expect(treeRow(page, 'new')).toBeVisible();
-    await expect.poll(() => toasts(page)).toHaveLength(2);
-  });
+  await editor.press('Control+Z');
+  await expect(editor).toHaveValue('{"old":1}');
+  await editor.press('Control+Y');
+  await expect(editor).toHaveValue('{"new":2}');
 
-  await test.step('the selection belongs to the new tree', async () => {
-    await treeRow(page, 'new').click();
-    await expect(reference(page)).toHaveText("outputs('Action')?['new']");
-  });
+  await newPayload(page).click();
+  await expect(editor).toHaveValue('');
 
-  await test.step('native Undo restores the text only; automatic validation follows 600ms later', async () => {
-    await editor.focus();
-    const during = await history(page, 'Control+Z', '{"old":1}');
-    expect(during.name).toBe('Action');
-    expect(during.rows.some((row) => row?.startsWith('new, '))).toBe(true);
-    expect(during.rows.some((row) => row?.startsWith('old, '))).toBe(false);
-    expect(during.reference).toBe("outputs('Action')?['new']");
-
-    await validated(page, 'Parsed · 2 values');
-    const after = await snapshot(page);
-    expect(after.rows.some((row) => row?.startsWith('old, '))).toBe(true);
-    expect(after.rows.some((row) => row?.startsWith('new, '))).toBe(false);
-    // The selected path no longer exists, so the ordinary rules reset it.
-    expect(after.reference).toBe("outputs('Action')");
-    await expect.poll(() => toasts(page)).toEqual([
-      'Parsed · 2 values',
-      'Parsed · 2 values',
-      'Payload updated · 2 values',
-    ]);
-  });
-
-  await test.step('native Redo behaves the same way', async () => {
-    const during = await history(page, 'Control+Y', '{"new":2}');
-    expect(during.rows.some((row) => row?.startsWith('old, '))).toBe(true);
-    expect(during.rows.some((row) => row?.startsWith('new, '))).toBe(false);
-
-    await validated(page, 'Parsed · 2 values');
-    await expect(treeRow(page, 'new')).toBeVisible();
-    await expect(treeRow(page, 'old')).toHaveCount(0);
-    await expect.poll(() => toasts(page)).toHaveLength(4);
-  });
-
-  await test.step('undoing back past the first paste keeps its action name and the retained output', async () => {
-    await history(page, 'Control+Z', '{"old":1}');
-    const during = await history(page, 'Control+Z', '');
-    expect(during.name).toBe('Action');
-    expect(during.rows.some((row) => row?.startsWith('new, '))).toBe(true);
-
-    await expect(page.getByRole('alert')).toHaveText(/Paste a sample before parsing/, { timeout: 3_000 });
-    await expect(payloadStatus(page)).toHaveText('Could not parse. Showing last successful payload.');
-    await expect(treeRow(page, 'new')).toBeVisible();
-    await expect(nameOf(page)).toHaveValue('Action');
-
-    await history(page, 'Control+Y', '{"old":1}');
-    await history(page, 'Control+Y', '{"new":2}');
-    await expect(page.getByRole('alert')).toHaveCount(0, { timeout: 3_000 });
-    await validated(page, 'Parsed · 2 values');
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(4);
-  });
-
-  await test.step('payload editors stay independent', async () => {
-    await addPayload(page);
-    await expect(editor).toHaveValue('');
-    await pasteSample(page, '{"second":3}');
-    await expect(treeRow(page, 'second')).toBeVisible();
-    await tabAt(page, 1).click();
-    await expect(editor).toHaveValue('{"new":2}');
-    await expect(nameOf(page)).toHaveValue('Action');
-    await tabAt(page, 2).click();
-    await expect(editor).toHaveValue('{"second":3}');
-  });
+  await pasteSample(page, '{"second":3}');
+  await page.getByRole('tab', {
+    name: /^Action, payload 1$/,
+  }).click();
+  await expect(editor).toHaveValue('{"new":2}');
 });
 
-test('repeats an identical paste as one notice per paste, never replayed (AC-4.7)', async ({
-  page,
-}) => {
+test('starts with one empty payload, enforces the 1 and 5 limits and restores one empty payload on reload', async ({ page }) => {
   await start(page);
-  await openJsonReference(page);
-  await nameOf(page).fill('Entered name');
 
-  await pasteSample(page, '{"same":1}');
-  await expect(nameOf(page)).toHaveValue('Entered name');
-  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values']);
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('1 / 5')).toBeVisible();
+  await expect(panel(page).getByRole('radio', { name: 'Action · Full output' })).toHaveAttribute('aria-checked', 'true');
+  await expect(nameOf(page)).toHaveValue('');
+  await expect(panel(page).getByLabel('Loop name')).toHaveCount(0);
+  await expect(editorOf(page)).toHaveValue('');
+  // The last payload offers no close action.
+  await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
 
-  await pasteSample(page, '{"same":1}');
-  await expect.poll(() => toasts(page)).toEqual([
-    'Parsed · 2 values',
-    'Parsed · 2 values',
-  ]);
+  for (let count = 2; count <= 5; count++) await newPayload(page).click();
+  await expect(page.getByRole('tab')).toHaveCount(5);
+  await expect(page.getByText('5 / 5')).toBeVisible();
+  await expect(newPayload(page)).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(5);
 
-  // Revisiting tabs and screens, and recreating the presentation, never replays a notice.
-  await addPayload(page);
-  await tabAt(page, 1).click();
-  await openScreen(page, 'Functions');
-  await openScreen(page, 'Trigger / Filter');
-  await openJsonReference(page);
-  await page.setViewportSize({ width: 600, height: 700 });
-  await page.setViewportSize({ width: 1280, height: 860 });
-  await page.waitForTimeout(800);
-  expect(await toasts(page)).toHaveLength(2);
+  await pasteSample(page, '{"kept":1}');
+  await expect(editorOf(page)).toHaveValue('{"kept":1}');
+  await page.reload();
+  await openScreen(page, 'JSON reference');
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeVisible();
+  await expect(editorOf(page)).toHaveValue('');
+  await expect(page.getByText('1 / 5')).toBeVisible();
 });
 
-test('treats equivalent edits as non-material and real changes as material (AC-4.5, AC-4.6, AC-2.2)', async ({
-  page,
-}) => {
-  const note = (tail: string) => `${'x'.repeat(150)}${tail}`;
-  const original = `{"b":1,"a":[1,2],"note":"${note('END1')}"}`;
+for (const size of [
+  { width: 768, height: 1024 },
+  { width: 1440, height: 900 },
+]) {
+  test(`five long-named tabs scroll inside the strip and keep the focused tab visible at ${size.width}x${size.height}`, async ({ page }) => {
+    await start(page, size);
+    await nameOf(page).fill('Get customer account details from the Dataverse list rows action 1');
+    for (let index = 2; index <= 5; index++) {
+      await addPayload(page, `Get customer account details from the Dataverse list rows action ${index}`);
+    }
+    await expect(newPayload(page)).toBeDisabled();
+
+    const strip = page.locator('.eb-payload-tabs');
+    const overflow = await strip.evaluate((element) => ({
+      scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
+    }));
+    expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
+    // Overflow stays local: the page itself never scrolls sideways.
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+    const tabs = page.getByRole('tab');
+    await tabs.last().focus();
+    for (const key of ['Home', 'End', 'ArrowLeft', 'ArrowLeft', 'Home', 'ArrowLeft']) {
+      await page.keyboard.press(key);
+      const focused = page.locator('[role="tab"]:focus');
+      await expect(focused).toHaveCount(1);
+      await expect(focused).toHaveAttribute('aria-selected', 'true');
+      await expectInside(focused, strip);
+    }
+    await expectVisibleFocusRing(page);
+    // Every tab remains discoverable by its full accessible name even though its label is truncated.
+    await expect(tabs.nth(0)).toHaveAccessibleName('Get customer account details from the Dataverse list rows action 1, payload 1');
+  });
+}
+
+for (const size of [
+  { width: 375, height: 667 },
+  { width: 1280, height: 420 },
+  { width: 1440, height: 900 },
+]) {
+  test(`search results stay inside the viewport at ${size.width}x${size.height}`, async ({ page }) => {
+    await start(page, size);
+    await nameOf(page).fill('Get items');
+    await pasteSample(page, items(30));
+    await expect(statusOf(page)).toHaveText('Parsed · 92 values');
+
+    const search = page.getByRole('combobox', { name: 'Search all payloads' });
+    await search.fill('email');
+    const popup = page.locator('.eb-payload-search-popup');
+    await expect(popup).toBeVisible();
+    await expect(page.getByRole('option')).toHaveCount(8);
+    await expect(popup.getByRole('status')).toHaveText('30 matches · 1 parsed payloads');
+
+    const box = await popup.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(size.width);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(size.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+    // The list scrolls inside its popup, so the last option is reachable.
+    await page.getByRole('option').last().scrollIntoViewIfNeeded();
+    await expect(page.getByRole('option').last()).toBeInViewport();
+  });
+}
+
+test('payload tabs work by keyboard: arrows wrap, Home/End jump, close moves focus to the replacement, add focuses the new tab', async ({ page }) => {
   await start(page);
-  await openJsonReference(page);
-  await pasteSample(page, original);
-  await expect.poll(() => toasts(page)).toEqual(['Parsed · 6 values']);
-  const total = 'Parsed · 6 values';
+  await nameOf(page).fill('Alpha');
+  await addPayload(page, 'Bravo');
+  await addPayload(page, 'Charlie');
+  const tab = (name: string) => page.getByRole('tab', { name: new RegExp(`^${name}, payload \\d$`) });
+  await tab('Charlie').focus();
 
-  await test.step('a preview is shortened but the full value is what is compared', async () => {
-    const preview = await treeRow(page, 'note').textContent();
-    expect(preview).not.toContain('END1');
-  });
-
-  await test.step('whitespace, key order and numeric spelling refresh feedback without a notice', async () => {
-    await treeRow(page, 'a').locator('[data-chevron]').click();
-    await treeRow(page, 'a').click();
-    await expect(treeRow(page, 'a')).toHaveAttribute('aria-selected', 'true');
-
-    await typeSample(page, `{ "note": "${note('END1')}",\n "a": [1, 2], "b": 1.0 }`);
-    await expect(payloadStatus(page)).toHaveText(
-      'Sample changed. Waiting for valid JSON.',
-    );
-    await validated(page, total);
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(1);
-    await expect(treeRow(page, 'a')).toHaveAttribute('aria-selected', 'true');
-    await expect(treeRow(page, 'a')).toHaveAttribute('aria-expanded', 'true');
-    await expect(treeRow(page, '[1]')).toBeVisible();
-  });
-
-  const material = [
-    ['array order', `{"note":"${note('END1')}","a":[2,1],"b":1}`],
-    ['a value beyond the preview', `{"note":"${note('END2')}","a":[2,1],"b":1}`],
-    ['a value type', `{"note":"${note('END2')}","a":[2,1],"b":"1"}`],
-    ['a key', `{"note":"${note('END2')}","a":[2,1],"c":"1"}`],
-  ] as const;
-  for (const [index, [what, text]] of material.entries()) {
-    await test.step(`${what} is a material change`, async () => {
-      await typeSample(page, text);
-      await expect.poll(() => toasts(page), { timeout: 3_000 }).toHaveLength(index + 2);
-      expect((await toasts(page)).at(-1)).toBe('Payload updated · 6 values');
-      await validated(page, total);
-    });
+  async function expectSelectedAndFocused(name: string, position: number): Promise<void> {
+    await expect(tab(name)).toBeFocused();
+    await expect(tab(name)).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(name)).toHaveAttribute('tabindex', '0');
+    await expect(page.getByRole('tab', { selected: true })).toHaveCount(1);
+    await expect(panel(page)).toHaveAccessibleName(`${name}, payload ${position}`);
+    await expectVisibleFocusRing(page);
   }
 
-  await test.step('a new tab reports its first automatic parse, singular counts included', async () => {
-    await addPayload(page);
-    await typeSample(page, '7');
-    await expect.poll(() => toasts(page), { timeout: 3_000 }).toHaveLength(6);
-    expect((await toasts(page)).at(-1)).toBe('Parsed · 1 value');
-  });
+  await page.keyboard.press('Home');
+  await expectSelectedAndFocused('Alpha', 1);
+  await page.keyboard.press('ArrowLeft');
+  await expectSelectedAndFocused('Charlie', 3);
+  await page.keyboard.press('ArrowRight');
+  await expectSelectedAndFocused('Alpha', 1);
+  await page.keyboard.press('End');
+  await expectSelectedAndFocused('Charlie', 3);
+  await page.keyboard.press('ArrowLeft');
+  await expectSelectedAndFocused('Bravo', 2);
+
+  // Tab reaches the focused payload's own close control; Enter closes it and the
+  // tab now occupying that position becomes active and receives focus.
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', ARIA_BUTTON('Close Bravo, payload 2'))).toBeFocused();
+  await expectVisibleFocusRing(page);
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expectSelectedAndFocused('Charlie', 2);
+
+  // Closing the last tab falls back to its predecessor.
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expectSelectedAndFocused('Alpha', 1);
+  await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
+
+  // New payload by keyboard appends, activates and focuses the new tab.
+  await page.keyboard.press('Tab');
+  await expect(newPayload(page)).toBeFocused();
+  await expectVisibleFocusRing(page);
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expectSelectedAndFocused('Payload 2', 2);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
+  await expectVisibleFocusRing(page);
 });
 
-test('keeps output for invalid automatic edits and clears it for an invalid paste (AC-4.8, AC-4.9)', async ({
-  page,
-}) => {
-  const original = '{"keep":1,"list":[1,2]}';
+test('search by keyboard reveals item 24 in the tree, selects and focuses its row and shows its exact reference', async ({ page }) => {
   await start(page);
-  await openJsonReference(page);
-  await pasteSample(page, original);
-  await treeRow(page, 'keep').click();
-  await expect.poll(() => toasts(page)).toHaveLength(1);
+  await nameOf(page).fill('Get items');
+  await pasteSample(page, items(30));
+  await expect(statusOf(page)).toHaveText('Parsed · 92 values');
+  await addPayload(page, 'Other', '{"Email":"other@x.com"}');
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
 
-  const retained = async (error: RegExp) => {
-    await expect(page.getByRole('alert')).toHaveText(error, { timeout: 3_000 });
-    await expect(payloadStatus(page)).toHaveText(
-      'Could not parse. Showing last successful payload.',
-    );
-    await expect(treeRow(page, 'keep')).toHaveAttribute('aria-selected', 'true');
-    await expect(reference(page)).toHaveText("outputs('Action')?['keep']");
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(1);
-  };
+  const search = page.getByRole('combobox', { name: 'Search all payloads' });
+  const options = page.getByRole('option');
+  await search.focus();
+  await expect(search).toHaveAttribute('aria-expanded', 'false');
+  await page.keyboard.type('email');
+  await expect(search).toHaveAttribute('aria-expanded', 'true');
+  await expect(options).toHaveCount(8);
+  await expect(page.getByRole('status').filter({ hasText: 'matches' })).toHaveText('31 matches · 2 parsed payloads');
+  await expect(options.first()).toContainText('Get items');
+  await expect(options.first()).toContainText('items[0].Email');
+  await expect(options.first()).toHaveAttribute('aria-selected', 'true');
+  const activeId = (index: number) => options.nth(index).getAttribute('id');
 
-  await test.step('invalid text keeps the last successful tree and references', async () => {
-    await typeSample(page, '{"keep":');
-    await retained(/^Not valid JSON/);
-  });
-  await test.step('empty text keeps them too', async () => {
-    await typeSample(page, '');
-    await retained(/Paste a sample before parsing/);
-  });
-  await test.step('over-limit text keeps them too', async () => {
-    await typeSample(page, `[${'0,'.repeat(10_000)}0]`);
-    await retained(/more than 10,000 values/);
-  });
-  await test.step('correcting to semantically identical data clears the error without a notice', async () => {
-    await typeSample(page, '{ "list": [1, 2], "keep": 1 }');
-    await expect(page.getByRole('alert')).toHaveCount(0, { timeout: 3_000 });
-    await validated(page, 'Parsed · 5 values');
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(1);
-  });
+  await page.keyboard.press('ArrowDown');
+  await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true');
+  expect(await search.getAttribute('aria-activedescendant')).toBe(await activeId(1));
+  await page.keyboard.press('ArrowUp');
+  await expect(options.first()).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('ArrowUp');
+  await expect(options.nth(7)).toHaveAttribute('aria-selected', 'true');
+  await expect(search).toBeFocused();
 
-  await test.step('an invalid paste clears the tree and selection and shows the error', async () => {
-    await pasteSample(page, '{"broken":');
-    await expect(page.getByRole('alert')).toHaveText(/^Not valid JSON/);
-    await expect(page.getByRole('tree')).toHaveCount(0);
-    await expect(payloadStatus(page)).toHaveText('Could not parse');
-    await expect(reference(page)).toHaveCount(0);
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(1);
-  });
+  // Escape clears and closes while focus stays in search.
+  await page.keyboard.press('Escape');
+  await expect(search).toHaveValue('');
+  await expect(search).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+  await expect(search).toBeFocused();
 
-  await test.step('the semantic baseline survives: equal data is not material, changed data is', async () => {
-    await typeSample(page, '{"list":[1,2],"keep":1}');
-    await validated(page, 'Parsed · 5 values');
-    await expect(treeRow(page, 'keep')).toBeVisible();
-    await settle(page);
-    expect(await toasts(page)).toHaveLength(1);
+  // A whitespace-only query opens nothing; an unmatched one says so.
+  await page.keyboard.type('   ');
+  await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.keyboard.type('zzz-nothing');
+  await expect(page.getByText('No matches in parsed payloads.')).toBeVisible();
+  await page.keyboard.press('Escape');
 
-    await pasteSample(page, '{"broken":');
-    await expect(page.getByRole('tree')).toHaveCount(0);
-    await typeSample(page, '{"list":[1,2,3],"keep":1}');
-    await expect.poll(() => toasts(page), { timeout: 3_000 }).toHaveLength(2);
-    expect((await toasts(page)).at(-1)).toBe('Payload updated · 6 values');
-  });
+  // Search a value beyond the first 20 array children, from the other payload's tab.
+  await page.keyboard.type('user24@');
+  await expect(options).toHaveCount(1);
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('tab', { name: 'Get items, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(search).toHaveValue('');
+  await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+  const row = treeRow(page, 'Email');
+  await expect(row).toBeFocused();
+  await expect(row).toHaveAttribute('aria-selected', 'true');
+  await expect(row).toHaveAttribute('aria-label', 'Email, string, "user24@x.com"');
+  await expect(row).toBeInViewport();
+  await expect(panel(page).getByLabel('Reference expression'))
+    .toHaveText("outputs('Get_items')?['items'][24]?['Email']");
+  await expectVisibleFocusRing(page);
+
+  // Tree keyboard: Up/Down rove, Home/End jump, Left moves to the parent.
+  await page.keyboard.press('ArrowUp');
+  await expect(treeRow(page, 'id')).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(treeRow(page, '[24]')).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(panel(page).getByRole('treeitem').first()).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(panel(page).getByRole('treeitem').last()).toBeFocused();
+
+  // Source root radios by keyboard: arrows move selection and focus together.
+  const full = panel(page).getByRole('radio', { name: 'Action · Full output' });
+  await full.focus();
+  await page.keyboard.press('ArrowRight');
+  const bodyOnly = panel(page).getByRole('radio', { name: 'Action · Body only' });
+  await expect(bodyOnly).toBeFocused();
+  await expect(bodyOnly).toHaveAttribute('aria-checked', 'true');
+  await expectVisibleFocusRing(page);
+  await page.keyboard.press('ArrowLeft');
+  await expect(full).toHaveAttribute('aria-checked', 'true');
 });
 
-test('cancels a pending validation on tab, screen and close changes (AC-4.3, AC-4.4)', async ({
-  page,
-}) => {
+test('Show more is operable by keyboard and moves focus to the first revealed child', async ({ page }) => {
   await start(page);
-  await openJsonReference(page);
+  await nameOf(page).fill('Get items');
+  await pasteSample(page, items(30));
+  await expect(statusOf(page)).toHaveText('Parsed · 92 values');
+  await treeRow(page, 'items').locator('[data-chevron]').click();
+  const more = panel(page).getByRole('treeitem', { name: 'Show 10 more' });
+  await more.focus();
+  await page.keyboard.press('Enter');
+  await expect(more).toHaveCount(0);
+  await expect(treeRow(page, '[20]')).toBeFocused();
+});
+
+test('Functions groups every parsed source and inserts correctly rooted references that survive source changes', async ({ page }) => {
+  await start(page);
+  await panel(page).getByRole('radio', { name: 'Action · Body only' }).click();
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, '{"Email":"c@x.com"}');
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  // The second payload keeps the default Action / Full output root.
+  await addPayload(page, 'Get manager', '{"Email":"m@x.com"}');
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+
+  await openScreen(page, 'Functions');
+  await page.getByRole('button', { name: /^Parsed Value / }).click();
+  const group = (label: string) => page.locator('details.eb-pv-source')
+    .filter({ has: page.locator('summary', { hasText: new RegExp(`^${label}`) }) });
+  await expect(page.locator('details.eb-pv-source')).toHaveCount(2);
+  await expect(page.locator('details.eb-pv-source[open]')).toHaveCount(0);
+  await group('Get customer').locator('summary').click();
+  await group('Get manager').locator('summary').click();
+  await expect(page.locator('details.eb-pv-source[open]')).toHaveCount(2);
+
+  const customerEmail = "body('Get_customer')?['Email']";
+  const managerEmail = "outputs('Get_manager')?['Email']";
+  const customerRow = group('Get customer').getByRole('button', { name: 'Email', exact: true });
+  const managerRow = group('Get manager').getByRole('button', { name: 'Email', exact: true });
+  // The accessible description names the source and carries its exact expression.
+  await expect(customerRow).toHaveAccessibleDescription(new RegExp(`^Get customer, .*\\. ${customerEmail.replace(/[()[\]?]/g, '\\$&')}$`));
+  await expect(managerRow).toHaveAccessibleDescription(new RegExp(`^Get manager, .*\\. ${managerEmail.replace(/[()[\]?]/g, '\\$&')}$`));
+
+  const text1 = page.getByRole('textbox', { name: 'text1', exact: true });
+  const text2 = page.getByRole('textbox', { name: 'text2', exact: true });
+  // No argument focused since selecting the function: the first empty one receives the reference.
+  await customerRow.dblclick();
+  await expect(text1).toHaveValue(customerEmail);
+  await expect(text1).toBeFocused();
+  // Otherwise the last focused argument is replaced.
+  await text2.focus();
+  await managerRow.focus();
+  await page.keyboard.press('Enter');
+  await expect(text2).toHaveValue(managerEmail);
+  await expect(text2).toBeFocused();
+  await expect(text1).toHaveValue(customerEmail);
+
+  // Rename one source and close the other: inserted text stays as it was.
+  await openScreen(page, 'JSON reference');
+  await page.getByRole('tab', { name: 'Get customer, payload 1' }).click();
+  await nameOf(page).fill('Get client');
+  await page.getByRole('button', ARIA_BUTTON('Close Get manager, payload 2')).click();
+  await expect(page.getByRole('tab')).toHaveCount(1);
+
+  await openScreen(page, 'Functions');
+  await expect(text1).toHaveValue(customerEmail);
+  await expect(text2).toHaveValue(managerEmail);
+  // Only the surviving source remains, with its current root.
+  await expect(page.locator('details.eb-pv-source')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Email', exact: true }))
+    .toHaveAccessibleDescription("body('Get_client')?['Email']");
+});
+
+test('Alt+Down in a Functions argument picks a reference from a closed source group by keyboard alone', async ({ page }) => {
+  await start(page);
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, '{"Email":"c@x.com"}');
+  await addPayload(page, 'Get manager', '{"Email":"m@x.com"}');
+  await openScreen(page, 'Functions');
+
+  const text1 = page.getByRole('textbox', { name: 'text1', exact: true });
+  const text2 = page.getByRole('textbox', { name: 'text2', exact: true });
+  await text1.focus();
+  await page.keyboard.press('Tab');
+  await expect(text2).toBeFocused();
+  await expect(text2).toHaveAttribute('aria-keyshortcuts', 'Alt+ArrowDown');
+
+  // Parsed Value is collapsed: Alt+Down expands it and lands on the first (closed) source summary.
+  await page.keyboard.press('Alt+ArrowDown');
+  await expect(parsedValue(page)).toHaveAttribute('aria-expanded', 'true');
+  await expect(sources(page)).toHaveCount(2);
+  await expect(sources(page).nth(0).locator('summary')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(sources(page).nth(1).locator('summary')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(sources(page).nth(1)).toHaveAttribute('open', '');
+  await page.keyboard.press('Tab');
+  await expect(sources(page).nth(1).getByRole('button', { name: 'Email', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(text2).toHaveValue("outputs('Get_manager')?['Email']");
+  await expect(text1).toHaveValue('');
+  await expect(text2).toBeFocused();
+});
+
+test('Functions tells an unnamed Action source apart and keeps usable sources insertable', async ({ page }) => {
+  await start(page);
+  await pasteSample(page, '{"Email":"a@x.com"}');
+  await nameOf(page).fill('');
+  await addPayload(page, 'Named', '{"Email":"n@x.com"}');
+  await openScreen(page, 'Functions');
+  await page.getByRole('button', { name: /^Parsed Value / }).click();
+  await expect(page.locator('details.eb-pv-source')).toHaveCount(2);
+  await page.locator('details.eb-pv-source > summary').nth(0).click();
+  await expect(page.getByText('Set an action name in JSON reference')).toBeVisible();
+  await page.locator('details.eb-pv-source > summary').nth(1).click();
+  await page.locator('details.eb-pv-source').nth(1).getByRole('button', { name: 'Email', exact: true }).dblclick();
+  await expect(page.getByRole('textbox', { name: 'text1', exact: true })).toHaveValue("outputs('Named')?['Email']");
+});
+
+test('native Undo restores the textarea at once without reverting the parsed tree or name; validation follows after 600ms', async ({ page }) => {
+  await page.clock.install();
+  await start(page);
+  await pasteSample(page, '{"old":1}');
+  await expect(treeRow(page, 'old')).toBeVisible();
+  await expect(nameOf(page)).toHaveValue('Action');
+  await nameOf(page).fill('Keep me');
+  await pasteSample(page, '{"new":2}');
+  await expect(treeRow(page, 'new')).toBeVisible();
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+
+  const editor = editorOf(page);
+  await pauseClock(page);
+  await editor.press('Control+Z');
+  // Immediately: the textarea is restored, but tree and name are untouched and validation is pending.
+  await expect(editor).toHaveValue('{"old":1}');
+  await expect(treeRow(page, 'new')).toBeVisible();
+  await expect(treeRow(page, 'old')).toHaveCount(0);
+  await expect(nameOf(page)).toHaveValue('Keep me');
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await expect(page.getByRole('tab', { name: 'Keep me, payload 1' })).toBeVisible();
+
+  // Nothing validates before 600ms ...
+  await page.clock.runFor(599);
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await expect(treeRow(page, 'new')).toBeVisible();
+  // ... and at 600ms the ordinary automatic result applies.
+  await page.clock.runFor(1);
+  await expect(treeRow(page, 'old')).toBeVisible();
+  await expect(treeRow(page, 'new')).toHaveCount(0);
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await expect(nameOf(page)).toHaveValue('Keep me');
+  expect((await toasts(page)).filter((text) => text.startsWith('Payload updated'))).toEqual(['Payload updated · 2 values']);
+
+  await editor.press('Control+Y');
+  await expect(editor).toHaveValue('{"new":2}');
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await page.clock.runFor(600);
+  await expect(treeRow(page, 'new')).toBeVisible();
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+});
+
+test('every valid paste, including a repeated identical one, requests exactly one notice and revisits replay none', async ({ page }) => {
+  await start(page);
+  await pasteSample(page, '{"same":1}');
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values']);
+  await pasteSample(page, '{"same":1}');
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values']);
+
+  await newPayload(page).click();
+  await page.getByRole('tab', { name: 'Action, payload 1' }).click();
+  await openScreen(page, 'Functions');
+  await openScreen(page, 'Trigger / Filter');
+  await openScreen(page, 'JSON reference');
+  await page.waitForTimeout(800);
+  expect(await toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values']);
+});
+
+test('automatic edits keep prior output on invalid text; invalid paste clears it; semantic equality requests no notice', async ({ page }) => {
+  await start(page);
+  await nameOf(page).fill('Get items');
   await pasteSample(page, '{"a":1}');
-  await addPayload(page);
-  await pasteSample(page, '{"b":1}');
-  await tabAt(page, 1).click();
-  await expect.poll(() => toasts(page)).toHaveLength(2);
+  await expect(treeRow(page, 'a')).toBeVisible();
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values']);
 
-  /** Returning to the pending payload starts a fresh 600ms delay, then only it is validated. */
-  const resumes = async (text: string) => {
-    await expect(editorOf(page)).toHaveValue(text);
-    await expect(payloadStatus(page)).toHaveText(
-      'Sample changed. Waiting for valid JSON.',
-    );
-    const returned = Date.now();
-    await validated(page, 'Parsed · 2 values');
-    expect(Date.now() - returned).toBeGreaterThan(450);
-  };
+  // Invalid automatic edit: previous output and references survive, with retained-output feedback.
+  const editor = editorOf(page);
+  await editor.fill('{"a":');
+  await expect(statusOf(page)).toHaveText('Could not parse. Showing last successful payload.');
+  await expect(panel(page).getByRole('alert')).toBeVisible();
+  await expect(treeRow(page, 'a')).toBeVisible();
+  await treeRow(page, 'a').click();
+  await expect(panel(page).getByLabel('Reference expression')).toHaveText("outputs('Get_items')?['a']");
+  await expect(page.getByRole('tab', { name: 'Get items, payload 1' })).toHaveAccessibleDescription(/Could not parse/);
 
-  await test.step('switching tabs before the delay parses nothing', async () => {
-    await typeSample(page, '{"a":2}');
-    await tabAt(page, 2).click();
-    await page.waitForTimeout(1_000);
-    await expect(editorOf(page)).toHaveValue('{"b":1}');
-    expect(await toasts(page)).toHaveLength(2);
-    const returned = Date.now();
-    await tabAt(page, 1).click();
-    await expect(payloadStatus(page)).toHaveText(
-      'Sample changed. Waiting for valid JSON.',
-    );
-    await expect(editorOf(page)).toHaveValue('{"a":2}');
-    await validated(page, 'Parsed · 2 values');
-    expect(Date.now() - returned).toBeGreaterThan(450);
-    await expect.poll(() => toasts(page)).toHaveLength(3);
-    await tabAt(page, 2).click();
-    await expect(editorOf(page)).toHaveValue('{"b":1}');
-    await expect(treeRow(page, 'b')).toBeVisible();
-  });
+  // Semantically identical correction clears the error without a success notice.
+  await editor.fill('{ "a" : 1.0 }');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await expect(treeRow(page, 'a')).toHaveAttribute('aria-selected', 'true');
+  await page.waitForTimeout(700);
+  expect(await toasts(page)).toEqual(['Parsed · 2 values']);
 
-  await test.step('switching screens before the delay parses nothing', async () => {
-    await tabAt(page, 1).click();
-    await typeSample(page, '{"a":3}');
-    await openScreenPromptly(page, 'Functions');
-    await page.waitForTimeout(1_000);
-    expect(await toasts(page)).toHaveLength(3);
-    await openJsonReference(page);
-    await resumes('{"a":3}');
-    await expect.poll(() => toasts(page)).toHaveLength(4);
-  });
-
-  await test.step('closing a pending payload cannot parse another', async () => {
-    await tabAt(page, 2).click();
-    await typeSample(page, '{"b":2}');
-    await page.getByRole('button', { name: /^Close .*, payload 2$/ }).click();
-    await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(1);
-    await expect(editorOf(page)).toHaveValue('{"a":3}');
-    await page.waitForTimeout(1_000);
-    expect(await toasts(page)).toHaveLength(4);
-    await expect(treeRow(page, 'a')).toBeVisible();
-  });
-
-  await test.step('a completed paste cancels the pending edit without a duplicate notice', async () => {
-    await typeSample(page, '{"a":4}');
-    await pasteSample(page, '{"a":5}');
-    await expect.poll(() => toasts(page)).toHaveLength(5);
-    await expect(payloadStatus(page)).toHaveText('Parsed · 2 values');
-    await page.waitForTimeout(900);
-    expect(await toasts(page)).toEqual([
-      'Parsed · 2 values',
-      'Parsed · 2 values',
-      'Payload updated · 2 values',
-      'Payload updated · 2 values',
-      'Parsed · 2 values',
-    ]);
-    await expect(editorOf(page)).toHaveValue('{"a":5}');
-  });
+  // Invalid paste clears the tree, selection and reference at once.
+  await pasteSample(page, '{"a": 1,}');
+  await expect(panel(page).getByRole('alert')).toBeVisible();
+  await expect(panel(page).getByRole('tree')).toHaveCount(0);
+  await expect(panel(page).getByText('No sample yet')).toBeVisible();
+  await expect(panel(page).getByLabel('Reference expression')).toHaveCount(0);
+  expect(await toasts(page)).toEqual(['Parsed · 2 values']);
 });
 
-test('gives each tab its own notices when samples are identical (AC-4.10)', async ({
-  page,
-}) => {
-  const sample = '{"same":[1,2]}';
+test('notices and baselines belong to their own payload', async ({ page }) => {
   await start(page);
-  await openJsonReference(page);
+  await nameOf(page).fill('First');
+  await editorOf(page).fill('{"x":1}');
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values']);
+  await addPayload(page, 'Second');
+  await editorOf(page).fill('{"x":1}');
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values']);
 
-  await typeSample(page, sample);
-  await expect.poll(() => toasts(page), { timeout: 3_000 }).toEqual(['Parsed · 4 values']);
-  await addPayload(page);
-  await typeSample(page, sample);
-  await expect.poll(() => toasts(page), { timeout: 3_000 }).toEqual([
-    'Parsed · 4 values',
-    'Parsed · 4 values',
-  ]);
-
-  await typeSample(page, '{"same":[1,3]}');
-  await expect.poll(() => toasts(page), { timeout: 3_000 }).toHaveLength(3);
-  expect((await toasts(page)).at(-1)).toBe('Payload updated · 4 values');
-
-  // The first tab's baseline is untouched: its identical re-edit is still non-material.
-  await tabAt(page, 1).click();
-  await typeSample(page, '{ "same": [1, 2] }');
-  await validated(page, 'Parsed · 4 values');
-  await settle(page);
+  // A material change in the second payload only produces one update notice for it.
+  await editorOf(page).fill('{"x":2,"y":3}');
+  await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values', 'Payload updated · 3 values']);
+  await page.getByRole('tab', { name: 'First, payload 1' }).click();
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await expect(editorOf(page)).toHaveValue('{"x":1}');
+  await page.waitForTimeout(800);
   expect(await toasts(page)).toHaveLength(3);
 });
 
-test('restores each payload exactly, enforces the limit and closes predictably (AC-1.1 to AC-1.7)', async ({
-  page,
-}) => {
-  const first = sampleOf('cust.example', 25);
+test('pending automatic validation is cancelled by tab change, screen change and close, then restarts when the payload returns', async ({ page }) => {
+  await page.clock.install();
+  await start(page);
+  await nameOf(page).fill('One');
+  await editorOf(page).fill('{"base":1}');
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await addPayload(page, 'Two');
+  await page.getByRole('tab', { name: 'One, payload 1' }).click();
+  expect(await toasts(page)).toEqual(['Parsed · 2 values']);
+  await pauseClock(page);
+
+  // Tab change: the edited payload is not parsed while inactive, nor is another payload changed.
+  await editorOf(page).fill('{"tab":1}');
+  await page.getByRole('tab', { name: 'Two, payload 2' }).click();
+  await page.clock.runFor(900);
+  await expect(editorOf(page)).toHaveValue('');
+  await expect(statusOf(page)).toHaveText('Nothing parsed yet');
+  expect(await toasts(page)).toEqual(['Parsed · 2 values']);
+  // Returning starts a fresh 600ms delay.
+  await page.getByRole('tab', { name: 'One, payload 1' }).click();
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await page.clock.runFor(599);
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await expect(treeRow(page, 'base')).toBeVisible();
+  await page.clock.runFor(1);
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await expect(treeRow(page, 'tab')).toBeVisible();
+  expect(await toasts(page)).toEqual(['Parsed · 2 values', 'Payload updated · 2 values']);
+
+  // Screen change: same cancellation, fresh delay on return.
+  await editorOf(page).fill('{"screen":1}');
+  await openScreen(page, 'Functions');
+  await page.clock.runFor(900);
+  await openScreen(page, 'JSON reference');
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await page.clock.runFor(599);
+  await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
+  await expect(treeRow(page, 'tab')).toBeVisible();
+  await page.clock.runFor(1);
+  await expect(statusOf(page)).toHaveText('Parsed · 2 values');
+  await expect(treeRow(page, 'screen')).toBeVisible();
+  expect(await toasts(page)).toEqual(['Parsed · 2 values', 'Payload updated · 2 values', 'Payload updated · 2 values']);
+
+  // Close: the pending parse cannot touch the surviving payload.
+  await editorOf(page).fill('{"closing":1}');
+  await page.getByRole('button', ARIA_BUTTON('Close One, payload 1')).click();
+  await page.clock.runFor(900);
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(page.getByRole('tab', { name: 'Two, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(editorOf(page)).toHaveValue('');
+  await expect(statusOf(page)).toHaveText('Nothing parsed yet');
+  expect(await toasts(page)).toEqual(['Parsed · 2 values', 'Payload updated · 2 values', 'Payload updated · 2 values']);
+});
+
+test('each payload restores its own root, text, expanded nodes, revealed children, selection and loop name (AC-1.4)', async ({ page }) => {
+  const first = emails('cust.example', 25);
   const second = JSON.stringify({ headers: { a: 1 }, body: { customer: { name: 'Contoso' } } });
   await start(page);
-  await openJsonReference(page);
 
-  await test.step('a fresh session has one empty Action / Full output payload (AC-1.1)', async () => {
-    await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(1);
-    await expect(tabAt(page, 1)).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeChecked();
-    await expect(nameOf(page)).toHaveValue('');
-    await expect(editorOf(page)).toHaveValue('');
-    await expect(page.getByRole('tree')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
-  });
+  await chooseRoot(page, 'Action · Body only');
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, first);
+  await expect(statusOf(page)).toHaveText('Parsed · 52 values');
+  await treeRow(page, 'value').locator('[data-chevron]').click();
+  await panel(page).getByRole('treeitem', { name: 'Show 5 more' }).click();
+  await treeRow(page, '[22]').locator('[data-chevron]').click();
+  await treeRow(page, 'Email').click();
+  await panel(page).getByLabel('Loop name').fill('Each customer');
 
-  await test.step('payload 1 keeps its own root, name, tree state and loop name (AC-1.4)', async () => {
-    await seed(page, { name: 'Get customer', root: 'Action · Body only', sample: first });
-    await treeRow(page, 'value').locator('[data-chevron]').click();
-    await page.getByRole('treeitem', { name: 'Show 5 more' }).click();
-    await treeRow(page, '[22]').locator('[data-chevron]').click();
-    await treeRow(page, 'Email').click();
-    await page.getByRole('textbox', { name: 'Loop name' }).fill('Each customer');
-  });
+  await newPayload(page).click();
+  await expect(editorOf(page)).toHaveValue('');
+  await expect(panel(page).getByRole('radio', { name: 'Action · Full output' })).toHaveAttribute('aria-checked', 'true');
+  await chooseRoot(page, 'Trigger · Full output');
+  await pasteSample(page, second);
+  await expect(statusOf(page)).toHaveText('Parsed · 6 values');
+  await treeRow(page, 'body').locator('[data-chevron]').click();
+  await treeRow(page, 'customer').click();
 
-  await test.step('New payload appends an empty active payload and leaves the first alone (AC-1.2)', async () => {
-    await addPayload(page);
-    await expect(tabAt(page, 2)).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByText('2 / 5')).toBeVisible();
-    await expect(editorOf(page)).toHaveValue('');
-    await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeChecked();
-    await seed(page, { root: 'Trigger · Full output', sample: second });
-    await treeRow(page, 'body').locator('[data-chevron]').click();
-    await treeRow(page, 'customer').click();
-  });
+  await tabAt(page, 1).click();
+  await expect(panel(page).getByRole('radio', { name: 'Action · Body only' })).toHaveAttribute('aria-checked', 'true');
+  await expect(nameOf(page)).toHaveValue('Get customer');
+  await expect(editorOf(page)).toHaveValue(first);
+  await expect(statusOf(page)).toHaveText('Parsed · 52 values');
+  // The revealed children and the expanded item survive; nothing is collapsed or re-paged.
+  await expect(panel(page).getByRole('treeitem', { name: /^Show \d+ more/ })).toHaveCount(0);
+  await expect(treeRow(page, '[22]')).toHaveAttribute('aria-expanded', 'true');
+  await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
+  await expect(panel(page).getByLabel('Loop name')).toHaveValue('Each customer');
+  await expect(referenceOf(page)).toHaveText("body('Get_customer')?['value'][22]?['Email']");
 
-  await test.step('switching back and forth restores each payload (AC-1.4, AC-1.7)', async () => {
-    await expect(tabAt(page, 1)).toHaveAccessibleName('Get customer, payload 1');
-    await expect(tabAt(page, 2)).toHaveAccessibleName('Trigger, payload 2');
-    await tabAt(page, 1).click();
-    await expect(page.getByRole('radio', { name: 'Action · Body only' })).toBeChecked();
-    await expect(nameOf(page)).toHaveValue('Get customer');
-    await expect(editorOf(page)).toHaveValue(first);
-    await expect(treeRow(page, '[22]')).toHaveAttribute('aria-expanded', 'true');
-    await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('textbox', { name: 'Loop name' })).toHaveValue('Each customer');
-    await expect(reference(page)).toHaveText("body('Get_customer')?['value'][22]?['Email']");
-
-    await tabAt(page, 2).click();
-    await expect(page.getByRole('radio', { name: 'Trigger · Full output' })).toBeChecked();
-    await expect(editorOf(page)).toHaveValue(second);
-    await expect(treeRow(page, 'customer')).toHaveAttribute('aria-selected', 'true');
-    await expect(reference(page)).toHaveText("triggerOutputs()?['body']?['customer']");
-  });
-
-  await test.step('equal names stay distinguishable and edits stay local (AC-1.7)', async () => {
-    await page.getByRole('radio', { name: 'Action · Full output' }).click();
-    await nameOf(page).fill('Get customer');
-    await expect(tabAt(page, 1)).toHaveAccessibleName('Get customer, payload 1');
-    await expect(tabAt(page, 2)).toHaveAccessibleName('Get customer, payload 2');
-    await nameOf(page).fill('Second');
-    await expect(tabAt(page, 1)).toHaveAccessibleName('Get customer, payload 1');
-    await expect(tabAt(page, 2)).toHaveAccessibleName('Second, payload 2');
-  });
-
-  await test.step('a sixth payload is unavailable (AC-1.3)', async () => {
-    for (const label of ['Third', 'Fourth', 'Fifth']) {
-      await addPayload(page);
-      await nameOf(page).fill(label);
-    }
-    await expect(page.getByText('5 / 5')).toBeVisible();
-    await expect(newPayload(page)).toBeDisabled();
-    await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(5);
-  });
-
-  await test.step('closing an inactive payload keeps the active one (AC-1.5)', async () => {
-    await page.getByRole('button', { name: 'Close Second, payload 2' }).click();
-    await expect(page.getByRole('tab', { name: 'Fifth, payload 4' })).toHaveAttribute('aria-selected', 'true');
-    await expect(nameOf(page)).toHaveValue('Fifth');
-    await expect(newPayload(page)).toBeEnabled();
-  });
-
-  await test.step('closing the active payload activates the tab in its position, or the one before it (AC-1.5)', async () => {
-    await page.getByRole('tab', { name: 'Third, payload 2' }).click();
-    await page.getByRole('button', { name: 'Close Third, payload 2' }).click();
-    await expect(page.getByRole('tab', { name: 'Fourth, payload 2' })).toHaveAttribute('aria-selected', 'true');
-    await page.getByRole('tab', { name: 'Fifth, payload 3' }).click();
-    await page.getByRole('button', { name: 'Close Fifth, payload 3' }).click();
-    await expect(page.getByRole('tab', { name: 'Fourth, payload 2' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  await test.step('the last payload cannot be closed and keeps its data (AC-1.6)', async () => {
-    await page.getByRole('button', { name: 'Close Fourth, payload 2' }).click();
-    await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
-    await expect(nameOf(page)).toHaveValue('Get customer');
-    await expect(editorOf(page)).toHaveValue(first);
-    await expect(treeRow(page, '[22]')).toBeVisible();
-  });
+  await tabAt(page, 2).click();
+  await expect(panel(page).getByRole('radio', { name: 'Trigger · Full output' })).toHaveAttribute('aria-checked', 'true');
+  await expect(editorOf(page)).toHaveValue(second);
+  await expect(statusOf(page)).toHaveText('Parsed · 6 values');
+  await expect(treeRow(page, 'body')).toHaveAttribute('aria-expanded', 'true');
+  await expect(treeRow(page, 'customer')).toHaveAttribute('aria-selected', 'true');
+  await expect(panel(page).getByLabel('Loop name')).toHaveCount(0);
+  await expect(referenceOf(page)).toHaveText("triggerOutputs()?['body']?['customer']");
 });
 
-test('finds paths across payloads by label and by full value (AC-2.1 to AC-2.3, AC-2.6, AC-2.7)', async ({
-  page,
-}) => {
+test('closing an inactive payload keeps the active one and its selection (AC-1.5)', async ({ page }) => {
+  await start(page);
+  await nameOf(page).fill('Alpha');
+  await pasteSample(page, '{"a":1}');
+  await addPayload(page, 'Bravo', '{"b":1}');
+  await addPayload(page, 'Charlie', '{"c":{"y":2}}');
+  await treeRow(page, 'c').locator('[data-chevron]').click();
+  await treeRow(page, 'y').click();
+  const charlieReference = "outputs('Charlie')?['c']?['y']";
+  await expect(referenceOf(page)).toHaveText(charlieReference);
+
+  // An inactive tab before the active one: positions shift, the active payload does not.
+  await page.getByRole('button', ARIA_BUTTON('Close Alpha, payload 1')).click();
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab', { name: 'Charlie, payload 2' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'false');
+  await expect(nameOf(page)).toHaveValue('Charlie');
+  await expect(editorOf(page)).toHaveValue('{"c":{"y":2}}');
+  await expect(treeRow(page, 'y')).toHaveAttribute('aria-selected', 'true');
+  await expect(referenceOf(page)).toHaveText(charlieReference);
+
+  // An inactive last tab: the active payload before it is unchanged.
+  await tabAt(page, 1).click();
+  await expect(editorOf(page)).toHaveValue('{"b":1}');
+  await page.getByRole('button', ARIA_BUTTON('Close Charlie, payload 2')).click();
+  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(page.getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(nameOf(page)).toHaveValue('Bravo');
+  await expect(editorOf(page)).toHaveValue('{"b":1}');
+});
+
+test('equal action names and repeated Trigger roots stay distinguishable by position, and edits stay local (AC-1.7)', async ({ page }) => {
+  await start(page);
+  await nameOf(page).fill('Same');
+  await pasteSample(page, '{"one":1}');
+  await addPayload(page, 'Same', '{"two":2}');
+  await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
+  await expect(tabAt(page, 2)).toHaveAccessibleName('Same, payload 2');
+
+  // Editing the active payload leaves its namesake alone; activating each shows its own text.
+  await nameOf(page).fill('Other');
+  await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
+  await expect(tabAt(page, 2)).toHaveAccessibleName('Other, payload 2');
+  await nameOf(page).fill('Same');
+  await tabAt(page, 1).click();
+  await expect(editorOf(page)).toHaveValue('{"one":1}');
+  await tabAt(page, 2).click();
+  await expect(editorOf(page)).toHaveValue('{"two":2}');
+
+  // Trigger payloads are numbered in their current tab order.
+  for (let count = 3; count <= 4; count++) {
+    await newPayload(page).click();
+    await chooseRoot(page, 'Trigger · Full output');
+  }
+  await expect(tabAt(page, 3)).toHaveAccessibleName('Trigger, payload 3');
+  await expect(tabAt(page, 4)).toHaveAccessibleName('Trigger 2, payload 4');
+
+  // Closing the first Trigger renumbers the second; the others are untouched.
+  await page.getByRole('button', ARIA_BUTTON('Close Trigger, payload 3')).click();
+  await expect(page.getByRole('tab')).toHaveCount(3);
+  await expect(tabAt(page, 3)).toHaveAccessibleName('Trigger, payload 3');
+  await expect(tabAt(page, 3)).toHaveAttribute('aria-selected', 'true');
+  await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
+  await expect(tabAt(page, 2)).toHaveAccessibleName('Same, payload 2');
+
+  // Closing one of the two equal names removes only that payload.
+  await page.getByRole('button', ARIA_BUTTON('Close Same, payload 1')).click();
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
+  await tabAt(page, 1).click();
+  await expect(editorOf(page)).toHaveValue('{"two":2}');
+});
+
+test('search matches labels and values case-insensitively, including a value past its shortened preview (AC-2.1, AC-2.2)', async ({ page }) => {
   const suffix = 'TAILSUFFIX';
   await start(page);
-  await openJsonReference(page);
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, JSON.stringify({ Email: 'a@contoso.example', note: `${'n'.repeat(120)}${suffix}` }));
+  await addPayload(page, 'Get manager', JSON.stringify({ Email: 'm@contoso.example', bio: 'Write to EMAIL first' }));
   const search = page.getByRole('combobox', { name: 'Search all payloads' });
   const options = page.getByRole('option');
-  const heading = page.locator('.eb-payload-search-popup [role="status"]');
 
-  await seed(page, {
-    name: 'Get customer',
-    sample: JSON.stringify({ Email: 'a@contoso.example', note: `${'n'.repeat(120)}${suffix}` }),
-  });
-  await addPayload(page);
-  await seed(page, {
-    name: 'Get manager',
-    sample: JSON.stringify({ Email: 'm@contoso.example', bio: 'Write to EMAIL first' }),
-  });
+  await search.fill('email');
+  await expect(options).toHaveCount(3);
+  await expect(page.locator('.eb-payload-search-popup').getByRole('status')).toHaveText('3 matches · 2 parsed payloads');
+  await expect(options.nth(0)).toContainText('Get customer');
+  await expect(options.nth(0)).toContainText('Email');
+  await expect(options.nth(0)).toContainText('"a@contoso.example"');
+  await expect(options.nth(1)).toContainText('Get manager');
+  await expect(options.nth(2)).toContainText('Get manager');
+  await expect(options.nth(2)).toContainText('bio');
 
-  await test.step('matches ignore case and show payload, path and value (AC-2.1)', async () => {
-    await search.fill('email');
-    await expect(options).toHaveCount(3);
-    await expect(heading).toHaveText('3 matches · 2 parsed payloads');
-    await expect(options.nth(0)).toContainText('Get customer');
-    await expect(options.nth(0)).toContainText('Email');
-    await expect(options.nth(0)).toContainText('"a@contoso.example"');
-    await expect(options.nth(2)).toContainText('Get manager');
-    await expect(options.nth(2)).toContainText('bio');
-  });
-
-  await test.step('a match beyond the shortened preview is found (AC-2.2)', async () => {
-    await search.fill(suffix.toLowerCase());
-    await expect(options).toHaveCount(1);
-    await expect(options.first()).toContainText('note');
-    await expect(options.first()).not.toContainText(suffix);
-  });
-
-  await test.step('blank queries open nothing; no matches say so (AC-2.6)', async () => {
-    await search.fill('   ');
-    await expect(search).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.getByRole('listbox')).toHaveCount(0);
-    await search.fill('no-such-value');
-    await expect(page.getByText('No matches in parsed payloads.')).toBeVisible();
-    await expect(heading).toHaveText('0 matches · 2 parsed payloads');
-  });
-
-  await test.step('more than eight matches list eight in order and state the total (AC-2.3)', async () => {
-    await addPayload(page);
-    await seed(page, {
-      name: 'Many',
-      sample: JSON.stringify(Object.fromEntries(
-        Array.from({ length: 12 }, (_, index) => [`zz${index}`, index]),
-      )),
-    });
-    await search.fill('zz');
-    await expect(options).toHaveCount(8);
-    await expect(heading).toHaveText('12 matches · 3 parsed payloads');
-    await expect(options.first()).toContainText('zz0');
-    await expect(options.last()).toContainText('zz7');
-    await search.press('Escape');
-  });
-
-  await test.step('only displayed parsed data is searched (AC-2.7)', async () => {
-    // Payload 4 has nothing parsed; payload 1 keeps its payload after an invalid automatic edit.
-    await addPayload(page);
-    await tabAt(page, 1).click();
-    await typeSample(page, '{"Email":');
-    await expect(page.getByRole('alert')).toBeVisible({ timeout: 3_000 });
-    // Payload 3 is parsed but its action name is blank.
-    await tabAt(page, 3).click();
-    await nameOf(page).fill('');
-    await search.fill('zz1');
-    await expect(heading).toHaveText('3 matches · 3 parsed payloads');
-    await expect(options.first()).toContainText('zz1');
-
-    await search.fill('email');
-    await expect(heading).toHaveText('3 matches · 3 parsed payloads');
-    await search.press('Enter');
-    await expect(tabAt(page, 1)).toHaveAttribute('aria-selected', 'true');
-    await expect(treeRow(page, 'Email')).toBeFocused();
-
-    await search.fill('zz1');
-    await search.press('Enter');
-    await expect(tabAt(page, 3)).toHaveAttribute('aria-selected', 'true');
-    await expect(treeRow(page, 'zz1')).toHaveAttribute('aria-selected', 'true');
-    // An unnamed source is revealed but never becomes copyable.
-    await expect(reference(page)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Copy', exact: true })).toHaveCount(0);
-  });
+  await search.fill(suffix.toLowerCase());
+  await expect(options).toHaveCount(1);
+  await expect(options.first()).toContainText('note');
+  await expect(options.first()).not.toContainText(suffix);
+  await search.press('Enter');
+  await expect(tabAt(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await expect(treeRow(page, 'note')).toHaveAttribute('aria-selected', 'true');
+  await expect(referenceOf(page)).toHaveText("outputs('Get_customer')?['note']");
 });
 
-test('groups Functions references by payload and keeps inserted text (AC-3.1 to AC-3.9, FR-3)', async ({
-  page,
-}) => {
-  const customer = JSON.stringify({ Email: 'c@cust.example', items: [{ Email: 'i0@cust.example' }] });
-  const manager = JSON.stringify({ Email: 'm@mgr.example', items: [{ Email: 'i0@mgr.example' }] });
+test('search covers displayed data only: it skips unparsed text, keeps retained output and reveals an unnamed source without enabling copy (AC-2.7)', async ({ page }) => {
+  await page.clock.install();
   await start(page);
-  const parsedValue = page.getByRole('button', { name: /^Parsed Value \d+$/ });
-  const args = page.locator('input[data-arg]');
-  const sources = page.locator('details.eb-pv-source');
-  const group = (label: string) => sources.filter({ hasText: label });
-  const emailRow = (label: string) =>
-    group(label).getByRole('button', { name: 'Email', exact: true });
-  const customerItem = "body('Get_customer')?['items'][0]?['Email']";
+  const search = page.getByRole('combobox', { name: 'Search all payloads' });
+  const options = page.getByRole('option');
+  const heading = page.locator('.eb-payload-search-popup').getByRole('status');
 
-  await test.step('with nothing parsed the group says where to parse (AC-3.1)', async () => {
-    await openScreen(page, 'Functions');
-    await parsedValue.click();
-    await expect(page.getByText('Parse a sample in JSON reference')).toBeVisible();
-    await parsedValue.click();
-  });
-
-  await openJsonReference(page);
-  await seed(page, { name: 'Get customer', root: 'Action · Body only', sample: customer });
-  await addPayload(page);
-  await seed(page, { name: 'Get manager', root: 'Action · Body only', sample: manager });
-  await addPayload(page);
-  await seed(page, { name: 'Temporary', root: 'Action · Body only', sample: customer });
+  await nameOf(page).fill('Retained');
+  await pasteSample(page, '{"Email":"kept@contoso.example"}');
+  await addPayload(page, 'Draft only');
+  await addPayload(page, 'Unnamed', '{"Email":"u@contoso.example"}');
   await nameOf(page).fill('');
-  await openScreen(page, 'Functions');
-  await parsedValue.click();
+  await expect(tabAt(page, 3)).toHaveAccessibleName('Payload 3, payload 3');
+  await pauseClock(page);
 
-  await test.step('one collapsed group per parsed payload, in tab order (AC-3.2)', async () => {
-    await expect(sources.locator('> summary')).toHaveText([
-      "Get customer · body('Get_customer') · 2",
-      "Get manager · body('Get_manager') · 2",
-      "Payload 3 · body('Action_name') · 0",
-    ]);
-    for (const source of await sources.all()) {
-      await expect(source).not.toHaveJSProperty('open', true);
-    }
-  });
+  // Payload 2 never parsed; payload 1 keeps its earlier payload after an invalid automatic edit.
+  await tabAt(page, 2).click();
+  await editorOf(page).fill('{"Hidden":');
+  await page.clock.runFor(600);
+  await expect(statusOf(page)).toHaveText('Could not parse');
+  await tabAt(page, 1).click();
+  await editorOf(page).fill('{"Email":');
+  await page.clock.runFor(600);
+  await expect(statusOf(page)).toHaveText('Could not parse. Showing last successful payload.');
 
-  await test.step('an unnamed source offers nothing to insert (AC-3.7)', async () => {
-    await sources.last().locator('summary').click();
-    await expect(sources.last()).toContainText('Set an action name in JSON reference');
-    await expect(sources.last().locator('.eb-pv-row')).toHaveCount(0);
-    await expect(sources.first().locator('.eb-pv-row')).toHaveCount(2);
-  });
+  await search.fill('hidden');
+  await expect(page.getByText('No matches in parsed payloads.')).toBeVisible();
+  await expect(heading).toHaveText('0 matches · 2 parsed payloads');
 
-  await test.step('array items start collapsed and open independently per source (AC-3.6)', async () => {
-    await sources.first().locator('summary').first().click();
-    await sources.nth(1).locator('summary').first().click();
-    const items = page.locator('details.eb-pv-item:not(.eb-pv-source)');
-    await expect(items).toHaveCount(2);
-    for (const item of await items.all()) await expect(item).not.toHaveJSProperty('open', true);
-    await items.first().locator('summary').click();
-    await expect(items.first()).toHaveJSProperty('open', true);
-    await expect(items.last()).not.toHaveJSProperty('open', true);
-  });
+  await search.fill('contoso');
+  await expect(options).toHaveCount(2);
+  await expect(heading).toHaveText('2 matches · 2 parsed payloads');
+  await expect(options.nth(0)).toContainText('Retained');
+  await expect(options.nth(1)).toContainText('Payload 3');
 
-  await test.step('with no argument focused, Enter fills the first empty one and focuses it (AC-3.4)', async () => {
-    const row = emailRow('Get customer');
-    await row.focus();
-    await row.press('Enter');
-    await expect(args.first()).toHaveValue("body('Get_customer')?['Email']");
-    await expect(args.first()).toBeFocused();
-  });
+  await search.press('Enter');
+  await expect(tabAt(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await expect(treeRow(page, 'Email')).toBeFocused();
+  await expect(referenceOf(page)).toHaveText("outputs('Retained')?['Email']");
 
-  await test.step('with another argument last focused, double-click fills that one (AC-3.3, AC-3.4)', async () => {
-    await args.nth(1).click();
-    await emailRow('Get manager').dblclick();
-    await expect(args.nth(1)).toHaveValue("body('Get_manager')?['Email']");
-    await expect(args.nth(1)).toBeFocused();
-  });
-
-  await test.step('the last focused argument is replaced, not appended to (AC-3.4)', async () => {
-    await args.first().click();
-    await sources.first().getByRole('button', { name: 'items[0].Email' }).dblclick();
-    await expect(args.first()).toHaveValue(customerItem);
-    await expect(args.first()).toBeFocused();
-    await expect(args.nth(1)).toHaveValue("body('Get_manager')?['Email']");
-  });
-
-  await test.step('inserted text equals each source JSON reference (AC-3.3)', async () => {
-    await openJsonReference(page);
-    await tabAt(page, 1).click();
-    await treeRow(page, 'items').locator('[data-chevron]').click();
-    await treeRow(page, '[0]').locator('[data-chevron]').click();
-    await page.getByRole('treeitem', { name: /^Email, string, "i0@/ }).click();
-    await expect(reference(page)).toHaveText(customerItem);
-    await tabAt(page, 2).click();
-    await treeRow(page, 'Email').click();
-    await expect(reference(page)).toHaveText("body('Get_manager')?['Email']");
-  });
-
-  await test.step('renaming a source updates its group but not inserted text (AC-3.9)', async () => {
-    await nameOf(page).fill('Get boss');
-    await openScreen(page, 'Functions');
-    await expect(sources.locator('> summary')).toHaveText([
-      "Get customer · body('Get_customer') · 2",
-      "Get boss · body('Get_boss') · 2",
-      "Payload 3 · body('Action_name') · 0",
-    ]);
-    await expect(args.nth(1)).toHaveValue("body('Get_manager')?['Email']");
-    await expect(args.first()).toHaveValue(customerItem);
-  });
-
-  await test.step('closing sources leaves the single-source list and the arguments alone (AC-3.9, AC-3.1)', async () => {
-    await openJsonReference(page);
-    await page.getByRole('button', { name: 'Close Get boss, payload 2' }).click();
-    await page.getByRole('button', { name: 'Close Payload 2, payload 2' }).click();
-    await openScreen(page, 'Functions');
-    await expect(sources).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Email', exact: true })).toBeVisible();
-    await expect(args.nth(1)).toHaveValue("body('Get_manager')?['Email']");
-    await expect(args.first()).toHaveValue(customerItem);
-  });
+  await search.fill('contoso');
+  await search.press('ArrowDown');
+  await search.press('Enter');
+  await expect(tabAt(page, 3)).toHaveAttribute('aria-selected', 'true');
+  await expect(treeRow(page, 'Email')).toBeFocused();
+  await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
+  await expect(referenceOf(page)).toHaveCount(0);
+  await expect(panel(page).getByRole('button', { name: 'Copy', exact: true })).toHaveCount(0);
 });
 
-test('keeps Functions to 200 rows across sources, allocated in tab order (AC-3.5)', async ({
-  page,
-}) => {
+test('Parsed Value says where to parse when nothing is parsed and keeps the flat list for one parsed source (AC-3.1)', async ({ page }) => {
+  await start(page);
+  await openScreen(page, 'Functions');
+  await parsedValue(page).click();
+  await expect(page.getByText('Parse a sample in JSON reference')).toBeVisible();
+  await expect(sources(page)).toHaveCount(0);
+  await parsedValue(page).click();
+
+  await openScreen(page, 'JSON reference');
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, '{"Email":"c@x.com","items":[{"Email":"i@x.com"}]}');
+  await addPayload(page, 'Draft only');
+  await openScreen(page, 'Functions');
+  await parsedValue(page).click();
+  // An empty second payload is not a source: the single-source presentation stays.
+  await expect(page.getByRole('button', { name: 'Parsed Value 2', exact: true })).toBeVisible();
+  await expect(page.getByText('Parse a sample in JSON reference')).toHaveCount(0);
+  await expect(sources(page)).toHaveCount(0);
+  await expect(page.locator('.eb-pv-row')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Email', exact: true }))
+    .toHaveAccessibleDescription("outputs('Get_customer')?['Email']");
+});
+
+test('Functions keeps to 200 rows across sources in tab order, and filtering precedes the shared cap (AC-3.5)', async ({ page }) => {
   const keys = (prefix: string, count: number) => JSON.stringify(
     Object.fromEntries(Array.from({ length: count }, (_, index) => [`${prefix}${index}`, index])),
   );
   await start(page);
-  await openJsonReference(page);
-  await seed(page, { name: 'Alpha', root: 'Action · Body only', sample: keys('alpha', 150) });
-  await addPayload(page);
-  await seed(page, { name: 'Beta', root: 'Action · Body only', sample: keys('beta', 100) });
+  await nameOf(page).fill('Alpha');
+  await pasteSample(page, keys('alpha', 150));
+  await addPayload(page, 'Beta', keys('beta', 100));
 
   await openScreen(page, 'Functions');
-  await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
-  await expect(page.getByRole('button', { name: 'Parsed Value 200' })).toBeVisible();
-  await expect(page.locator('.eb-pv-row')).toHaveCount(200);
-  await expect(page.getByText('+50 more — narrow with search')).toBeVisible();
+  await parsedValue(page).click();
+  await expect(page.getByRole('button', { name: 'Parsed Value 200', exact: true })).toBeVisible();
   await expect(page.locator('details.eb-pv-source > summary')).toHaveText([
-    "Alpha · body('Alpha') · 150",
-    "Beta · body('Beta') · 100",
+    "Alpha · outputs('Alpha') · 150",
+    "Beta · outputs('Beta') · 100",
   ]);
+  await expect(page.locator('.eb-pv-row')).toHaveCount(200);
+  await expect(sources(page).first().locator('.eb-pv-row')).toHaveCount(150);
+  await expect(sources(page).last().locator('.eb-pv-row')).toHaveCount(50);
+  await expect(page.getByText('+50 more — narrow with search')).toBeVisible();
 
-  // Filtering precedes the shared cap, so leaves from the later source can appear.
   await page.getByRole('searchbox', { name: 'Search functions' }).fill('beta99');
-  await expect(page.getByRole('button', { name: 'Parsed Value 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Parsed Value 1', exact: true })).toBeVisible();
   await expect(page.locator('.eb-pv-row')).toHaveText(['beta99']);
+  await expect(page.getByText(/more — narrow with search/)).toHaveCount(0);
 });
 
-test('keeps conditions, Functions arguments and payloads through navigation; reload starts empty (AC-1.8, FR-6)', async ({
-  page,
-}) => {
+test('array items start collapsed in every source and open independently (AC-3.6)', async ({ page }) => {
+  const sample = JSON.stringify({ items: [{ Email: 'i0@x.com' }] });
+  await start(page);
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, sample);
+  await addPayload(page, 'Get manager', sample);
+  await openScreen(page, 'Functions');
+  await parsedValue(page).click();
+  await expect(sources(page)).toHaveCount(2);
+  for (const source of await sources(page).all()) await source.locator('summary').first().click();
+
+  const arrayItems = page.locator('details.eb-pv-item:not(.eb-pv-source)');
+  await expect(arrayItems).toHaveCount(2);
+  for (const item of await arrayItems.all()) await expect(item).not.toHaveJSProperty('open', true);
+  await arrayItems.first().locator('summary').click();
+  await expect(arrayItems.first()).toHaveJSProperty('open', true);
+  await expect(arrayItems.last()).not.toHaveJSProperty('open', true);
+});
+
+test('conditions, Functions arguments and payloads survive all three screens and a reload starts empty (AC-1.8)', async ({ page }) => {
+  await page.clock.install();
   await start(page);
   const generated = page.locator('[aria-label="Generated expression"]:visible');
   const args = page.locator('input[data-arg]');
+  const group = (label: string) => sources(page).filter({ hasText: label });
 
+  /** Export copies the condition document; a sentinel proves the read is this export's. */
+  async function exportCondition(): Promise<string> {
+    await writeClipboard(page, 'pending-export');
+    await page.getByRole('button', { name: 'Export' }).click();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).not.toBe('pending-export');
+    return page.evaluate(() => navigator.clipboard.readText());
+  }
+
+  await chooseRoot(page, 'Action · Body only');
+  await nameOf(page).fill('Get customer');
+  await pasteSample(page, '{"Email":"c@x.example"}');
+  await newPayload(page).click();
+  await chooseRoot(page, 'Action · Body only');
+  await nameOf(page).fill('Get manager');
+  await pasteSample(page, '{"Email":"m@x.example"}');
+
+  await openScreen(page, 'Trigger / Filter');
   await page.getByRole('button', { name: 'Load sample fields' }).first().click();
   const addRule = page.getByRole('button', { name: 'Add rule to group root' });
   await addRule.click();
   await addRule.click();
   const conditionExpression = await generated.textContent();
-  await page.getByRole('button', { name: 'Export' }).click();
-  const conditionExport = await page.evaluate(() => navigator.clipboard.readText());
+  const conditionExport = await exportCondition();
   expect(conditionExport).not.toBe('');
 
-  await openJsonReference(page);
-  await seed(page, { name: 'Get customer', root: 'Action · Body only', sample: '{"Email":"c@x.example"}' });
-  await addPayload(page);
-  await seed(page, { name: 'Get manager', root: 'Action · Body only', sample: '{"Email":"m@x.example"}' });
-
   await openScreen(page, 'Functions');
-  await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
+  await parsedValue(page).click();
   for (const [index, label] of ['Get customer', 'Get manager'].entries()) {
-    await page.locator('details.eb-pv-source', { hasText: label }).locator('summary').click();
+    await group(label).locator('summary').click();
     await args.nth(index).click();
-    await page.locator('details.eb-pv-source', { hasText: label })
-      .getByRole('button', { name: 'Email', exact: true }).dblclick();
+    await group(label).getByRole('button', { name: 'Email', exact: true }).dblclick();
   }
-  const argValues = [
-    "body('Get_customer')?['Email']",
-    "body('Get_manager')?['Email']",
-  ];
+  const argValues = ["body('Get_customer')?['Email']", "body('Get_manager')?['Email']"];
   await expect(args.nth(0)).toHaveValue(argValues[0]);
   await expect(args.nth(1)).toHaveValue(argValues[1]);
   const functionsExpression = await generated.textContent();
+  const payloadNotices = async () => (await toasts(page)).filter((text) => /^(Parsed|Payload updated)/.test(text));
+  const noticesBefore = await payloadNotices();
 
-  for (const screen of ['Trigger / Filter', 'JSON reference', 'Functions', 'Trigger / Filter', 'Functions', 'JSON reference'] as const) {
-    await test.step(`visiting ${screen} changes nothing`, async () => {
-      await openScreen(page, screen);
-      if (screen === 'Trigger / Filter') {
-        await expect(generated).toHaveText(conditionExpression ?? '');
-        await page.getByRole('button', { name: 'Export' }).click();
-        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(conditionExport);
-      } else if (screen === 'Functions') {
-        await expect(args.nth(0)).toHaveValue(argValues[0]);
-        await expect(args.nth(1)).toHaveValue(argValues[1]);
-        await expect(generated).toHaveText(functionsExpression ?? '');
-      } else {
-        await expect(tabAt(page, 2)).toHaveAttribute('aria-selected', 'true');
-        await expect(editorOf(page)).toHaveValue('{"Email":"m@x.example"}');
-        await tabAt(page, 1).click();
-        await expect(editorOf(page)).toHaveValue('{"Email":"c@x.example"}');
-        await tabAt(page, 2).click();
-      }
-    });
+  await pauseClock(page);
+  for (const screen of ['JSON reference', 'Trigger / Filter', 'Functions'] as const) {
+    await openScreen(page, screen);
+    if (screen === 'Trigger / Filter') {
+      await expect(generated).toHaveText(conditionExpression ?? '');
+      expect(await exportCondition()).toBe(conditionExport);
+    } else if (screen === 'Functions') {
+      await expect(args.nth(0)).toHaveValue(argValues[0]);
+      await expect(args.nth(1)).toHaveValue(argValues[1]);
+      await expect(generated).toHaveText(functionsExpression ?? '');
+    } else {
+      await expect(tabAt(page, 2)).toHaveAttribute('aria-selected', 'true');
+      await expect(editorOf(page)).toHaveValue('{"Email":"m@x.example"}');
+      await tabAt(page, 1).click();
+      await expect(editorOf(page)).toHaveValue('{"Email":"c@x.example"}');
+      await tabAt(page, 2).click();
+    }
   }
-  await page.waitForTimeout(800);
-  // Nothing was re-parsed or re-announced by all that navigation.
-  expect((await toasts(page)).filter((message) => message.startsWith('Payload updated'))).toEqual([]);
+  // Past the 600ms validation window, navigation has re-parsed and re-announced nothing.
+  await page.clock.runFor(1000);
+  expect(await payloadNotices()).toEqual(noticesBefore);
 
+  await page.clock.resume();
   await page.reload();
-  await openJsonReference(page);
-  await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(1);
+  await openScreen(page, 'JSON reference');
+  await expect(page.getByRole('tab')).toHaveCount(1);
   await expect(tabAt(page, 1)).toHaveAccessibleName('Payload 1, payload 1');
   await expect(page.getByText('1 / 5')).toBeVisible();
   await expect(editorOf(page)).toHaveValue('');
   await expect(nameOf(page)).toHaveValue('');
-  await expect(page.getByRole('radio', { name: 'Action · Full output' })).toBeChecked();
-  await expect(page.getByRole('tree')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
+  await expect(panel(page).getByRole('radio', { name: 'Action · Full output' })).toHaveAttribute('aria-checked', 'true');
+  await expect(panel(page).getByRole('tree')).toHaveCount(0);
+});
+
+test('at 375x667 a long-named second tab keeps its Close button inside the strip once scrolled into view (AC-5.4)', async ({ page }) => {
+  const longName = 'Get customer account details from the Dataverse list rows action';
+  await start(page, { width: 375, height: 667 });
+  await nameOf(page).fill('Short');
+  await addPayload(page, longName);
+  const strip = page.locator('.eb-payload-strip');
+  const tabs = page.locator('.eb-payload-tabs');
+  const second = page.getByRole('tab', { name: `${longName}, payload 2`, exact: true });
+  const close = page.getByRole('button', ARIA_BUTTON(`Close ${longName}, payload 2`));
+
+  // The strip scrolls inside .eb-payload-tabs, which clips there: the tab and its Close must fit that box, not merely the strip.
+  async function expectTabAndCloseInside(): Promise<void> {
+    await expect(second).toBeFocused();
+    await expect(second).toHaveAttribute('aria-selected', 'true');
+    await expect(async () => {
+      await expectInside(second, tabs);
+      await expectInside(close, tabs);
+      await expectInside(close, strip);
+    }).toPass({ timeout: 5_000 });
+  }
+
+  await second.focus();
+  for (const keys of [['Home', 'ArrowRight'], ['Home', 'End'], ['ArrowLeft', 'ArrowLeft']]) {
+    for (const key of keys) await page.keyboard.press(key);
+    await expectTabAndCloseInside();
+  }
 });

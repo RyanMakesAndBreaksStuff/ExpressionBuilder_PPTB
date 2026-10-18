@@ -19,6 +19,50 @@ export interface FunctionsNavProps {
   onInsertReference: (expression: string) => void;
 }
 
+function ParsedValueSources({
+  list,
+  baseId,
+  onInsertReference,
+}: {
+  list: ParsedValueList;
+  baseId: string;
+  onInsertReference: (expression: string) => void;
+}) {
+  return (
+    <>
+      {list.emptyMessage ? <div>{list.emptyMessage}</div> : null}
+      {list.sources.map((source) => {
+        const content = (
+          <>
+            <ParsedValueEntries
+              entries={source.entries}
+              baseId={`${baseId}-${source.id}`}
+              descriptionPrefix={list.sources.length > 1
+                ? `${source.label}, ${source.rootCaption}`
+                : undefined}
+              onInsertReference={onInsertReference}
+            />
+            {source.emptyMessage ? <div>{source.emptyMessage}</div> : null}
+          </>
+        );
+        return list.sources.length === 1
+          ? <div key={source.id}>{content}</div>
+          : (
+            <details key={source.id} className="eb-pv-item eb-pv-source">
+              <summary>
+                {source.label} · {source.rootCaption} · {source.matchingCount}
+              </summary>
+              {content}
+            </details>
+          );
+      })}
+      {list.hiddenCount > 0
+        ? <div>+{list.hiddenCount} more — narrow with search</div>
+        : null}
+    </>
+  );
+}
+
 export function FunctionsNav({
   groups,
   selectedFunction,
@@ -102,55 +146,13 @@ export function FunctionsNav({
           <span>{parsedValue.visibleCount}</span>
         </button>
         {parsedValueExpanded ? (
-          <div>
-            <ParsedValueSources list={parsedValue} baseId={baseId} onInsertReference={onInsertReference} />
-          </div>
+          <ParsedValueSources
+            list={parsedValue}
+            baseId={baseId}
+            onInsertReference={onInsertReference}
+          />
         ) : null}
       </div>
     </nav>
-  );
-}
-
-function ParsedValueSources({
-  list,
-  baseId,
-  onInsertReference,
-}: {
-  list: ParsedValueList;
-  baseId: string;
-  onInsertReference: (expression: string) => void;
-}) {
-  return (
-    <>
-      {list.emptyMessage ? <div>{list.emptyMessage}</div> : null}
-      {list.sources.map((source) => {
-        const content = (
-          <>
-            <ParsedValueEntries
-              entries={source.entries}
-              baseId={`${baseId}-${source.id}`}
-              descriptionPrefix={list.sources.length > 1
-                ? `${source.label}, ${source.rootCaption}`
-                : undefined}
-              onInsertReference={onInsertReference}
-            />
-            {source.emptyMessage ? <div>{source.emptyMessage}</div> : null}
-          </>
-        );
-        return list.sources.length === 1
-          ? <div key={source.id}>{content}</div>
-          : (
-            <details key={source.id} className="eb-pv-item eb-pv-source">
-              <summary>
-                {source.label} · {source.rootCaption} · {source.matchingCount}
-              </summary>
-              {content}
-            </details>
-          );
-      })}
-      {list.hiddenCount > 0
-        ? <div>+{list.hiddenCount} more — narrow with search</div>
-        : null}
-    </>
   );
 }

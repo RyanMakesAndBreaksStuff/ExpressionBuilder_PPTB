@@ -7,26 +7,31 @@ import userEvent from '@testing-library/user-event';
 import { navGroups, initialFunctionsState } from '../src/workbench/functionsState';
 import { FunctionsNav } from '../src/workbench/FunctionsNav';
 import { buildParsedValueList } from '../src/workbench/parsedValueModel';
-import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
-import { parsePayload } from '../src/importExport/jsonPayload';
 import { formatPayloadRoot, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
+import { parsePayload } from '../src/importExport/jsonPayload';
+import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
 
-function fixture(value: unknown, root: PayloadReferenceRoot): ParsedValueSource[] {
+function fixture(
+  value: unknown,
+  root: PayloadReferenceRoot | null,
+  id = 'fixture-1',
+  label = 'Fixture',
+): ParsedValueSource {
   const result = parsePayload(JSON.stringify(value));
   if (!result.ok) throw new Error(result.message);
-  return [{
-    id: 'fixture-1',
-    label: 'Fixture',
-    rootCaption: formatPayloadRoot(root),
+  return {
+    id,
+    label,
+    rootCaption: formatPayloadRoot(root ?? { kind: 'triggerBody' }),
     parsed: result.payload,
     referenceRoot: root,
-  }];
+  };
 }
 
+const triggerBody: PayloadReferenceRoot = { kind: 'triggerBody' };
 const parsedValue = buildParsedValueList(
-  fixture({ Name: 'Ada', tags: ['a'] }, { kind: 'triggerBody' }), '',
+  [fixture({ Name: 'Ada', tags: ['a'] }, triggerBody)], '',
 );
-const parsedRows = parsedValue.sources[0].rows;
 
 function renderNav(overrides: Partial<ComponentProps<typeof FunctionsNav>> = {}) {
   const props: ComponentProps<typeof FunctionsNav> = {
@@ -196,7 +201,7 @@ describe('FunctionsNav', () => {
   it('starts every item closed and toggles sibling and nested items independently', async () => {
     const user = userEvent.setup();
     renderNav({ parsedValue: buildParsedValueList(
-      fixture({ rows: [{ Name: 'Ada', tags: ['a'] }, { Name: 'Grace' }] }, { kind: 'triggerBody' }), '',
+      [fixture({ rows: [{ Name: 'Ada', tags: ['a'] }, { Name: 'Grace' }] }, triggerBody)], '',
     ) });
     const first = screen.getByText('rows[0]', { selector: 'summary' });
     const second = screen.getByText('rows[1]', { selector: 'summary' });
@@ -225,24 +230,24 @@ describe('FunctionsNav', () => {
           id: 'fixture-1', label: 'Fixture', rootCaption: 'triggerBody()', matchingCount: 0,
           rows: [], entries: [], emptyMessage: 'No paths match this search',
         }],
-        visibleCount: 0,
-        hiddenCount: 0,
-        emptyMessage: null,
+        visibleCount: 0, hiddenCount: 0, emptyMessage: null,
       },
     });
     expect(screen.getByText('No paths match this search')).toBeInTheDocument();
     rerender(
       <FunctionsNav
         groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
-        parsedValue={{
-          sources: [{
-            id: 'fixture-1', label: 'Fixture', rootCaption: 'triggerBody()', matchingCount: 1,
-            rows: [parsedRows[0]], entries: [{ kind: 'row', row: parsedRows[0] }], emptyMessage: null,
-          }],
-          visibleCount: 1,
-          hiddenCount: 3,
-          emptyMessage: null,
-        }}
+        parsedValue={(() => {
+          const rows = [parsedValue.sources[0].rows[0]];
+          const entries = [{ kind: 'row' as const, row: rows[0] }];
+          return {
+            sources: [{
+              id: 'fixture-1', label: 'Fixture', rootCaption: 'triggerBody()',
+              matchingCount: rows.length, rows, entries, emptyMessage: null,
+            }],
+            visibleCount: rows.length, hiddenCount: 3, emptyMessage: null,
+          };
+        })()}
         parsedValueExpanded
         onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
         onSelectFunction={vi.fn()} onInsertReference={vi.fn()}
@@ -263,28 +268,46 @@ describe('FunctionsNav', () => {
     expect(props.onInsertReference).toHaveBeenCalledTimes(2);
   });
 
-  it('groups equal paths by source, inserts each source expression and keeps accordions independent', async () => {
+  it('groups several sources in collapsed details with label, root and match count', async () => {
     const user = userEvent.setup();
-    const sources = [
-      ...fixture({ Name: 'Ada' }, { kind: 'body', actionName: 'First' }),
-      ...fixture({ Name: 'Grace' }, { kind: 'body', actionName: 'Second' }),
-    ].map((item, index) => ({ ...item, id: 'p' + index, label: 'Payload ' + (index + 1) }));
-    const { props } = renderNav({ parsedValue: buildParsedValueList(sources, '') });
-    const groups = screen.getAllByText(/^Payload \d · /, { selector: 'summary' });
-    expect(groups).toHaveLength(2);
-    const [first, second] = groups.map((summary) => summary.parentElement as HTMLDetailsElement);
-    expect(first.open).toBe(false);
-    expect(second.open).toBe(false);
-    await user.click(groups[0]);
-    expect(first.open).toBe(true);
-    expect(second.open).toBe(false);
-    await user.click(groups[1]);
+    const list = buildParsedValueList([
+      fixture({ id: 1, tags: ['a'] }, { kind: 'body', actionName: 'One' }, 'p1', 'One'),
+      fixture({ id: 2 }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two'),
+    ], '');
+    const { props } = renderNav({ parsedValue: list });
+    expect(screen.getByRole('button', { name: 'Parsed Value 3' })).toBeInTheDocument();
+    const one = screen.getByText("One · body('One') · 2", { selector: 'summary' });
+    const two = screen.getByText("Two · body('Two') · 1", { selector: 'summary' });
+    const oneDetails = one.parentElement as HTMLDetailsElement;
+    const twoDetails = two.parentElement as HTMLDetailsElement;
+    expect(oneDetails.open).toBe(false);
+    expect(twoDetails.open).toBe(false);
+    await user.click(one);
+    expect(oneDetails.open).toBe(true);
+    expect(twoDetails.open).toBe(false);
 
-    const [one, two] = screen.getAllByRole('button', { name: 'Name' });
-    expect(one).toHaveAccessibleDescription("Payload 1, body('First'). body('First')?['Name']");
-    await user.dblClick(one);
-    expect(props.onInsertReference).toHaveBeenLastCalledWith("body('First')?['Name']");
-    await user.dblClick(two);
-    expect(props.onInsertReference).toHaveBeenLastCalledWith("body('Second')?['Name']");
+    // Equal paths stay separate: each id button inserts its own source's expression.
+    await user.click(two);
+    const [idOne, idTwo] = screen.getAllByRole('button', { name: 'id' });
+    expect(idOne).toHaveAccessibleDescription("One, body('One'). body('One')?['id']");
+    await user.dblClick(idOne);
+    expect(props.onInsertReference).toHaveBeenLastCalledWith("body('One')?['id']");
+    await user.dblClick(idTwo);
+    expect(props.onInsertReference).toHaveBeenLastCalledWith("body('Two')?['id']");
+  });
+
+  it('keeps array accordions independent between sources with equal item paths', async () => {
+    const user = userEvent.setup();
+    renderNav({ parsedValue: buildParsedValueList([
+      fixture({ rows: [{ a: 1 }] }, { kind: 'body', actionName: 'One' }, 'p1', 'One'),
+      fixture({ rows: [{ a: 2 }] }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two'),
+    ], '') });
+    await user.click(screen.getByText("One · body('One') · 1", { selector: 'summary' }));
+    await user.click(screen.getByText("Two · body('Two') · 1", { selector: 'summary' }));
+    const items = screen.getAllByText('rows[0]', { selector: 'summary' });
+    expect(items).toHaveLength(2);
+    await user.click(items[0]);
+    expect((items[0].parentElement as HTMLDetailsElement).open).toBe(true);
+    expect((items[1].parentElement as HTMLDetailsElement).open).toBe(false);
   });
 });

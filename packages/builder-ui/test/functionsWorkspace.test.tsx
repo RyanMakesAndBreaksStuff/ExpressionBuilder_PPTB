@@ -2,12 +2,13 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { formatPayloadRoot, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
+import type { PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FunctionsWorkspace } from '../src/workbench/FunctionsWorkspace';
-import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
+import { formatPayloadRoot } from '@ryanmakes/eb_engine';
 import { parsePayload } from '../src/importExport/jsonPayload';
+import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
+import { FunctionsWorkspace } from '../src/workbench/FunctionsWorkspace';
 
 afterEach(() => {
   cleanup();
@@ -29,20 +30,25 @@ function createAdapter(): PlatformAdapter {
   };
 }
 
-function fixture(value: unknown, root: PayloadReferenceRoot): ParsedValueSource[] {
+function fixture(
+  value: unknown,
+  root: PayloadReferenceRoot | null,
+  id = 'fixture-1',
+  label = 'Fixture',
+): ParsedValueSource {
   const result = parsePayload(JSON.stringify(value));
   if (!result.ok) throw new Error(result.message);
-  return [{
-    id: 'fixture-1',
-    label: 'Fixture',
-    rootCaption: formatPayloadRoot(root),
+  return {
+    id,
+    label,
+    rootCaption: formatPayloadRoot(root ?? { kind: 'triggerBody' }),
     parsed: result.payload,
     referenceRoot: root,
-  }];
+  };
 }
 
 const referenceRoot: PayloadReferenceRoot = { kind: 'triggerBody' };
-const sources = fixture({ Name: 'Ada' }, referenceRoot);
+const sources = [fixture({ Name: 'Ada' }, referenceRoot)];
 
 describe('FunctionsWorkspace', () => {
   it('starts on concat, validates typed arguments, and shows the expression', async () => {
@@ -67,10 +73,7 @@ describe('FunctionsWorkspace', () => {
   it('inserts Parsed Value into the focused argument and returns focus after double-click or Enter', async () => {
     const user = userEvent.setup();
     render(
-      <FunctionsWorkspace
-        adapter={createAdapter()}
-        sources={sources}
-      />
+      <FunctionsWorkspace adapter={createAdapter()} sources={sources} />
     );
     await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
 
@@ -91,7 +94,7 @@ describe('FunctionsWorkspace', () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace
       adapter={createAdapter()}
-      sources={fixture({ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }, referenceRoot)}
+      sources={[fixture({ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }, referenceRoot)]}
     />);
     await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
     const first = screen.getByText('body.value[0]', { selector: 'summary' });
@@ -245,5 +248,45 @@ describe('FunctionsWorkspace', () => {
     expect(vi.getTimerCount()).toBe(1);
     unmount();
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('inserts each own source expression for equal paths and keeps arguments after sources change', async () => {
+    const user = userEvent.setup();
+    const one = fixture({ rows: [{ id: 1 }] }, { kind: 'body', actionName: 'One' }, 'p1', 'One');
+    const two = fixture({ rows: [{ id: 2 }] }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two');
+    const { rerender } = render(<FunctionsWorkspace adapter={createAdapter()} sources={[one, two]} />);
+    await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
+    await user.click(screen.getByText("One · body('One') · 1", { selector: 'summary' }));
+    await user.click(screen.getByText("Two · body('Two') · 1", { selector: 'summary' }));
+    const items = screen.getAllByText('rows[0]', { selector: 'summary' });
+    await user.click(items[0]);
+    await user.click(items[1]);
+    expect((items[0].parentElement as HTMLDetailsElement).open).toBe(true);
+    expect((items[1].parentElement as HTMLDetailsElement).open).toBe(true);
+
+    const [idOne, idTwo] = screen.getAllByRole('button', { name: 'rows[0].id', exact: true });
+    const text1 = screen.getByLabelText('text1');
+    const text2 = screen.getByLabelText('text2');
+    await user.click(text1);
+    await user.dblClick(idOne);
+    expect(text1).toHaveValue("body('One')?['rows'][0]?['id']");
+    await user.click(text2);
+    await user.dblClick(idTwo);
+    expect(text2).toHaveValue("body('Two')?['rows'][0]?['id']");
+
+    rerender(<FunctionsWorkspace adapter={createAdapter()} sources={[two]} />);
+    expect(text1).toHaveValue("body('One')?['rows'][0]?['id']");
+    expect(text2).toHaveValue("body('Two')?['rows'][0]?['id']");
+  });
+
+  it('excludes a missing-name source from the Parsed Value count', async () => {
+    const user = userEvent.setup();
+    const unnamed: ParsedValueSource = { ...fixture({ a: 1 }, null, 'p1', 'Payload 1'), referenceRoot: null };
+    render(<FunctionsWorkspace
+      adapter={createAdapter()}
+      sources={[unnamed, fixture({ b: 1 }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two')]}
+    />);
+    await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
+    expect(screen.getByText('Set an action name in JSON reference')).toBeInTheDocument();
   });
 });

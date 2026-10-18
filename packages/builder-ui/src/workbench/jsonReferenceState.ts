@@ -76,8 +76,6 @@ export type JsonReferenceAction =
 	| { type: "resetCopyStatus" };
 
 export const ACTION_NAME_PLACEHOLDER = "Action";
-// Blank-name root preview only; paste still fills ACTION_NAME_PLACEHOLDER.
-const ROOT_PREVIEW_NAME = "Action_name";
 
 // Off for pasted payloads and names: some browsers send spell-check text to a
 // cloud service (FR-062).
@@ -294,7 +292,7 @@ export function rootExpression(
 	shape: PayloadShape = state.shape,
 ): string {
 	const actionName = isActionNameMissing(state)
-		? ROOT_PREVIEW_NAME
+		? "Action_name"
 		: state.actionName;
 	return formatPayloadRoot(referenceRoot(state, shape, actionName));
 }
@@ -307,7 +305,7 @@ export function rootExpressionFor(
 ): string {
 	const actionName =
 		outputFrom === "action" && state.actionName.trim() === ""
-			? ROOT_PREVIEW_NAME
+			? "Action_name"
 			: state.actionName;
 	return formatPayloadRoot(
 		referenceRoot({ ...state, outputFrom }, shape, actionName),

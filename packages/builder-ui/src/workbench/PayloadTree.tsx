@@ -12,6 +12,7 @@ import {
 } from 'react';
 import type { PayloadPath } from '@ryanmakes/eb_engine';
 import { pathKey } from '../importExport/jsonPayload';
+import type { PayloadReveal } from './jsonPayloadSession';
 import {
   ROOT_KEY,
   buildVisibleRows,
@@ -20,7 +21,6 @@ import {
   type PayloadTreeRow,
 } from './payloadTreeModel';
 import { ChevronRightIcon } from './icons/BuilderIcons';
-import type { PayloadReveal } from './jsonPayloadSession';
 
 interface PayloadTreeProps {
   /** Id of the Payload heading, which names the tree (FR-084). */
@@ -31,10 +31,10 @@ interface PayloadTreeProps {
   expanded: ReadonlySet<string>;
   showAll: ReadonlySet<string>;
   selectedPath: PayloadPath;
-  reveal?: PayloadReveal | null;
   onSelect: (path: PayloadPath) => void;
   onToggle: (key: string) => void;
   onShowAll: (key: string) => void;
+  reveal?: PayloadReveal | null;
 }
 
 /**

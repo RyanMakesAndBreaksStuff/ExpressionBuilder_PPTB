@@ -113,29 +113,23 @@ describe('previews and summaries', () => {
 });
 
 describe('collectPayloadLeaves', () => {
-  it('walks nested arrays and objects in document order with path labels', () => {
-    const leaves = collectPayloadLeaves({ a: [1, { b: 'x' }], c: null });
-
-    expect(leaves).toEqual([
-      { path: ['a', 0], label: 'a[0]', value: 1 },
-      { path: ['a', 1, 'b'], label: 'a[1].b', value: 'x' },
-      { path: ['c'], label: 'c', value: null },
-    ]);
-  });
-
-  it('labels an empty-string key as "" and treats empty containers as leaves', () => {
-    expect(collectPayloadLeaves({ '': 1, e: {}, f: [] })).toEqual([
+  it('walks every leaf with path labels, including empty keys and array indexes', () => {
+    expect(collectPayloadLeaves({ '': 1, rows: [{ a: 'x' }, []], n: null })).toEqual([
       { path: [''], label: '""', value: 1 },
-      { path: ['e'], label: 'e', value: {} },
-      { path: ['f'], label: 'f', value: [] },
+      { path: ['rows', 0, 'a'], label: 'rows[0].a', value: 'x' },
+      { path: ['rows', 1], label: 'rows[1]', value: [] },
+      { path: ['n'], label: 'n', value: null },
     ]);
   });
 
-  it('yields one (root) leaf for a scalar or empty-container root', () => {
-    for (const root of ['text', 3, null, {}, []]) {
-      expect(collectPayloadLeaves(root)).toEqual([
-        { path: [], label: '(root)', value: root },
-      ]);
-    }
+  it('is not paged: leaves past the page sizes are included', () => {
+    const leaves = collectPayloadLeaves(Array.from({ length: ARRAY_PAGE_SIZE + 5 }, (_, i) => i));
+    expect(leaves).toHaveLength(ARRAY_PAGE_SIZE + 5);
+    expect(leaves.at(-1)).toEqual({ path: [ARRAY_PAGE_SIZE + 4], label: `[${ARRAY_PAGE_SIZE + 4}]`, value: ARRAY_PAGE_SIZE + 4 });
+  });
+
+  it('labels a scalar root (root)', () => {
+    expect(collectPayloadLeaves(7)).toEqual([{ path: [], label: '(root)', value: 7 }]);
+    expect(collectPayloadLeaves({})).toEqual([{ path: [], label: '(root)', value: {} }]);
   });
 });

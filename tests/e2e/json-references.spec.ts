@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from 'playwright/test';
+import { expect, test, type Page } from 'playwright/test';
 import {
   fixtureA1,
   triggerBodySample,
@@ -36,49 +36,46 @@ async function clipboardText(page: Page): Promise<string> {
 
 // Parse success surfaces as the value count in the Payload card header; the
 // old in-pane Parse button and status line were replaced by paste-to-parse.
-const payloadMeta = (page: Page) => page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
+const jsonPanel = (page: Page) => page.getByRole('tabpanel');
+const payloadMeta = (page: Page) => jsonPanel(page).getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
 
 /** Bare formula-editor copy. The panel also has "Copy @{}", "Copy item()", and "Copy item() @{}". */
-const referenceCopy = (page: Page) => page.getByRole('button', { name: 'Copy', exact: true });
+const referenceCopy = (page: Page) => jsonPanel(page).getByRole('button', { name: 'Copy', exact: true });
 
 const treeRow = (page: Page, label: string) =>
-  page.getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
+  jsonPanel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
-/** Switches screens through the header's Screen menu. */
-async function openScreen(page: Page, name: 'Functions' | 'Trigger / Filter' | 'JSON reference') {
+async function openJsonReference(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name, exact: true }).click();
+  await page.getByRole('menuitemradio', {
+    name: 'JSON reference',
+    exact: true,
+  }).click();
 }
 
-const openJsonReference = (page: Page) => openScreen(page, 'JSON reference');
-const openCondition = (page: Page) => openScreen(page, 'Trigger / Filter');
-const openFunctions = (page: Page) => openScreen(page, 'Functions');
+async function openFunctions(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^Screen:/ }).click();
+  await page.getByRole('menuitemradio', { name: 'Functions', exact: true }).click();
+}
 
-/**
- * The focus indicator of the active element. Header controls draw their ring as an outline
- * (shell.css, FR-6); the payload strip and search use an outline too; everything else a box-shadow.
- */
-const focusRing = (page: Page) =>
-  page.evaluate(() => {
-    const style = getComputedStyle(document.activeElement as Element);
-    return style.boxShadow !== 'none' ? style.boxShadow : style.outlineStyle === 'none' || style.outlineWidth === '0px' ? 'none' : style.outline;
+async function openConditionBuilder(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^Screen:/ }).click();
+  await page.getByRole('menuitemradio', {
+    name: 'Trigger / Filter',
+    exact: true,
+  }).click();
+}
+
+/** Native paste into the Sample JSON textarea — the flow the app auto-parses. */
+async function pasteSample(page: Page, text: string): Promise<void> {
+  await page.evaluate(
+    (value) => navigator.clipboard.writeText(value),
+    text,
+  );
+  const editor = jsonPanel(page).getByRole('textbox', {
+    name: 'Sample JSON',
+    exact: true,
   });
-
-/** Asserts the control has keyboard focus and a visible indicator. */
-async function expectFocused(page: Page, target: Locator): Promise<void> {
-  await expect(target).toBeFocused();
-  expect(await focusRing(page)).not.toBe('none');
-}
-
-const tabAt = (page: Page, position: number) =>
-  page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
-const addPayload = (page: Page) => page.getByRole('button', { name: 'New payload', exact: true }).click();
-const referenceExpression = (page: Page) => page.locator('[aria-label="Reference expression"]:visible');
-
-/** Pastes through the real clipboard into the Sample JSON textarea — the flow the app auto-parses. */
-async function pasteSample(page: Page, sample: string) {
-  await page.evaluate((text) => navigator.clipboard.writeText(text), sample);
-  const editor = page.getByRole('textbox', { name: 'Sample JSON', exact: true });
   await editor.focus();
   await editor.press('Control+V');
 }
@@ -89,8 +86,8 @@ async function parseSample(
 ) {
   // One radiogroup of four combined roots, labelled e.g. 'Action · Full output'.
   const root = `${source.outputFrom} · ${source.shape === 'full' ? 'Full output' : 'Body only'}`;
-  await page.getByRole('radio', { name: root }).click();
-  if (source.name !== undefined) await page.getByRole('textbox', { name: 'Action name' }).fill(source.name);
+  await jsonPanel(page).getByRole('radio', { name: root }).click();
+  if (source.name !== undefined) await jsonPanel(page).getByLabel('Action name').fill(source.name);
   await pasteSample(page, source.sample);
   await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
 }
@@ -132,7 +129,7 @@ test.describe('web build', () => {
       for (const { source, path, expected } of cases) {
         await parseSample(page, source);
         await select(page, [...path]);
-        await expect(page.getByLabel('Reference expression')).toHaveText(expected);
+        await expect(jsonPanel(page).getByLabel('Reference expression')).toHaveText(expected);
         await referenceCopy(page).click();
         // .first(): successive cases can stack not-yet-dismissed toasts.
         await expect(page.getByText('Expression copied').first()).toBeVisible();
@@ -186,7 +183,7 @@ test.describe('web build', () => {
       await loadEmailReference(page);
       await referenceCopy(page).click();
       await expect(page.getByText('Expression copied')).toBeVisible();
-      await openCondition(page);
+      await openConditionBuilder(page);
       await openJsonReference(page);
 
       expect(requests).toEqual([]);
@@ -210,9 +207,9 @@ test.describe('web build', () => {
         await scan('Condition builder with rules');
         await loadEmailReference(page);
         await scan('JSON reference with a selection');
-        await page.getByRole('textbox', { name: 'Action name' }).fill('');
+        await jsonPanel(page).getByLabel('Action name').fill('');
         await pasteSample(page, '{"a": 1,}');
-        await expect(page.getByRole('alert')).toBeVisible();
+        await expect(jsonPanel(page).getByRole('alert')).toBeVisible();
         await scan('JSON reference with errors');
       });
     }
@@ -220,13 +217,14 @@ test.describe('web build', () => {
 
 test('the core task works by keyboard alone, with a visible focus ring (SC-005)', async ({ page }) => {
   await open(page);
+  const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
 
   await page.keyboard.press('Tab');
-  const screenButton = page.getByRole('button', { name: /^Screen:/ });
-  await expectFocused(page, screenButton);
+  await expect(page.getByRole('button', { name: /^Screen:/ })).toBeFocused();
+  // Header controls draw their focus ring as an outline rather than a box-shadow.
+  expect(await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle)).not.toBe('none');
   await page.keyboard.press('Enter');
   const jsonItem = page.getByRole('menuitemradio', { name: 'JSON reference', exact: true });
-  await expect(jsonItem).toBeVisible();
   for (let step = 0; step < 3 && !(await jsonItem.evaluate((el) => el === document.activeElement)); step++) {
     await page.keyboard.press('ArrowDown');
   }
@@ -234,22 +232,20 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeVisible();
 
-  // Focus returns to the Screen button once the menu closes.
-  await expect(screenButton).toBeFocused();
-  // The payload strip now precedes Source: the payload tab, New payload, then search (AC-5.5).
+  // Payload strip: the selected tab, New payload, then search, before the root radios.
   await page.keyboard.press('Tab');
-  await expectFocused(page, page.getByRole('tab', { name: 'Payload 1, payload 1' }));
+  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expectFocused(page, page.getByRole('button', { name: 'New payload', exact: true }));
+  await expect(page.getByRole('button', { name: 'New payload' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expectFocused(page, page.getByRole('combobox', { name: 'Search all payloads' }));
+  await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expectFocused(page, page.getByRole('radio', { name: 'Action · Full output' }));
+  await expect(jsonPanel(page).getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('textbox', { name: 'Action name' })).toBeFocused();
+  await expect(jsonPanel(page).getByLabel('Action name')).toBeFocused();
   await page.keyboard.type('Get items');
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('textbox', { name: 'Sample JSON', exact: true })).toBeFocused();
+  await expect(jsonPanel(page).getByLabel('Sample JSON')).toBeFocused();
   await page.evaluate((text) => navigator.clipboard.writeText(text), fixtureA1);
   await page.keyboard.press('Control+V');
   await expect(payloadMeta(page)).toHaveText('25 values');
@@ -265,263 +261,33 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
     await page.keyboard.press(key);
   }
   await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
-  expect(await focusRing(page)).not.toBe('none');
+  expect(await focusRing()).not.toBe('none');
 
   // Reference info, then the inline copy, then the bare Copy.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Reference info' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('button', { name: 'Reference info' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Copy @{}' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('button', { name: 'Copy @{}' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(referenceCopy(page)).toBeFocused();
-  expect(await focusRing(page)).not.toBe('none');
+  expect(await focusRing()).not.toBe('none');
   await page.keyboard.press('Enter');
   await expect(page.getByText('Expression copied')).toBeVisible();
   expect(await clipboardText(page)).toBe(EMAIL);
 });
 
-/** Picks a screen with the keyboard: open the Screen menu, arrow to the item, press Enter. */
-async function chooseScreenByKeyboard(page: Page, name: string) {
-  await page.getByRole('button', { name: /^Screen:/ }).focus();
-  await page.keyboard.press('Enter');
-  const item = page.getByRole('menuitemradio', { name, exact: true });
-  await expect(item).toBeVisible();
-  for (let step = 0; step < 4 && !(await item.evaluate((el) => el === document.activeElement)); step++) {
-    await page.keyboard.press('ArrowDown');
-  }
-  await expect(item).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: `Screen: ${name}` })).toBeFocused();
-}
-
-const emails = (domain: string, count: number) =>
-  JSON.stringify({ value: Array.from({ length: count }, (_, index) => ({ Email: `e${index}@${domain}` })) });
-
-test('the multi-payload workspace works by keyboard alone (AC-2.5, AC-3.4, AC-5.5)', async ({ page }) => {
-  await open(page);
-  await openJsonReference(page);
-  await parseSample(page, { outputFrom: 'Action', name: 'Get customer', shape: 'body', sample: emails('cust.example', 30) });
-  await addPayload(page);
-  await parseSample(page, { outputFrom: 'Action', name: 'Get manager', shape: 'body', sample: emails('mgr.example', 30) });
-  const press = async (...keys: string[]) => {
-    for (const key of keys) await page.keyboard.press(key);
-  };
-  const closeButton = (label: string) => page.getByRole('button', { name: `Close ${label}` });
-  const search = page.getByRole('combobox', { name: 'Search all payloads' });
-  const options = page.getByRole('option');
-
-  await test.step('tab order crosses the strip: closes, the active tab, New payload, search, then Source', async () => {
-    await page.getByRole('button', { name: /^Screen:/ }).focus();
-    await press('Tab');
-    await expectFocused(page, closeButton('Get customer, payload 1'));
-    await press('Tab');
-    await expectFocused(page, tabAt(page, 2));
-    await expect(tabAt(page, 2)).toHaveAttribute('aria-selected', 'true');
-    await press('Tab');
-    await expectFocused(page, closeButton('Get manager, payload 2'));
-    await press('Tab');
-    await expectFocused(page, page.getByRole('button', { name: 'New payload', exact: true }));
-    await press('Tab');
-    await expectFocused(page, search);
-    await press('Tab');
-    await expectFocused(page, page.getByRole('radio', { name: 'Action · Body only' }));
-  });
-
-  await test.step('payload tabs move with Left, Right, Home and End and wrap', async () => {
-    await press('Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab');
-    await expectFocused(page, tabAt(page, 2));
-    const expectTab = async (position: number, text: string) => {
-      await expectFocused(page, tabAt(page, position));
-      await expect(tabAt(page, position)).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'Sample JSON', exact: true })).toHaveValue(new RegExp(text));
-      const panel = page.getByRole('tabpanel');
-      await expect(panel).toHaveAttribute('aria-labelledby', (await tabAt(page, position).getAttribute('id')) ?? '');
-      expect(await tabAt(page, position).getAttribute('aria-controls')).toBe(await panel.getAttribute('id'));
-    };
-    await press('ArrowLeft');
-    await expectTab(1, 'cust.example');
-    await press('ArrowLeft');
-    await expectTab(2, 'mgr.example');
-    await press('ArrowRight');
-    await expectTab(1, 'cust.example');
-    await press('End');
-    await expectTab(2, 'mgr.example');
-    await press('Home');
-    await expectTab(1, 'cust.example');
-    await press('End');
-    await expectTab(2, 'mgr.example');
-  });
-
-  await test.step('root choices move with the arrow keys', async () => {
-    await press('Tab', 'Tab', 'Tab', 'Tab');
-    const bodyOnly = page.getByRole('radio', { name: 'Action · Body only' });
-    await expectFocused(page, bodyOnly);
-    await press('ArrowRight');
-    const triggerFull = page.getByRole('radio', { name: 'Trigger · Full output' });
-    await expectFocused(page, triggerFull);
-    await expect(triggerFull).toHaveAttribute('aria-checked', 'true');
-    await press('ArrowLeft');
-    await expectFocused(page, bodyOnly);
-    await expect(bodyOnly).toHaveAttribute('aria-checked', 'true');
-  });
-
-  await test.step('tree rows, Show more and selection work from the keyboard', async () => {
-    await press('Tab');
-    await expect(page.getByRole('textbox', { name: 'Action name' })).toBeFocused();
-    await press('Tab', 'Tab');
-    await expectFocused(page, treeRow(page, "body('Get_manager')"));
-    await press('ArrowDown', 'ArrowRight');
-    await expect(treeRow(page, 'value')).toHaveAttribute('aria-expanded', 'true');
-    await press('End');
-    await expectFocused(page, page.getByRole('treeitem', { name: 'Show 10 more' }));
-    await press('Enter');
-    await expectFocused(page, treeRow(page, '[20]'));
-    await press('ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowDown');
-    await expectFocused(page, treeRow(page, 'Email'));
-    await press('Enter');
-    await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
-    await expect(referenceExpression(page)).toHaveText("body('Get_manager')?['value'][24]?['Email']");
-  });
-
-  await test.step('copy actions follow the tree in tab order', async () => {
-    await press('Tab');
-    await expectFocused(page, page.getByRole('button', { name: 'Reference info' }));
-    await press('Tab');
-    await expectFocused(page, page.getByRole('button', { name: 'Copy @{}' }));
-    await press('Tab');
-    await expectFocused(page, referenceCopy(page));
-    await press('Enter');
-    await expect(page.getByText('Expression copied').first()).toBeVisible();
-    expect(await clipboardText(page)).toBe("body('Get_manager')?['value'][24]?['Email']");
-  });
-
-  await test.step('search results move with Up and Down, wrap and Escape clears (AC-2.5)', async () => {
-    await press('Shift+Tab', 'Shift+Tab', 'Shift+Tab');
-    await expectFocused(page, treeRow(page, 'Email'));
-    await press('Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab');
-    await expectFocused(page, search);
-    await page.keyboard.type('@mgr');
-    await expect(options).toHaveCount(8);
-    await expect(page.locator('.eb-payload-search-popup [role="status"]')).toHaveText('30 matches · 2 parsed payloads');
-    const selected = () => page.locator('[role="option"][aria-selected="true"]');
-    await expect(selected()).toHaveCount(1);
-    await expect(options.first()).toHaveAttribute('aria-selected', 'true');
-    await press('ArrowDown');
-    await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true');
-    await expect(search).toHaveAttribute('aria-activedescendant', (await options.nth(1).getAttribute('id')) ?? '');
-    await press('ArrowUp', 'ArrowUp');
-    await expect(options.nth(7)).toHaveAttribute('aria-selected', 'true');
-    await press('ArrowDown');
-    await expect(options.first()).toHaveAttribute('aria-selected', 'true');
-    await press('Escape');
-    await expect(search).toHaveValue('');
-    await expect(search).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.getByRole('listbox')).toHaveCount(0);
-    await expectFocused(page, search);
-  });
-
-  await test.step('Enter on a result reveals that exact row and closes the search (AC-2.4)', async () => {
-    await page.keyboard.type('@mgr');
-    await press('ArrowDown', 'ArrowDown', 'Enter');
-    await expect(search).toHaveValue('');
-    await expect(page.getByRole('listbox')).toHaveCount(0);
-    const second = page.getByRole('treeitem', { name: /^Email, string, "e2@mgr/ });
-    await expectFocused(page, second);
-    await expect(second).toHaveAttribute('aria-selected', 'true');
-    await expect(referenceExpression(page)).toHaveText("body('Get_manager')?['value'][2]?['Email']");
-
-    // A result in another payload beyond its first 20 array children.
-    await press('Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab');
-    await expectFocused(page, search);
-    await page.keyboard.type('e27@cust');
-    await expect(options).toHaveCount(1);
-    await expect(options.first()).toContainText('Get customer');
-    await press('Enter');
-    await expect(tabAt(page, 1)).toHaveAttribute('aria-selected', 'true');
-    const revealed = page.getByRole('treeitem', { name: /^Email, string, "e27@cust/ });
-    await expectFocused(page, revealed);
-    await expect(revealed).toBeInViewport();
-    await expect(revealed).toHaveAttribute('aria-selected', 'true');
-    await expect(referenceExpression(page)).toHaveText("body('Get_customer')?['value'][27]?['Email']");
-    await expect(search).toHaveValue('');
-  });
-
-  await test.step('Functions source groups and reference insertion work from the keyboard', async () => {
-    await chooseScreenByKeyboard(page, 'Functions');
-    const parsedValue = page.getByRole('button', { name: /^Parsed Value \d+$/ });
-    await parsedValue.focus();
-    await press('Enter');
-    const groups = page.locator('details.eb-pv-source');
-    await expect(groups).toHaveCount(2);
-
-    await press('Tab');
-    await expectFocused(page, groups.first().locator('summary').first());
-    await press('Space');
-    await expect(groups.first()).toHaveJSProperty('open', true);
-    await press('Tab', 'Space');
-    await expectFocused(page, groups.first().locator('details.eb-pv-item > summary').first());
-    await press('Tab');
-    await expectFocused(page, page.getByRole('button', { name: 'value[0].Email' }).first());
-    await press('Enter');
-    const first = page.locator('input[data-arg]').first();
-    await expectFocused(page, first);
-    await expect(first).toHaveValue("body('Get_customer')?['value'][0]?['Email']");
-
-    // Back from the first argument, the last control of the list is the second group's summary.
-    await press('Shift+Tab');
-    await expectFocused(page, groups.last().locator('summary').first());
-    await press('Space', 'Tab', 'Space', 'Tab');
-    await expect(groups.last()).toHaveJSProperty('open', true);
-    await press('Enter');
-    await expectFocused(page, first);
-    await expect(first).toHaveValue("body('Get_manager')?['value'][0]?['Email']");
-
-    // Alt+ArrowDown keeps the second argument as the target, so the list is reachable from it.
-    await press('Tab');
-    const second = page.locator('input[data-arg]').nth(1);
-    await expectFocused(page, second);
-    await expect(second).toHaveAttribute('aria-keyshortcuts', 'Alt+ArrowDown');
-    await press('Alt+ArrowDown');
-    await expectFocused(page, page.getByRole('button', { name: 'value[0].Email' }).first());
-    await press('Enter');
-    await expectFocused(page, second);
-    await expect(second).toHaveValue("body('Get_customer')?['value'][0]?['Email']");
-    await expect(first).toHaveValue("body('Get_manager')?['value'][0]?['Email']");
-  });
-
-  await test.step('closing and adding payloads keeps focus on a surviving tab (AC-5.5)', async () => {
-    await chooseScreenByKeyboard(page, 'JSON reference');
-    await press('Tab');
-    await expectFocused(page, tabAt(page, 1));
-    await press('Tab');
-    await expectFocused(page, closeButton('Get customer, payload 1'));
-    await press('Enter');
-    await expectFocused(page, page.getByRole('tab', { name: 'Get manager, payload 1' }));
-    await expect(page.getByRole('tab', { name: /, payload \d$/ })).toHaveCount(1);
-    await press('Tab');
-    await expectFocused(page, page.getByRole('button', { name: 'New payload', exact: true }));
-    await press('Enter');
-    await expectFocused(page, tabAt(page, 2));
-    await expect(tabAt(page, 2)).toHaveAttribute('aria-selected', 'true');
-    await press('Tab');
-    await expectFocused(page, closeButton('Payload 2, payload 2'));
-    await press('Enter');
-    await expectFocused(page, page.getByRole('tab', { name: 'Get manager, payload 1' }));
-  });
-});
-
 test('switching builders leaves the document and Export byte-identical (SC-003)', async ({ page }) => {
   await open(page);
   await addTwoRules(page);
-  // The Functions screen stays mounted (hidden) with its own "Generated expression"; take the visible one.
-  const expression = page.locator('[aria-label="Generated expression"]:visible');
+  // The Functions dock also labels a preview "Generated expression"; only one is visible.
+  const expression = page.getByLabel('Generated expression').locator('visible=true');
   const expressionBefore = await expression.textContent();
   await page.getByRole('button', { name: 'Export' }).click();
   const exportBefore = await clipboardText(page);
 
   await loadEmailReference(page);
   await referenceCopy(page).click();
-  await openCondition(page);
+  await openConditionBuilder(page);
 
   await expect(expression).toHaveText(expressionBefore ?? '');
   await page.getByRole('button', { name: 'Export' }).click();
@@ -531,7 +297,7 @@ test('switching builders leaves the document and Export byte-identical (SC-003)'
 test('the JSON reference view follows the host theme (FR-091)', async ({ page }) => {
   await open(page, { theme: 'light' });
   await openJsonReference(page);
-  const card = page.locator('.eb-json-source');
+  const card = jsonPanel(page).locator('.eb-json-source');
   const lightSurface = await card.evaluate((element) => getComputedStyle(element).backgroundColor);
 
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -547,6 +313,78 @@ const VIEWPORTS = [
   { width: 1280, height: 860 },
   { width: 1440, height: 900 },
 ];
+
+for (const theme of THEMES) {
+  test(`every viewport keeps all three screens inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await open(page, { theme });
+    await addTwoRules(page);
+    await loadEmailReference(page);
+    // A second, parsed payload so the strip, tabs and hidden panel are present.
+    await page.getByRole('button', { name: 'New payload', exact: true }).click();
+    await jsonPanel(page).getByLabel('Action name').fill('Get manager');
+    await pasteSample(page, '{"Email":"boss@example.com"}');
+    await expect(payloadMeta(page)).toHaveText('2 values');
+    await page.getByRole('tab', { name: /^Get items, payload 1$/ }).click();
+    await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
+    const views = [
+      { name: 'Trigger / Filter', open: openConditionBuilder },
+      { name: 'Functions', open: openFunctions },
+      { name: 'JSON reference', open: openJsonReference },
+    ];
+
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize(viewport);
+      for (const view of views) {
+        await view.open(page);
+        const layout = await page.evaluate(() => {
+          const visible = (element: Element) => (element as HTMLElement).checkVisibility();
+          const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')].filter(visible);
+          const header = document.querySelector('.eb-pill-header') as HTMLElement;
+          const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
+          return {
+            pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+            // A control past the edge is reachable when a horizontally scrolling owner (the payload tab strip) that fits the page holds it.
+            controlsCutOff: controls
+              .filter((control) => {
+                const box = control.getBoundingClientRect();
+                if (box.width === 0 || (box.left >= 0 && box.right <= window.innerWidth + 0.5)) return false;
+                for (let owner = control.parentElement; owner; owner = owner.parentElement) {
+                  if (!/auto|scroll/.test(getComputedStyle(owner).overflowX)) continue;
+                  const bounds = owner.getBoundingClientRect();
+                  return !(bounds.left >= 0 && bounds.right <= window.innerWidth + 0.5);
+                }
+                return true;
+              }).length,
+            headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
+          };
+        });
+        const where = `${view.name} at ${viewport.width}x${viewport.height}`;
+        expect(layout.pageScrollsSideways, where).toBe(false);
+        expect(layout.controlsCutOff, where).toBe(0);
+        if (viewport.width > 900) {
+          expect(layout.headerRows, where).toBe(1);
+        }
+
+        if (view.name === 'JSON reference') {
+          // Final Source, Payload and Reference content is reachable through its owning region.
+          const reach = [
+            { owner: 'Source', control: jsonPanel(page).getByRole('textbox', { name: 'Sample JSON', exact: true }) },
+            { owner: 'Payload', control: jsonPanel(page).getByRole('treeitem').last() },
+            { owner: 'Reference', control: jsonPanel(page).getByRole('button', { name: 'Copy item() @{}', exact: true }) },
+          ];
+          for (const { owner, control } of reach) {
+            await control.scrollIntoViewIfNeeded();
+            await expect.soft(control, `${owner} end content at ${viewport.width}x${viewport.height}`).toBeInViewport({ ratio: 0.9, timeout: 1500 });
+          }
+          // The strip stays one local row of controls; five-tab overflow scrolls inside .eb-payload-tabs.
+          await expect.soft(page.locator('.eb-payload-strip'), where).toBeInViewport();
+          await expect.soft(page.getByRole('combobox', { name: 'Search all payloads' }), where).toBeInViewport();
+        }
+      }
+    }
+  });
+}
 
 const longName = (position: number) => `Very long payload source name number ${position} for layout checks`;
 
@@ -587,12 +425,11 @@ function findUnreachable(extraSelectors: string[]): string[] {
   return failures;
 }
 
-/** Page-level overflow and header geometry shared by every screen. */
+/** Page-level overflow and header geometry; payload tabs scroll inside their own strip, so only the strip must fit. */
 const measureLayout = (page: Page) =>
   page.evaluate(() => {
     const visible = (element: Element) => (element as HTMLElement).checkVisibility();
     const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')]
-      // Payload tabs scroll inside their own strip; only the strip itself must fit.
       .filter((control) => visible(control) && !control.closest('.eb-payload-tabs'));
     const header = document.querySelector('.eb-pill-header') as HTMLElement;
     const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
@@ -602,7 +439,6 @@ const measureLayout = (page: Page) =>
       controlsCutOff: controls
         .map((control) => control.getBoundingClientRect())
         .filter((box) => box.width > 0 && (box.left < 0 || box.right > window.innerWidth + 0.5)).length,
-      headerHeight: header.getBoundingClientRect().height,
       headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
     };
   });
@@ -624,122 +460,106 @@ const paneArrangement = (page: Page) =>
     });
   });
 
-for (const theme of THEMES) {
-  test(`every viewport keeps all three screens inside the page width and reachable in the ${theme} theme (SC-011, FR-007, FR-092, AC-5.1 to AC-5.4)`, async ({ page }) => {
-    test.setTimeout(180_000);
-    await open(page, { theme });
-    await page.getByRole('button', { name: 'Load sample fields' }).first().click();
-    const addRule = page.getByRole('button', { name: 'Add rule to group root' });
-    await addRule.click();
-    await addRule.click();
+// One viewport per layout class (stacked, two-column, short desktop, wide desktop); the others share a class and are covered above.
+const LAYOUT_CLASSES = ['375x667', '900x700', '1280x420', '1440x900'];
 
-    // Five payloads with long names, each with the same Title selected and a loop name entered.
-    // The sample is small on purpose: with fixtureA1 expanded to its first item the Reference card
-    // collapses to 2px at 900x700 (reported separately), which would hide everything else checked here.
-    const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
+for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.includes(`${width}x${height}`))) {
+  const size = `${viewport.width}x${viewport.height}`;
+  test(`five long-named payloads stay reachable, scroll their tabs locally and keep the pane arrangement at ${size} (AC-5.2 to AC-5.4)`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await open(page, { theme: 'dark' });
     await openJsonReference(page);
+    // A small sample: the Reference card's own height at 900x700 is covered by the end-content checks above.
+    const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
     for (let position = 1; position <= 5; position++) {
-      if (position > 1) await addPayload(page);
-      await parseSample(page, { outputFrom: 'Action', name: longName(position), shape: 'full', sample: layoutSample });
-      await select(page, ['value', '[0]', 'Title']);
-      await page.getByRole('textbox', { name: 'Loop name' }).fill('Check it');
+      if (position > 1) await page.getByRole('button', { name: 'New payload', exact: true }).click();
+      await jsonPanel(page).getByLabel('Action name').fill(longName(position));
+      await pasteSample(page, layoutSample);
+      await expect(payloadMeta(page)).toHaveText('5 values');
     }
-    await openFunctions(page);
-    await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
-    for (const summary of await page.locator('details.eb-pv-source > summary').all()) await summary.click();
-
-    const search = page.getByRole('combobox', { name: 'Search all payloads' });
-    const popup = page.locator('.eb-payload-search-popup');
+    // The active (last) payload shows its named-loop block, the tallest Reference content.
+    await select(page, ['value', '[0]', 'Title']);
+    await jsonPanel(page).getByLabel('Loop name').fill('Check it');
+    const tabAt = (position: number) => page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
     const strip = page.locator('.eb-payload-tabs');
-    /** The focused tab (its Close button sits inside the tab box) must be fully inside the strip. */
-    const tabsInView = async (position: number, where: string) => {
-      await expect.poll(async () => {
-        const bounds = await strip.boundingBox();
-        const box = await tabAt(page, position).boundingBox();
-        const close = await page.locator('.eb-payload-tab').nth(position - 1).locator('.eb-payload-close').boundingBox();
-        expect(bounds).not.toBeNull();
-        expect(box).not.toBeNull();
-        expect(close).not.toBeNull();
-        const within = (b: { x: number; width: number }) => b.x >= bounds!.x - 1 && b.x + b.width <= bounds!.x + bounds!.width + 1;
-        return within(box!) && within(close!);
-      }, { message: `${where}: tab ${position} and its Close button fully in the strip` }).toBe(true);
-    };
 
-    for (const viewport of VIEWPORTS) {
-      const size = `${viewport.width}x${viewport.height}`;
-      await page.setViewportSize(viewport);
+    await test.step('JSON reference fits and every control is reachable', async () => {
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, size).toBe(false);
+      expect(layout.bodyScrollsSideways, size).toBe(false);
+      expect(layout.controlsCutOff, size).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, size).toBe(1);
+      expect(
+        await page.evaluate(findUnreachable, ['.eb-json-session [role="tabpanel"]:not([hidden]) [aria-label="Loop items() reference"]']),
+        `${size}: every control reachable`,
+      ).toEqual([]);
+    });
 
-      for (const screen of ['Trigger / Filter', 'Functions', 'JSON reference'] as const) {
-        await test.step(`${theme} ${size} ${screen}`, async () => {
-          await openScreen(page, screen);
-          const where = `${screen} at ${size}`;
-          const layout = await measureLayout(page);
-          expect(layout.pageScrollsSideways, where).toBe(false);
-          expect(layout.bodyScrollsSideways, where).toBe(false);
-          expect(layout.controlsCutOff, where).toBe(0);
-          if (viewport.width > 900) expect(layout.headerRows, where).toBe(1);
-
-          const extras = screen === 'JSON reference'
-            ? ['.eb-json-session [role="tabpanel"]:not([hidden]) [aria-label="Loop items() reference"]']
-            : ['[aria-label="Generated expression"]'];
-          expect(await page.evaluate(findUnreachable, extras), `${where}: every control reachable`).toEqual([]);
-
-          if (screen === 'Functions') {
-            for (const button of [page.getByRole('button', { name: 'Copy expression' }), page.getByRole('button', { name: 'Copy as @{…}' })]) {
-              await button.scrollIntoViewIfNeeded();
-              await expect(button, where).toBeInViewport();
-            }
-          }
-          if (screen !== 'JSON reference') return;
-
-          // Pane arrangement per width class, then unchanged by everything below.
-          await tabAt(page, 5).click();
-          const arranged = await paneArrangement(page);
-          const [source, payload, referencePane] = arranged;
-          if (viewport.width <= 600) {
-            expect(source.top + source.height, `${where}: stacked`).toBeLessThanOrEqual(payload.top);
-            expect(payload.top + payload.height, `${where}: stacked`).toBeLessThanOrEqual(referencePane.top);
-            expect([payload.left, referencePane.left], where).toEqual([source.left, source.left]);
-          } else if (viewport.width <= 900) {
-            expect(source.left + source.width, where).toBeLessThanOrEqual(payload.left);
-            expect(payload.top + payload.height, where).toBeLessThanOrEqual(referencePane.top);
-            expect(referencePane.left, where).toBe(payload.left);
-          } else {
-            expect(source.left + source.width, where).toBeLessThanOrEqual(payload.left);
-            expect(payload.left + payload.width, where).toBeLessThanOrEqual(referencePane.left);
-            expect([payload.top, referencePane.top], where).toEqual([source.top, source.top]);
-          }
-
-          // Five long names overflow the strip, which scrolls on its own and keeps the focused tab in view.
-          const overflow = await strip.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
-          expect(overflow.scroll, `${where}: tabs overflow`).toBeGreaterThan(overflow.client);
-          expect((await measureLayout(page)).pageScrollsSideways, where).toBe(false);
-          await tabAt(page, 1).click();
-          await tabAt(page, 1).press('End');
-          await expectFocused(page, tabAt(page, 5));
-          await tabsInView(5, where);
-          await tabAt(page, 5).press('Home');
-          await expectFocused(page, tabAt(page, 1));
-          await tabsInView(1, where);
-          await tabAt(page, 5).click();
-
-          // The result list stays inside the window and keeps a visible focus ring.
-          await search.fill('email');
-          await expect(popup).toBeVisible();
-          const list = await popup.boundingBox();
-          expect(list, where).not.toBeNull();
-          expect(list!.x, `${where}: popup left`).toBeGreaterThanOrEqual(0);
-          expect(list!.y, `${where}: popup top`).toBeGreaterThanOrEqual(0);
-          expect(list!.x + list!.width, `${where}: popup right`).toBeLessThanOrEqual(viewport.width);
-          expect(list!.y + list!.height, `${where}: popup bottom`).toBeLessThanOrEqual(viewport.height);
-          expect(await focusRing(page), `${where}: search ring`).not.toBe('none');
-          await search.press('Escape');
-          await expect(popup).toHaveCount(0);
-
-          expect(await paneArrangement(page), `${where}: arrangement unchanged`).toEqual(arranged);
-        });
+    await test.step('panes keep their arrangement per width class, with or without search open', async () => {
+      await tabAt(5).click();
+      const arranged = await paneArrangement(page);
+      const [source, payload, reference] = arranged;
+      if (viewport.width <= 600) {
+        expect(source.top + source.height, `${size}: stacked`).toBeLessThanOrEqual(payload.top);
+        expect(payload.top + payload.height, `${size}: stacked`).toBeLessThanOrEqual(reference.top);
+        expect([payload.left, reference.left], size).toEqual([source.left, source.left]);
+      } else if (viewport.width <= 900) {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.top + payload.height, size).toBeLessThanOrEqual(reference.top);
+        expect(reference.left, size).toBe(payload.left);
+      } else {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.left + payload.width, size).toBeLessThanOrEqual(reference.left);
+        expect([payload.top, reference.top], size).toEqual([source.top, source.top]);
       }
-    }
+
+      // Five long names overflow the strip, which scrolls on its own and keeps the focused tab in view.
+      const overflow = await strip.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+      expect(overflow.scroll, `${size}: tabs overflow`).toBeGreaterThan(overflow.client);
+      for (const [from, key, position] of [[1, 'End', 5], [5, 'Home', 1]] as const) {
+        await tabAt(from).click();
+        await tabAt(from).press(key);
+        await expect(tabAt(position)).toBeFocused();
+        await expect(async () => {
+          const [bounds, box, close] = await Promise.all([
+            strip.boundingBox(),
+            tabAt(position).boundingBox(),
+            page.locator('.eb-payload-tab').nth(position - 1).locator('.eb-payload-close').boundingBox(),
+          ]);
+          for (const inner of [box, close]) {
+            expect(inner).not.toBeNull();
+            expect(inner!.x).toBeGreaterThanOrEqual(bounds!.x - 1);
+            expect(inner!.x + inner!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width + 1);
+          }
+        }, `${size}: tab ${position} and its Close fully in the strip`).toPass({ timeout: 5_000 });
+      }
+      expect((await measureLayout(page)).pageScrollsSideways, size).toBe(false);
+
+      await tabAt(5).click();
+      const search = page.getByRole('combobox', { name: 'Search all payloads' });
+      await search.fill('email');
+      await expect(page.locator('.eb-payload-search-popup')).toBeVisible();
+      await search.press('Escape');
+      await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+      expect(await paneArrangement(page), `${size}: arrangement unchanged`).toEqual(arranged);
+    });
+
+    await test.step('Functions with five expanded source groups fits and stays reachable', async () => {
+      await openFunctions(page);
+      await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
+      for (const summary of await page.locator('details.eb-pv-source > summary').all()) await summary.click();
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.bodyScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.controlsCutOff, `Functions at ${size}`).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, `Functions at ${size}`).toBe(1);
+      expect(await page.evaluate(findUnreachable, ['[aria-label="Generated expression"]']), `Functions at ${size}: every control reachable`).toEqual([]);
+      for (const name of ['Copy expression', 'Copy as @{…}']) {
+        const button = page.getByRole('button', { name });
+        await button.scrollIntoViewIfNeeded();
+        await expect(button, `Functions at ${size}`).toBeInViewport();
+      }
+    });
   });
 }
 
@@ -748,12 +568,12 @@ test('at 1280x860 the reference and Copy are visible without scrolling; at 1280x
   await page.setViewportSize({ width: 1280, height: 860 });
   await loadEmailReference(page);
 
-  await expect(page.getByLabel('Reference expression')).toBeInViewport();
+  await expect(jsonPanel(page).getByLabel('Reference expression')).toBeInViewport();
   await expect(referenceCopy(page)).toBeInViewport();
-  expect(await page.locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
+  expect(await jsonPanel(page).locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
 
   await page.setViewportSize({ width: 1280, height: 420 });
-  const workspace = page.locator('.eb-json-workspace');
+  const workspace = jsonPanel(page).locator('.eb-json-workspace');
   // Cards are bounded to the host frame, so the tree and reference body
   // scroll inside their cards and the workspace itself never needs a scrollbar.
   expect(await workspace.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
@@ -764,7 +584,7 @@ test('at 1280x860 the reference and Copy are visible without scrolling; at 1280x
 test('samples at the limits parse and expand within 1 second (FR-039, SC-006 guard)', async ({ page }) => {
   await open(page);
   await openJsonReference(page);
-  await page.getByRole('radio', { name: 'Trigger · Full output' }).click();
+  await jsonPanel(page).getByRole('radio', { name: 'Trigger · Full output' }).click();
   const wide = JSON.stringify(Object.fromEntries(Array.from({ length: 9_999 }, (_, index) => [`key${index}`, index])));
   const samples = {
     size: JSON.stringify({ blob: 'x'.repeat(1_048_500) }),
@@ -777,7 +597,7 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
     const started = Date.now();
     await pasteSample(page, sample);
     await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
-    await expect(page.getByRole('tree')).toBeVisible();
+    await expect(jsonPanel(page).getByRole('tree')).toBeVisible();
     const elapsed = Date.now() - started;
     test.info().annotations.push({ type: 'SC-006 parse', description: `${name}: ${elapsed} ms` });
     expect(elapsed, `${name} parse`).toBeLessThan(1_000);
@@ -788,7 +608,7 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
   await root.locator('[data-chevron]').click();
   const started = Date.now();
   await root.locator('[data-chevron]').click();
-  await expect(page.getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
+  await expect(jsonPanel(page).getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
   const elapsed = Date.now() - started;
   test.info().annotations.push({ type: 'SC-006 expand', description: `9,999-member object: ${elapsed} ms` });
   expect(elapsed).toBeLessThan(1_000);

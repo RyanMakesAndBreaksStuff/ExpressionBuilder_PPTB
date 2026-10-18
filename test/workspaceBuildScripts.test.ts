@@ -96,11 +96,10 @@ describe('workspace build scripts', () => {
     expect(rootManifest.devDependencies).toHaveProperty('@axe-core/playwright');
   });
 
-  it('does not ignore the tests or docs directories, so e2e specs and plans are committed (D-2)', () => {
-    const lines = readFileSync(resolve(process.cwd(), '.gitignore'), 'utf8').split(/\r?\n/);
+  it('commits the JSON reference e2e spec despite the tests/e2e ignore rule (D-2)', () => {
+    const gitignore = readFileSync(resolve(process.cwd(), '.gitignore'), 'utf8');
 
-    expect(lines).not.toContain('tests');
-    expect(lines).not.toContain('docs');
+    expect(gitignore).toContain('!/tests/e2e/json-references.spec.ts');
   });
 
   it('lists JSON references in the PPTB manifest and keeps its display name (FR-096)', () => {

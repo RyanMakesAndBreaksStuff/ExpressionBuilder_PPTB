@@ -32,7 +32,9 @@ export interface ParsedValueGroup {
 export interface ParsedValueList {
   sources: ParsedValueGroup[];
   visibleCount: number;
+  /** Matching leaves past the shared cap. */
   hiddenCount: number;
+  /** Set when there are no sources, explaining why. */
   emptyMessage: string | null;
 }
 

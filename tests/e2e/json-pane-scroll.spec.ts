@@ -2,6 +2,19 @@ import { expect, test, type Locator, type Page } from 'playwright/test';
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
+async function pasteSample(page: Page, text: string): Promise<void> {
+  await page.evaluate(
+    (value) => navigator.clipboard.writeText(value),
+    text,
+  );
+  const editor = page.getByRole('textbox', {
+    name: 'Sample JSON',
+    exact: true,
+  });
+  await editor.focus();
+  await editor.press('Control+V');
+}
+
 const sample = {
   statusCode: 200,
   headers: { 'Content-Type': 'application/json' },
@@ -14,14 +27,6 @@ const sample = {
   },
 };
 
-/** Pastes through the real clipboard into the Sample JSON textarea. */
-async function pasteSample(page: Page, text: string): Promise<void> {
-  await page.evaluate((value) => navigator.clipboard.writeText(value), text);
-  const editor = page.getByRole('textbox', { name: 'Sample JSON', exact: true });
-  await editor.focus();
-  await editor.press('Control+V');
-}
-
 async function expectInside(owner: Locator, target: Locator): Promise<void> {
   const port = await owner.boundingBox();
   const item = await target.boundingBox();
@@ -31,20 +36,22 @@ async function expectInside(owner: Locator, target: Locator): Promise<void> {
   expect(item!.y + item!.height).toBeLessThanOrEqual(port!.y + port!.height + 1);
 }
 
-/** Names the active payload, pastes the sample, then selects the first item's first field and names its loop. */
+/** Names the active payload, pastes the sample, then selects the first item and names its loop. */
 async function loadSample(page: Page, name: string): Promise<void> {
-  await page.getByRole('textbox', { name: 'Action name' }).fill(name);
+  const panel = page.getByRole('tabpanel');
+  await panel.getByLabel('Action name').fill(name);
   await pasteSample(page, JSON.stringify(sample));
-  await expect(page.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta')).toHaveText(/^\d+ values?$/);
+  await expect(panel.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'))
+    .toHaveText(/^\d+ values?$/);
 
   for (const label of [/^body, object$/, /^value, array$/, /^\[0\], object$/]) {
-    const row = page.getByRole('treeitem', { name: label });
+    const row = panel.getByRole('treeitem', { name: label });
     if (await row.getAttribute('aria-expanded') === 'false') {
       await row.locator('[data-chevron]').click();
     }
   }
-  await page.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
-  await page.getByRole('textbox', { name: 'Loop name' }).fill('Check it');
+  await panel.getByRole('treeitem', { name: /^\[0\], object$/ }).click();
+  await panel.getByLabel('Loop name').fill('Check it');
 }
 
 for (const theme of ['light', 'dark'] as const) {
@@ -63,31 +70,32 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('http://127.0.0.1:5173/');
       await page.getByRole('button', { name: /^Screen:/ }).click();
       await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
-      // Two payloads, so one tabpanel stays mounted but hidden and every query below must be scoped to the visible one.
+      // Two loaded payloads: only the active tabpanel is visible, so each check below is scoped to it.
       await loadSample(page, 'List Rows');
       await page.getByRole('button', { name: 'New payload', exact: true }).click();
       await loadSample(page, 'List Rows Again');
 
       for (const position of [2, 1]) await test.step('payload ' + position + ' is active', async () => {
         await page.getByRole('tab', { name: new RegExp(', payload ' + position + '$') }).click();
-        const pane = page.getByRole('tabpanel');
-        await expect(pane).toHaveCount(1);
+        const panel = page.getByRole('tabpanel');
+        await expect(panel).toHaveCount(1);
+        await expect(panel.getByLabel('Action name')).toHaveValue(position === 1 ? 'List Rows' : 'List Rows Again');
 
-        const workspace = pane.locator('.eb-json-workspace');
+        const workspace = panel.locator('.eb-json-workspace');
         const cards = [
-          pane.locator('.eb-json-source'),
-          pane.locator('.eb-json-payload'),
-          pane.locator('.eb-json-reference'),
+          panel.locator('.eb-json-source'),
+          panel.locator('.eb-json-payload'),
+          panel.locator('.eb-json-reference'),
         ];
         const owners = [
-          pane.locator('.eb-json-source > .eb-json-card-body'),
-          pane.locator('.eb-payload-tree'),
-          pane.locator('.eb-json-reference > .eb-json-card-body'),
+          panel.locator('.eb-json-source > .eb-json-card-body'),
+          panel.locator('.eb-payload-tree'),
+          panel.locator('.eb-json-reference > .eb-json-card-body'),
         ];
         const targets = [
-          page.getByRole('textbox', { name: 'Sample JSON', exact: true }),
-          page.getByRole('treeitem').last(),
-          pane.locator('[aria-label="Loop items() reference"]'),
+          panel.getByRole('textbox', { name: 'Sample JSON', exact: true }),
+          panel.getByRole('treeitem').last(),
+          panel.getByLabel('Loop items() reference'),
         ];
 
         if (size.width > 600) {

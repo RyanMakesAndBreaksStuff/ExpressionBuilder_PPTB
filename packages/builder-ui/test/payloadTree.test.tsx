@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,7 +10,10 @@ import {
   jsonReferenceReducer,
   type JsonReferenceState,
 } from '../src/workbench/jsonReferenceState';
-import { createJsonPayloadSession, jsonPayloadSessionReducer } from '../src/workbench/jsonPayloadSession';
+import {
+  createJsonPayloadSession,
+  jsonPayloadSessionReducer,
+} from '../src/workbench/jsonPayloadSession';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
 afterEach(() => cleanup());
@@ -178,56 +181,58 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
     ]);
   });
 
-  it('focuses and selects a revealed row beyond the first page', () => {
-    let session = createJsonPayloadSession();
-    session = jsonPayloadSessionReducer(session, {
+  it('focuses and selects a revealed row past the array page, once per sequence', () => {
+    const initial = createJsonPayloadSession();
+    const pasted = jsonPayloadSessionReducer(initial, {
       type: 'edit',
-      payloadId: session.activeId,
+      payloadId: initial.activeId,
       action: {
         type: 'pasteAndParse',
         defaultActionName: 'Action',
         text: JSON.stringify(Array.from({ length: 30 }, (_, index) => index)),
       },
     });
-    const payload = session.payloads[0];
-    const view = (current: typeof session) => {
-      const state = current.payloads[0].state;
-      return (
-        <>
-          <h2 id="payload-heading">Payload</h2>
-          <PayloadTree
-            labelledBy="payload-heading"
-            value={state.parsed!.value}
-            rootLabel="triggerBody()"
-            expanded={state.expanded}
-            showAll={state.showAll}
-            selectedPath={state.selectedPath}
-            reveal={current.reveal}
-            onSelect={() => undefined}
-            onToggle={() => undefined}
-            onShowAll={() => undefined}
-          />
-        </>
-      );
-    };
-    const { rerender } = render(view(session));
-    expect(screen.queryByRole('treeitem', { name: /^\[24\], number, 24$/ })).toBeNull();
-
-    session = jsonPayloadSessionReducer(session, {
+    const parsed = pasted.payloads[0].state.parsed!;
+    const session = jsonPayloadSessionReducer(pasted, {
       type: 'reveal',
       match: {
-        payloadId: payload.id,
-        parsed: payload.state.parsed!,
+        payloadId: initial.activeId,
+        parsed,
         path: [24],
-        payloadLabel: 'Action',
+        payloadLabel: 'Payload 1',
         pathLabel: '[24]',
         preview: '24',
       },
     });
-    act(() => rerender(view(session)));
+    const state = session.payloads[0].state;
+    const tree = (reveal: typeof session.reveal) => (
+      <>
+        <button type="button">Elsewhere</button>
+        <h2 id="payload-heading">Payload</h2>
+        <PayloadTree
+          labelledBy="payload-heading"
+          value={parsed.value}
+          rootLabel="triggerBody()"
+          expanded={state.expanded}
+          showAll={state.showAll}
+          selectedPath={state.selectedPath}
+          onSelect={() => undefined}
+          onToggle={() => undefined}
+          onShowAll={() => undefined}
+          reveal={reveal}
+        />
+      </>
+    );
+    const view = render(tree(null));
+    const row = () => item(/^\[24\], number, 24$/);
+    expect(row()).toHaveAttribute('aria-selected', 'true');
+    expect(row()).not.toHaveFocus();
 
-    const row = item(/^\[24\], number, 24$/);
-    expect(row).toHaveFocus();
-    expect(row).toHaveAttribute('aria-selected', 'true');
+    view.rerender(tree(session.reveal));
+    expect(row()).toHaveFocus();
+
+    screen.getByRole('button', { name: 'Elsewhere' }).focus();
+    view.rerender(tree(session.reveal));
+    expect(row()).not.toHaveFocus();
   });
 });

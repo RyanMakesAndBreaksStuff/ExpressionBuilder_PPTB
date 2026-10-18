@@ -16,6 +16,7 @@ import { FunctionsStatusCards } from './FunctionsStatusCards';
 
 export interface FunctionsWorkspaceProps {
   adapter: PlatformAdapter;
+  /** Every successfully parsed JSON reference payload; empty before a parse. */
   sources: readonly ParsedValueSource[];
 }
 

@@ -4,6 +4,7 @@ import type { ParsedValueEntry } from './parsedValueModel';
 export interface ParsedValueEntriesProps {
   entries: readonly ParsedValueEntry[];
   baseId: string;
+  /** Names the source when several payloads are listed. */
   descriptionPrefix?: string;
   onInsertReference: (expression: string) => void;
 }

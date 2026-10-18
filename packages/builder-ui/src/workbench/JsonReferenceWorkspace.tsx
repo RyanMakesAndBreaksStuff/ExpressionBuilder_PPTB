@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
+import type { PayloadReveal } from "./jsonPayloadSession";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
@@ -13,7 +14,6 @@ import {
 	type JsonReferenceState,
 } from "./jsonReferenceState";
 import { countLabel } from "./payloadTreeModel";
-import type { PayloadReveal } from "./jsonPayloadSession";
 
 interface JsonReferenceWorkspaceProps {
 	adapter: PlatformAdapter;
@@ -109,7 +109,7 @@ interface PayloadPanelProps {
 	reveal?: PayloadReveal | null;
 }
 
-function PayloadPanel({ dispatch, state, reveal }: PayloadPanelProps) {
+function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
 	const status = parseStatus(state);
@@ -141,10 +141,10 @@ function PayloadPanel({ dispatch, state, reveal }: PayloadPanelProps) {
 					expanded={state.expanded}
 					showAll={state.showAll}
 					selectedPath={state.selectedPath}
-					reveal={reveal}
 					onSelect={(path) => dispatch({ type: "select", path })}
 					onToggle={(key) => dispatch({ type: "toggleExpanded", key })}
 					onShowAll={(key) => dispatch({ type: "showAll", key })}
+					reveal={reveal}
 				/>
 			) : (
 				<div className="eb-json-empty">

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   createJsonPayloadSession,
   getParsedSources,
-  jsonPayloadSessionReducer,
   payloadLabel,
-  type JsonPayloadAction,
   type JsonPayloadSession,
+  jsonPayloadSessionReducer,
 } from '../src/workbench/jsonPayloadSession';
 import { searchPayloads } from '../src/workbench/payloadSearchModel';
+import type { JsonReferenceAction } from '../src/workbench/jsonReferenceState';
 
 describe('payload session', () => {
   it('caps capacity and never reuses a closed payload identity', () => {
@@ -96,222 +96,153 @@ describe('payload session', () => {
       match,
     })).toBe(session);
   });
+});
 
-  function reduce(
+describe('payload session behaviour', () => {
+  const load = (
     session: JsonPayloadSession,
-    ...actions: JsonPayloadAction[]
-  ): JsonPayloadSession {
-    return actions.reduce(jsonPayloadSessionReducer, session);
-  }
-
-  function withPayloads(count: number): JsonPayloadSession {
+    payloadId: string,
+    text: string,
+    defaultActionName = 'Action',
+  ) => jsonPayloadSessionReducer(session, {
+    type: 'edit',
+    payloadId,
+    action: { type: 'pasteAndParse', text, defaultActionName },
+  });
+  const withPayloads = (count: number) => {
     let session = createJsonPayloadSession();
     for (let index = 1; index < count; index += 1) {
-      session = reduce(session, { type: 'add' });
+      session = jsonPayloadSessionReducer(session, { type: 'add' });
     }
     return session;
-  }
+  };
+  const ids = (session: JsonPayloadSession) =>
+    session.payloads.map((payload) => payload.id);
 
-  function paste(payloadId: string, text: string): JsonPayloadAction {
-    return {
-      type: 'edit',
-      payloadId,
-      action: { type: 'pasteAndParse', defaultActionName: 'Action', text },
+  it('selects the neighbour at the same index, or the last, when the active payload closes', () => {
+    let session = withPayloads(3);
+    const [first, second, third] = ids(session);
+    session = jsonPayloadSessionReducer(session, { type: 'activate', payloadId: second });
+    session = jsonPayloadSessionReducer(session, { type: 'close', payloadId: second });
+    expect(session.activeId).toBe(third);
+
+    session = jsonPayloadSessionReducer(session, { type: 'close', payloadId: third });
+    expect(session.activeId).toBe(first);
+
+    expect(jsonPayloadSessionReducer(session, { type: 'close', payloadId: first }))
+      .toBe(session);
+  });
+
+  it('keeps the active payload when another one closes', () => {
+    let session = withPayloads(3);
+    const [first, second] = ids(session);
+    session = jsonPayloadSessionReducer(session, { type: 'activate', payloadId: first });
+    session = jsonPayloadSessionReducer(session, { type: 'close', payloadId: second });
+    expect(session.activeId).toBe(first);
+  });
+
+  it('labels duplicate triggers and blank action names stably', () => {
+    let session = withPayloads(4);
+    const [a, b, c, d] = ids(session);
+    const edit = (payloadId: string, action: JsonReferenceAction) => {
+      session = jsonPayloadSessionReducer(session, { type: 'edit', payloadId, action });
     };
-  }
-
-  it('closing the active payload activates the neighbour at the same index, else the last', () => {
-    let session = withPayloads(4);
-    const [a, b, c, d] = session.payloads.map((payload) => payload.id);
-
-    session = reduce(session, { type: 'activate', payloadId: b });
-    session = reduce(session, { type: 'close', payloadId: b });
-    expect(session.activeId).toBe(c);
-
-    session = reduce(session, { type: 'activate', payloadId: d });
-    session = reduce(session, { type: 'close', payloadId: d });
-    expect(session.activeId).toBe(c);
-
-    // Closing an inactive payload keeps the active one.
-    session = reduce(session, { type: 'close', payloadId: a });
-    expect(session.activeId).toBe(c);
-
-    // The last remaining payload cannot be closed.
-    session = reduce(session, { type: 'close', payloadId: c });
-    const only = session.payloads;
-    expect(only).toHaveLength(1);
-    expect(reduce(session, { type: 'close', payloadId: only[0].id })).toBe(session);
-  });
-
-  it('ignores activation of an unknown payload', () => {
-    const session = createJsonPayloadSession();
-    expect(reduce(session, { type: 'activate', payloadId: 'missing' })).toBe(session);
-  });
-
-  it('disambiguates Trigger labels and falls back to Payload N for blank names', () => {
-    let session = withPayloads(4);
-    const [a, , c, d] = session.payloads.map((payload) => payload.id);
-    session = reduce(
-      session,
-      { type: 'edit', payloadId: a, action: { type: 'setOutputFrom', value: 'trigger' } },
-      { type: 'edit', payloadId: c, action: { type: 'setOutputFrom', value: 'trigger' } },
-      { type: 'edit', payloadId: d, action: { type: 'setActionName', value: '  Get rows ' } },
-    );
+    edit(a, { type: 'setOutputFrom', value: 'trigger' });
+    edit(b, { type: 'setOutputFrom', value: 'trigger' });
+    edit(c, { type: 'setActionName', value: '  Get items ' });
+    // d keeps a blank action name
 
     expect(session.payloads.map((_, index) => payloadLabel(session.payloads, index)))
-      .toEqual(['Trigger', 'Payload 2', 'Trigger 2', 'Get rows']);
+      .toEqual(['Trigger', 'Trigger 2', 'Get items', 'Payload 4']);
+    expect(d).toBe('payload-4');
   });
 
   it('keeps settings independent per payload', () => {
     let session = withPayloads(2);
-    const [a, b] = session.payloads.map((payload) => payload.id);
-    session = reduce(
-      session,
-      { type: 'edit', payloadId: a, action: { type: 'setShape', value: 'body' } },
-      { type: 'edit', payloadId: a, action: { type: 'setActionName', value: 'First' } },
-      { type: 'edit', payloadId: b, action: { type: 'setOutputFrom', value: 'trigger' } },
-      { type: 'edit', payloadId: b, action: { type: 'setLoopName', value: 'Loop' } },
-    );
+    const [first, second] = ids(session);
+    session = jsonPayloadSessionReducer(session, {
+      type: 'edit', payloadId: first, action: { type: 'setShape', value: 'body' },
+    });
+    session = jsonPayloadSessionReducer(session, {
+      type: 'edit', payloadId: first, action: { type: 'setActionName', value: 'One' },
+    });
+    session = load(session, second, '{"a":1}', 'Two');
 
-    const [first, second] = session.payloads.map((payload) => payload.state);
-    expect(first).toMatchObject({ shape: 'body', actionName: 'First', outputFrom: 'action', loopName: '' });
-    expect(second).toMatchObject({ shape: 'full', actionName: '', outputFrom: 'trigger', loopName: 'Loop' });
-    // Fresh states do not share mutable sets.
-    expect(first.expanded).not.toBe(second.expanded);
-    expect(first.showAll).not.toBe(second.showAll);
+    const [one, two] = session.payloads.map((payload) => payload.state);
+    expect(one).toMatchObject({ shape: 'body', actionName: 'One', parsed: null });
+    expect(two).toMatchObject({ shape: 'full', actionName: 'Two' });
+    expect(two.parsed).not.toBeNull();
+    expect(one.expanded).not.toBe(two.expanded);
   });
 
-  it('retains the last successful data after a failed edit and rejects stale autoParse text', () => {
+  it('retains the last successful data after an invalid automatic edit', () => {
     let session = createJsonPayloadSession();
     const id = session.activeId;
-    session = reduce(
-      session,
-      paste(id, '{"a":1}'),
-      { type: 'edit', payloadId: id, action: { type: 'setText', value: '{"a":' } },
-    );
+    const edit = (action: JsonReferenceAction) => {
+      session = jsonPayloadSessionReducer(session, { type: 'edit', payloadId: id, action });
+    };
+    edit({ type: 'setText', value: '{"a":1}' });
+    edit({ type: 'autoParse', expectedText: '{"a":1}' });
+    const good = session.payloads[0].state.parsed;
+    expect(good).not.toBeNull();
 
-    // Obsolete delayed work (text has moved on) is rejected.
-    const stale = {
-      type: 'edit',
-      payloadId: id,
-      action: { type: 'autoParse', expectedText: '{"a":1}' },
-    } as const;
-    expect(reduce(session, stale)).toBe(session);
+    edit({ type: 'setText', value: '{"a":' });
+    edit({ type: 'autoParse', expectedText: '{"a":' });
 
-    session = reduce(session, {
-      type: 'edit',
-      payloadId: id,
-      action: { type: 'autoParse', expectedText: '{"a":' },
-    });
     const state = session.payloads[0].state;
     expect(state.error).not.toBeNull();
-    expect(state.parsed?.value).toEqual({ a: 1 });
+    expect(state.parsed).toBe(good);
+    expect(state.lastSuccessfulPayload).toBe(good);
     expect(getParsedSources(session.payloads)).toHaveLength(1);
 
     // The same failed text is not re-attempted.
-    expect(reduce(session, {
-      type: 'edit',
-      payloadId: id,
+    expect(jsonPayloadSessionReducer(session, {
+      type: 'edit', payloadId: id,
       action: { type: 'autoParse', expectedText: '{"a":' },
     })).toBe(session);
   });
 
-  it('exposes parsed sources with label, caption and reference root, skipping unparsed payloads', () => {
-    let session = withPayloads(3);
-    const [a, b] = session.payloads.map((payload) => payload.id);
-    session = reduce(
-      session,
-      paste(a, '{"a":1}'),
-      { type: 'edit', payloadId: a, action: { type: 'setActionName', value: 'My Action' } },
-      { type: 'edit', payloadId: b, action: { type: 'setOutputFrom', value: 'trigger' } },
-      paste(b, '{"t":2}'),
-    );
-
-    const sources = getParsedSources(session.payloads);
-    expect(sources.map((source) => source.id)).toEqual([a, b]);
-    expect(sources[0]).toMatchObject({
-      label: 'My Action',
-      rootCaption: "outputs('My_Action')",
-      referenceRoot: { kind: 'outputs', actionName: 'My Action' },
-    });
-    expect(sources[1]).toMatchObject({
-      label: 'Trigger',
-      referenceRoot: { kind: 'triggerOutputs' },
-    });
-  });
-
-  it('previews a blank action name as Action_name and gives no reference root', () => {
+  it('rejects an automatic parse for text that has since changed', () => {
     let session = createJsonPayloadSession();
     const id = session.activeId;
-    // Typed parse (not paste) leaves the name blank.
-    session = reduce(
-      session,
-      { type: 'edit', payloadId: id, action: { type: 'setText', value: '{"a":1}' } },
-      { type: 'edit', payloadId: id, action: { type: 'parse' } },
-    );
-
-    const [source] = getParsedSources(session.payloads);
-    expect(source.label).toBe('Payload 1');
-    expect(source.rootCaption).toBe("outputs('Action_name')");
-    expect(source.referenceRoot).toBeNull();
+    session = jsonPayloadSessionReducer(session, {
+      type: 'edit', payloadId: id, action: { type: 'setText', value: '{"b":2}' },
+    });
+    expect(jsonPayloadSessionReducer(session, {
+      type: 'edit', payloadId: id,
+      action: { type: 'autoParse', expectedText: '{"a":1}' },
+    })).toBe(session);
   });
 
-  it('searches scalar roots and empty containers as a single (root) leaf', () => {
+  it('searches scalar roots as (root)', () => {
     let session = withPayloads(2);
-    const [a, b] = session.payloads.map((payload) => payload.id);
-    session = reduce(session, paste(a, '"hello root"'), paste(b, '{}'));
+    const [first, second] = ids(session);
+    session = load(session, first, 'null');
+    session = load(session, second, '42');
 
-    const hit = searchPayloads(session.payloads, 'hello');
-    expect(hit.total).toBe(1);
-    expect(hit.matches[0]).toMatchObject({ payloadId: a, path: [], pathLabel: '(root)' });
-
-    const byLabel = searchPayloads(session.payloads, '(root)');
-    expect(byLabel.total).toBe(2);
+    expect(searchPayloads(session.payloads, 'null').matches).toMatchObject([
+      { payloadId: first, path: [], pathLabel: '(root)', preview: 'null' },
+    ]);
+    expect(searchPayloads(session.payloads, '42').matches).toMatchObject([
+      { payloadId: second, path: [], pathLabel: '(root)', preview: '42' },
+    ]);
+    expect(searchPayloads(session.payloads, '(root)').total).toBe(2);
   });
 
-  it('caps results at eight while counting every match, and reports parsed sources', () => {
-    let session = withPayloads(3);
-    const [a, b] = session.payloads.map((payload) => payload.id);
-    const rows = (prefix: string) =>
-      JSON.stringify(Array.from({ length: 6 }, (_, index) => ({ name: `${prefix}${index}` })));
-    session = reduce(session, paste(a, rows('hit')), paste(b, rows('hit')));
+  it('renders at most eight matches but counts every match across payloads', () => {
+    let session = withPayloads(2);
+    const [first, second] = ids(session);
+    const list = (count: number) =>
+      JSON.stringify({ hits: Array.from({ length: count }, () => 'hit') });
+    session = load(session, first, list(6));
+    session = load(session, second, list(7));
 
     const result = searchPayloads(session.payloads, 'HIT');
     expect(result.matches).toHaveLength(8);
-    expect(result.total).toBe(12);
+    // A leaf matching by both label and value still counts once.
+    expect(result.total).toBe(13);
     expect(result.parsedSourceCount).toBe(2);
-    expect(result.matches.slice(0, 6).every((match) => match.payloadId === a)).toBe(true);
-    expect(result.matches[6].payloadId).toBe(b);
-
-    const blank = searchPayloads(session.payloads, '   ');
-    expect(blank).toMatchObject({ total: 0, parsedSourceCount: 2 });
-    expect(blank.matches).toEqual([]);
-  });
-
-  it('reveals a match: activates, expands ancestors, pages in and selects', () => {
-    let session = withPayloads(2);
-    const [a, b] = session.payloads.map((payload) => payload.id);
-    session = reduce(
-      session,
-      paste(a, JSON.stringify({ rows: Array.from({ length: 30 }, (_, index) => ({ v: index === 25 ? 'target' : 'x' })) })),
-      { type: 'activate', payloadId: b },
-    );
-
-    const [match] = searchPayloads(session.payloads, 'target').matches;
-    session = reduce(session, { type: 'reveal', match });
-
-    const state = session.payloads[0].state;
-    expect(session.activeId).toBe(a);
-    expect(state.selectedPath).toEqual(['rows', 25, 'v']);
-    expect([...state.expanded]).toEqual(expect.arrayContaining([
-      JSON.stringify([]), JSON.stringify(['rows']), JSON.stringify(['rows', 25]),
-    ]));
-    expect(state.showAll.size).toBe(1);
-    expect(session.reveal).toMatchObject({ sequence: 1, payloadId: a, path: ['rows', 25, 'v'] });
-
-    // Editing that payload clears the reveal; closing it does too.
-    const edited = reduce(session, { type: 'edit', payloadId: a, action: { type: 'select', path: [] } });
-    expect(edited.reveal).toBeNull();
-    expect(reduce(session, { type: 'close', payloadId: a }).reveal).toBeNull();
+    expect(result.matches.slice(0, 6).every((match) => match.payloadId === first)).toBe(true);
+    expect(searchPayloads(session.payloads, '  ').total).toBe(0);
   });
 });

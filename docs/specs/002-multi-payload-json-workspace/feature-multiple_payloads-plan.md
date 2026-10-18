@@ -1872,7 +1872,7 @@ Extend the browser contract with the viewport and keyboard scenarios below. If a
 
 - [ ] **Step 4: Confirm the signal changed, and nothing else did**
 
-> Pending: item 6 (actual Toolbox clipboard and notification evidence in both host palettes) awaits manual verification. Items 1–5 and 7 verified on the web build: lint, typecheck, test (610), test:e2e (46, with `dev:pptb` running for pptb-smoke), build and `git diff --check` exit 0. Layout fixes for 375×667 tabs and the 900×700 Reference card landed in 63aebf3.
+   > Execution 2026-10-08/14: items 1–5 and 7 verified (lint/typecheck/build/`git diff --check` exit 0; unit 68 files/611 tests; e2e passes except `pptb-smoke`, which needs `dev:pptb` on 5174 that `playwright.config.ts` does not start). 900×700 Reference collapse fixed in `jsonPayloads.css` (`e88b333`). A parallel remote implementation was superseded by merge `7ef9b87`; its 375px tab-width cap and broader AC scenarios were ported. **Item 6 (actual Toolbox load) is pending, so this step stays unchecked.**
 
 Run checks sequentially:
 

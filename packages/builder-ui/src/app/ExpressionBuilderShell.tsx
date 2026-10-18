@@ -45,7 +45,9 @@ import { ShellHeader } from '../workbench/ShellHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
 import { JsonPayloadWorkspace } from '../workbench/JsonPayloadWorkspace';
 import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
-import { createJsonPayloadSession, getParsedSources, jsonPayloadSessionReducer } from '../workbench/jsonPayloadSession';
+import {
+  createJsonPayloadSession, getParsedSources, jsonPayloadSessionReducer,
+} from '../workbench/jsonPayloadSession';
 import type { ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
