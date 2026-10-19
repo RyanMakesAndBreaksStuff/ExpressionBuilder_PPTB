@@ -23,13 +23,13 @@ Two things were cut during specification: there is no host "insert into flow" AP
 
 [`docs/plans/10-01-2026-items-loop-name.md`](docs/plans/10-01-2026-items-loop-name.md) is being implemented on `function-formatter` now (baseline `1a6da08`). This plan builds on its three commits:
 
-| Its change | What this plan does with it |
-|---|---|
-| `JsonReferenceState` gains `loopName` + `setLoopName`; `items()` roots at the loop name, not the source action | T15 hoists the reducer, so `loopName` survives screen switches like every other JSON reference field (FR-4). T3's `currentReferenceRoot` returns the **source** root only — Parsed Value never emits `items()` (FR-21) — and T3 adds a test pinning that split. |
-| `NO_TEXT_ASSISTANCE` becomes a shared export of `jsonReferenceState.ts` | T11 spreads it on argument inputs instead of redefining it. |
-| `ReferencePanel` takes `onLoopNameChange`, wired in `JsonReferenceWorkspace` through `dispatch` | T15 keeps that wiring when `dispatch` becomes a prop. |
-| `PayloadReferenceRoot` widens to `item` / `items`; `buildPathSuffix` is deleted; `formatPayloadReference` formats every reference | T3 already formats through `formatPayloadReference`, so it needs no change. T8 adds an `items('Apply_to_each')?[…]` case so text copied from the new items() block parses as a reference. |
-| `jsonReferenceWorkspace.test.tsx` gains a loop-name case and still renders the workspace standalone | T19 moves every render in that suite, the new case included, onto a reducer harness after T15 hoists the state. |
+| Its change                                                                                                                        | What this plan does with it                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `JsonReferenceState` gains `loopName` + `setLoopName`; `items()` roots at the loop name, not the source action                    | T15 hoists the reducer, so `loopName` survives screen switches like every other JSON reference field (FR-4). T3's `currentReferenceRoot` returns the **source** root only — Parsed Value never emits `items()` (FR-21) — and T3 adds a test pinning that split. |
+| `NO_TEXT_ASSISTANCE` becomes a shared export of `jsonReferenceState.ts`                                                           | T11 spreads it on argument inputs instead of redefining it.                                                                                                                                                                                                     |
+| `ReferencePanel` takes `onLoopNameChange`, wired in `JsonReferenceWorkspace` through `dispatch`                                   | T15 keeps that wiring when `dispatch` becomes a prop.                                                                                                                                                                                                           |
+| `PayloadReferenceRoot` widens to `item` / `items`; `buildPathSuffix` is deleted; `formatPayloadReference` formats every reference | T3 already formats through `formatPayloadReference`, so it needs no change. T8 adds an `items('Apply_to_each')?[…]` case so text copied from the new items() block parses as a reference.                                                                       |
+| `jsonReferenceWorkspace.test.tsx` gains a loop-name case and still renders the workspace standalone                               | T19 moves every render in that suite, the new case included, onto a reducer harness after T15 hoists the state.                                                                                                                                                 |
 
 **Gate.** T3, T11, T15 and T19 start only once the loop plan's Task 3 commit (`Format item()/items() references through formatPayloadReference`) is on the branch. They edit or import from `jsonReferenceState.ts` / `JsonReferenceWorkspace.tsx`, which that plan is editing now. T1, T2, T4, T5, T6 and T7 share no file with it and can start immediately.
 
@@ -39,22 +39,22 @@ Two things were cut during specification: there is no host "insert into flow" AP
 
 **Hard rule: one task per agent.** Each phase below is exactly one agent's whole assignment. An agent owns every file on its `Files:` line and touches nothing else. No two phases in the same wave share a file, so a wave runs fully parallel with zero merge risk.
 
-**Parallelism comes first.** Phases are drawn along file boundaries rather than feature boundaries wherever the spec allows it, and a phase is only pushed to a later wave when it *imports* something a earlier phase produces. Three consequences worth naming:
+**Parallelism comes first.** Phases are drawn along file boundaries rather than feature boundaries wherever the spec allows it, and a phase is only pushed to a later wave when it _imports_ something a earlier phase produces. Three consequences worth naming:
 
-1. **CSS parallelises immediately.** `shell.css` and `functions.css` reference token and class *names*, which this plan fixes up front. They need no compiled artifact, so they start in wave 1 beside the tokens they will consume.
+1. **CSS parallelises immediately.** `shell.css` and `functions.css` reference token and class _names_, which this plan fixes up front. They need no compiled artifact, so they start in wave 1 beside the tokens they will consume.
 2. **The Functions screen is four phases, not one.** The handoff describes four regions (nav, arguments, cards, dock); each becomes its own component, test and agent. This also matches the existing `JsonReferenceWorkspace` + `JsonSourcePane` + `PayloadTree` + `ReferencePanel` split, so it is the established pattern here rather than new structure.
 3. **Suite repair fans out.** Seven suites assert the old header, the tab strip, or a self-owned JSON reference reducer. Five agents repair them at once; T20 holds three files because they carry the same two-line Import change.
 
-| Wave | Phases (all parallel) | Agents | Each blocked by |
-|------|----------------------|:------:|-----------------|
-| **1** | **T1** tokens · **T2** catalog · **T3** parsed-value model · **T4** screen contract test · **T5** `shell.css` · **T6** `functions.css` · **T7** pill header | **7** | — (T3 also the loop plan) |
-| **2** | **T8** argument parser | 1 | T2 |
-| **3** | **T9** functions state | 1 | T2, T8 |
-| **4** | **T10** nav · **T11** arguments panel · **T12** status cards · **T13** dock | **4** | T9 (T10 also T3; T11 also the loop plan) |
-| **5** | **T14** FunctionsWorkspace | 1 | T10–T13 |
-| **6** | **T15** shell wiring, old header retired | 1 | T7, T14, the loop plan |
-| **7** | **T16** `builderSwitching` · **T17** dead CSS + its assertions · **T18** e2e chip switching · **T19** JSON reference workspace harness · **T20** Import via overflow | **5** | T15 |
-| **8** | **T21** integration verification | 1 | T16–T20 |
+| Wave  | Phases (all parallel)                                                                                                                                                | Agents | Each blocked by                          |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: | ---------------------------------------- |
+| **1** | **T1** tokens · **T2** catalog · **T3** parsed-value model · **T4** screen contract test · **T5** `shell.css` · **T6** `functions.css` · **T7** pill header          | **7**  | — (T3 also the loop plan)                |
+| **2** | **T8** argument parser                                                                                                                                               |   1    | T2                                       |
+| **3** | **T9** functions state                                                                                                                                               |   1    | T2, T8                                   |
+| **4** | **T10** nav · **T11** arguments panel · **T12** status cards · **T13** dock                                                                                          | **4**  | T9 (T10 also T3; T11 also the loop plan) |
+| **5** | **T14** FunctionsWorkspace                                                                                                                                           |   1    | T10–T13                                  |
+| **6** | **T15** shell wiring, old header retired                                                                                                                             |   1    | T7, T14, the loop plan                   |
+| **7** | **T16** `builderSwitching` · **T17** dead CSS + its assertions · **T18** e2e chip switching · **T19** JSON reference workspace harness · **T20** Import via overflow | **5**  | T15                                      |
+| **8** | **T21** integration verification                                                                                                                                     |   1    | T16–T20                                  |
 
 21 tasks, 8 waves, peak concurrency 7. Critical path: T2 → T8 → T9 → T11 → T14 → T15 → T17 → T21. T3 waits on the loop plan but has slack until wave 4, so the gate costs no wall-clock time unless the loop plan is still open when T9 finishes.
 
@@ -62,29 +62,29 @@ Two things were cut during specification: there is no host "insert into flow" AP
 
 ### File ownership — no file appears twice in a wave
 
-| Phase | Owns, exclusively |
-|-------|-------------------|
-| T1 | `builder-ui/src/theme/workbenchTokens.ts`, `builder-ui/test/workbenchTokens.test.ts` |
-| T2 | `engine/src/functionCatalog.ts`, `engine/test/functionCatalog.test.ts`, `engine/src/index.ts` |
-| T3 | `builder-ui/src/workbench/parsedValueModel.ts`, `builder-ui/test/parsedValueModel.test.ts`, `builder-ui/src/workbench/jsonReferenceState.ts` (one added export) |
-| T4 | `builder-ui/test/screenContract.test.tsx` |
-| T5 | `builder-ui/src/theme/shell.css`, `builder-ui/test/shellStyles.test.ts` |
-| T6 | `builder-ui/src/theme/functions.css`, `builder-ui/test/functionsStyles.test.ts` |
-| T7 | `builder-ui/src/workbench/ShellHeader.tsx`, `builder-ui/src/workbench/screens.ts`, `builder-ui/test/shellHeader.test.tsx` |
-| T8 | `engine/src/argumentParser.ts`, `engine/test/argumentParser.test.ts`, `engine/src/index.ts` |
-| T9 | `builder-ui/src/workbench/functionsState.ts`, `builder-ui/test/functionsState.test.ts` |
-| T10 | `builder-ui/src/workbench/FunctionsNav.tsx`, `builder-ui/test/functionsNav.test.tsx` |
-| T11 | `builder-ui/src/workbench/ArgumentsPanel.tsx`, `builder-ui/test/argumentsPanel.test.tsx` |
-| T12 | `builder-ui/src/workbench/FunctionsStatusCards.tsx`, `builder-ui/test/functionsStatusCards.test.tsx` |
-| T13 | `builder-ui/src/workbench/FunctionsDock.tsx`, `builder-ui/test/functionsDock.test.tsx` |
-| T14 | `builder-ui/src/workbench/FunctionsWorkspace.tsx`, `builder-ui/test/functionsWorkspace.test.tsx` |
-| T15 | `builder-ui/src/app/ExpressionBuilderShell.tsx`, `builder-ui/src/workbench/types.ts`, `builder-ui/src/workbench/JsonReferenceWorkspace.tsx`, deletes `WorkbenchHeader.tsx` + `BuilderTabs.tsx` |
-| T16 | `builder-ui/test/builderSwitching.test.tsx` |
-| T17 | `builder-ui/src/theme/tokens.css`, `builder-ui/test/jsonReferenceStyles.test.ts` |
-| T18 | `tests/e2e/json-references.spec.ts` |
-| T19 | `builder-ui/test/jsonReferenceWorkspace.test.tsx` |
-| T20 | `builder-ui/test/sharedBuilderUi.test.tsx`, `tests/e2e/web-smoke.spec.ts`, `tests/e2e/condition-move-to-group.spec.ts` |
-| *loop plan* | `jsonReferenceState.ts`, `JsonReferenceWorkspace.tsx`, `ReferencePanel.tsx`, `JsonSourcePane.tsx`, `engine/src/fieldReferences.ts`, their tests, `USER_MANUAL.md` — outside this plan, in progress. T3, T15 and T19 touch three of these only after it lands. |
+| Phase       | Owns, exclusively                                                                                                                                                                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1          | `builder-ui/src/theme/workbenchTokens.ts`, `builder-ui/test/workbenchTokens.test.ts`                                                                                                                                                                          |
+| T2          | `engine/src/functionCatalog.ts`, `engine/test/functionCatalog.test.ts`, `engine/src/index.ts`                                                                                                                                                                 |
+| T3          | `builder-ui/src/workbench/parsedValueModel.ts`, `builder-ui/test/parsedValueModel.test.ts`, `builder-ui/src/workbench/jsonReferenceState.ts` (one added export)                                                                                               |
+| T4          | `builder-ui/test/screenContract.test.tsx`                                                                                                                                                                                                                     |
+| T5          | `builder-ui/src/theme/shell.css`, `builder-ui/test/shellStyles.test.ts`                                                                                                                                                                                       |
+| T6          | `builder-ui/src/theme/functions.css`, `builder-ui/test/functionsStyles.test.ts`                                                                                                                                                                               |
+| T7          | `builder-ui/src/workbench/ShellHeader.tsx`, `builder-ui/src/workbench/screens.ts`, `builder-ui/test/shellHeader.test.tsx`                                                                                                                                     |
+| T8          | `engine/src/argumentParser.ts`, `engine/test/argumentParser.test.ts`, `engine/src/index.ts`                                                                                                                                                                   |
+| T9          | `builder-ui/src/workbench/functionsState.ts`, `builder-ui/test/functionsState.test.ts`                                                                                                                                                                        |
+| T10         | `builder-ui/src/workbench/FunctionsNav.tsx`, `builder-ui/test/functionsNav.test.tsx`                                                                                                                                                                          |
+| T11         | `builder-ui/src/workbench/ArgumentsPanel.tsx`, `builder-ui/test/argumentsPanel.test.tsx`                                                                                                                                                                      |
+| T12         | `builder-ui/src/workbench/FunctionsStatusCards.tsx`, `builder-ui/test/functionsStatusCards.test.tsx`                                                                                                                                                          |
+| T13         | `builder-ui/src/workbench/FunctionsDock.tsx`, `builder-ui/test/functionsDock.test.tsx`                                                                                                                                                                        |
+| T14         | `builder-ui/src/workbench/FunctionsWorkspace.tsx`, `builder-ui/test/functionsWorkspace.test.tsx`                                                                                                                                                              |
+| T15         | `builder-ui/src/app/ExpressionBuilderShell.tsx`, `builder-ui/src/workbench/types.ts`, `builder-ui/src/workbench/JsonReferenceWorkspace.tsx`, deletes `WorkbenchHeader.tsx` + `BuilderTabs.tsx`                                                                |
+| T16         | `builder-ui/test/builderSwitching.test.tsx`                                                                                                                                                                                                                   |
+| T17         | `builder-ui/src/theme/tokens.css`, `builder-ui/test/jsonReferenceStyles.test.ts`                                                                                                                                                                              |
+| T18         | `tests/e2e/json-references.spec.ts`                                                                                                                                                                                                                           |
+| T19         | `builder-ui/test/jsonReferenceWorkspace.test.tsx`                                                                                                                                                                                                             |
+| T20         | `builder-ui/test/sharedBuilderUi.test.tsx`, `tests/e2e/web-smoke.spec.ts`, `tests/e2e/condition-move-to-group.spec.ts`                                                                                                                                        |
+| _loop plan_ | `jsonReferenceState.ts`, `JsonReferenceWorkspace.tsx`, `ReferencePanel.tsx`, `JsonSourcePane.tsx`, `engine/src/fieldReferences.ts`, their tests, `USER_MANUAL.md` — outside this plan, in progress. T3, T15 and T19 touch three of these only after it lands. |
 
 `engine/src/index.ts` is held by T2 and T8, which sit in different waves — sequential, never concurrent. T17 pairs the `tokens.css` deletions with the assertions about them deliberately: split across two agents they would race.
 
@@ -102,7 +102,7 @@ Copied from the spec; every phase is bound by these.
 - New CSS lives in `theme/shell.css` and `theme/functions.css`, never `theme/tokens.css` (3,013 lines; one owner per file is what keeps the waves conflict-free). Both are imported **after** `tokens.css`, because `shell.css` re-declares `.eb-root` at equal specificity and wins only on cascade order.
 - Row descriptions use `aria-describedby` onto a visually hidden `<span>`, never `aria-description` — the latter is ARIA 1.3 and resolves inconsistently under jsdom.
 - Commands: unit `npm test`, one file `npx vitest run <path>`, types `npm run typecheck`, lint `npm run lint`, e2e `npm run test:e2e`.
-- **The baseline has one known failure.** `workspaceBuildScripts.test.ts` (CON-001) fails on the uncommitted `"node": "^22.23.3"` dependency in root `package.json`. Every "expect: PASS" for a full `npm test` / `npx vitest run` in this plan means *only CON-001 fails*. Once the loop plan lands, the full run reads `Tests  1 failed | 433 passed (434)`.
+- **The baseline has one known failure.** `workspaceBuildScripts.test.ts` (CON-001) fails on the uncommitted `"node": "^22.23.3"` dependency in root `package.json`. Every "expect: PASS" for a full `npm test` / `npx vitest run` in this plan means _only CON-001 fails_. Once the loop plan lands, the full run reads `Tests  1 failed | 433 passed (434)`.
 - **Stage by path.** Each commit stages exactly its phase's owned files with `git add <file> …`, never `git add -A` or `git add .`. Never stage `package.json` or `npm-shrinkwrap.json`.
 - **Component files export components and types only.** `reactRefresh.configs.vite` turns on `react-refresh/only-export-components`, which rejects array and object exports from `.tsx` files. That is why the loop plan moved `NO_TEXT_ASSISTANCE` into `jsonReferenceState.ts`. Constants live in `.ts` modules (`screens.ts`, `parsedValueModel.ts`, `functionsState.ts`).
 - **Tests are not type-checked.** Both packages' `tsconfig.json` include `src` only, so `npm run typecheck` never sees a test file. Vitest is the signal for tests, and each phase lints its own files with `npx eslint <owned files>`.
@@ -155,33 +155,46 @@ The nine values 11a needs that the palette lacks. They must live here: `themeCol
 - [x] Append to `packages/builder-ui/test/workbenchTokens.test.ts`:
 
 ```ts
-describe('11a shell tokens (FR-7)', () => {
-  it('defines every new variable in both palettes (AC-7.1)', () => {
+describe("11a shell tokens (FR-7)", () => {
+  it("defines every new variable in both palettes (AC-7.1)", () => {
     const names = [
-      '--code', '--header-glass', '--panel-glass', '--glow-1', '--glow-2',
-      '--panel-shadow', '--dock-shadow', '--seg-track', '--seg-selected',
+      "--code",
+      "--header-glass",
+      "--panel-glass",
+      "--glow-1",
+      "--glow-2",
+      "--panel-shadow",
+      "--dock-shadow",
+      "--seg-track",
+      "--seg-selected",
     ] as const;
-    for (const paletteId of ['graphiteLight', 'graphiteDark'] satisfies PaletteId[]) {
+    for (const paletteId of [
+      "graphiteLight",
+      "graphiteDark",
+    ] satisfies PaletteId[]) {
       for (const name of names) {
-        expect(graphiteTokens[paletteId].cssVariables[name], `${paletteId} ${name}`).toBeTruthy();
+        expect(
+          graphiteTokens[paletteId].cssVariables[name],
+          `${paletteId} ${name}`,
+        ).toBeTruthy();
       }
     }
   });
 
-  it('uses the handoff values', () => {
+  it("uses the handoff values", () => {
     expect(graphiteTokens.graphiteDark.cssVariables).toMatchObject({
-      '--code': '#0E1216',
-      '--header-glass': 'rgba(35, 45, 53, 0.92)',
-      '--panel-glass': 'rgba(27, 34, 40, 0.85)',
-      '--glow-1': 'rgba(119, 167, 255, 0.2)',
-      '--glow-2': 'rgba(85, 197, 187, 0.16)',
+      "--code": "#0E1216",
+      "--header-glass": "rgba(35, 45, 53, 0.92)",
+      "--panel-glass": "rgba(27, 34, 40, 0.85)",
+      "--glow-1": "rgba(119, 167, 255, 0.2)",
+      "--glow-2": "rgba(85, 197, 187, 0.16)",
     });
     expect(graphiteTokens.graphiteLight.cssVariables).toMatchObject({
-      '--code': '#111820',
-      '--header-glass': 'rgba(238, 242, 245, 0.92)',
-      '--panel-glass': 'rgba(253, 254, 255, 0.85)',
-      '--glow-1': 'rgba(21, 94, 239, 0.14)',
-      '--glow-2': 'rgba(8, 125, 120, 0.12)',
+      "--code": "#111820",
+      "--header-glass": "rgba(238, 242, 245, 0.92)",
+      "--panel-glass": "rgba(253, 254, 255, 0.85)",
+      "--glow-1": "rgba(21, 94, 239, 0.14)",
+      "--glow-2": "rgba(8, 125, 120, 0.12)",
     });
   });
 });
@@ -232,58 +245,89 @@ All 79 entries Microsoft Learn lists across the five categories, as typed data.
 - [x] Write `packages/engine/test/functionCatalog.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest';
-import { FUNCTION_CATALOG, FUNCTION_GROUPS, findFunction } from '../src/functionCatalog';
+import { describe, expect, it } from "vitest";
+import {
+  FUNCTION_CATALOG,
+  FUNCTION_GROUPS,
+  findFunction,
+} from "../src/functionCatalog";
 
-describe('function catalog', () => {
-  it('covers every Microsoft Learn category (FR-9)', () => {
-    expect(FUNCTION_GROUPS).toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time']);
+describe("function catalog", () => {
+  it("covers every Microsoft Learn category (FR-9)", () => {
+    expect(FUNCTION_GROUPS).toEqual([
+      "String",
+      "Collection",
+      "Logical",
+      "Math",
+      "Date and time",
+    ]);
     const counts = Object.fromEntries(
-      FUNCTION_GROUPS.map((group) => [group, FUNCTION_CATALOG.filter((fn) => fn.group === group).length]),
+      FUNCTION_GROUPS.map((group) => [
+        group,
+        FUNCTION_CATALOG.filter((fn) => fn.group === group).length,
+      ]),
     );
-    expect(counts).toEqual({ String: 20, Collection: 14, Logical: 12, Math: 10, 'Date and time': 23 });
+    expect(counts).toEqual({
+      String: 20,
+      Collection: 14,
+      Logical: 12,
+      Math: 10,
+      "Date and time": 23,
+    });
   });
 
-  it('gives every entry unique argument names and a description (AC-9.1)', () => {
+  it("gives every entry unique argument names and a description (AC-9.1)", () => {
     for (const fn of FUNCTION_CATALOG) {
-      expect(fn.description, fn.name).not.toBe('');
-      expect(new Set(fn.args.map((arg) => arg.name)).size, fn.name).toBe(fn.args.length);
+      expect(fn.description, fn.name).not.toBe("");
+      expect(new Set(fn.args.map((arg) => arg.name)).size, fn.name).toBe(
+        fn.args.length,
+      );
       const firstOptional = fn.args.findIndex((arg) => !arg.required);
       if (firstOptional !== -1) {
-        expect(fn.args.slice(firstOptional).every((arg) => !arg.required), fn.name).toBe(true);
+        expect(
+          fn.args.slice(firstOptional).every((arg) => !arg.required),
+          fn.name,
+        ).toBe(true);
       }
     }
   });
 
-  it('models the signatures the UI depends on (AC-12.1)', () => {
-    expect(findFunction('substring')?.args).toEqual([
-      { name: 'text', type: 'string', required: true, variadic: false },
-      { name: 'startIndex', type: 'integer', required: true, variadic: false },
-      { name: 'length', type: 'integer', required: false, variadic: false },
+  it("models the signatures the UI depends on (AC-12.1)", () => {
+    expect(findFunction("substring")?.args).toEqual([
+      { name: "text", type: "string", required: true, variadic: false },
+      { name: "startIndex", type: "integer", required: true, variadic: false },
+      { name: "length", type: "integer", required: false, variadic: false },
     ]);
-    expect(findFunction('concat')?.args).toEqual([
-      { name: 'text1', type: 'string', required: true, variadic: false },
-      { name: 'text2', type: 'string', required: true, variadic: false },
-      { name: 'text3', type: 'string', required: false, variadic: true },
+    expect(findFunction("concat")?.args).toEqual([
+      { name: "text1", type: "string", required: true, variadic: false },
+      { name: "text2", type: "string", required: true, variadic: false },
+      { name: "text3", type: "string", required: false, variadic: true },
     ]);
-    expect(findFunction('item')?.args).toEqual([]);
-    expect(findFunction('nope')).toBeUndefined();
+    expect(findFunction("item")?.args).toEqual([]);
+    expect(findFunction("nope")).toBeUndefined();
   });
 
-  it('returns the first group for a name Learn lists twice', () => {
-    expect(findFunction('length')?.group).toBe('String');
-    expect(FUNCTION_CATALOG.filter((fn) => fn.name === 'length')).toHaveLength(2);
+  it("returns the first group for a name Learn lists twice", () => {
+    expect(findFunction("length")?.group).toBe("String");
+    expect(FUNCTION_CATALOG.filter((fn) => fn.name === "length")).toHaveLength(
+      2,
+    );
   });
 
   // findFunction resolves by name, so a twin with its own signature would hand
   // the Collection row the String row's arguments.
-  it('gives a name Learn lists twice one signature, since it is one function', () => {
+  it("gives a name Learn lists twice one signature, since it is one function", () => {
     for (const fn of FUNCTION_CATALOG) {
       const first = findFunction(fn.name);
-      expect({ args: fn.args, returns: fn.returns }, `${fn.group} ${fn.name}`)
-        .toEqual({ args: first?.args, returns: first?.returns });
+      expect(
+        { args: fn.args, returns: fn.returns },
+        `${fn.group} ${fn.name}`,
+      ).toEqual({ args: first?.args, returns: first?.returns });
     }
-    expect(findFunction('chunk')?.args.map((arg) => arg.name)).toEqual(['collection', 'length']);
+    expect(findFunction("chunk")?.args.map((arg) => arg.name)).toEqual([
+      "collection",
+      "length",
+    ]);
   });
 });
 ```
@@ -293,13 +337,28 @@ describe('function catalog', () => {
 
 ```ts
 export type ArgType =
-  | 'string' | 'number' | 'integer' | 'boolean' | 'any'
-  | 'collection' | 'object' | 'timestamp';
+  | "string"
+  | "number"
+  | "integer"
+  | "boolean"
+  | "any"
+  | "collection"
+  | "object"
+  | "timestamp";
 
-export type FunctionGroup = 'String' | 'Collection' | 'Logical' | 'Math' | 'Date and time';
+export type FunctionGroup =
+  | "String"
+  | "Collection"
+  | "Logical"
+  | "Math"
+  | "Date and time";
 
 export const FUNCTION_GROUPS: readonly FunctionGroup[] = [
-  'String', 'Collection', 'Logical', 'Math', 'Date and time',
+  "String",
+  "Collection",
+  "Logical",
+  "Math",
+  "Date and time",
 ];
 
 export interface CatalogArg {
@@ -326,12 +385,14 @@ export interface CatalogFunction {
  * than name/type/required/variadic, drop the spec and write the objects out.
  */
 function parseArgs(spec: string): CatalogArg[] {
-  if (spec === '') return [];
-  return spec.split(' ').map((token) => {
-    const variadic = token.endsWith('*');
+  if (spec === "") return [];
+  return spec.split(" ").map((token) => {
+    const variadic = token.endsWith("*");
     const withoutStar = variadic ? token.slice(0, -1) : token;
-    const required = !withoutStar.endsWith('?');
-    const [name, type] = (required ? withoutStar : withoutStar.slice(0, -1)).split(':');
+    const required = !withoutStar.endsWith("?");
+    const [name, type] = (
+      required ? withoutStar : withoutStar.slice(0, -1)
+    ).split(":");
     return { name, type: type as ArgType, required, variadic };
   });
 }
@@ -348,93 +409,549 @@ function entry(
 
 export const FUNCTION_CATALOG: CatalogFunction[] = [
   // ---- String (20) ----
-  entry('String', 'chunk', 'collection:any length:integer', 'collection', 'Split a string or array into chunks of equal length.'),
-  entry('String', 'concat', 'text1:string text2:string text3:string?*', 'string', 'Join two or more strings.'),
-  entry('String', 'endsWith', 'text:string searchText:string', 'boolean', 'True when the text ends with the substring.'),
-  entry('String', 'formatNumber', 'number:number format:string locale:string?', 'string', 'Format a number as a string.'),
-  entry('String', 'guid', 'format:string?', 'string', 'Generate a globally unique identifier.'),
-  entry('String', 'indexOf', 'text:string searchText:string', 'integer', 'Position of the first occurrence, or -1.'),
-  entry('String', 'isFloat', 'value:string locale:string?', 'boolean', 'True when the string is a floating-point number.'),
-  entry('String', 'isInt', 'value:string', 'boolean', 'True when the string is an integer.'),
-  entry('String', 'lastIndexOf', 'text:string searchText:string', 'integer', 'Position of the last occurrence, or -1.'),
-  entry('String', 'length', 'value:any', 'integer', 'Number of characters in a string or items in a collection.'),
-  entry('String', 'nthIndexOf', 'text:string searchText:string occurrence:integer', 'integer', 'Position of the nth occurrence.'),
-  entry('String', 'replace', 'text:string oldText:string newText:string', 'string', 'Replace every occurrence of a substring.'),
-  entry('String', 'slice', 'text:string startIndex:integer endIndex:integer?', 'string', 'Substring between two positions.'),
-  entry('String', 'split', 'text:string delimiter:string', 'collection', 'Split text on a delimiter into an array.'),
-  entry('String', 'startsWith', 'text:string searchText:string', 'boolean', 'True when the text starts with the substring.'),
-  entry('String', 'substring', 'text:string startIndex:integer length:integer?', 'string', 'Characters from a position for a length.'),
-  entry('String', 'toLower', 'text:string', 'string', 'Lower-case the text.'),
-  entry('String', 'toUpper', 'text:string', 'string', 'Upper-case the text.'),
-  entry('String', 'trim', 'text:string', 'string', 'Remove leading and trailing whitespace.'),
-  entry('String', 'trimByteOrderMark', 'text:string', 'string', 'Remove a leading byte-order mark.'),
+  entry(
+    "String",
+    "chunk",
+    "collection:any length:integer",
+    "collection",
+    "Split a string or array into chunks of equal length.",
+  ),
+  entry(
+    "String",
+    "concat",
+    "text1:string text2:string text3:string?*",
+    "string",
+    "Join two or more strings.",
+  ),
+  entry(
+    "String",
+    "endsWith",
+    "text:string searchText:string",
+    "boolean",
+    "True when the text ends with the substring.",
+  ),
+  entry(
+    "String",
+    "formatNumber",
+    "number:number format:string locale:string?",
+    "string",
+    "Format a number as a string.",
+  ),
+  entry(
+    "String",
+    "guid",
+    "format:string?",
+    "string",
+    "Generate a globally unique identifier.",
+  ),
+  entry(
+    "String",
+    "indexOf",
+    "text:string searchText:string",
+    "integer",
+    "Position of the first occurrence, or -1.",
+  ),
+  entry(
+    "String",
+    "isFloat",
+    "value:string locale:string?",
+    "boolean",
+    "True when the string is a floating-point number.",
+  ),
+  entry(
+    "String",
+    "isInt",
+    "value:string",
+    "boolean",
+    "True when the string is an integer.",
+  ),
+  entry(
+    "String",
+    "lastIndexOf",
+    "text:string searchText:string",
+    "integer",
+    "Position of the last occurrence, or -1.",
+  ),
+  entry(
+    "String",
+    "length",
+    "value:any",
+    "integer",
+    "Number of characters in a string or items in a collection.",
+  ),
+  entry(
+    "String",
+    "nthIndexOf",
+    "text:string searchText:string occurrence:integer",
+    "integer",
+    "Position of the nth occurrence.",
+  ),
+  entry(
+    "String",
+    "replace",
+    "text:string oldText:string newText:string",
+    "string",
+    "Replace every occurrence of a substring.",
+  ),
+  entry(
+    "String",
+    "slice",
+    "text:string startIndex:integer endIndex:integer?",
+    "string",
+    "Substring between two positions.",
+  ),
+  entry(
+    "String",
+    "split",
+    "text:string delimiter:string",
+    "collection",
+    "Split text on a delimiter into an array.",
+  ),
+  entry(
+    "String",
+    "startsWith",
+    "text:string searchText:string",
+    "boolean",
+    "True when the text starts with the substring.",
+  ),
+  entry(
+    "String",
+    "substring",
+    "text:string startIndex:integer length:integer?",
+    "string",
+    "Characters from a position for a length.",
+  ),
+  entry("String", "toLower", "text:string", "string", "Lower-case the text."),
+  entry("String", "toUpper", "text:string", "string", "Upper-case the text."),
+  entry(
+    "String",
+    "trim",
+    "text:string",
+    "string",
+    "Remove leading and trailing whitespace.",
+  ),
+  entry(
+    "String",
+    "trimByteOrderMark",
+    "text:string",
+    "string",
+    "Remove a leading byte-order mark.",
+  ),
 
   // ---- Collection (14) ----
-  entry('Collection', 'chunk', 'collection:any length:integer', 'collection', 'Split a string or array into chunks of equal length.'),
-  entry('Collection', 'contains', 'collection:any value:any', 'boolean', 'True when the collection holds the value.'),
-  entry('Collection', 'empty', 'collection:any', 'boolean', 'True when the collection is empty.'),
-  entry('Collection', 'first', 'collection:collection', 'any', 'First item in the collection.'),
-  entry('Collection', 'intersection', 'collection1:collection collection2:collection*', 'collection', 'Items common to every collection.'),
-  entry('Collection', 'item', '', 'any', 'Current item of the enclosing repeating action.'),
-  entry('Collection', 'join', 'collection:collection delimiter:string', 'string', 'Join items into one delimited string.'),
-  entry('Collection', 'last', 'collection:collection', 'any', 'Last item in the collection.'),
-  entry('Collection', 'length', 'value:any', 'integer', 'Number of items in a collection or characters in a string.'),
-  entry('Collection', 'reverse', 'collection:collection', 'collection', 'Reverse the item order.'),
-  entry('Collection', 'skip', 'collection:collection count:integer', 'collection', 'Drop items from the front.'),
-  entry('Collection', 'sort', 'collection:collection sortBy:string?', 'collection', 'Sort items, optionally by a key.'),
-  entry('Collection', 'take', 'collection:collection count:integer', 'collection', 'Keep items from the front.'),
-  entry('Collection', 'union', 'collection1:collection collection2:collection*', 'collection', 'All items from every collection, deduplicated.'),
+  entry(
+    "Collection",
+    "chunk",
+    "collection:any length:integer",
+    "collection",
+    "Split a string or array into chunks of equal length.",
+  ),
+  entry(
+    "Collection",
+    "contains",
+    "collection:any value:any",
+    "boolean",
+    "True when the collection holds the value.",
+  ),
+  entry(
+    "Collection",
+    "empty",
+    "collection:any",
+    "boolean",
+    "True when the collection is empty.",
+  ),
+  entry(
+    "Collection",
+    "first",
+    "collection:collection",
+    "any",
+    "First item in the collection.",
+  ),
+  entry(
+    "Collection",
+    "intersection",
+    "collection1:collection collection2:collection*",
+    "collection",
+    "Items common to every collection.",
+  ),
+  entry(
+    "Collection",
+    "item",
+    "",
+    "any",
+    "Current item of the enclosing repeating action.",
+  ),
+  entry(
+    "Collection",
+    "join",
+    "collection:collection delimiter:string",
+    "string",
+    "Join items into one delimited string.",
+  ),
+  entry(
+    "Collection",
+    "last",
+    "collection:collection",
+    "any",
+    "Last item in the collection.",
+  ),
+  entry(
+    "Collection",
+    "length",
+    "value:any",
+    "integer",
+    "Number of items in a collection or characters in a string.",
+  ),
+  entry(
+    "Collection",
+    "reverse",
+    "collection:collection",
+    "collection",
+    "Reverse the item order.",
+  ),
+  entry(
+    "Collection",
+    "skip",
+    "collection:collection count:integer",
+    "collection",
+    "Drop items from the front.",
+  ),
+  entry(
+    "Collection",
+    "sort",
+    "collection:collection sortBy:string?",
+    "collection",
+    "Sort items, optionally by a key.",
+  ),
+  entry(
+    "Collection",
+    "take",
+    "collection:collection count:integer",
+    "collection",
+    "Keep items from the front.",
+  ),
+  entry(
+    "Collection",
+    "union",
+    "collection1:collection collection2:collection*",
+    "collection",
+    "All items from every collection, deduplicated.",
+  ),
 
   // ---- Logical (12) ----
-  entry('Logical', 'and', 'expression1:boolean expression2:boolean*', 'boolean', 'True when every expression is true.'),
-  entry('Logical', 'equals', 'object1:any object2:any', 'boolean', 'True when both values are equivalent.'),
-  entry('Logical', 'greater', 'value:any compareTo:any', 'boolean', 'True when the first value is greater.'),
-  entry('Logical', 'greaterOrEquals', 'value:any compareTo:any', 'boolean', 'True when the first value is greater or equal.'),
-  entry('Logical', 'if', 'expression:boolean valueIfTrue:any valueIfFalse:any', 'any', 'Pick a value on a condition.'),
-  entry('Logical', 'isFloat', 'value:string locale:string?', 'boolean', 'True when the string is a floating-point number.'),
-  entry('Logical', 'isInt', 'value:string', 'boolean', 'True when the string is an integer.'),
-  entry('Logical', 'less', 'value:any compareTo:any', 'boolean', 'True when the first value is less.'),
-  entry('Logical', 'lessOrEquals', 'value:any compareTo:any', 'boolean', 'True when the first value is less or equal.'),
-  entry('Logical', 'not', 'expression:boolean', 'boolean', 'Invert a boolean.'),
-  entry('Logical', 'or', 'expression1:boolean expression2:boolean*', 'boolean', 'True when any expression is true.'),
-  entry('Logical', 'strongEquals', 'object1:any object2:any', 'boolean', 'True when both values match without type coercion.'),
+  entry(
+    "Logical",
+    "and",
+    "expression1:boolean expression2:boolean*",
+    "boolean",
+    "True when every expression is true.",
+  ),
+  entry(
+    "Logical",
+    "equals",
+    "object1:any object2:any",
+    "boolean",
+    "True when both values are equivalent.",
+  ),
+  entry(
+    "Logical",
+    "greater",
+    "value:any compareTo:any",
+    "boolean",
+    "True when the first value is greater.",
+  ),
+  entry(
+    "Logical",
+    "greaterOrEquals",
+    "value:any compareTo:any",
+    "boolean",
+    "True when the first value is greater or equal.",
+  ),
+  entry(
+    "Logical",
+    "if",
+    "expression:boolean valueIfTrue:any valueIfFalse:any",
+    "any",
+    "Pick a value on a condition.",
+  ),
+  entry(
+    "Logical",
+    "isFloat",
+    "value:string locale:string?",
+    "boolean",
+    "True when the string is a floating-point number.",
+  ),
+  entry(
+    "Logical",
+    "isInt",
+    "value:string",
+    "boolean",
+    "True when the string is an integer.",
+  ),
+  entry(
+    "Logical",
+    "less",
+    "value:any compareTo:any",
+    "boolean",
+    "True when the first value is less.",
+  ),
+  entry(
+    "Logical",
+    "lessOrEquals",
+    "value:any compareTo:any",
+    "boolean",
+    "True when the first value is less or equal.",
+  ),
+  entry("Logical", "not", "expression:boolean", "boolean", "Invert a boolean."),
+  entry(
+    "Logical",
+    "or",
+    "expression1:boolean expression2:boolean*",
+    "boolean",
+    "True when any expression is true.",
+  ),
+  entry(
+    "Logical",
+    "strongEquals",
+    "object1:any object2:any",
+    "boolean",
+    "True when both values match without type coercion.",
+  ),
 
   // ---- Math (10) ----
-  entry('Math', 'add', 'summand1:number summand2:number', 'number', 'Add two numbers.'),
-  entry('Math', 'div', 'dividend:number divisor:number', 'number', 'Divide the first number by the second.'),
-  entry('Math', 'max', 'number1:number number2:number*', 'number', 'Largest value.'),
-  entry('Math', 'min', 'number1:number number2:number*', 'number', 'Smallest value.'),
-  entry('Math', 'mod', 'dividend:number divisor:number', 'number', 'Remainder of a division.'),
-  entry('Math', 'mul', 'multiplicand1:number multiplicand2:number', 'number', 'Multiply two numbers.'),
-  entry('Math', 'pow', 'base:number exponent:number', 'number', 'Raise a number to a power.'),
-  entry('Math', 'rand', 'minValue:integer maxValue:integer', 'integer', 'Random integer in a range.'),
-  entry('Math', 'range', 'startIndex:integer count:integer', 'collection', 'Array of integers starting at a number.'),
-  entry('Math', 'sub', 'minuend:number subtrahend:number', 'number', 'Subtract the second number from the first.'),
+  entry(
+    "Math",
+    "add",
+    "summand1:number summand2:number",
+    "number",
+    "Add two numbers.",
+  ),
+  entry(
+    "Math",
+    "div",
+    "dividend:number divisor:number",
+    "number",
+    "Divide the first number by the second.",
+  ),
+  entry(
+    "Math",
+    "max",
+    "number1:number number2:number*",
+    "number",
+    "Largest value.",
+  ),
+  entry(
+    "Math",
+    "min",
+    "number1:number number2:number*",
+    "number",
+    "Smallest value.",
+  ),
+  entry(
+    "Math",
+    "mod",
+    "dividend:number divisor:number",
+    "number",
+    "Remainder of a division.",
+  ),
+  entry(
+    "Math",
+    "mul",
+    "multiplicand1:number multiplicand2:number",
+    "number",
+    "Multiply two numbers.",
+  ),
+  entry(
+    "Math",
+    "pow",
+    "base:number exponent:number",
+    "number",
+    "Raise a number to a power.",
+  ),
+  entry(
+    "Math",
+    "rand",
+    "minValue:integer maxValue:integer",
+    "integer",
+    "Random integer in a range.",
+  ),
+  entry(
+    "Math",
+    "range",
+    "startIndex:integer count:integer",
+    "collection",
+    "Array of integers starting at a number.",
+  ),
+  entry(
+    "Math",
+    "sub",
+    "minuend:number subtrahend:number",
+    "number",
+    "Subtract the second number from the first.",
+  ),
 
   // ---- Date and time (23) ----
-  entry('Date and time', 'addDays', 'timestamp:timestamp days:integer format:string?', 'string', 'Add days to a timestamp.'),
-  entry('Date and time', 'addHours', 'timestamp:timestamp hours:integer format:string?', 'string', 'Add hours to a timestamp.'),
-  entry('Date and time', 'addMinutes', 'timestamp:timestamp minutes:integer format:string?', 'string', 'Add minutes to a timestamp.'),
-  entry('Date and time', 'addSeconds', 'timestamp:timestamp seconds:integer format:string?', 'string', 'Add seconds to a timestamp.'),
-  entry('Date and time', 'addToTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Add a number of time units to a timestamp.'),
-  entry('Date and time', 'convertFromUtc', 'timestamp:timestamp destinationTimeZone:string format:string?', 'string', 'Convert a timestamp from UTC to a time zone.'),
-  entry('Date and time', 'convertTimeZone', 'timestamp:timestamp sourceTimeZone:string destinationTimeZone:string format:string?', 'string', 'Convert a timestamp between time zones.'),
-  entry('Date and time', 'convertToUtc', 'timestamp:timestamp sourceTimeZone:string format:string?', 'string', 'Convert a timestamp from a time zone to UTC.'),
-  entry('Date and time', 'dateDifference', 'startDate:timestamp endDate:timestamp', 'string', 'Difference between two timestamps.'),
-  entry('Date and time', 'dayOfMonth', 'timestamp:timestamp', 'integer', 'Day of the month.'),
-  entry('Date and time', 'dayOfWeek', 'timestamp:timestamp', 'integer', 'Day of the week, Sunday is 0.'),
-  entry('Date and time', 'dayOfYear', 'timestamp:timestamp', 'integer', 'Day of the year.'),
-  entry('Date and time', 'formatDateTime', 'timestamp:timestamp format:string? locale:string?', 'string', 'Format a timestamp.'),
-  entry('Date and time', 'formatTimeSpan', 'timespan:string format:string? locale:string?', 'string', 'Format a time span.'),
-  entry('Date and time', 'getFutureTime', 'interval:integer timeUnit:string format:string?', 'string', 'Current timestamp plus an interval.'),
-  entry('Date and time', 'getPastTime', 'interval:integer timeUnit:string format:string?', 'string', 'Current timestamp minus an interval.'),
-  entry('Date and time', 'parseDateTime', 'timestamp:string locale:string? format:string?', 'string', 'Parse a timestamp from a string.'),
-  entry('Date and time', 'startOfDay', 'timestamp:timestamp format:string?', 'string', 'Start of the day for a timestamp.'),
-  entry('Date and time', 'startOfHour', 'timestamp:timestamp format:string?', 'string', 'Start of the hour for a timestamp.'),
-  entry('Date and time', 'startOfMonth', 'timestamp:timestamp format:string?', 'string', 'Start of the month for a timestamp.'),
-  entry('Date and time', 'subtractFromTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Subtract a number of time units from a timestamp.'),
-  entry('Date and time', 'ticks', 'timestamp:timestamp', 'number', 'Number of 100-nanosecond ticks since 0001-01-01.'),
-  entry('Date and time', 'utcNow', 'format:string?', 'string', 'Current timestamp in UTC.'),
+  entry(
+    "Date and time",
+    "addDays",
+    "timestamp:timestamp days:integer format:string?",
+    "string",
+    "Add days to a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "addHours",
+    "timestamp:timestamp hours:integer format:string?",
+    "string",
+    "Add hours to a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "addMinutes",
+    "timestamp:timestamp minutes:integer format:string?",
+    "string",
+    "Add minutes to a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "addSeconds",
+    "timestamp:timestamp seconds:integer format:string?",
+    "string",
+    "Add seconds to a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "addToTime",
+    "timestamp:timestamp interval:integer timeUnit:string format:string?",
+    "string",
+    "Add a number of time units to a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "convertFromUtc",
+    "timestamp:timestamp destinationTimeZone:string format:string?",
+    "string",
+    "Convert a timestamp from UTC to a time zone.",
+  ),
+  entry(
+    "Date and time",
+    "convertTimeZone",
+    "timestamp:timestamp sourceTimeZone:string destinationTimeZone:string format:string?",
+    "string",
+    "Convert a timestamp between time zones.",
+  ),
+  entry(
+    "Date and time",
+    "convertToUtc",
+    "timestamp:timestamp sourceTimeZone:string format:string?",
+    "string",
+    "Convert a timestamp from a time zone to UTC.",
+  ),
+  entry(
+    "Date and time",
+    "dateDifference",
+    "startDate:timestamp endDate:timestamp",
+    "string",
+    "Difference between two timestamps.",
+  ),
+  entry(
+    "Date and time",
+    "dayOfMonth",
+    "timestamp:timestamp",
+    "integer",
+    "Day of the month.",
+  ),
+  entry(
+    "Date and time",
+    "dayOfWeek",
+    "timestamp:timestamp",
+    "integer",
+    "Day of the week, Sunday is 0.",
+  ),
+  entry(
+    "Date and time",
+    "dayOfYear",
+    "timestamp:timestamp",
+    "integer",
+    "Day of the year.",
+  ),
+  entry(
+    "Date and time",
+    "formatDateTime",
+    "timestamp:timestamp format:string? locale:string?",
+    "string",
+    "Format a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "formatTimeSpan",
+    "timespan:string format:string? locale:string?",
+    "string",
+    "Format a time span.",
+  ),
+  entry(
+    "Date and time",
+    "getFutureTime",
+    "interval:integer timeUnit:string format:string?",
+    "string",
+    "Current timestamp plus an interval.",
+  ),
+  entry(
+    "Date and time",
+    "getPastTime",
+    "interval:integer timeUnit:string format:string?",
+    "string",
+    "Current timestamp minus an interval.",
+  ),
+  entry(
+    "Date and time",
+    "parseDateTime",
+    "timestamp:string locale:string? format:string?",
+    "string",
+    "Parse a timestamp from a string.",
+  ),
+  entry(
+    "Date and time",
+    "startOfDay",
+    "timestamp:timestamp format:string?",
+    "string",
+    "Start of the day for a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "startOfHour",
+    "timestamp:timestamp format:string?",
+    "string",
+    "Start of the hour for a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "startOfMonth",
+    "timestamp:timestamp format:string?",
+    "string",
+    "Start of the month for a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "subtractFromTime",
+    "timestamp:timestamp interval:integer timeUnit:string format:string?",
+    "string",
+    "Subtract a number of time units from a timestamp.",
+  ),
+  entry(
+    "Date and time",
+    "ticks",
+    "timestamp:timestamp",
+    "number",
+    "Number of 100-nanosecond ticks since 0001-01-01.",
+  ),
+  entry(
+    "Date and time",
+    "utcNow",
+    "format:string?",
+    "string",
+    "Current timestamp in UTC.",
+  ),
 ];
 
 /**
@@ -450,8 +967,17 @@ export function findFunction(name: string): CatalogFunction | undefined {
 - [x] Append to `packages/engine/src/index.ts`:
 
 ```ts
-export type { ArgType, CatalogArg, CatalogFunction, FunctionGroup } from './functionCatalog';
-export { FUNCTION_CATALOG, FUNCTION_GROUPS, findFunction } from './functionCatalog';
+export type {
+  ArgType,
+  CatalogArg,
+  CatalogFunction,
+  FunctionGroup,
+} from "./functionCatalog";
+export {
+  FUNCTION_CATALOG,
+  FUNCTION_GROUPS,
+  findFunction,
+} from "./functionCatalog";
 ```
 
 - [x] Run: `npx vitest run packages/engine/test/functionCatalog.test.ts && npm run typecheck` — expect: PASS (observed: 5 tests; TypeScript and scoped ESLint passed)
@@ -472,65 +998,99 @@ Turn the JSON reference sample into insertable rows. Reference text comes from t
 - [x] Write `packages/builder-ui/test/parsedValueModel.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 import {
   currentReferenceRoot,
   initialJsonReferenceState,
   jsonReferenceReducer,
   type JsonReferenceAction,
-} from '../src/workbench/jsonReferenceState';
-import { buildParsedValueList, MAX_PARSED_VALUE_ROWS } from '../src/workbench/parsedValueModel';
+} from "../src/workbench/jsonReferenceState";
+import {
+  buildParsedValueList,
+  MAX_PARSED_VALUE_ROWS,
+} from "../src/workbench/parsedValueModel";
 
-const triggerBody = { kind: 'triggerBody' } as const;
+const triggerBody = { kind: "triggerBody" } as const;
 
-describe('parsed value model', () => {
-  it('lists every leaf with its reference expression (FR-21, AC-21.1)', () => {
-    const list = buildParsedValueList({ Name: 'Ada Lovelace', tags: ['a'] }, triggerBody, '');
+describe("parsed value model", () => {
+  it("lists every leaf with its reference expression (FR-21, AC-21.1)", () => {
+    const list = buildParsedValueList(
+      { Name: "Ada Lovelace", tags: ["a"] },
+      triggerBody,
+      "",
+    );
     expect(list.rows).toEqual([
-      { label: 'Name', expression: "triggerBody()?['Name']", path: ['Name'] },
-      { label: 'tags[0]', expression: "triggerBody()?['tags'][0]", path: ['tags', 0] },
+      { label: "Name", expression: "triggerBody()?['Name']", path: ["Name"] },
+      {
+        label: "tags[0]",
+        expression: "triggerBody()?['tags'][0]",
+        path: ["tags", 0],
+      },
     ]);
     expect(list.emptyMessage).toBeNull();
     expect(list.hiddenCount).toBe(0);
   });
 
-  it('treats an empty object or array as a leaf and nests deeply', () => {
-    const list = buildParsedValueList({ a: { b: { c: 1 } }, empty: {}, none: [] }, triggerBody, '');
-    expect(list.rows.map((row) => row.label)).toEqual(['a.b.c', 'empty', 'none']);
+  it("treats an empty object or array as a leaf and nests deeply", () => {
+    const list = buildParsedValueList(
+      { a: { b: { c: 1 } }, empty: {}, none: [] },
+      triggerBody,
+      "",
+    );
+    expect(list.rows.map((row) => row.label)).toEqual([
+      "a.b.c",
+      "empty",
+      "none",
+    ]);
   });
 
-  it('explains an absent sample or root (AC-21.2)', () => {
-    expect(buildParsedValueList(null, triggerBody, '').emptyMessage)
-      .toBe('Parse a sample in JSON reference');
-    expect(buildParsedValueList({ a: 1 }, null, '').emptyMessage)
-      .toBe('Set an action name in JSON reference');
+  it("explains an absent sample or root (AC-21.2)", () => {
+    expect(buildParsedValueList(null, triggerBody, "").emptyMessage).toBe(
+      "Parse a sample in JSON reference",
+    );
+    expect(buildParsedValueList({ a: 1 }, null, "").emptyMessage).toBe(
+      "Set an action name in JSON reference",
+    );
   });
 
-  it('filters by label, case-insensitively', () => {
-    const list = buildParsedValueList({ Name: 1, other: 2 }, triggerBody, 'NAM');
-    expect(list.rows.map((row) => row.label)).toEqual(['Name']);
+  it("filters by label, case-insensitively", () => {
+    const list = buildParsedValueList(
+      { Name: 1, other: 2 },
+      triggerBody,
+      "NAM",
+    );
+    expect(list.rows.map((row) => row.label)).toEqual(["Name"]);
   });
 
-  it('caps the rows and counts the rest (AC-21.3)', () => {
-    const sample = Object.fromEntries(Array.from({ length: 250 }, (_, i) => [`key${i}`, i]));
-    const list = buildParsedValueList(sample, triggerBody, '');
+  it("caps the rows and counts the rest (AC-21.3)", () => {
+    const sample = Object.fromEntries(
+      Array.from({ length: 250 }, (_, i) => [`key${i}`, i]),
+    );
+    const list = buildParsedValueList(sample, triggerBody, "");
     expect(list.rows).toHaveLength(MAX_PARSED_VALUE_ROWS);
     expect(list.hiddenCount).toBe(50);
   });
 
-  it('says so when a filter matches nothing', () => {
-    expect(buildParsedValueList({ a: 1 }, triggerBody, 'zzz').emptyMessage)
-      .toBe('No paths match this search');
+  it("says so when a filter matches nothing", () => {
+    expect(
+      buildParsedValueList({ a: 1 }, triggerBody, "zzz").emptyMessage,
+    ).toBe("No paths match this search");
   });
 
   // HIGH-001 (loop plan): the source action and the Apply to each are different names.
-  it('roots Parsed Value at the source action, never the loop name', () => {
+  it("roots Parsed Value at the source action, never the loop name", () => {
     const actions: JsonReferenceAction[] = [
-      { type: 'setActionName', value: 'Get items' },
-      { type: 'setLoopName', value: 'Apply to each' },
+      { type: "setActionName", value: "Get items" },
+      { type: "setLoopName", value: "Apply to each" },
     ];
-    const state = actions.reduce(jsonReferenceReducer, initialJsonReferenceState);
-    expect(currentReferenceRoot(state)).toEqual({ kind: 'outputs', actionName: 'Get items' });
+    const state = actions.reduce(
+      jsonReferenceReducer,
+      initialJsonReferenceState,
+    );
+    expect(currentReferenceRoot(state)).toEqual({
+      kind: "outputs",
+      actionName: "Get items",
+    });
     expect(currentReferenceRoot(initialJsonReferenceState)).toBeNull();
   });
 });
@@ -544,8 +1104,8 @@ import {
   formatPayloadReference,
   type PayloadPath,
   type PayloadReferenceRoot,
-} from '@ryanmakes/eb_engine';
-import { isJsonObject } from '../importExport/jsonPayload';
+} from "@ryanmakes/eb_engine";
+import { isJsonObject } from "../importExport/jsonPayload";
 
 export interface ParsedValueRow {
   /** Dotted/bracketed path, e.g. `Name`, `tags[0]`, `a.b.c`. */
@@ -578,14 +1138,24 @@ function walk(
   out: ParsedValueRow[],
 ): void {
   const leaf = () => {
-    out.push({ label, expression: formatPayloadReference({ root, path }), path });
+    out.push({
+      label,
+      expression: formatPayloadReference({ root, path }),
+      path,
+    });
   };
 
   if (isJsonObject(value)) {
     const keys = Object.keys(value);
     if (keys.length === 0) return leaf();
     for (const key of keys) {
-      walk(value[key], [...path, key], label === '' ? key : `${label}.${key}`, root, out);
+      walk(
+        value[key],
+        [...path, key],
+        label === "" ? key : `${label}.${key}`,
+        root,
+        out,
+      );
     }
     return;
   }
@@ -607,22 +1177,35 @@ export function buildParsedValueList(
   search: string,
 ): ParsedValueList {
   if (sample === null || sample === undefined) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'Parse a sample in JSON reference' };
+    return {
+      rows: [],
+      hiddenCount: 0,
+      emptyMessage: "Parse a sample in JSON reference",
+    };
   }
   if (root === null) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'Set an action name in JSON reference' };
+    return {
+      rows: [],
+      hiddenCount: 0,
+      emptyMessage: "Set an action name in JSON reference",
+    };
   }
 
   const all: ParsedValueRow[] = [];
-  walk(sample, [], '', root, all);
+  walk(sample, [], "", root, all);
 
   const needle = search.trim().toLowerCase();
-  const matched = needle === ''
-    ? all
-    : all.filter((row) => row.label.toLowerCase().includes(needle));
+  const matched =
+    needle === ""
+      ? all
+      : all.filter((row) => row.label.toLowerCase().includes(needle));
 
   if (matched.length === 0) {
-    return { rows: [], hiddenCount: 0, emptyMessage: 'No paths match this search' };
+    return {
+      rows: [],
+      hiddenCount: 0,
+      emptyMessage: "No paths match this search",
+    };
   }
 
   return {
@@ -641,7 +1224,9 @@ export function buildParsedValueList(
  * still required. Functions' Parsed Value group builds its expressions from
  * this so both screens emit byte-identical reference text.
  */
-export function currentReferenceRoot(state: JsonReferenceState): PayloadReferenceRoot | null {
+export function currentReferenceRoot(
+  state: JsonReferenceState,
+): PayloadReferenceRoot | null {
   if (isActionNameMissing(state)) return null;
   return referenceRoot(state, state.shape, state.actionName);
 }
@@ -664,12 +1249,12 @@ Lock the three-screen behaviour down before any of it exists.
 
 ```tsx
 // @vitest-environment jsdom
-import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
-import userEvent, { type UserEvent } from '@testing-library/user-event';
-import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
+import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ExpressionBuilderShell } from "../src/app/ExpressionBuilderShell";
 
 afterEach(() => cleanup());
 
@@ -677,11 +1262,13 @@ function createAdapter(): PlatformAdapter {
   return {
     copyToClipboard: vi.fn(async () => undefined),
     notify: vi.fn(async () => undefined),
-    getTheme: vi.fn(async () => 'dark' as const),
+    getTheme: vi.fn(async () => "dark" as const),
     onThemeChanged: vi.fn(() => () => undefined),
     settings: {
       // Onboarding already seen, so its modal does not take focus mid-test.
-      get: vi.fn(async (key: string) => (key === 'eb.onboarding.seen.v1' ? '1' : null)),
+      get: vi.fn(async (key: string) =>
+        key === "eb.onboarding.seen.v1" ? "1" : null,
+      ),
       set: vi.fn(async () => undefined),
       remove: vi.fn(async () => undefined),
     },
@@ -689,68 +1276,81 @@ function createAdapter(): PlatformAdapter {
   };
 }
 
-const chip = () => screen.getByRole('button', { name: /^Screen:/ });
+const chip = () => screen.getByRole("button", { name: /^Screen:/ });
 
 async function goTo(user: UserEvent, label: string) {
   await user.click(chip());
-  await user.click(screen.getByRole('menuitemradio', { name: label }));
+  await user.click(screen.getByRole("menuitemradio", { name: label }));
 }
 
-describe('screen contract', () => {
-  it('shows the pill title and the active screen in the chip (FR-2, AC-2.1)', () => {
+describe("screen contract", () => {
+  it("shows the pill title and the active screen in the chip (FR-2, AC-2.1)", () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
-    expect(screen.getByText('Expression Builder')).toBeInTheDocument();
-    expect(chip()).toHaveAccessibleName('Screen: Trigger / Filter');
+    expect(screen.getByText("Expression Builder")).toBeInTheDocument();
+    expect(chip()).toHaveAccessibleName("Screen: Trigger / Filter");
   });
 
-  it('lists all three screens in order and switches (FR-3, AC-3.1)', async () => {
+  it("lists all three screens in order and switches (FR-3, AC-3.1)", async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
     await user.click(chip());
-    expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
+    expect(
+      screen.getAllByRole("menuitemradio").map((item) => item.textContent),
+    ).toEqual(["Functions", "Trigger / Filter", "JSON reference"]);
 
-    await user.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
-    expect(chip()).toHaveAccessibleName('Screen: JSON reference');
-    expect(screen.getByLabelText('Sample JSON')).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "JSON reference" }),
+    );
+    expect(chip()).toHaveAccessibleName("Screen: JSON reference");
+    expect(screen.getByLabelText("Sample JSON")).toBeInTheDocument();
   });
 
-  it('keeps each screen’s state across switches (FR-4, AC-4.1)', async () => {
+  it("keeps each screen’s state across switches (FR-4, AC-4.1)", async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
-    await goTo(user, 'JSON reference');
-    await user.type(screen.getByLabelText('Action name'), 'Get items');
+    await goTo(user, "JSON reference");
+    await user.type(screen.getByLabelText("Action name"), "Get items");
 
-    await goTo(user, 'Functions');
-    await user.type(screen.getByLabelText('text2'), "' - '");
+    await goTo(user, "Functions");
+    await user.type(screen.getByLabelText("text2"), "' - '");
 
-    await goTo(user, 'Trigger / Filter');
-    await goTo(user, 'Functions');
-    expect(screen.getByLabelText('text2')).toHaveValue("' - '");
+    await goTo(user, "Trigger / Filter");
+    await goTo(user, "Functions");
+    expect(screen.getByLabelText("text2")).toHaveValue("' - '");
 
-    await goTo(user, 'JSON reference');
-    expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
+    await goTo(user, "JSON reference");
+    expect(screen.getByLabelText("Action name")).toHaveValue("Get items");
   });
 
-  it('shows mode, Import and Export only on Trigger / Filter (FR-5, AC-5.1, AC-5.2)', async () => {
+  it("shows mode, Import and Export only on Trigger / Filter (FR-5, AC-5.1, AC-5.2)", async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
-    expect(screen.getByRole('radiogroup', { name: 'Expression mode' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radiogroup", { name: "Expression mode" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'More actions' }));
-    expect(screen.getByRole('menuitem', { name: 'Import' })).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole("button", { name: "More actions" }));
+    expect(
+      screen.getByRole("menuitem", { name: "Import" }),
+    ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
 
-    await goTo(user, 'Functions');
-    expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('radiogroup', { name: 'Expression mode' })).not.toBeInTheDocument();
+    await goTo(user, "Functions");
+    expect(
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("radiogroup", { name: "Expression mode" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Sample result/i)).not.toBeInTheDocument();
 
-    await goTo(user, 'JSON reference');
+    await goTo(user, "JSON reference");
     expect(
-      screen.getByText('Pasted JSON is processed locally and is not uploaded or saved in any way.'),
+      screen.getByText(
+        "Pasted JSON is processed locally and is not uploaded or saved in any way.",
+      ),
     ).toBeInTheDocument();
   });
 });
@@ -772,26 +1372,31 @@ The frame, gradient backdrop and pill chrome. CI has no browser, so a CSS-text t
 - [x] Write `packages/builder-ui/test/shellStyles.test.ts`:
 
 ```ts
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 const css = readFileSync(
-  resolve(fileURLToPath(new URL('../src/', import.meta.url)), 'theme/shell.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, '');
+  resolve(
+    fileURLToPath(new URL("../src/", import.meta.url)),
+    "theme/shell.css",
+  ),
+  "utf8",
+).replace(/\/\*[\s\S]*?\*\//g, "");
 
 function rule(selector: string): string {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = new RegExp(`(?:^|[}\\s,])${escaped}\\s*\\{([^}]*)\\}`).exec(css);
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp(`(?:^|[}\\s,])${escaped}\\s*\\{([^}]*)\\}`).exec(
+    css,
+  );
   if (match === null) throw new Error(`Missing rule: ${selector}`);
   return match[1];
 }
 
-describe('shell styles', () => {
-  it('frames the app with the handoff padding, gap and glow (FR-1)', () => {
-    const root = rule('.eb-root');
+describe("shell styles", () => {
+  it("frames the app with the handoff padding, gap and glow (FR-1)", () => {
+    const root = rule(".eb-root");
     expect(root).toMatch(/padding:\s*16px;/);
     expect(root).toMatch(/gap:\s*14px;/);
     expect(root).toMatch(/var\(--glow-1\)/);
@@ -799,45 +1404,49 @@ describe('shell styles', () => {
     expect(root).toMatch(/var\(--bg\)/);
   });
 
-  it('shapes the 48px pill (FR-2)', () => {
-    const header = rule('.eb-pill-header');
+  it("shapes the 48px pill (FR-2)", () => {
+    const header = rule(".eb-pill-header");
     expect(header).toMatch(/height:\s*48px;/);
     expect(header).toMatch(/padding:\s*0 18px;/);
     expect(header).toMatch(/border-radius:\s*24px;/);
     expect(header).toMatch(/gap:\s*12px;/);
     expect(header).toMatch(/background:\s*var\(--header-glass\);/);
-    expect(rule('.eb-pill-title')).toMatch(/white-space:\s*nowrap;/);
-    expect(rule('.eb-pill-title')).toMatch(/flex:\s*none;/);
+    expect(rule(".eb-pill-title")).toMatch(/white-space:\s*nowrap;/);
+    expect(rule(".eb-pill-title")).toMatch(/flex:\s*none;/);
   });
 
-  it('shapes the mode chip (FR-3)', () => {
-    const chipRule = rule('.eb-mode-chip');
+  it("shapes the mode chip (FR-3)", () => {
+    const chipRule = rule(".eb-mode-chip");
     expect(chipRule).toMatch(/height:\s*30px;/);
     expect(chipRule).toMatch(/border-radius:\s*15px;/);
     expect(chipRule).toMatch(/background:\s*var\(--accent-soft\);/);
     expect(chipRule).toMatch(/color:\s*var\(--accent\);/);
   });
 
-  it('rings every header control at 2px with a 2px offset (FR-6)', () => {
-    const focus = rule('.eb-pill-header button:focus-visible');
+  it("rings every header control at 2px with a 2px offset (FR-6)", () => {
+    const focus = rule(".eb-pill-header button:focus-visible");
     expect(focus).toMatch(/outline:\s*2px solid var\(--accent\);/);
     expect(focus).toMatch(/outline-offset:\s*2px;/);
   });
 
-  it('keeps every color on a token (AC-1.1)', () => {
+  it("keeps every color on a token (AC-1.1)", () => {
     expect(css).not.toMatch(/#[\da-f]{3,8}\b/i);
     expect(css).not.toMatch(/rgba?\(/i);
   });
 
-  it('wraps instead of scrolling sideways at 900px and below (FR-26)', () => {
-    const narrow = /@media \(max-width: 900px\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+  it("wraps instead of scrolling sideways at 900px and below (FR-26)", () => {
+    const narrow =
+      /@media \(max-width: 900px\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
     expect(narrow).toMatch(/flex-wrap:\s*wrap;/);
     expect(narrow).toMatch(/height:\s*auto;/);
   });
 
-  it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
-    expect(rule('.eb-mode-chip')).toMatch(/transition:\s*background-color 120ms ease;/);
-    const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
+  it("transitions in 120ms and stops under reduced motion (FR-24)", () => {
+    expect(rule(".eb-mode-chip")).toMatch(
+      /transition:\s*background-color 120ms ease;/,
+    );
+    const reduced =
+      /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
   });
 });
@@ -850,124 +1459,124 @@ describe('shell styles', () => {
 /* 11a shared shell: frame, gradient backdrop and the pill header.
    Imported after tokens.css — .eb-root below overrides it by cascade order. */
 .eb-root {
-	padding: 16px;
-	gap: 14px;
-	background:
-		radial-gradient(circle at 85% 10%, var(--glow-1) 0, transparent 45%),
-		radial-gradient(circle at 15% 85%, var(--glow-2) 0, transparent 45%),
-		var(--bg);
+  padding: 16px;
+  gap: 14px;
+  background:
+    radial-gradient(circle at 85% 10%, var(--glow-1) 0, transparent 45%),
+    radial-gradient(circle at 15% 85%, var(--glow-2) 0, transparent 45%),
+    var(--bg);
 }
 
 .eb-pill-header {
-	flex: none;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	height: 48px;
-	padding: 0 18px;
-	border: 1px solid var(--border);
-	border-radius: 24px;
-	background: var(--header-glass);
-	box-shadow: var(--dock-shadow);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--header-glass);
+  box-shadow: var(--dock-shadow);
 }
 
 .eb-pill-title {
-	flex: none;
-	margin: 0;
-	font-size: 15px;
-	font-weight: 600;
-	white-space: nowrap;
+  flex: none;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .eb-pill-sep {
-	color: var(--text3);
+  color: var(--text3);
 }
 
 .eb-pill-spacer {
-	flex: 1;
+  flex: 1;
 }
 
 .eb-mode-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	height: 30px;
-	padding: 0 12px;
-	border: none;
-	border-radius: 15px;
-	background: var(--accent-soft);
-	color: var(--accent);
-	font-size: 14px;
-	cursor: pointer;
-	transition: background-color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 15px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
 }
 
 .eb-mode-chip svg {
-	width: 10px;
-	height: 10px;
-	stroke-width: 3;
+  width: 10px;
+  height: 10px;
+  stroke-width: 3;
 }
 
 .eb-pill-overflow {
-	flex: none;
-	width: 30px;
-	height: 30px;
-	border: none;
-	border-radius: 15px;
-	background: transparent;
-	color: var(--text2);
-	cursor: pointer;
-	transition: background-color 120ms ease;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 15px;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: background-color 120ms ease;
 }
 
 .eb-mode-chip:hover,
 .eb-pill-overflow:hover {
-	background: var(--seg-selected);
+  background: var(--seg-selected);
 }
 
 .eb-pill-privacy {
-	margin: 0;
-	color: var(--text2);
-	font-size: 12px;
+  margin: 0;
+  color: var(--text2);
+  font-size: 12px;
 }
 
 /* FR-6: 2px accent ring at a 2px offset on every header control. */
 .eb-pill-header button:focus-visible {
-	outline: 2px solid var(--accent);
-	outline-offset: 2px;
-	box-shadow: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .eb-visually-hidden {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	margin: -1px;
-	padding: 0;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* At 900px and below the pill wraps onto extra rows rather than push the page
    sideways: the SC-011 e2e checks every viewport down to 375px. Above 900px
    it stays one 48px row, which that same test also asserts. */
 @media (max-width: 900px) {
-	.eb-pill-header {
-		flex-wrap: wrap;
-		height: auto;
-		min-height: 48px;
-		padding: 8px 18px;
-		row-gap: 8px;
-	}
+  .eb-pill-header {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 48px;
+    padding: 8px 18px;
+    row-gap: 8px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.eb-mode-chip,
-	.eb-pill-overflow {
-		transition: none;
-	}
+  .eb-mode-chip,
+  .eb-pill-overflow {
+    transition: none;
+  }
 }
 ```
 
@@ -985,49 +1594,70 @@ describe('shell styles', () => {
 - [x] Write `packages/builder-ui/test/functionsStyles.test.ts` (same `rule()` helper as T5, reading `theme/functions.css`), asserting:
 
 ```ts
-describe('Functions screen styles', () => {
-  it('lays out nav plus the content grid (FR-8)', () => {
-    expect(rule('.eb-fn-workspace')).toMatch(/gap:\s*14px;/);
-    expect(rule('.eb-fn-nav')).toMatch(/width:\s*250px;/);
-    expect(rule('.eb-fn-grid')).toMatch(
+describe("Functions screen styles", () => {
+  it("lays out nav plus the content grid (FR-8)", () => {
+    expect(rule(".eb-fn-workspace")).toMatch(/gap:\s*14px;/);
+    expect(rule(".eb-fn-nav")).toMatch(/width:\s*250px;/);
+    expect(rule(".eb-fn-grid")).toMatch(
       /grid-template-columns:\s*minmax\(0,\s*3fr\)\s*minmax\(0,\s*2fr\);/,
     );
-    expect(rule('.eb-fn-grid')).toMatch(
+    expect(rule(".eb-fn-grid")).toMatch(
       /grid-template-rows:\s*minmax\(0,\s*1fr\)\s*minmax\(0,\s*1fr\)\s*210px;/,
     );
-    expect(rule('.eb-fn-grid')).toMatch(/gap:\s*12px;/);
-    expect(rule('.eb-fn-panel')).toMatch(/grid-area:\s*1\s*\/\s*1\s*\/\s*3\s*\/\s*2;/);
-    expect(rule('.eb-fn-dock')).toMatch(/grid-area:\s*3\s*\/\s*1\s*\/\s*4\s*\/\s*3;/);
-    expect(rule('.eb-fn-dock-side')).toMatch(/width:\s*280px;/);
+    expect(rule(".eb-fn-grid")).toMatch(/gap:\s*12px;/);
+    expect(rule(".eb-fn-panel")).toMatch(
+      /grid-area:\s*1\s*\/\s*1\s*\/\s*3\s*\/\s*2;/,
+    );
+    expect(rule(".eb-fn-dock")).toMatch(
+      /grid-area:\s*3\s*\/\s*1\s*\/\s*4\s*\/\s*3;/,
+    );
+    expect(rule(".eb-fn-dock-side")).toMatch(/width:\s*280px;/);
   });
 
-  it('keeps every color on a token (AC-1.1)', () => {
+  it("keeps every color on a token (AC-1.1)", () => {
     expect(css).not.toMatch(/#[\da-f]{3,8}\b/i);
     expect(css).not.toMatch(/rgba?\(/i);
-    expect(rule('.eb-fn-dock-code')).toMatch(/background:\s*var\(--code\);/);
-    expect(rule('.eb-fn-panel')).toMatch(/background:\s*var\(--panel-glass\);/);
+    expect(rule(".eb-fn-dock-code")).toMatch(/background:\s*var\(--code\);/);
+    expect(rule(".eb-fn-panel")).toMatch(/background:\s*var\(--panel-glass\);/);
   });
 
-  it('colors argument values by kind (FR-14)', () => {
-    expect(rule('.eb-fn-input[data-kind="reference"]')).toMatch(/color:\s*var\(--warn\);/);
-    expect(rule('.eb-fn-input[data-kind="literal"]')).toMatch(/color:\s*var\(--good\);/);
-    expect(rule('.eb-fn-input::placeholder')).toMatch(/color:\s*var\(--text3\);/);
+  it("colors argument values by kind (FR-14)", () => {
+    expect(rule('.eb-fn-input[data-kind="reference"]')).toMatch(
+      /color:\s*var\(--warn\);/,
+    );
+    expect(rule('.eb-fn-input[data-kind="literal"]')).toMatch(
+      /color:\s*var\(--good\);/,
+    );
+    expect(rule(".eb-fn-input::placeholder")).toMatch(
+      /color:\s*var\(--text3\);/,
+    );
   });
 
-  it('stacks into one scrolling column at 900px and below (FR-26, AC-26.2)', () => {
-    const stacked = /@media \(max-width: 900px\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
-    expect(stacked).toMatch(/\.eb-fn-workspace\s*\{[^}]*flex-direction:\s*column;[^}]*overflow-y:\s*auto;/);
-    expect(stacked).toMatch(/\.eb-fn-workspace > \*\s*\{[^}]*flex:\s*0 0 auto;/);
-    expect(stacked).toMatch(/\.eb-fn-nav\s*\{[^}]*width:\s*auto;[^}]*max-height:\s*40vh;/);
-    expect(stacked).toMatch(/\.eb-fn-grid\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/);
+  it("stacks into one scrolling column at 900px and below (FR-26, AC-26.2)", () => {
+    const stacked =
+      /@media \(max-width: 900px\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+    expect(stacked).toMatch(
+      /\.eb-fn-workspace\s*\{[^}]*flex-direction:\s*column;[^}]*overflow-y:\s*auto;/,
+    );
+    expect(stacked).toMatch(
+      /\.eb-fn-workspace > \*\s*\{[^}]*flex:\s*0 0 auto;/,
+    );
+    expect(stacked).toMatch(
+      /\.eb-fn-nav\s*\{[^}]*width:\s*auto;[^}]*max-height:\s*40vh;/,
+    );
+    expect(stacked).toMatch(
+      /\.eb-fn-grid\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/,
+    );
     expect(stacked).toMatch(/\.eb-fn-dock\s*\{[^}]*flex-direction:\s*column;/);
     expect(stacked).toMatch(/\.eb-fn-dock-side\s*\{[^}]*width:\s*auto;/);
   });
 
-  it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
-    expect(rule('.eb-fn-row'))
-      .toMatch(/transition:\s*background-color 120ms ease, border-color 120ms ease;/);
-    const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
+  it("transitions in 120ms and stops under reduced motion (FR-24)", () => {
+    expect(rule(".eb-fn-row")).toMatch(
+      /transition:\s*background-color 120ms ease, border-color 120ms ease;/,
+    );
+    const reduced =
+      /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
   });
 });
@@ -1041,44 +1671,45 @@ describe('Functions screen styles', () => {
    the stacked order — nav, Arguments, Status, Info, dock. The nav keeps its own
    scroll so a 20-row group does not push the arguments off-screen. */
 @media (max-width: 900px) {
-	.eb-fn-workspace {
-		flex-direction: column;
-		overflow-x: hidden;
-		overflow-y: auto;
-	}
+  .eb-fn-workspace {
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 
-	.eb-fn-workspace > * {
-		flex: 0 0 auto;
-	}
+  .eb-fn-workspace > * {
+    flex: 0 0 auto;
+  }
 
-	.eb-fn-nav {
-		width: auto;
-		max-height: 40vh;
-	}
+  .eb-fn-nav {
+    width: auto;
+    max-height: 40vh;
+  }
 
-	.eb-fn-grid {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-	}
+  .eb-fn-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-	.eb-fn-panel {
-		overflow-y: visible;
-	}
+  .eb-fn-panel {
+    overflow-y: visible;
+  }
 
-	.eb-fn-dock {
-		flex-direction: column;
-	}
+  .eb-fn-dock {
+    flex-direction: column;
+  }
 
-	.eb-fn-dock-side {
-		width: auto;
-		border-left: 0;
-		border-top: 1px solid var(--border);
-	}
+  .eb-fn-dock-side {
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
 }
 ```
 
 Close with `@media (prefers-reduced-motion: reduce)` setting `transition: none` on `.eb-fn-row`, `.eb-pv-row` and `.eb-fn-input`.
+
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsStyles.test.ts packages/builder-ui/test/themeColorAudit.test.ts` — expect: PASS (observed: 6 tests; scoped ESLint/whitespace passed; coordinator corrected undefined mono variable and markup selectors)
 - [x] Commit: `feat(theme): add the Functions screen stylesheet` — `40cbecc`, follow-up `03fb458` (nav row containment and transparent Parsed Value buttons; 6 tests passed again)
 
@@ -1096,20 +1727,23 @@ The pill, standalone and fully tested before it is wired in. The chip reuses the
 
 ```tsx
 // @vitest-environment jsdom
-import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SCREENS } from '../src/workbench/screens';
-import { ShellHeader, type ShellHeaderProps } from '../src/workbench/ShellHeader';
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SCREENS } from "../src/workbench/screens";
+import {
+  ShellHeader,
+  type ShellHeaderProps,
+} from "../src/workbench/ShellHeader";
 
 afterEach(() => cleanup());
 
 function renderHeader(overrides: Partial<ShellHeaderProps> = {}) {
   const props: ShellHeaderProps = {
-    screen: 'condition',
+    screen: "condition",
     onScreenChange: vi.fn(),
-    mode: 'triggerCondition',
+    mode: "triggerCondition",
     onModeChange: vi.fn(),
     onImport: vi.fn(),
     onExport: vi.fn(),
@@ -1119,56 +1753,76 @@ function renderHeader(overrides: Partial<ShellHeaderProps> = {}) {
   return props;
 }
 
-describe('ShellHeader', () => {
-  it('names all three screens once, in design order (FR-3)', () => {
-    expect(SCREENS.map((entry) => entry.label))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
+describe("ShellHeader", () => {
+  it("names all three screens once, in design order (FR-3)", () => {
+    expect(SCREENS.map((entry) => entry.label)).toEqual([
+      "Functions",
+      "Trigger / Filter",
+      "JSON reference",
+    ]);
   });
 
-  it('shows the title and the active screen (FR-2, AC-2.1)', () => {
+  it("shows the title and the active screen (FR-2, AC-2.1)", () => {
     renderHeader();
-    expect(screen.getByText('Expression Builder')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Screen: Trigger / Filter' })).toBeInTheDocument();
+    expect(screen.getByText("Expression Builder")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Screen: Trigger / Filter" }),
+    ).toBeInTheDocument();
   });
 
-  it('switches screens from the chip menu (FR-3, AC-3.1)', async () => {
+  it("switches screens from the chip menu (FR-3, AC-3.1)", async () => {
     const user = userEvent.setup();
     const props = renderHeader();
-    await user.click(screen.getByRole('button', { name: 'Screen: Trigger / Filter' }));
+    await user.click(
+      screen.getByRole("button", { name: "Screen: Trigger / Filter" }),
+    );
 
-    const items = screen.getAllByRole('menuitemradio');
-    expect(items.map((item) => item.textContent))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
-    expect(items[1]).toHaveAttribute('aria-checked', 'true');
+    const items = screen.getAllByRole("menuitemradio");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Functions",
+      "Trigger / Filter",
+      "JSON reference",
+    ]);
+    expect(items[1]).toHaveAttribute("aria-checked", "true");
 
     await user.click(items[0]);
-    expect(props.onScreenChange).toHaveBeenCalledWith('functions');
+    expect(props.onScreenChange).toHaveBeenCalledWith("functions");
   });
 
-  it('offers mode, Import and Export on Trigger / Filter only (FR-5, AC-5.1)', async () => {
+  it("offers mode, Import and Export on Trigger / Filter only (FR-5, AC-5.1)", async () => {
     const user = userEvent.setup();
     const props = renderHeader();
-    expect(screen.getByRole('radiogroup', { name: 'Expression mode' })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radiogroup", { name: "Expression mode" }),
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Export' }));
+    await user.click(screen.getByRole("button", { name: "Export" }));
     expect(props.onExport).toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: 'More actions' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Import' }));
+    await user.click(screen.getByRole("button", { name: "More actions" }));
+    await user.click(screen.getByRole("menuitem", { name: "Import" }));
     expect(props.onImport).toHaveBeenCalled();
   });
 
-  it('shows no actions on Functions and the privacy note on JSON reference (AC-5.2)', () => {
-    renderHeader({ screen: 'functions' });
-    expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+  it("shows no actions on Functions and the privacy note on JSON reference (AC-5.2)", () => {
+    renderHeader({ screen: "functions" });
+    expect(
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "More actions" }),
+    ).not.toBeInTheDocument();
     cleanup();
 
-    renderHeader({ screen: 'jsonReference' });
+    renderHeader({ screen: "jsonReference" });
     expect(
-      screen.getByText('Pasted JSON is processed locally and is not uploaded or saved in any way.'),
+      screen.getByText(
+        "Pasted JSON is processed locally and is not uploaded or saved in any way.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
   });
 });
 ```
@@ -1178,12 +1832,12 @@ describe('ShellHeader', () => {
 
 ```ts
 /** The three screens the pill's mode chip switches between, in design order (FR-3). */
-export type ScreenId = 'functions' | 'condition' | 'jsonReference';
+export type ScreenId = "functions" | "condition" | "jsonReference";
 
 export const SCREENS: ReadonlyArray<{ id: ScreenId; label: string }> = [
-  { id: 'functions', label: 'Functions' },
-  { id: 'condition', label: 'Trigger / Filter' },
-  { id: 'jsonReference', label: 'JSON reference' },
+  { id: "functions", label: "Functions" },
+  { id: "condition", label: "Trigger / Filter" },
+  { id: "jsonReference", label: "JSON reference" },
 ];
 ```
 
@@ -1197,15 +1851,15 @@ import {
   MenuList,
   MenuPopover,
   MenuTrigger,
-} from '@fluentui/react-components';
-import type { ExpressionMode } from '@ryanmakes/eb_engine';
-import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
-import { ActionButton } from './controls/ActionButton';
-import { ChevronDownIcon, ExportIcon, ImportIcon } from './icons/BuilderIcons';
-import { SCREENS, type ScreenId } from './screens';
+} from "@fluentui/react-components";
+import type { ExpressionMode } from "@ryanmakes/eb_engine";
+import { ModeSegmentedControl } from "../components/ModeSegmentedControl";
+import { ActionButton } from "./controls/ActionButton";
+import { ChevronDownIcon, ExportIcon, ImportIcon } from "./icons/BuilderIcons";
+import { SCREENS, type ScreenId } from "./screens";
 
 const JSON_PRIVACY =
-  'Pasted JSON is processed locally and is not uploaded or saved in any way.';
+  "Pasted JSON is processed locally and is not uploaded or saved in any way.";
 
 export interface ShellHeaderProps {
   screen: ScreenId;
@@ -1224,7 +1878,7 @@ export function ShellHeader({
   onScreenChange,
   screen,
 }: ShellHeaderProps) {
-  const label = SCREENS.find((entry) => entry.id === screen)?.label ?? '';
+  const label = SCREENS.find((entry) => entry.id === screen)?.label ?? "";
 
   return (
     <header className="eb-pill-header">
@@ -1235,10 +1889,16 @@ export function ShellHeader({
 
       <Menu
         checkedValues={{ screen: [screen] }}
-        onCheckedValueChange={(_event, data) => onScreenChange(data.checkedItems[0] as ScreenId)}
+        onCheckedValueChange={(_event, data) =>
+          onScreenChange(data.checkedItems[0] as ScreenId)
+        }
       >
         <MenuTrigger disableButtonEnhancement>
-          <button type="button" className="eb-mode-chip" aria-label={`Screen: ${label}`}>
+          <button
+            type="button"
+            className="eb-mode-chip"
+            aria-label={`Screen: ${label}`}
+          >
             <span>{label}</span>
             <ChevronDownIcon aria-hidden="true" />
           </button>
@@ -1256,12 +1916,16 @@ export function ShellHeader({
 
       <div className="eb-pill-spacer" />
 
-      {screen === 'condition' ? (
+      {screen === "condition" ? (
         <>
           <ModeSegmentedControl mode={mode} onChange={onModeChange} />
           <Menu>
             <MenuTrigger disableButtonEnhancement>
-              <button type="button" className="eb-pill-overflow" aria-label="More actions">
+              <button
+                type="button"
+                className="eb-pill-overflow"
+                aria-label="More actions"
+              >
                 &middot;&middot;&middot;
               </button>
             </MenuTrigger>
@@ -1273,13 +1937,19 @@ export function ShellHeader({
               </MenuList>
             </MenuPopover>
           </Menu>
-          <ActionButton variant="primary" onClick={onExport} icon={<ExportIcon />}>
+          <ActionButton
+            variant="primary"
+            onClick={onExport}
+            icon={<ExportIcon />}
+          >
             Export
           </ActionButton>
         </>
       ) : null}
 
-      {screen === 'jsonReference' ? <p className="eb-pill-privacy">{JSON_PRIVACY}</p> : null}
+      {screen === "jsonReference" ? (
+        <p className="eb-pill-privacy">{JSON_PRIVACY}</p>
+      ) : null}
     </header>
   );
 }
@@ -1303,12 +1973,13 @@ Validate one argument field: a recursive-descent reader over the WDL subset the 
 - [x] Write `packages/engine/test/argumentParser.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest';
-import { parseArgument } from '../src/argumentParser';
+import { describe, expect, it } from "vitest";
+import { parseArgument } from "../src/argumentParser";
 
 function kindOf(text: string) {
   const result = parseArgument(text);
-  if (!result.ok) throw new Error(`expected ${text} to parse: ${result.message}`);
+  if (!result.ok)
+    throw new Error(`expected ${text} to parse: ${result.message}`);
   return result.value.kind;
 }
 
@@ -1318,55 +1989,71 @@ function messageOf(text: string) {
   return result.message;
 }
 
-describe('parseArgument', () => {
-  it('reads the shapes the screen produces (FR-13, AC-13.1)', () => {
-    expect(kindOf('')).toBe('empty');
-    expect(kindOf('   ')).toBe('empty');
-    expect(kindOf("' - '")).toBe('string');
-    expect(kindOf("'O''Brien'")).toBe('string');
-    expect(kindOf('42')).toBe('number');
-    expect(kindOf('-1.5')).toBe('number');
-    expect(kindOf('true')).toBe('boolean');
-    expect(kindOf('null')).toBe('null');
-    expect(kindOf('utcNow()')).toBe('call');
-    expect(kindOf("toUpper('a')")).toBe('call');
-    expect(kindOf("triggerBody()?['Name']")).toBe('reference');
-    expect(kindOf('triggerBody()')).toBe('reference');
-    expect(kindOf("outputs('Get_items')?['body']?['value'][0]")).toBe('reference');
-    expect(kindOf('item()')).toBe('reference');
+describe("parseArgument", () => {
+  it("reads the shapes the screen produces (FR-13, AC-13.1)", () => {
+    expect(kindOf("")).toBe("empty");
+    expect(kindOf("   ")).toBe("empty");
+    expect(kindOf("' - '")).toBe("string");
+    expect(kindOf("'O''Brien'")).toBe("string");
+    expect(kindOf("42")).toBe("number");
+    expect(kindOf("-1.5")).toBe("number");
+    expect(kindOf("true")).toBe("boolean");
+    expect(kindOf("null")).toBe("null");
+    expect(kindOf("utcNow()")).toBe("call");
+    expect(kindOf("toUpper('a')")).toBe("call");
+    expect(kindOf("triggerBody()?['Name']")).toBe("reference");
+    expect(kindOf("triggerBody()")).toBe("reference");
+    expect(kindOf("outputs('Get_items')?['body']?['value'][0]")).toBe(
+      "reference",
+    );
+    expect(kindOf("item()")).toBe("reference");
     // What the JSON reference items() block copies once the loop plan lands.
-    expect(kindOf("items('Apply_to_each')?['Requester']?['Email']")).toBe('reference');
+    expect(kindOf("items('Apply_to_each')?['Requester']?['Email']")).toBe(
+      "reference",
+    );
   });
 
-  it('names the nested call so the breadcrumb can label it', () => {
+  it("names the nested call so the breadcrumb can label it", () => {
     const result = parseArgument("concat('a', 'b')");
-    expect(result.ok && result.value).toMatchObject({ kind: 'call', name: 'concat' });
+    expect(result.ok && result.value).toMatchObject({
+      kind: "call",
+      name: "concat",
+    });
   });
 
-  it('rejects bare text with a single-quotes hint (D8, AC-13.1)', () => {
-    expect(messageOf('Ada')).toBe("Wrap text in single quotes: 'Ada'.");
+  it("rejects bare text with a single-quotes hint (D8, AC-13.1)", () => {
+    expect(messageOf("Ada")).toBe("Wrap text in single quotes: 'Ada'.");
   });
 
-  it('rejects incomplete and malformed input (AC-13.1)', () => {
-    expect(messageOf('toUpper(')).toBe('The value is incomplete.');
-    expect(messageOf("'unclosed")).toBe('This text is missing its closing quote.');
-    expect(messageOf("triggerBody()?['Name'")).toBe('An accessor is missing its closing "]".');
-    expect(messageOf("toUpper('a')extra")).toBe('Unexpected "extra" after the value.');
-    expect(messageOf('triggerBody()?[Name]'))
-      .toBe("An accessor needs a quoted key or an index, e.g. ?['Name'].");
+  it("rejects incomplete and malformed input (AC-13.1)", () => {
+    expect(messageOf("toUpper(")).toBe("The value is incomplete.");
+    expect(messageOf("'unclosed")).toBe(
+      "This text is missing its closing quote.",
+    );
+    expect(messageOf("triggerBody()?['Name'")).toBe(
+      'An accessor is missing its closing "]".',
+    );
+    expect(messageOf("toUpper('a')extra")).toBe(
+      'Unexpected "extra" after the value.',
+    );
+    expect(messageOf("triggerBody()?[Name]")).toBe(
+      "An accessor needs a quoted key or an index, e.g. ?['Name'].",
+    );
   });
 
-  it('checks arity for catalog functions, not for payload roots', () => {
-    expect(messageOf('toUpper()')).toBe('toUpper needs at least 1 argument.');
-    expect(messageOf("substring('a', 1, 2, 3)")).toBe('substring takes at most 3 arguments.');
-    expect(messageOf('nope()')).toBe('"nope" is not a known function.');
-    expect(kindOf("concat('a', 'b', 'c', 'd')")).toBe('call'); // variadic
-    expect(kindOf("outputs('Any_name')")).toBe('reference'); // a root, not in the catalog
+  it("checks arity for catalog functions, not for payload roots", () => {
+    expect(messageOf("toUpper()")).toBe("toUpper needs at least 1 argument.");
+    expect(messageOf("substring('a', 1, 2, 3)")).toBe(
+      "substring takes at most 3 arguments.",
+    );
+    expect(messageOf("nope()")).toBe('"nope" is not a known function.');
+    expect(kindOf("concat('a', 'b', 'c', 'd')")).toBe("call"); // variadic
+    expect(kindOf("outputs('Any_name')")).toBe("reference"); // a root, not in the catalog
   });
 
-  it('stops runaway nesting', () => {
-    const deep = `${'toUpper('.repeat(40)}'a'${')'.repeat(40)}`;
-    expect(messageOf(deep)).toBe('This expression nests too deeply.');
+  it("stops runaway nesting", () => {
+    const deep = `${"toUpper(".repeat(40)}'a'${")".repeat(40)}`;
+    expect(messageOf(deep)).toBe("This expression nests too deeply.");
   });
 });
 ```
@@ -1375,17 +2062,17 @@ describe('parseArgument', () => {
 - [x] Write `packages/engine/src/argumentParser.ts`:
 
 ```ts
-import { findFunction } from './functionCatalog';
+import { findFunction } from "./functionCatalog";
 
 export type ParsedArgument =
-  | { kind: 'empty' }
-  | { kind: 'string' }
-  | { kind: 'number' }
-  | { kind: 'boolean' }
-  | { kind: 'null' }
+  | { kind: "empty" }
+  | { kind: "string" }
+  | { kind: "number" }
+  | { kind: "boolean" }
+  | { kind: "null" }
   /** A payload-output call, or any call narrowed by an accessor. */
-  | { kind: 'reference'; name: string }
-  | { kind: 'call'; name: string };
+  | { kind: "reference"; name: string }
+  | { kind: "call"; name: string };
 
 export type ParseArgumentResult =
   | { ok: true; value: ParsedArgument }
@@ -1393,8 +2080,17 @@ export type ParseArgumentResult =
 
 /** Calls addressing flow data; these name an action, so arity is not ours to check. */
 const PAYLOAD_ROOTS = new Set([
-  'triggerBody', 'triggerOutputs', 'trigger', 'outputs', 'body', 'actionBody',
-  'actionOutputs', 'item', 'items', 'variables', 'parameters',
+  "triggerBody",
+  "triggerOutputs",
+  "trigger",
+  "outputs",
+  "body",
+  "actionBody",
+  "actionOutputs",
+  "item",
+  "items",
+  "variables",
+  "parameters",
 ]);
 
 /** A text field is a trust boundary: cap nesting so no input can exhaust the stack. */
@@ -1411,7 +2107,7 @@ const IDENTIFIER = /[A-Za-z_][A-Za-z0-9_]*/y;
 
 export function parseArgument(text: string): ParseArgumentResult {
   const trimmed = text.trim();
-  if (trimmed === '') return { ok: true, value: { kind: 'empty' } };
+  if (trimmed === "") return { ok: true, value: { kind: "empty" } };
 
   const cursor: Cursor = { text: trimmed, pos: 0, depth: 0 };
   let value: ParsedArgument;
@@ -1420,51 +2116,59 @@ export function parseArgument(text: string): ParseArgumentResult {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : 'Could not read this value.',
+      message:
+        error instanceof Error ? error.message : "Could not read this value.",
     };
   }
 
   skipSpace(cursor);
   if (cursor.pos < cursor.text.length) {
-    return { ok: false, message: `Unexpected "${cursor.text.slice(cursor.pos)}" after the value.` };
+    return {
+      ok: false,
+      message: `Unexpected "${cursor.text.slice(cursor.pos)}" after the value.`,
+    };
   }
   return { ok: true, value };
 }
 
 function skipSpace(cursor: Cursor): void {
-  while (cursor.pos < cursor.text.length && /\s/.test(cursor.text[cursor.pos])) cursor.pos += 1;
+  while (cursor.pos < cursor.text.length && /\s/.test(cursor.text[cursor.pos]))
+    cursor.pos += 1;
 }
 
 function readValue(cursor: Cursor): ParsedArgument {
-  if (cursor.depth > MAX_DEPTH) throw new Error('This expression nests too deeply.');
+  if (cursor.depth > MAX_DEPTH)
+    throw new Error("This expression nests too deeply.");
   skipSpace(cursor);
   const char = cursor.text[cursor.pos];
-  if (char === undefined) throw new Error('The value is incomplete.');
+  if (char === undefined) throw new Error("The value is incomplete.");
   if (char === "'") {
     readString(cursor);
-    return { kind: 'string' };
+    return { kind: "string" };
   }
-  if (char === '-' || (char >= '0' && char <= '9')) {
+  if (char === "-" || (char >= "0" && char <= "9")) {
     readNumber(cursor);
-    return { kind: 'number' };
+    return { kind: "number" };
   }
   if (/[A-Za-z_]/.test(char)) return readNamedValue(cursor);
-  throw new Error(`"${char}" cannot start a value. Wrap text in single quotes.`);
+  throw new Error(
+    `"${char}" cannot start a value. Wrap text in single quotes.`,
+  );
 }
 
 function readNamedValue(cursor: Cursor): ParsedArgument {
   const name = readIdentifier(cursor);
-  if (cursor.text[cursor.pos] !== '(') {
-    if (name === 'true' || name === 'false') return { kind: 'boolean' };
-    if (name === 'null') return { kind: 'null' };
+  if (cursor.text[cursor.pos] !== "(") {
+    if (name === "true" || name === "false") return { kind: "boolean" };
+    if (name === "null") return { kind: "null" };
     throw new Error(`Wrap text in single quotes: '${name}'.`);
   }
 
   const argCount = readCallArguments(cursor);
   checkArity(name, argCount);
   const narrowed = readAccessors(cursor);
-  if (PAYLOAD_ROOTS.has(name) || narrowed) return { kind: 'reference', name };
-  return { kind: 'call', name };
+  if (PAYLOAD_ROOTS.has(name) || narrowed) return { kind: "reference", name };
+  return { kind: "call", name };
 }
 
 function checkArity(name: string, count: number): void {
@@ -1473,20 +2177,21 @@ function checkArity(name: string, count: number): void {
   if (fn === undefined) throw new Error(`"${name}" is not a known function.`);
 
   const required = fn.args.filter((arg) => arg.required).length;
-  if (count < required) throw new Error(`${name} needs at least ${plural(required)}.`);
+  if (count < required)
+    throw new Error(`${name} needs at least ${plural(required)}.`);
   if (!fn.args.some((arg) => arg.variadic) && count > fn.args.length) {
     throw new Error(`${name} takes at most ${plural(fn.args.length)}.`);
   }
 }
 
 function plural(count: number): string {
-  return `${count} argument${count === 1 ? '' : 's'}`;
+  return `${count} argument${count === 1 ? "" : "s"}`;
 }
 
 function readIdentifier(cursor: Cursor): string {
   IDENTIFIER.lastIndex = cursor.pos;
   const match = IDENTIFIER.exec(cursor.text);
-  if (match === null) throw new Error('A name was expected here.');
+  if (match === null) throw new Error("A name was expected here.");
   cursor.pos = IDENTIFIER.lastIndex;
   return match[0];
 }
@@ -1494,7 +2199,7 @@ function readIdentifier(cursor: Cursor): string {
 function readNumber(cursor: Cursor): void {
   NUMBER.lastIndex = cursor.pos;
   const match = NUMBER.exec(cursor.text);
-  if (match === null) throw new Error('This is not a valid number.');
+  if (match === null) throw new Error("This is not a valid number.");
   cursor.pos = NUMBER.lastIndex;
 }
 
@@ -1503,7 +2208,8 @@ function readString(cursor: Cursor): void {
   let from = cursor.pos + 1;
   for (;;) {
     const quote = cursor.text.indexOf("'", from);
-    if (quote === -1) throw new Error('This text is missing its closing quote.');
+    if (quote === -1)
+      throw new Error("This text is missing its closing quote.");
     if (cursor.text[quote + 1] === "'") {
       from = quote + 2;
       continue;
@@ -1518,7 +2224,7 @@ function readCallArguments(cursor: Cursor): number {
   cursor.pos += 1;
   cursor.depth += 1;
   skipSpace(cursor);
-  if (cursor.text[cursor.pos] === ')') {
+  if (cursor.text[cursor.pos] === ")") {
     cursor.pos += 1;
     cursor.depth -= 1;
     return 0;
@@ -1530,16 +2236,16 @@ function readCallArguments(cursor: Cursor): number {
     count += 1;
     skipSpace(cursor);
     const char = cursor.text[cursor.pos];
-    if (char === ',') {
+    if (char === ",") {
       cursor.pos += 1;
       continue;
     }
-    if (char === ')') {
+    if (char === ")") {
       cursor.pos += 1;
       cursor.depth -= 1;
       return count;
     }
-    throw new Error('The value is incomplete.');
+    throw new Error("The value is incomplete.");
   }
 }
 
@@ -1548,18 +2254,23 @@ function readAccessors(cursor: Cursor): boolean {
   let found = false;
   for (;;) {
     let pos = cursor.pos;
-    if (cursor.text[pos] === '?') pos += 1;
-    if (cursor.text[pos] !== '[') return found;
+    if (cursor.text[pos] === "?") pos += 1;
+    if (cursor.text[pos] !== "[") return found;
     cursor.pos = pos + 1;
 
     skipSpace(cursor);
     const char = cursor.text[cursor.pos];
     if (char === "'") readString(cursor);
-    else if (char !== undefined && char >= '0' && char <= '9') readNumber(cursor);
-    else throw new Error("An accessor needs a quoted key or an index, e.g. ?['Name'].");
+    else if (char !== undefined && char >= "0" && char <= "9")
+      readNumber(cursor);
+    else
+      throw new Error(
+        "An accessor needs a quoted key or an index, e.g. ?['Name'].",
+      );
 
     skipSpace(cursor);
-    if (cursor.text[cursor.pos] !== ']') throw new Error('An accessor is missing its closing "]".');
+    if (cursor.text[cursor.pos] !== "]")
+      throw new Error('An accessor is missing its closing "]".');
     cursor.pos += 1;
     found = true;
   }
@@ -1569,8 +2280,8 @@ function readAccessors(cursor: Cursor): boolean {
 - [x] Append to `packages/engine/src/index.ts`:
 
 ```ts
-export type { ParsedArgument, ParseArgumentResult } from './argumentParser';
-export { parseArgument } from './argumentParser';
+export type { ParsedArgument, ParseArgumentResult } from "./argumentParser";
+export { parseArgument } from "./argumentParser";
 ```
 
 - [x] Run: `npx vitest run packages/engine && npm run typecheck` — expect: PASS (observed: 9 files / 71 engine tests; TypeScript, scoped ESLint and whitespace passed; final focused rerun 6/6 after restoring plan syntax)
@@ -1591,7 +2302,7 @@ Every Functions behaviour as pure functions, so the four wave-4 components are m
 - [x] Write `packages/builder-ui/test/functionsState.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 import {
   argKind,
   deriveFunctions,
@@ -1601,7 +2312,7 @@ import {
   navGroups,
   type FunctionsAction,
   type FunctionsState,
-} from '../src/workbench/functionsState';
+} from "../src/workbench/functionsState";
 
 function run(...actions: FunctionsAction[]): FunctionsState {
   return actions.reduce(functionsReducer, initialFunctionsState);
@@ -1609,159 +2320,190 @@ function run(...actions: FunctionsAction[]): FunctionsState {
 
 /** concat as the mock has it: text1 = reference, text2 = ' - ', text3 empty. */
 const mock = run(
-  { type: 'setArg', name: 'text1', value: "triggerBody()?['Name']" },
-  { type: 'setArg', name: 'text2', value: "' - '" },
+  { type: "setArg", name: "text1", value: "triggerBody()?['Name']" },
+  { type: "setArg", name: "text2", value: "' - '" },
 );
 
-describe('functions state', () => {
-  it('opens on String with concat selected (FR-10, AC-10.1)', () => {
-    expect(initialFunctionsState.selectedFunction).toBe('concat');
-    expect([...initialFunctionsState.expandedGroups]).toEqual(['String']);
-    expect(deriveFunctions(initialFunctionsState).fn.name).toBe('concat');
+describe("functions state", () => {
+  it("opens on String with concat selected (FR-10, AC-10.1)", () => {
+    expect(initialFunctionsState.selectedFunction).toBe("concat");
+    expect([...initialFunctionsState.expandedGroups]).toEqual(["String"]);
+    expect(deriveFunctions(initialFunctionsState).fn.name).toBe("concat");
   });
 
-  it('counts and filters nav groups (FR-11, AC-11.1)', () => {
+  it("counts and filters nav groups (FR-11, AC-11.1)", () => {
     const all = navGroups(initialFunctionsState);
-    expect(all.map((group) => group.group))
-      .toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time']);
+    expect(all.map((group) => group.group)).toEqual([
+      "String",
+      "Collection",
+      "Logical",
+      "Math",
+      "Date and time",
+    ]);
     expect(all[0].total).toBe(20);
     expect(all[0].expanded).toBe(true);
     expect(all[1].expanded).toBe(false);
 
-    const filtered = navGroups(run({ type: 'setSearch', value: 'upper' }));
+    const filtered = navGroups(run({ type: "setSearch", value: "upper" }));
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].group).toBe('String');
-    expect(filtered[0].functions.map((fn) => fn.name)).toEqual(['toUpper']);
+    expect(filtered[0].group).toBe("String");
+    expect(filtered[0].functions.map((fn) => fn.name)).toEqual(["toUpper"]);
     expect(filtered[0].expanded).toBe(true);
 
-    expect(navGroups(run({ type: 'setSearch', value: '' }))).toHaveLength(5);
+    expect(navGroups(run({ type: "setSearch", value: "" }))).toHaveLength(5);
   });
 
-  it('builds a slot per argument, required first (FR-12, AC-12.1)', () => {
-    const state = run({ type: 'selectFunction', name: 'substring' });
-    expect(deriveFunctions(state).slots.map((slot) => [slot.name, slot.required]))
-      .toEqual([['text', true], ['startIndex', true], ['length', false]]);
+  it("builds a slot per argument, required first (FR-12, AC-12.1)", () => {
+    const state = run({ type: "selectFunction", name: "substring" });
+    expect(
+      deriveFunctions(state).slots.map((slot) => [slot.name, slot.required]),
+    ).toEqual([
+      ["text", true],
+      ["startIndex", true],
+      ["length", false],
+    ]);
   });
 
-  it('offers one more slot once a variadic argument is filled (D9)', () => {
-    const state = functionsReducer(mock, { type: 'setArg', name: 'text3', value: "'x'" });
-    expect(deriveFunctions(state).slots.map((slot) => slot.name))
-      .toEqual(['text1', 'text2', 'text3', 'text4']);
+  it("offers one more slot once a variadic argument is filled (D9)", () => {
+    const state = functionsReducer(mock, {
+      type: "setArg",
+      name: "text3",
+      value: "'x'",
+    });
+    expect(deriveFunctions(state).slots.map((slot) => slot.name)).toEqual([
+      "text1",
+      "text2",
+      "text3",
+      "text4",
+    ]);
   });
 
-  it('wraps the named argument and keeps the selection (FR-15, AC-15.1)', () => {
+  it("wraps the named argument and keeps the selection (FR-15, AC-15.1)", () => {
     const state = run(
-      { type: 'setArg', name: 'text1', value: "triggerBody()?['Name']" },
-      { type: 'wrapArg', arg: 'text1', fn: 'toUpper' },
+      { type: "setArg", name: "text1", value: "triggerBody()?['Name']" },
+      { type: "wrapArg", arg: "text1", fn: "toUpper" },
     );
-    expect(state.selectedFunction).toBe('concat');
+    expect(state.selectedFunction).toBe("concat");
     expect(state.args.text1).toBe("toUpper(triggerBody()?['Name'])");
-    expect(state.lastFocusedArg).toBe('text1');
+    expect(state.lastFocusedArg).toBe("text1");
   });
 
   // An earlier focus that has since ended must not turn the next pick into a
   // wrap. Whether focus is live is the nav's call, made at mousedown (T10).
-  it('selects a function even after an argument was focused (FR-15)', () => {
+  it("selects a function even after an argument was focused (FR-15)", () => {
     const state = run(
-      { type: 'setArg', name: 'text1', value: "'a'" },
-      { type: 'focusArg', name: 'text1' },
-      { type: 'selectFunction', name: 'toUpper' },
+      { type: "setArg", name: "text1", value: "'a'" },
+      { type: "focusArg", name: "text1" },
+      { type: "selectFunction", name: "toUpper" },
     );
-    expect(state.selectedFunction).toBe('toUpper');
+    expect(state.selectedFunction).toBe("toUpper");
     expect(state.args).toEqual({});
     expect(state.lastFocusedArg).toBeNull();
   });
 
-  it('reports validity and the card counts (FR-17, FR-18, AC-17.1, AC-18.1)', () => {
+  it("reports validity and the card counts (FR-17, FR-18, AC-17.1, AC-18.1)", () => {
     expect(deriveFunctions(mock)).toMatchObject({
-      valid: true, error: null, requiredSet: 2, requiredTotal: 2,
-      setCount: 2, shownCount: 3, optionalEmpty: 1,
+      valid: true,
+      error: null,
+      requiredSet: 2,
+      requiredTotal: 2,
+      setCount: 2,
+      shownCount: 3,
+      optionalEmpty: 1,
     });
 
     const cleared = deriveFunctions(
-      functionsReducer(mock, { type: 'setArg', name: 'text2', value: '' }),
+      functionsReducer(mock, { type: "setArg", name: "text2", value: "" }),
     );
     expect(cleared.valid).toBe(false);
-    expect(cleared.error).toBe('text2 is required.');
+    expect(cleared.error).toBe("text2 is required.");
     expect(cleared.requiredSet).toBe(1);
   });
 
-  it('surfaces a parse error against its argument (FR-13, FR-17)', () => {
+  it("surfaces a parse error against its argument (FR-13, FR-17)", () => {
     const derived = deriveFunctions(
-      functionsReducer(mock, { type: 'setArg', name: 'text2', value: 'Ada' }),
+      functionsReducer(mock, { type: "setArg", name: "text2", value: "Ada" }),
     );
     expect(derived.error).toBe("text2: Wrap text in single quotes: 'Ada'.");
   });
 
-  it('rejects a gap before a filled argument (FR-20)', () => {
+  it("rejects a gap before a filled argument (FR-20)", () => {
     const state = run(
-      { type: 'selectFunction', name: 'substring' },
-      { type: 'setArg', name: 'text', value: "'abc'" },
-      { type: 'setArg', name: 'length', value: '2' },
+      { type: "selectFunction", name: "substring" },
+      { type: "setArg", name: "text", value: "'abc'" },
+      { type: "setArg", name: "length", value: "2" },
     );
-    expect(deriveFunctions(state).error).toBe('startIndex is required.');
+    expect(deriveFunctions(state).error).toBe("startIndex is required.");
   });
 
-  it('builds the expression and its wrapped form (FR-20, AC-20.1)', () => {
+  it("builds the expression and its wrapped form (FR-20, AC-20.1)", () => {
     const derived = deriveFunctions(mock);
     expect(derived.expression).toBe("concat(triggerBody()?['Name'], ' - ')");
     expect(derived.wrapped).toBe("@{concat(triggerBody()?['Name'], ' - ')}");
   });
 
-  it('drops trailing empty optionals from the expression (FR-20)', () => {
-    expect(deriveFunctions(run({ type: 'selectFunction', name: 'utcNow' })).expression)
-      .toBe('utcNow()');
+  it("drops trailing empty optionals from the expression (FR-20)", () => {
+    expect(
+      deriveFunctions(run({ type: "selectFunction", name: "utcNow" }))
+        .expression,
+    ).toBe("utcNow()");
   });
 
-  it('labels the breadcrumb by argument kind (FR-19, AC-19.1)', () => {
+  it("labels the breadcrumb by argument kind (FR-19, AC-19.1)", () => {
     expect(deriveFunctions(mock).crumbs).toEqual([
-      { label: 'concat', tone: 'fn' },
-      { label: 'JSON reference', tone: 'ref' },
-      { label: 'text', tone: 'value' },
+      { label: "concat", tone: "fn" },
+      { label: "JSON reference", tone: "ref" },
+      { label: "text", tone: "value" },
     ]);
   });
 
-  it('shows a single error crumb when invalid (FR-19)', () => {
+  it("shows a single error crumb when invalid (FR-19)", () => {
     const derived = deriveFunctions(
-      functionsReducer(mock, { type: 'setArg', name: 'text2', value: 'Ada' }),
+      functionsReducer(mock, { type: "setArg", name: "text2", value: "Ada" }),
     );
     expect(derived.crumbs).toEqual([
-      { label: 'concat', tone: 'fn' },
-      { label: 'error', tone: 'error' },
+      { label: "concat", tone: "fn" },
+      { label: "error", tone: "error" },
     ]);
   });
 
-  it('classifies a slot for its input color (FR-14)', () => {
+  it("classifies a slot for its input color (FR-14)", () => {
     const slots = deriveFunctions(mock).slots;
-    expect(argKind(slots[0])).toBe('reference');
-    expect(argKind(slots[1])).toBe('literal');
-    expect(argKind(slots[2])).toBe('empty');
+    expect(argKind(slots[0])).toBe("reference");
+    expect(argKind(slots[1])).toBe("literal");
+    expect(argKind(slots[2])).toBe("empty");
     const bad = deriveFunctions(
-      functionsReducer(mock, { type: 'setArg', name: 'text2', value: 'Ada' }),
+      functionsReducer(mock, { type: "setArg", name: "text2", value: "Ada" }),
     ).slots[1];
-    expect(argKind(bad)).toBe('invalid');
+    expect(argKind(bad)).toBe("invalid");
   });
 
-  it('inserts a reference into the focused argument, else the first empty one (FR-22, AC-22.1)', () => {
-    const focusedText2 = functionsReducer(mock, { type: 'focusArg', name: 'text2' });
-    expect(insertTarget(focusedText2)).toBe('text2');
+  it("inserts a reference into the focused argument, else the first empty one (FR-22, AC-22.1)", () => {
+    const focusedText2 = functionsReducer(mock, {
+      type: "focusArg",
+      name: "text2",
+    });
+    expect(insertTarget(focusedText2)).toBe("text2");
     const focused = functionsReducer(focusedText2, {
-      type: 'insertReference',
+      type: "insertReference",
       expression: "triggerBody()?['Other']",
     });
     expect(focused.args.text2).toBe("triggerBody()?['Other']");
 
-    expect(insertTarget(initialFunctionsState)).toBe('text1');
+    expect(insertTarget(initialFunctionsState)).toBe("text1");
     const unfocused = functionsReducer(initialFunctionsState, {
-      type: 'insertReference',
+      type: "insertReference",
       expression: "triggerBody()?['Name']",
     });
     expect(unfocused.args.text1).toBe("triggerBody()?['Name']");
-    expect(unfocused.lastFocusedArg).toBe('text1');
+    expect(unfocused.lastFocusedArg).toBe("text1");
   });
 
-  it('clears arguments and focus when the selection changes', () => {
-    const state = functionsReducer(mock, { type: 'selectFunction', name: 'toUpper' });
+  it("clears arguments and focus when the selection changes", () => {
+    const state = functionsReducer(mock, {
+      type: "selectFunction",
+      name: "toUpper",
+    });
     expect(state.args).toEqual({});
     expect(state.lastFocusedArg).toBeNull();
   });
@@ -1781,9 +2523,9 @@ import {
   type CatalogFunction,
   type FunctionGroup,
   type ParseArgumentResult,
-} from '@ryanmakes/eb_engine';
+} from "@ryanmakes/eb_engine";
 
-export type CopyFormat = 'expression' | 'wrapped';
+export type CopyFormat = "expression" | "wrapped";
 
 /** Everything the Functions screen holds. In memory only: nothing persists (FR-4). */
 export interface FunctionsState {
@@ -1796,95 +2538,103 @@ export interface FunctionsState {
   /** Last argument the user focused; Parsed Value inserts here (FR-22). */
   lastFocusedArg: string | null;
   copyFormat: CopyFormat;
-  copyState: 'idle' | 'copied';
+  copyState: "idle" | "copied";
 }
 
 export type FunctionsAction =
-  | { type: 'setSearch'; value: string }
-  | { type: 'toggleGroup'; group: FunctionGroup }
-  | { type: 'toggleParsedValue' }
-  | { type: 'selectFunction'; name: string }
+  | { type: "setSearch"; value: string }
+  | { type: "toggleGroup"; group: FunctionGroup }
+  | { type: "toggleParsedValue" }
+  | { type: "selectFunction"; name: string }
   /** FR-15: the caller saw `arg` focused when the pick of `fn` began. */
-  | { type: 'wrapArg'; arg: string; fn: string }
-  | { type: 'setArg'; name: string; value: string }
-  | { type: 'focusArg'; name: string }
-  | { type: 'insertReference'; expression: string }
-  | { type: 'setCopyFormat'; value: CopyFormat }
-  | { type: 'copySucceeded' }
-  | { type: 'resetCopyState' };
+  | { type: "wrapArg"; arg: string; fn: string }
+  | { type: "setArg"; name: string; value: string }
+  | { type: "focusArg"; name: string }
+  | { type: "insertReference"; expression: string }
+  | { type: "setCopyFormat"; value: CopyFormat }
+  | { type: "copySucceeded" }
+  | { type: "resetCopyState" };
 
 export const initialFunctionsState: FunctionsState = {
-  search: '',
-  expandedGroups: new Set<FunctionGroup>(['String']),
+  search: "",
+  expandedGroups: new Set<FunctionGroup>(["String"]),
   parsedValueExpanded: false,
-  selectedFunction: 'concat',
+  selectedFunction: "concat",
   args: {},
   lastFocusedArg: null,
-  copyFormat: 'expression',
-  copyState: 'idle',
+  copyFormat: "expression",
+  copyState: "idle",
 };
 
-export function functionsReducer(state: FunctionsState, action: FunctionsAction): FunctionsState {
+export function functionsReducer(
+  state: FunctionsState,
+  action: FunctionsAction,
+): FunctionsState {
   switch (action.type) {
-    case 'setSearch':
+    case "setSearch":
       return { ...state, search: action.value };
 
-    case 'toggleGroup': {
+    case "toggleGroup": {
       const expandedGroups = new Set(state.expandedGroups);
-      if (!expandedGroups.delete(action.group)) expandedGroups.add(action.group);
+      if (!expandedGroups.delete(action.group))
+        expandedGroups.add(action.group);
       return { ...state, expandedGroups };
     }
 
-    case 'toggleParsedValue':
+    case "toggleParsedValue":
       return { ...state, parsedValueExpanded: !state.parsedValueExpanded };
 
     // lastFocusedArg outlives the focus itself (FR-22 needs it after a blur), so
     // it cannot decide a wrap; the nav dispatches wrapArg instead (FR-15).
-    case 'selectFunction':
+    case "selectFunction":
       if (action.name === state.selectedFunction) return state;
       return {
         ...state,
         selectedFunction: action.name,
         args: {},
         lastFocusedArg: null,
-        copyState: 'idle',
+        copyState: "idle",
       };
 
-    case 'wrapArg': {
-      const current = state.args[action.arg] ?? '';
+    case "wrapArg": {
+      const current = state.args[action.arg] ?? "";
       return {
         ...state,
         args: { ...state.args, [action.arg]: `${action.fn}(${current})` },
         lastFocusedArg: action.arg,
-        copyState: 'idle',
+        copyState: "idle",
       };
     }
 
-    case 'setArg':
-      return { ...state, args: { ...state.args, [action.name]: action.value }, copyState: 'idle' };
+    case "setArg":
+      return {
+        ...state,
+        args: { ...state.args, [action.name]: action.value },
+        copyState: "idle",
+      };
 
-    case 'focusArg':
+    case "focusArg":
       return { ...state, lastFocusedArg: action.name };
 
-    case 'insertReference': {
+    case "insertReference": {
       const target = insertTarget(state);
       if (target === null) return state;
       return {
         ...state,
         args: { ...state.args, [target]: action.expression },
         lastFocusedArg: target,
-        copyState: 'idle',
+        copyState: "idle",
       };
     }
 
-    case 'setCopyFormat':
-      return { ...state, copyFormat: action.value, copyState: 'idle' };
+    case "setCopyFormat":
+      return { ...state, copyFormat: action.value, copyState: "idle" };
 
-    case 'copySucceeded':
-      return { ...state, copyState: 'copied' };
+    case "copySucceeded":
+      return { ...state, copyState: "copied" };
 
-    case 'resetCopyState':
-      return { ...state, copyState: 'idle' };
+    case "resetCopyState":
+      return { ...state, copyState: "idle" };
 
     default:
       return state;
@@ -1902,7 +2652,11 @@ function selectedFunctionOf(state: FunctionsState): CatalogFunction {
 export function insertTarget(state: FunctionsState): string | null {
   if (state.lastFocusedArg !== null) return state.lastFocusedArg;
   const slots = buildSlots(selectedFunctionOf(state), state.args);
-  return slots.find((slot) => slot.value.trim() === '')?.name ?? slots[0]?.name ?? null;
+  return (
+    slots.find((slot) => slot.value.trim() === "")?.name ??
+    slots[0]?.name ??
+    null
+  );
 }
 
 export interface ArgumentSlot {
@@ -1918,16 +2672,21 @@ export interface ArgumentSlot {
  * another can always be added (D9). Required arguments come first because the
  * catalog already orders them that way.
  */
-function buildSlots(fn: CatalogFunction, args: Readonly<Record<string, string>>): ArgumentSlot[] {
-  const slots = fn.args.map((arg) => slotFor(arg.name, arg.type, arg.required, args));
+function buildSlots(
+  fn: CatalogFunction,
+  args: Readonly<Record<string, string>>,
+): ArgumentSlot[] {
+  const slots = fn.args.map((arg) =>
+    slotFor(arg.name, arg.type, arg.required, args),
+  );
 
   const tail = fn.args.at(-1);
   if (tail?.variadic === true) {
     // `text3` -> text4, text5 … while the one before it is filled.
-    const base = tail.name.replace(/\d+$/, '');
+    const base = tail.name.replace(/\d+$/, "");
     let index = Number.parseInt(tail.name.slice(base.length), 10);
     if (!Number.isFinite(index)) index = fn.args.length;
-    while ((args[`${base}${index}`] ?? '').trim() !== '') {
+    while ((args[`${base}${index}`] ?? "").trim() !== "") {
       index += 1;
       slots.push(slotFor(`${base}${index}`, tail.type, false, args));
     }
@@ -1942,15 +2701,17 @@ function slotFor(
   required: boolean,
   args: Readonly<Record<string, string>>,
 ): ArgumentSlot {
-  const value = args[name] ?? '';
+  const value = args[name] ?? "";
   return { name, type, required, value, parsed: parseArgument(value) };
 }
 
 /** Drives the input's `data-kind`, and so its color (FR-14). */
-export function argKind(slot: ArgumentSlot): 'empty' | 'literal' | 'reference' | 'invalid' {
-  if (slot.value.trim() === '') return 'empty';
-  if (!slot.parsed.ok) return 'invalid';
-  return slot.parsed.value.kind === 'reference' ? 'reference' : 'literal';
+export function argKind(
+  slot: ArgumentSlot,
+): "empty" | "literal" | "reference" | "invalid" {
+  if (slot.value.trim() === "") return "empty";
+  if (!slot.parsed.ok) return "invalid";
+  return slot.parsed.value.kind === "reference" ? "reference" : "literal";
 }
 
 export interface NavGroup {
@@ -1967,20 +2728,23 @@ export function navGroups(state: FunctionsState): NavGroup[] {
   const needle = state.search.trim().toLowerCase();
   return FUNCTION_GROUPS.flatMap((group) => {
     const all = FUNCTION_CATALOG.filter((fn) => fn.group === group);
-    const functions = needle === ''
-      ? all
-      : all.filter((fn) => fn.name.toLowerCase().includes(needle));
+    const functions =
+      needle === ""
+        ? all
+        : all.filter((fn) => fn.name.toLowerCase().includes(needle));
     if (functions.length === 0) return [];
-    return [{
-      group,
-      functions,
-      total: all.length,
-      expanded: needle === '' ? state.expandedGroups.has(group) : true,
-    }];
+    return [
+      {
+        group,
+        functions,
+        total: all.length,
+        expanded: needle === "" ? state.expandedGroups.has(group) : true,
+      },
+    ];
   });
 }
 
-export type CrumbTone = 'fn' | 'ref' | 'value' | 'error';
+export type CrumbTone = "fn" | "ref" | "value" | "error";
 
 export interface FunctionsDerived {
   fn: CatalogFunction;
@@ -2002,14 +2766,17 @@ export function deriveFunctions(state: FunctionsState): FunctionsDerived {
   const fn = selectedFunctionOf(state);
   const slots = buildSlots(fn, state.args);
   const values = slots.map((slot) => slot.value.trim());
-  const lastSet = values.reduce((last, value, index) => (value === '' ? last : index), -1);
+  const lastSet = values.reduce(
+    (last, value, index) => (value === "" ? last : index),
+    -1,
+  );
 
   let error: string | null = null;
   const note = (message: string) => {
     error ??= message;
   };
   slots.forEach((slot, index) => {
-    if (values[index] === '') {
+    if (values[index] === "") {
       if (slot.required) note(`${slot.name} is required.`);
       else if (index < lastSet) note(`Fill ${slot.name} first.`);
       return;
@@ -2017,53 +2784,61 @@ export function deriveFunctions(state: FunctionsState): FunctionsDerived {
     if (!slot.parsed.ok) note(`${slot.name}: ${slot.parsed.message}`);
   });
 
-  const expression = `${fn.name}(${values.slice(0, lastSet + 1).join(', ')})`;
+  const expression = `${fn.name}(${values.slice(0, lastSet + 1).join(", ")})`;
 
   return {
     fn,
     slots,
     valid: error === null,
     error,
-    requiredSet: slots.filter((slot, index) => slot.required && values[index] !== '').length,
+    requiredSet: slots.filter(
+      (slot, index) => slot.required && values[index] !== "",
+    ).length,
     requiredTotal: slots.filter((slot) => slot.required).length,
-    setCount: values.filter((value) => value !== '').length,
+    setCount: values.filter((value) => value !== "").length,
     shownCount: slots.length,
-    optionalEmpty: slots.filter((slot, index) => !slot.required && values[index] === '').length,
+    optionalEmpty: slots.filter(
+      (slot, index) => !slot.required && values[index] === "",
+    ).length,
     expression,
     wrapped: `@{${expression}}`,
     crumbs: [
-      { label: fn.name, tone: 'fn' as CrumbTone },
+      { label: fn.name, tone: "fn" as CrumbTone },
       ...(error !== null
-        ? [{ label: 'error', tone: 'error' as CrumbTone }]
-        : slots.flatMap((slot, index) => (values[index] === '' ? [] : [crumbFor(slot.parsed)]))),
+        ? [{ label: "error", tone: "error" as CrumbTone }]
+        : slots.flatMap((slot, index) =>
+            values[index] === "" ? [] : [crumbFor(slot.parsed)],
+          )),
     ],
   };
 }
 
-function crumbFor(parsed: ParseArgumentResult): { label: string; tone: CrumbTone } {
-  if (!parsed.ok) return { label: 'error', tone: 'error' };
+function crumbFor(parsed: ParseArgumentResult): {
+  label: string;
+  tone: CrumbTone;
+} {
+  if (!parsed.ok) return { label: "error", tone: "error" };
   switch (parsed.value.kind) {
-    case 'reference':
-      return { label: 'JSON reference', tone: 'ref' };
-    case 'string':
-      return { label: 'text', tone: 'value' };
-    case 'number':
-      return { label: 'number', tone: 'value' };
-    case 'boolean':
-      return { label: 'boolean', tone: 'value' };
-    case 'null':
-      return { label: 'null', tone: 'value' };
-    case 'call':
-      return { label: parsed.value.name, tone: 'fn' };
+    case "reference":
+      return { label: "JSON reference", tone: "ref" };
+    case "string":
+      return { label: "text", tone: "value" };
+    case "number":
+      return { label: "number", tone: "value" };
+    case "boolean":
+      return { label: "boolean", tone: "value" };
+    case "null":
+      return { label: "null", tone: "value" };
+    case "call":
+      return { label: parsed.value.name, tone: "fn" };
     default:
-      return { label: 'empty', tone: 'value' };
+      return { label: "empty", tone: "value" };
   }
 }
 ```
 
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsState.test.ts && npm run typecheck` — expect: PASS
 - [x] Commit: `feat(builder-ui): add Functions screen state and derivation`
-
 
 **Execution evidence:** Red: missing functionsState module. Green: 16/16 focused tests; TypeScript, scoped ESLint and whitespace checks passed. Coordinator reviewed both files; committed `8e6e9e5`.
 
@@ -2113,14 +2888,15 @@ const wrapArg = useRef<string | null>(null);
   draggable
   onMouseDown={() => {
     const active = document.activeElement;
-    wrapArg.current = active instanceof HTMLElement ? (active.dataset.arg ?? null) : null;
+    wrapArg.current =
+      active instanceof HTMLElement ? (active.dataset.arg ?? null) : null;
   }}
   onKeyDown={() => {
     wrapArg.current = null;
   }}
   onDragStart={(event) => {
     wrapArg.current = null;
-    event.dataTransfer.setData('text/plain', `${fn.name}()`);
+    event.dataTransfer.setData("text/plain", `${fn.name}()`);
   }}
   onClick={() => {
     onSelectFunction(fn.name, wrapArg.current);
@@ -2128,11 +2904,11 @@ const wrapArg = useRef<string | null>(null);
   }}
 >
   {fn.name}
-</button>
+</button>;
 ```
+
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsNav.test.tsx && npm run typecheck` — expect: PASS
 - [x] Commit: `feat(builder-ui): add the Functions nav`
-
 
 **Execution evidence:** Red: unresolved FunctionsNav import, zero tests run. Green: 14/14 focused tests, TypeScript, scoped ESLint and whitespace passed. Coordinator reviewed live-focus capture, group names, Parsed Value descriptions and keyboard insertion; cleanup scoped lint passed. Committed `4fcd7eb`.
 
@@ -2159,7 +2935,6 @@ export interface ArgumentsPanelProps {
 - [x] Run: `npx vitest run packages/builder-ui/test/argumentsPanel.test.tsx && npm run typecheck` — expect: PASS
 - [x] Commit: `feat(builder-ui): add the Functions arguments panel`
 
-
 **Execution evidence:** Missing-component red check captured; focused 5/5 tests, TypeScript, scoped ESLint and whitespace passed. Coordinator reviewed input accessibility and native drop acceptance. Committed `3549043`.
 
 ---
@@ -2182,7 +2957,6 @@ export interface FunctionsStatusCardsProps {
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsStatusCards.test.tsx && npm run typecheck` — expect: PASS
 - [x] Commit: `feat(builder-ui): add the Functions status cards`
 
-
 **Execution evidence:** Red: missing component import. Focused 4/4 tests, scoped ESLint and whitespace passed. TypeScript initially overlapped T10 edits; shared check passed once nav settled. Coordinator reviewed both files; committed `fa6f3d2`.
 
 ---
@@ -2197,7 +2971,7 @@ export interface FunctionsStatusCardsProps {
 export interface FunctionsDockProps {
   derived: FunctionsDerived;
   copyFormat: CopyFormat;
-  copyState: 'idle' | 'copied';
+  copyState: "idle" | "copied";
   onCopyFormatChange: (format: CopyFormat) => void;
   /** T14 performs the clipboard write; this component only reports intent. */
   onCopy: (format: CopyFormat) => void;
@@ -2209,7 +2983,6 @@ export interface FunctionsDockProps {
 - [x] Implement `FunctionsDock.tsx`: a `<div className="eb-fn-dock">` over a `<div className="eb-fn-dock-code">` (header row with the uppercase "Expression" label, the validity pill, and a two-button `role="radiogroup" aria-label="Expression format"`; then `<ExpressionPreview expression={copyFormat === 'wrapped' ? derived.wrapped : derived.expression} label="Generated expression" />`; then a 1px divider and the crumb chips as `<span className="eb-fn-crumb" data-tone={crumb.tone}>` separated by `›` spans marked `aria-hidden`) and a `<div className="eb-fn-dock-side">` holding `<ActionButton variant="primary" icon={<CopyIcon />} disabled={!derived.valid} onClick={() => onCopy(copyFormat)}>{copyState === 'copied' ? 'Copied' : 'Copy expression'}</ActionButton>` plus a caption `<button disabled={!derived.valid} onClick={() => onCopy('wrapped')}>Copy as @{'{…}'}</button>`.
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsDock.test.tsx && npm run typecheck` — expect: PASS
 - [x] Commit: `feat(builder-ui): add the Functions expression dock`
-
 
 **Execution evidence:** Red: missing component module. Green: 7/7 focused tests, TypeScript and scoped ESLint passed. Coordinator reviewed keyboard radio navigation, copy format independence and wrapping header. Committed `a35da92`; EOF whitespace repaired in `8a73db2` after staged check identified it. Final staged whitespace check passed. Combined T9–T13 plus theme color audit: 6 files / 47 tests passed.
 
@@ -2249,15 +3022,17 @@ const rootRef = useRef<HTMLDivElement>(null);
  */
 function focusArg(name: string | null) {
   if (name === null) return;
-  rootRef.current?.querySelector<HTMLInputElement>(`[data-arg="${name}"]`)?.focus();
+  rootRef.current
+    ?.querySelector<HTMLInputElement>(`[data-arg="${name}"]`)
+    ?.focus();
 }
 
 function selectFunction(name: string, wrapArg: string | null) {
   if (wrapArg === null) {
-    dispatch({ type: 'selectFunction', name });
+    dispatch({ type: "selectFunction", name });
     return;
   }
-  dispatch({ type: 'wrapArg', arg: wrapArg, fn: name });
+  dispatch({ type: "wrapArg", arg: wrapArg, fn: name });
   // Without this, a second pick would see the nav row focused and replace
   // every argument instead of wrapping again.
   focusArg(wrapArg);
@@ -2265,13 +3040,13 @@ function selectFunction(name: string, wrapArg: string | null) {
 
 function insertReference(expression: string) {
   const target = insertTarget(state);
-  dispatch({ type: 'insertReference', expression });
+  dispatch({ type: "insertReference", expression });
   focusArg(target);
 }
 ```
+
 - [x] Run: `npx vitest run packages/builder-ui/test/functionsWorkspace.test.tsx && npm run typecheck && npm run lint` — expect: PASS
 - [x] Commit: `feat(builder-ui): compose the Functions workspace`
-
 
 **Execution evidence:** Red missing component module (exit1, 0tests). Green focused 6/6 (18.62s), TypeScript and scoped ESLint passed; coordinator reviewed both files and staged whitespace check passed. Full npm run lint initially failed21errors in ignored skill samples (archive dec16f71e27b6e0f); user authorized narrow sample exclusion, separately committed8eeef89, full lint thenpassed (exit0 archive207d2f084fdae24b). T14 committed e6c8175.
 
@@ -2298,7 +3073,6 @@ Mount the header and the new screen, retire the old ones. The JSON reference red
 
 > `npm test` is red here, by design. The wave table lists each red suite and the wave-7 agent that repairs it. Do not touch those files in this phase.
 
-
 **Execution evidence:** Prechange screen contract4/4 failed (exit1 archive772781d5438c4b52); after shell integration screenContract+jsonReferenceState26/26 passed, TypeScript/full lint/scoped whitespaceexit0. Coordinator reviewed full owned diff, preserved all JSON body handlers/markup, and staged whitespacepassed. Committed d83fc09. Downstream suites intentionally awaitT16–T20.
 
 ---
@@ -2315,7 +3089,6 @@ Mount the header and the new screen, retire the old ones. The JSON reference red
 - [x] Keep and re-point the cases that still hold — JSON reference state surviving a switch, the copied-status reset, and "leaves the document, mode, predicate and Export output unchanged" — replacing each `getByRole('tab', …)` click with the chip menu via a local `goTo(user, label)` helper of the shape T4 uses.
 - [x] Run: `npx vitest run packages/builder-ui/test/builderSwitching.test.tsx` — expect: PASS
 - [x] Commit: `test: point builder switching at the mode chip`
-
 
 **Execution evidence:** Coordinator reviewed diff: 5 focused tests, scoped ESLint and staged whitespacepassed, exits0; committed103ad52.
 
@@ -2335,7 +3108,6 @@ Paired deliberately: the rules and the assertions about them must go in one comm
 - [x] Confirm `grep -n "eb-builder-tab\|eb-workbench-header\|eb-header-" packages/builder-ui/src/theme/tokens.css` returns nothing
 - [x] Commit: `refactor(theme): drop the retired header and tab-strip rules`
 
-
 **Execution evidence:** Coordinator reviewed full deletion diff: 6focused/audit tests, scoped ESLint, selectorsearch0matches and staged whitespacepassed; committed90d6368.
 
 ---
@@ -2350,8 +3122,8 @@ Paired deliberately: the rules and the assertions about them must go in one comm
 
 ```ts
 async function goToScreen(page: Page, label: string) {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name: label }).click();
+  await page.getByRole("button", { name: /^Screen:/ }).click();
+  await page.getByRole("menuitemradio", { name: label }).click();
 }
 ```
 
@@ -2376,17 +3148,27 @@ T15 made `state` / `dispatch` required, so every standalone render here — the 
 - [x] Add a host component near the top of the file, merging these imports into the existing ones:
 
 ```tsx
-import { useReducer } from 'react';
-import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
+import { useReducer } from "react";
+import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
 import {
-	initialJsonReferenceState,
-	jsonReferenceReducer,
-} from '../src/workbench/jsonReferenceState';
+  initialJsonReferenceState,
+  jsonReferenceReducer,
+} from "../src/workbench/jsonReferenceState";
 
 /** Owns the reducer the shell owns in production (T15). */
 function Workspace({ adapter }: { adapter: PlatformAdapter }) {
-	const [state, dispatch] = useReducer(jsonReferenceReducer, initialJsonReferenceState);
-	return <JsonReferenceWorkspace adapter={adapter} active state={state} dispatch={dispatch} />;
+  const [state, dispatch] = useReducer(
+    jsonReferenceReducer,
+    initialJsonReferenceState,
+  );
+  return (
+    <JsonReferenceWorkspace
+      adapter={adapter}
+      active
+      state={state}
+      dispatch={dispatch}
+    />
+  );
 }
 ```
 
@@ -2394,7 +3176,6 @@ function Workspace({ adapter }: { adapter: PlatformAdapter }) {
 - [x] Run: `npx vitest run packages/builder-ui/test/jsonReferenceWorkspace.test.tsx` — expect: PASS. If any case still fails after the harness swap, **stop and report it as a T15 regression** — do not edit assertions.
 - [x] Run: `npx eslint packages/builder-ui/test/jsonReferenceWorkspace.test.tsx` — expect: no output
 - [x] Commit: `test: host the JSON reference workspace on a reducer harness`
-
 
 **Execution evidence:** Agent tool rejected new threads repeatedly; coordinator used skill unavailable-delegation fallback. Mechanical16render harness swap only, allassertionsunchanged; focused16/16 passed archivefd662036a3734741; scopedlint and stagedwhitespaceexit0. Committed8b4f5d5.
 
@@ -2406,26 +3187,27 @@ function Workspace({ adapter }: { adapter: PlatformAdapter }) {
 **Files:** `packages/builder-ui/test/sharedBuilderUi.test.tsx`, `tests/e2e/web-smoke.spec.ts`, `tests/e2e/condition-move-to-group.spec.ts`
 **Interfaces:** Consumes: the shipped header (T15) — Import is now a `menuitem` behind the **More actions** button. Produces: nothing other phases read.
 
-One change in three files: every click on the old header **Import** button opens the overflow first. The dialog's own **Import** confirm button is unchanged — leave those lines alone.
+One change in three files: every click on the old header **Import** button opens the overflow first. The 's own **Import** confirm button is unchanged — leave those lines alone.
 
 - [x] In `tests/e2e/web-smoke.spec.ts` (lines 46 and 67) and `tests/e2e/condition-move-to-group.spec.ts` (line 33), replace `await page.getByRole('button', { name: 'Import', exact: true }).click();` with:
 
 ```ts
-  await page.getByRole('button', { name: 'More actions' }).click();
-  await page.getByRole('menuitem', { name: 'Import' }).click();
+await page.getByRole("button", { name: "More actions" }).click();
+await page.getByRole("menuitem", { name: "Import" }).click();
 ```
 
 - [x] In `packages/builder-ui/test/sharedBuilderUi.test.tsx` (line 510), replace `await user.click(screen.getByRole('button', { name: 'Import' }));` with the lines below. `hidden: true` matches the jsdom quirk the surrounding comment already documents for Fluent portals after Export:
 
 ```ts
-    await user.click(screen.getByRole('button', { name: 'More actions' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Import', hidden: true }));
+await user.click(screen.getByRole("button", { name: "More actions" }));
+await user.click(
+  await screen.findByRole("menuitem", { name: "Import", hidden: true }),
+);
 ```
 
 - [x] Run: `npx vitest run packages/builder-ui/test/sharedBuilderUi.test.tsx` — expect: PASS
 - [x] Run: `npm run test:e2e -- tests/e2e/web-smoke.spec.ts tests/e2e/condition-move-to-group.spec.ts` — expect: PASS
 - [x] Commit: `test: open Import from the header overflow menu`
-
 
 **Execution evidence:** Coordinator fallback implementation; Import header calls retargeted, conditionpreviewqueries scoped for all-mounted screens, existingheaderImportassertion and stalewebCopylocator retargeted without changing behaviorassertions. Initialunit24/25 and e2e1/2 failed on those oldlocators; afterrepair unit25/25 passed archive364b4bc13addf8e5, e2e2/2 passed archived0ecd797ff5fbba6, scopedlint/stagedwhitespaceexit0. Existing ignored web-smoke/condition-move tests force-staged only because exacttaskpathsrequirethem. Committed bd8e8e4.
 
