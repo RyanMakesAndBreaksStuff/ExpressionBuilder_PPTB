@@ -1,5 +1,0 @@
-{
-  "hook_event_name": "SubagentStart",
-  "session_id": "test-session-001",
-  "cwd": "__CWD_PLACEHOLDER__"
-}
