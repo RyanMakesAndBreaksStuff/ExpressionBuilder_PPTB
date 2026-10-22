@@ -48,3 +48,7 @@ tasks/lessons.md
 /.playwright-mcp
 /.codegraph
 /CLAUDE.md
+/assets/JSON BUILDERFlow Functions UI.zip
+*.json
+/tests/e2e/fixtures/toolboxApiMock.ts
+/package-lock.json

@@ -1,13 +1,39 @@
 # Feature 002: Multi-payload JSON reference workspace
 
-**Status:** Approved (2026-10-08)
-**Version:** 1.0.1
+**Status:** Approved (2026-10-08); revised from the 13c handoff at the user's request (2026-10-20)
+**Version:** 2.0.0
 **Created:** 2026-10-08
+**Last Updated:** 2026-10-20
 **Branch:** Documentation prepared on `functions-prep-for-release`; implementation branch is deferred until execution.
-**Design evidence:** [13b design](reference/13b-design.dc.html), [standalone handoff](reference/13b-standalone.html), [13a integration notes](reference/13a-integration-notes.md).
-**Baseline and interpretation:** [Source notes](source-notes.md). Spec 001 remains the baseline for Functions and the shared header; this spec extends its single-sample Parsed Value requirements.
+**Design evidence:** [13c handoff ZIP](../../../assets/JSON%20BUILDERFlow%20Functions%20UI.zip), including `codebase_13c/INTEGRATION.md` and `codebase_13c/mockup/JSON Reference Multi-Payload 13c (export).dc.html`.
+**Earlier evidence:** [13b design](reference/13b-design.dc.html), [standalone handoff](reference/13b-standalone.html), [13a integration notes](reference/13a-integration-notes.md).
+**Baseline and interpretation:** [Source notes](source-notes.md) record the v1.0.1 handoff and behavior baseline. The 13c interpretation below supersedes their 13b strip measurements and design precedence. Spec 001 remains the baseline for Functions and the shared header, except that this spec extends its single-sample Parsed Value requirements and replaces its FR-3 / AC-3.1 screen-menu order.
 
-**Approved scope:** Multi-payload tabs, cross-payload search and Functions source groups, with preservation of the pending JSON behavior fixes and viewport fit. Full Trigger / Filter and JSON page redesigns remain deferred. The 13b reference governs the new payload strip and search controls only; existing pane bodies and styling remain the baseline.
+**Approved scope:** Multi-payload card tabs, cross-payload search, Functions source groups and the 13c screen-menu order, with preservation of the existing JSON behavior fixes and viewport fit. Full Trigger / Filter and JSON page redesigns remain deferred. The 13c reference governs the payload strip, search controls and screen-menu order; existing pane bodies and styling remain the baseline.
+
+## Changelog
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0.1 | 2026-10-08 | Approved the limited multi-payload scope, 13b pill strip and search controls, Functions source groups and preservation of existing pane bodies and JSON behavior. |
+| 2.0.0 | 2026-10-20 | Replaced the 13b pill strip with 13c cards, added visible per-card status, moved `+ New payload` into the card row, specified the 900px strip layout and replaced the inherited screen-menu order. MAJOR because the approved strip design and shared navigation contract change. |
+
+## 13c Handoff Interpretation and Impact
+
+The source is `assets/JSON BUILDERFlow Functions UI.zip`, SHA-256 `32DAAAF95E0A72D2012BD4C7649589E34AE875BCED2EC6E0D738548046453D7F`. Its six entries provide the following evidence:
+
+| Archive entry under `codebase_13c/` | Evidence used by this revision |
+|-----------------------------------|--------------------------------|
+| `INTEGRATION.md` | Lines 3–17 define shared web/PPTB coverage, card tabs, the in-row add control and Trigger / Filter → JSON reference → Functions order. Lines 35–41 require both themes/hosts to be checked and explicitly state that the supplied code was not built or tested against the repository. |
+| `mockup/JSON Reference Multi-Payload 13c (export).dc.html` | Lines 18–20 show the menu order; lines 23–43 show three-line cards, selected treatment, dashed add card, count and cross-payload search. The 1280 × 860 canvas, demonstration samples and pane bodies provide context. |
+| `mockup/support.js` | Generated runtime for the design export, not application behavior or a new product dependency. |
+| `packages/builder-ui/src/workbench/PayloadStrip.tsx` | Proposed card content, visible status and `+ New payload` placement, with the existing stable identities, close/add behavior, keyboard navigation and accessible status descriptions preserved. |
+| `packages/builder-ui/src/theme/jsonPayloads.css` | Card dimensions, typography, theme-role mapping, local tab scrolling, focus styling and the two-column strip with full-width search at 900px and below. See FR-6 for the reconciled visual contract. |
+| `packages/builder-ui/src/workbench/screens.ts` | The exact screen order and labels; screen IDs are unchanged. The header dropdown continues to use the shared screen list. |
+
+**Precedence:** This revision governs the 13c cards, search controls and menu order. The existing Story 4 parsing/paste/notification contract and FR-5 reference behavior take precedence over simplified prototype interactions. In particular, do not load its seeded samples, adopt its `Action` blank-name preview instead of `Action_name`, restore `Parse again` messaging, clear retained output on an automatic parse failure, reset unrelated expansion state when revealing a search result, or report clipboard success after a failed write. `Pending validation` is the card's pending-state caption; the existing Source feedback remains unchanged. The archive adds no Functions body redesign or new function behavior.
+
+**Downstream impact:** The existing [implementation plan](feature-multiple_payloads-plan.md) targets v1.0.1 and must be reviewed before further execution against v2.0.0. Its Task 2 strip markup/styles and Task 4 visual/browser checks need the card/status/add/layout requirements; it also needs ownership and verification for the new shared menu order. Spec 001's FR-3 and AC-3.1 are superseded only for that order. Current `PayloadStrip.tsx`, `jsonPayloads.css`, `screens.ts`, `shellHeader.test.tsx`, `screenContract.test.tsx` and affected browser selectors/assertions require review for alignment. This request updates the spec only; it does not revise that plan, reopen its completed tasks or authorize application implementation. The ZIP's copy-over instructions describe an untested proposal and are not an implementation strategy requirement.
 
 ## Problem Statement
 
@@ -18,7 +44,8 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 - Keep one to five independent payloads available within the current session.
 - Find a leaf path or value across every displayed parsed payload and reveal its source in the JSON tree.
 - Insert correctly rooted references from any parsed payload into Functions arguments.
-- Implement the 13b rounded payload strip and search controls in both existing palettes, with reachable controls on narrow and short viewports.
+- Implement the 13c payload cards and search controls in both existing palettes, with visible per-payload status and reachable controls on narrow and short viewports.
+- List the screens as Trigger / Filter, JSON reference, Functions in the shared mode menu while retaining the default Trigger / Filter screen and per-screen state/actions.
 - Preserve the local pending paste, validation and notification fixes as existing behavior throughout the UI change.
 
 ## Non-Goals
@@ -47,8 +74,8 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 **Acceptance criteria:**
 
 - [ ] **AC-1.1** Given a fresh session When JSON reference is opened Then one empty active payload exists, Action / Full output is selected, the action name and loop name are blank, and no handoff demonstration data is loaded.
-- [ ] **AC-1.2** Given fewer than five payloads When the user activates New payload Then one empty payload is appended and activated, the count increases, and existing payload data is unchanged.
-- [ ] **AC-1.3** Given five payloads When the user attempts to add another Then no sixth payload is created and New payload is visibly unavailable.
+- [ ] **AC-1.2** Given fewer than five payloads When the user activates the `+ New payload` card Then one empty payload is appended, activated and focused, the count increases, and existing payload data is unchanged.
+- [ ] **AC-1.3** Given five payloads When the user attempts to add another Then no sixth payload is created and the `+ New payload` card is visibly disabled and cannot be activated by pointer or keyboard.
 - [ ] **AC-1.4** Given two payloads with different source roots, text, selections, expanded nodes, revealed array children and loop names When the user switches between them Then each restores its own values and feedback.
 - [ ] **AC-1.5** Given multiple payloads When an inactive payload is closed Then the active payload is unchanged; when the active payload is closed Then the tab now occupying its position becomes active, or the preceding tab if it was last.
 - [ ] **AC-1.6** Given one remaining payload When its tab is displayed Then a close action is unavailable and the session retains that payload.
@@ -121,19 +148,22 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 
 **Acceptance criteria:**
 
-- [ ] **AC-5.1** Given a 1280 × 860 viewport in the dark palette When JSON reference is opened with multiple samples Then the 13b pill tabs appear between the shared header and the existing panes, with a selected rounded capsule, status dots, two-line labels, close controls, count and search; existing Source, Payload and Reference pane styling and arrangement are retained.
+- [ ] **AC-5.1** Given a 1280 × 860 viewport in either palette When JSON reference is opened with multiple samples Then the 13c card row appears between the shared header and the existing panes; each card shows its name, monospaced root expression and visible status line with a dot, the selected card has an accent border/background and subtle shadow, and a dashed `+ New payload` card follows the payloads inside that row, with count and search alongside; existing Source, Payload and Reference pane styling and arrangement are retained.
 - [ ] **AC-5.2** Given the standalone or hosted app at 375 × 667, 768 × 1024, 900 × 700, 1280 × 420, 1280 × 860 or 1440 × 900 When any screen is opened in either palette Then the page has no horizontal overflow and every control can be reached by scrolling its owning region.
 - [ ] **AC-5.3** Given a short 1280 × 420 window with a large sample When JSON reference is opened Then the header and payload strip fit without empty layout space creating unnecessary page scrolling, and Source, Payload and Reference content scroll sufficiently to reach their last controls or rows.
 - [ ] **AC-5.4** Given a narrow viewport When the desktop row cannot fit Then payload tabs remain horizontally scrollable within their strip, search/count remain reachable, and Source, Payload and Reference stack in that order without page-level sideways scrolling.
 - [ ] **AC-5.5** Given keyboard-only use When tabs, close/add controls, root choices, tree rows, search results and copy actions are operated Then selection and focus are visible, labelled and correctly associated with their content; closing a focused payload places focus on its surviving replacement tab.
+- [ ] **AC-5.6** Given payloads that are empty, successfully parsed, pending validation or in error (including a retained successful tree) When their cards are displayed or the state changes Then every card visibly shows that payload's current status text and corresponding neutral, good, warning or danger dot without requiring activation or hover; truncated names, roots and statuses retain their full accessible text, and the root expression is also available on hover.
+- [ ] **AC-5.7** Given any of the three screens in either host When the shared mode menu is opened Then its options appear in the exact order `Trigger / Filter`, `JSON reference`, `Functions`; choosing each option shows that screen and updates the active label while retaining its session state and actions, and a fresh session still opens Trigger / Filter.
+- [ ] **AC-5.8** Given a viewport at or below 900px wide When the payload strip is displayed Then the card row and count occupy the first row, search spans the row below, and long or numerous cards scroll locally with `+ New payload` reachable at the end; keyboard navigation or adding a payload scrolls the focused card into view without page-level horizontal overflow.
 
 ## Functional Requirements
 
 ### FR-1: Payload session and strip
 
-**Must:** Maintain one to five independent samples in current tab order. Start with one empty Action / Full output sample. New payload appends and activates; closing follows AC-1.5. Preserve each payload's source root, action-name interaction state, textarea text, parse attempts, successful baseline, displayed data, errors, selected path, expanded nodes, revealed array children, loop name and copy preferences through switching. State must survive screen changes and clear on application reload.
+**Must:** Maintain one to five independent samples in current tab order. Start with one empty Action / Full output sample. The `+ New payload` card appends and activates an empty payload and focuses its tab; closing follows AC-1.5. Preserve each payload's source root, action-name interaction state, textarea text, parse attempts, successful baseline, displayed data, errors, selected path, expanded nodes, revealed array children, loop name and copy preferences through switching. State must survive screen changes and clear on application reload.
 
-**Must:** Show Action tabs using the trimmed entered action name, or `Payload N` for their current one-based position when unnamed. Trigger tabs must use `Trigger`, `Trigger 2`, and following trigger ordinals in current tab order. Root captions must use the source's chosen root; a missing Action name must show the existing `Action_name` preview without enabling reference generation. Display the current count as `N / 5`. Identical labels must still refer to independent payloads.
+**Must:** Show Action tabs using the trimmed entered action name, or `Payload N` for their current one-based position when unnamed. Trigger tabs must use `Trigger`, `Trigger 2`, and following trigger ordinals in current tab order. Each card must show its name, chosen root expression and visible parse status on separate lines. A missing Action name must show the existing `Action_name` preview without enabling reference generation. Display the current count as `N / 5`. Identical labels must still refer to independent payloads.
 
 **Must not:** Load demonstration payloads in a new session, allow the last payload to close, allow a sixth payload, or use display labels as the source's identity.
 
@@ -157,7 +187,7 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 
 **Must:** Preserve the existing immediate whole-field native paste behavior and 600ms active-view automatic validation. Parsing, semantic equality, errors and notice eligibility must belong to the edited payload. Cancel pending automatic work when its payload becomes inactive, is closed, or completes a paste; returning to an unvalidated draft must start a fresh delay. Presentation changes, tab switches and repeated presentation setup must not repeat a delivered notice.
 
-**Must:** Preserve the distinctions between automatic validation and paste failure in Story 4. Inline feedback must remain visible with these states: `Nothing parsed yet`, `Sample changed. Waiting for valid JSON.`, `Could not parse`, `Could not parse. Showing last successful payload.`, and `Parsed · N values`. Status dots and accessible tab status descriptions must reflect empty, valid, pending or error state for that tab, including errors while a previous tree is retained.
+**Must:** Preserve the distinctions between automatic validation and paste failure in Story 4. Source inline feedback must remain visible with these states: `Nothing parsed yet`, `Sample changed. Waiting for valid JSON.`, `Could not parse`, `Could not parse. Showing last successful payload.`, and `Parsed · N values` (with `1 value` for a singular count). Every card must also show a visible status caption and dot: neutral for `Nothing parsed yet`, good for successful parsing, warning with `Pending validation` for an unvalidated draft without a current error, and danger for a parse error, including `Could not parse. Showing last successful payload.` when output is retained. Accessible descriptions must include the full root and current card status, even when the visible caption is shortened. A retained successful tree must not make an errored card appear successful.
 
 **Must not:** Add a Parse button, reinstate `Parse again` instructions, reset semantic baselines by switching tabs, deduplicate separate valid paste operations, or report a success before parsing succeeds.
 
@@ -169,15 +199,29 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 
 **Must not:** Introduce host insertion, expression evaluation, or replace working reference behavior with the prototype's simplified clipboard or parser behavior.
 
-### FR-6: Payload strip and preservation of host fit
+### FR-6: 13c cards, screen order and preservation of host fit
 
-**Must:** Follow the 13b reference for the new payload strip and search controls: a rounded full-width track, rounded selected tabs, status dot, primary name and secondary root caption, discrete close controls, New payload, count and Search all payloads. Match the new controls' type hierarchy, spacing and selected accents through the current dark and light palette roles. Preserve the existing Source, Payload and Reference bodies, pane chrome, desktop arrangement and copy-block placement. See source notes for the measured strip/search reference values.
+**Must:** Replace the 13b capsule track with the 13c row of individual rounded rectangular cards. Cards have a primary name, monospaced root caption and visible status line with a dot; close controls remain discrete at the upper right and are omitted for the last payload. Place the dashed `+ New payload` card immediately after the payloads inside the horizontally scrollable card row, stretching to the same height, rather than as a separate strip-level button. Keep `N / 5` and `Search all payloads` outside the scrolling row. Preserve the existing Source, Payload and Reference bodies, pane chrome, desktop arrangement and copy-block placement.
 
-**Must:** Adapt to available host dimensions. Account for the added strip rather than retaining a height allowance intended for the old header-only body. Preserve existing responsive pane stacking at narrow widths and move search onto a reachable row; allow scrolling within the tab strip. On desktop, Source body, tree and Reference body must each reach their final content through their own scrolling region. Adjust body sizing only as required to accommodate the new controls and preserve reachability. Long captions, paths and expressions must remain discoverable through accessible descriptions, wrapping or local scrolling.
+**Must:** Use the following 13c reference measurements and current theme roles for the new controls in both palettes. The mockup defines the content hierarchy and card silhouette; the supplied stylesheet provides the theme-based mapping and responsive strip behavior. The card height must accommodate all three lines (approximately 75px in the mockup), rather than clip content to a fixed canvas measurement.
 
-**Must:** Preserve the current shared header, default Trigger / Filter screen, per-screen actions, web-only palette selection and host-controlled palette behavior. Preserve viewport fit of the other two screens.
+| Element | 13c visual contract |
+|---------|---------------------|
+| Strip | Flexible scrolling card row, separate count, then a 280px search field on desktop; 12px gaps between strip regions and 8px between cards. No enclosing pill/capsule track. |
+| Payload card | 200px reference width, 10px corner radius and 1px border; approximately 10px vertical / 14px left padding with room for the close control; 4px gaps between name, root and status. |
+| Selected / unselected card | Selected uses accent border, accent-soft background, primary text and a subtle shadow; unselected uses surface, border and secondary-text roles. Hover strengthens the border. Root text uses an accent role when selected and secondary text otherwise. |
+| Card typography/status | Name 14px semibold; root 11px in the existing monospace family; status 11px secondary text with a 7px dot and 6px gap. Use neutral/good/warn/danger theme roles; visible text conveys the state independently of color. Long lines ellipsize and retain full accessible text. |
+| Close control | 20 × 20px visual control at the upper right (approximately 8px from the right and 9px from the top), with its own accessible name, keyboard activation and hover/focus treatment. |
+| Add card | 120px reference width, 10px padding and corner radius, dashed border, transparent background and accent-colored 13px semibold `+ New payload` label. At capacity it remains present with a visibly disabled treatment. |
+| Search/count | Search retains its leading search icon, 34px reference height and 12px radius; count uses 12px secondary text. Results retain payload identity, path, value preview and an announced total/parsed-source count. |
+| Search popup | Rounded bordered surface with shadow, highlighted active option and rows at least 44px high; anchor it to search and constrain its position/size to the viewport so it is scrollable and not clipped by the card row or pane containers. |
+| Focus/motion | Visible focus outline using the accent role (2px reference width with 2px offset); suppress nonessential transitions for reduced motion. |
 
-**Must not:** Apply the prototype's full-page redesign, pane widths or pane-body restyling; treat its fixed canvas dimensions as a required runtime window size; introduce a theme toggle into the hosted/shared workspace; or use the earlier 13a underline tab appearance for the new strip.
+**Must:** Adapt to available host dimensions. Above 900px, arrange the scrolling card row, count and search in three strip regions. At 900px and below, use two regions for cards/count and let search span the next row. Do not squeeze five cards into unreadable widths; scroll the card row locally, including the add card. Keyboard navigation and add/close focus changes must reveal the focused tab within that row. Account for the taller cards rather than retaining a height allowance intended for the old header-only body or pill strip. Preserve existing responsive pane stacking at narrow widths. On desktop, Source body, tree and Reference body must each reach their final content through their own scrolling region. Adjust body sizing only as required to accommodate the new controls and preserve reachability. Long captions, paths and expressions must remain discoverable through accessible descriptions, wrapping or local scrolling.
+
+**Must:** Set the shared mode menu order to `Trigger / Filter` → `JSON reference` → `Functions` in both web and PPTB. Keep the existing screen IDs, dropdown component, default Trigger / Filter screen, per-screen actions, web-only palette selection and host-controlled palette behavior. This supersedes Spec 001's FR-3 / AC-3.1 order without redesigning the header or other screens. Preserve viewport fit of the other two screens.
+
+**Must not:** Apply the prototype's full-page redesign, pane widths or pane-body restyling; treat its fixed canvas dimensions or literal dark colors as required runtime sizing/theme implementation; introduce a theme toggle into the hosted/shared workspace; or retain the earlier 13a underline / 13b pill-tab appearance for the payload strip.
 
 ## Non-Functional Requirements
 
@@ -202,6 +246,7 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 ### Accessibility and responsive behavior
 
 - Tabs must have one selected item, roving focus, Left/Right and Home/End navigation, and a labelled association to the visible payload panel. Close actions must identify their payload and remain independently operable without accidentally selecting another payload.
+- The in-row `+ New payload` card remains an independently labelled button, outside payload-tab arrow navigation and selected-tab semantics. Each tab's accessible name includes its current position; its description includes the complete root and status. Close buttons remain separate from tab buttons. Preserve valid tablist/panel relationships when arranging these controls in one scrolling row.
 - Search must expose combobox/listbox relationships, an announced result count and an active option. It must keep focus in search during arrow navigation and move it to the selected tree row on reveal.
 - The tree must retain its existing Up/Down, Left/Right, Home/End, Enter/Space and Show more keyboard behavior. New source groups must announce their expanded state.
 - Every interactive control must show a visible focus indication. Body text must meet 4.5:1 contrast; large text and control boundaries/focus indicators must meet 3:1. Status must not depend on color alone. Reduced-motion preference must suppress nonessential transitions.
@@ -225,7 +270,7 @@ JSON reference currently holds one sample, so makers must replace it to inspect 
 
 ## Open Questions
 
-None. On 2026-10-08 the user confirmed the limited multi-payload scope and explicitly deferred both full Trigger / Filter and JSON page redesigns. The source notes record the accepted behavior interpretations; the deferred redesigns must not be included during planning or implementation of this feature.
+None for this spec revision. On 2026-10-08 the user confirmed the limited multi-payload scope and deferred full Trigger / Filter and JSON page redesigns. The 2026-10-20 request incorporates the 13c card strip and menu order within that boundary. Prototype conflicts are resolved by the precedence above; the deferred redesigns remain excluded. Downstream plan/code alignment is a separate task, and the v1.0.1 plan must be reviewed before further execution.
 
 ## Out of Scope (Future Considerations)
 
