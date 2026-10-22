@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseArgument } from '../src/argumentParser';
+import { FUNCTION_CATALOG } from '../src/functionCatalog';
 
 function kindOf(text: string) {
   const result = parseArgument(text);
@@ -62,5 +63,46 @@ describe('parseArgument', () => {
   it('stops runaway nesting', () => {
     const deep = `${'toUpper('.repeat(40)}'a'${')'.repeat(40)}`;
     expect(messageOf(deep)).toBe('This expression nests too deeply.');
+  });
+
+  it('recognizes every Conversion function through the shared catalog', () => {
+    const conversions = FUNCTION_CATALOG.filter((fn) => String(fn.group) === 'Conversion');
+    expect(conversions).toHaveLength(24);
+    for (const fn of conversions) {
+      const args = fn.args.filter((arg) => arg.required).map(() => "'a'").join(', ');
+      expect(kindOf(`add(${fn.name}(${args}), 1)`), fn.name).toBe('call');
+    }
+  });
+
+  it('accepts conversion examples nested in arguments', () => {
+    for (const expression of [
+      "add(int(triggerBody()?['Qty']), 1)",
+      'string(item())',
+      "json(body('Get_item'))",
+      'bool(1)',
+      "float('1.5')",
+      "float('10.000,333', 'de-DE')",
+      "createArray('h', 'e', 'l', 'l', 'o')",
+      "json(xml('<name>Ada</name>'))",
+      `xml(json('{"name":"Ada"}'))`,
+      "base64ToJson('eyJuYW1lIjoiQWxpY2UifQ==')",
+      "string(decimal('1.2345678912312131'))",
+      "string(variables('myArrayVariable'))",
+    ]) {
+      expect(kindOf(expression), expression).toBe('call');
+    }
+  });
+
+  it('checks conversion arity and retains deprecated-name errors', () => {
+    for (const [expression, message] of [
+      ["int('1', '2')", 'int takes at most 1 argument.'],
+      ['int()', 'int needs at least 1 argument.'],
+      ["float('1', 'en-US', 'extra')", 'float takes at most 2 arguments.'],
+      ["createArray('a')", 'createArray needs at least 2 arguments.'],
+      ["decodeBase64('aGk=')", '"decodeBase64" is not a known function.'],
+      ["parse('{}')", '"parse" is not a known function.'],
+    ]) {
+      expect(messageOf(expression), expression).toBe(message);
+    }
   });
 });

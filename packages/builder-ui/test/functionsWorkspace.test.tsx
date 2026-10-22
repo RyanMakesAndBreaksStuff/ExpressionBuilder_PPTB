@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
@@ -288,5 +288,132 @@ describe('FunctionsWorkspace', () => {
     />);
     await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
     expect(screen.getByText('Set an action name in JSON reference')).toBeInTheDocument();
+  });
+
+  it('shows Conversion after the existing groups and supports keyboard operation', async () => {
+    const user = userEvent.setup();
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+    const nav = within(screen.getByRole('navigation', { name: 'Functions' }));
+    const groups = nav.getAllByRole('button', {
+      name: /^(String|Collection|Logical|Math|Date and time|Conversion) \d+$/,
+    });
+    expect(groups.map((button) => button.getAttribute('aria-label')))
+      .toEqual(['String 20', 'Collection 14', 'Logical 12', 'Math 10', 'Date and time 23', 'Conversion 24']);
+    expect(groups[0]).toHaveAttribute('aria-expanded', 'true');
+    expect(groups.slice(1).every((button) => button.getAttribute('aria-expanded') === 'false')).toBe(true);
+    expect(nav.getByRole('button', { name: 'concat', exact: true })).toHaveAttribute('aria-current', 'true');
+    const conversion = nav.getByRole('button', { name: 'Conversion 24' });
+    conversion.focus();
+    await user.keyboard('{Enter}');
+    expect(conversion).toHaveAttribute('aria-expanded', 'true');
+    await user.tab();
+    expect(nav.getByRole('button', { name: 'array', exact: true })).toHaveFocus();
+    const int = nav.getByRole('button', { name: 'int', exact: true });
+    int.focus();
+    await user.keyboard(' ');
+    expect(int).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('heading', { name: 'Arguments int' })).toBeInTheDocument();
+    expect(screen.getByLabelText('value')).toHaveAttribute('aria-required', 'true');
+    expect(screen.getByLabelText('value')).toHaveAccessibleDescription(/STRING/);
+    expect(nav.queryByRole('button', { name: 'decodeBase64', exact: true })).toBeNull();
+    expect(nav.queryByRole('button', { name: 'parse', exact: true })).toBeNull();
+    conversion.focus();
+    await user.keyboard('{Enter}');
+    expect(conversion).toHaveAttribute('aria-expanded', 'false');
+    expect(nav.queryByRole('button', { name: 'int', exact: true })).toBeNull();
+  });
+
+  it('builds and copies int with a payload reference', async () => {
+    const user = userEvent.setup();
+    const adapter = createAdapter();
+    render(<FunctionsWorkspace adapter={adapter} sources={[]} />);
+    await user.click(screen.getByRole('button', { name: 'Conversion 24' }));
+    await user.click(screen.getByRole('button', { name: 'int', exact: true }));
+    const status = screen.getByRole('region', { name: 'Status' });
+    expect(status).toHaveTextContent('Invalid');
+    expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Copy as @{…}' })).toBeDisabled();
+    const value = screen.getByLabelText('value');
+    fireEvent.change(value, { target: { value: "triggerBody()?['Qty']" } });
+    expect(status).toHaveTextContent('Valid');
+    expect(status).not.toHaveTextContent('Invalid');
+    expect(status).toHaveTextContent('1 of 1 required set');
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("int(triggerBody()?['Qty'])");
+    await user.click(screen.getByRole('button', { name: 'Copy expression', exact: true }));
+    expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("int(triggerBody()?['Qty'])");
+    await user.click(screen.getByRole('button', { name: 'Copy as @{…}' }));
+    expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("@{int(triggerBody()?['Qty'])}");
+    fireEvent.change(value, { target: { value: '' } });
+    expect(status).toHaveTextContent('Invalid');
+    expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Copy as @{…}' })).toBeDisabled();
+  });
+
+  it('omits an empty float locale and includes a filled locale', async () => {
+    const user = userEvent.setup();
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+    await user.click(screen.getByRole('button', { name: 'Conversion 24' }));
+    await user.click(screen.getByRole('button', { name: 'float', exact: true }));
+    const value = screen.getByLabelText('value');
+    const locale = screen.getByLabelText('locale');
+    expect(value).toHaveAttribute('aria-required', 'true');
+    expect(locale).toHaveAttribute('aria-required', 'false');
+    fireEvent.change(value, { target: { value: "'1.5'" } });
+    const status = screen.getByRole('region', { name: 'Status' });
+    expect(status).not.toHaveTextContent('Invalid');
+    expect(status).toHaveTextContent('1 of 1 required set');
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("float('1.5')");
+    fireEvent.change(locale, { target: { value: "'en-US'" } });
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("float('1.5', 'en-US')");
+    expect(status).not.toHaveTextContent('Invalid');
+  });
+
+  it('requires two createArray values and extends the repeating tail', async () => {
+    const user = userEvent.setup();
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+    await user.click(screen.getByRole('button', { name: 'Conversion 24' }));
+    await user.click(screen.getByRole('button', { name: 'createArray', exact: true }));
+    fireEvent.change(screen.getByLabelText('object1'), { target: { value: "'a'" } });
+    const status = screen.getByRole('region', { name: 'Status' });
+    expect(status).toHaveTextContent('Invalid');
+    expect(status).toHaveTextContent('object2 is required.');
+    expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('object2'), { target: { value: "'b'" } });
+    expect(status).not.toHaveTextContent('Invalid');
+    expect(status).toHaveTextContent('2 of 2 required set');
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("createArray('a', 'b')");
+    expect(screen.getByLabelText('object3')).toHaveValue('');
+    expect(screen.getByLabelText('object3')).toHaveAttribute('aria-required', 'false');
+    fireEvent.change(screen.getByLabelText('object3'), { target: { value: "'c'" } });
+    expect(screen.getByLabelText('object4')).toHaveValue('');
+    expect(screen.getByLabelText('object4')).toHaveAttribute('aria-required', 'false');
+    expect(screen.getByLabelText('Generated expression')).toHaveTextContent("createArray('a', 'b', 'c')");
+    expect(status).toHaveTextContent('2 of 2 required set');
+  });
+
+  it('validates nested conversions and keeps existing errors', async () => {
+    const user = userEvent.setup();
+    render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+    await user.click(screen.getByRole('button', { name: 'Math 10' }));
+    await user.click(screen.getByRole('button', { name: 'add', exact: true }));
+    const first = screen.getByLabelText('summand1');
+    fireEvent.change(screen.getByLabelText('summand2'), { target: { value: '1' } });
+    for (const expression of ["int(triggerBody()?['Qty'])", 'string(item())', "json(body('Get_item'))", 'bool(1)']) {
+      fireEvent.change(first, { target: { value: expression } });
+      const status = screen.getByRole('region', { name: 'Status' });
+      expect(status, expression).not.toHaveTextContent('Invalid');
+      expect(status).toHaveTextContent('2 of 2 required set');
+      expect(screen.getByLabelText('Generated expression')).toHaveTextContent(`add(${expression}, 1)`);
+    }
+    for (const [expression, message] of [
+      ["int('1', '2')", 'int takes at most 1 argument.'],
+      ["createArray('a')", 'createArray needs at least 2 arguments.'],
+      ["decodeBase64('aGk=')", '"decodeBase64" is not a known function.'],
+      ["parse('{}')", '"parse" is not a known function.'],
+    ]) {
+      fireEvent.change(first, { target: { value: expression } });
+      expect(screen.getByRole('region', { name: 'Status' })).toHaveTextContent(`summand1: ${message}`);
+      expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
+    }
   });
 });

@@ -31,7 +31,7 @@ describe('functions state', () => {
 	it('counts and filters nav groups (FR-11, AC-11.1)', () => {
 		const all = navGroups(initialFunctionsState);
 		expect(all.map((group) => group.group))
-			.toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time']);
+			.toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time', 'Conversion']);
 		expect(all[0].total).toBe(20);
 		expect(all[0].expanded).toBe(true);
 		expect(all[1].expanded).toBe(false);
@@ -42,7 +42,7 @@ describe('functions state', () => {
 		expect(filtered[0].functions.map((fn) => fn.name)).toEqual(['toUpper']);
 		expect(filtered[0].expanded).toBe(true);
 
-		expect(navGroups(run({ type: 'setSearch', value: '' }))).toHaveLength(5);
+		expect(navGroups(run({ type: 'setSearch', value: '' }))).toHaveLength(6);
 	});
 
 	it('builds a slot per argument, required first (FR-12, AC-12.1)', () => {
@@ -194,5 +194,21 @@ describe('functions state', () => {
 		const state = functionsReducer(mock, { type: 'selectFunction', name: 'toUpper' });
 		expect(state.args).toEqual({});
 		expect(state.lastFocusedArg).toBeNull();
+	});
+
+	it('filters Conversion and restores previous group expansion', () => {
+		const before = run({ type: 'toggleGroup', group: 'Math' });
+		const searched = functionsReducer(before, { type: 'setSearch', value: 'toBinary' });
+		const filtered = navGroups(searched);
+		expect(filtered).toHaveLength(1);
+		expect(filtered[0]).toMatchObject({ group: 'Conversion', total: 24, expanded: true });
+		expect(filtered[0].functions.map((fn) => fn.name))
+			.toEqual(['base64ToBinary', 'dataUriToBinary', 'uriComponentToBinary']);
+		expect(navGroups(functionsReducer(searched, { type: 'setSearch', value: '' })))
+			.toEqual(navGroups(before));
+		expect(navGroups(before)).toHaveLength(6);
+		expect(navGroups(before).at(-1)).toMatchObject({ group: 'Conversion', expanded: false });
+		expect(navGroups(functionsReducer(before, { type: 'setSearch', value: 'no-such-function' })))
+			.toEqual([]);
 	});
 });

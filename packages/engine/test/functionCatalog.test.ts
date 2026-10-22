@@ -1,13 +1,14 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { FUNCTION_CATALOG, FUNCTION_GROUPS, findFunction } from '../src/functionCatalog';
 
 describe('function catalog', () => {
   it('covers every Microsoft Learn category (FR-9)', () => {
-    expect(FUNCTION_GROUPS).toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time']);
+    expect(FUNCTION_GROUPS).toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time', 'Conversion']);
     const counts = Object.fromEntries(
       FUNCTION_GROUPS.map((group) => [group, FUNCTION_CATALOG.filter((fn) => fn.group === group).length]),
     );
-    expect(counts).toEqual({ String: 20, Collection: 14, Logical: 12, Math: 10, 'Date and time': 23 });
+    expect(counts).toEqual({ String: 20, Collection: 14, Logical: 12, Math: 10, 'Date and time': 23, Conversion: 24 });
   });
 
   it('gives every entry unique argument names and a description (AC-9.1)', () => {
@@ -89,5 +90,50 @@ describe('function catalog', () => {
         .toEqual({ args: first?.args, returns: first?.returns });
     }
     expect(findFunction('chunk')?.args.map((arg) => arg.name)).toEqual(['collection', 'length']);
+  });
+
+  it('preserves every pre-existing catalog entry', () => {
+    const existing = FUNCTION_CATALOG.filter((fn) => String(fn.group) !== 'Conversion');
+    expect(existing).toHaveLength(79);
+    expect(createHash('sha256').update(JSON.stringify(existing)).digest('hex'))
+      .toBe('ebbd420b861eac3e3c91e023778e31db67fa29ec6ecef35ea580304e80ce501e');
+  });
+
+  it('matches the complete Conversion metadata contract', () => {
+    const conversions = FUNCTION_CATALOG.filter((fn) => String(fn.group) === 'Conversion');
+    expect(conversions.map((fn) => [
+      fn.name,
+      fn.args.map((arg) => [arg.name, arg.type, arg.required, arg.variadic]),
+      fn.returns,
+    ])).toEqual([
+      ['array', [['value', 'string', true, false]], 'collection'],
+      ['base64', [['value', 'string', true, false]], 'string'],
+      ['base64ToBinary', [['value', 'string', true, false]], 'string'],
+      ['base64ToJson', [['value', 'string', true, false]], 'any'],
+      ['base64ToString', [['value', 'string', true, false]], 'string'],
+      ['binary', [['value', 'string', true, false]], 'string'],
+      ['bool', [['value', 'any', true, false]], 'boolean'],
+      ['createArray', [['object1', 'any', true, false], ['object2', 'any', true, false], ['object3', 'any', false, true]], 'collection'],
+      ['dataUri', [['value', 'string', true, false]], 'string'],
+      ['dataUriToBinary', [['value', 'string', true, false]], 'string'],
+      ['dataUriToString', [['value', 'string', true, false]], 'string'],
+      ['decimal', [['value', 'string', true, false]], 'number'],
+      ['decodeDataUri', [['value', 'string', true, false]], 'string'],
+      ['decodeUriComponent', [['value', 'string', true, false]], 'string'],
+      ['encodeBase64', [['value', 'string', true, false]], 'string'],
+      ['encodeUriComponent', [['value', 'string', true, false]], 'string'],
+      ['float', [['value', 'string', true, false], ['locale', 'string', false, false]], 'number'],
+      ['int', [['value', 'string', true, false]], 'integer'],
+      ['json', [['value', 'any', true, false]], 'any'],
+      ['string', [['value', 'any', true, false]], 'string'],
+      ['uriComponent', [['value', 'string', true, false]], 'string'],
+      ['uriComponentToBinary', [['value', 'string', true, false]], 'string'],
+      ['uriComponentToString', [['value', 'string', true, false]], 'string'],
+      ['xml', [['value', 'string', true, false]], 'object'],
+    ]);
+    const names = conversions.map((fn) => fn.name.toLowerCase());
+    expect(names).toEqual([...names].sort());
+    expect(findFunction('decodeBase64')).toBeUndefined();
+    expect(findFunction('parse')).toBeUndefined();
   });
 });

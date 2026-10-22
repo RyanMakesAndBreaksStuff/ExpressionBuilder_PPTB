@@ -2,10 +2,10 @@ export type ArgType =
   | 'string' | 'number' | 'integer' | 'boolean' | 'any'
   | 'collection' | 'object' | 'timestamp';
 
-export type FunctionGroup = 'String' | 'Collection' | 'Logical' | 'Math' | 'Date and time';
+export type FunctionGroup = 'String' | 'Collection' | 'Logical' | 'Math' | 'Date and time' | 'Conversion';
 
 export const FUNCTION_GROUPS: readonly FunctionGroup[] = [
-  'String', 'Collection', 'Logical', 'Math', 'Date and time',
+  'String', 'Collection', 'Logical', 'Math', 'Date and time', 'Conversion',
 ];
 
 export interface CatalogArg {
@@ -29,7 +29,7 @@ export interface CatalogFunction {
 /**
  * Argument spec: space-separated `name:type`, `?` for optional, `*` for
  * variadic — `'text:string length:integer?'`.
- * ponytail: a 7-line reader keeps 79 uniform signatures at one line each
+ * ponytail: a 7-line reader keeps 103 uniform signatures at one line each
  * instead of ~900 lines of object literals. If an argument ever needs more
  * than name/type/required/variadic, drop the spec and write the objects out.
  * Timestamp samples stay out of the spec: convertToUtc's sample contains a space.
@@ -149,6 +149,32 @@ export const FUNCTION_CATALOG: CatalogFunction[] = [
   entry('Date and time', 'subtractFromTime', 'timestamp:timestamp interval:integer timeUnit:string format:string?', 'string', 'Subtract a number of time units from a timestamp.', { timestamp: '2018-01-02T00:00:00Z' }),
   entry('Date and time', 'ticks', 'timestamp:timestamp', 'number', 'Number of 100-nanosecond ticks since 0001-01-01.', { timestamp: '2018-03-15T13:27:36Z' }),
   entry('Date and time', 'utcNow', 'format:string?', 'string', 'Current timestamp in UTC.'),
+
+  // ---- Conversion (24) ----
+  entry('Conversion', 'array', 'value:string', 'collection', 'Return an array from a single input.'),
+  entry('Conversion', 'base64', 'value:string', 'string', 'Return the base64-encoded version of a string.'),
+  entry('Conversion', 'base64ToBinary', 'value:string', 'string', 'Return the binary version of a base64-encoded string.'),
+  entry('Conversion', 'base64ToJson', 'value:string', 'any', 'Return the JSON value of a base64-encoded string.'),
+  entry('Conversion', 'base64ToString', 'value:string', 'string', 'Return the string version of a base64-encoded string.'),
+  entry('Conversion', 'binary', 'value:string', 'string', 'Return the binary version of an input value.'),
+  entry('Conversion', 'bool', 'value:any', 'boolean', 'Return the Boolean version of a value.'),
+  entry('Conversion', 'createArray', 'object1:any object2:any object3:any?*', 'collection', 'Return an array from multiple inputs.'),
+  entry('Conversion', 'dataUri', 'value:string', 'string', 'Return the data URI for an input value.'),
+  entry('Conversion', 'dataUriToBinary', 'value:string', 'string', 'Return the binary version of a data URI.'),
+  entry('Conversion', 'dataUriToString', 'value:string', 'string', 'Return the string version of a data URI.'),
+  entry('Conversion', 'decimal', 'value:string', 'number', 'Return the decimal number for a decimal string.'),
+  entry('Conversion', 'decodeDataUri', 'value:string', 'string', 'Return the binary version of a data URI.'),
+  entry('Conversion', 'decodeUriComponent', 'value:string', 'string', 'Replace escape characters with decoded versions.'),
+  entry('Conversion', 'encodeBase64', 'value:string', 'string', 'Return the base64-encoded version of a string.'),
+  entry('Conversion', 'encodeUriComponent', 'value:string', 'string', 'Replace URL-unsafe characters with escape characters.'),
+  entry('Conversion', 'float', 'value:string locale:string?', 'number', 'Return a floating-point number for an input value.'),
+  entry('Conversion', 'int', 'value:string', 'integer', 'Return the integer version of a string.'),
+  entry('Conversion', 'json', 'value:any', 'any', 'Return the JSON value or object for a string or XML.'),
+  entry('Conversion', 'string', 'value:any', 'string', 'Return the string version of a value.'),
+  entry('Conversion', 'uriComponent', 'value:string', 'string', 'Return the URI-encoded version of a value.'),
+  entry('Conversion', 'uriComponentToBinary', 'value:string', 'string', 'Return the binary version of a URI-encoded string.'),
+  entry('Conversion', 'uriComponentToString', 'value:string', 'string', 'Return the string version of a URI-encoded string.'),
+  entry('Conversion', 'xml', 'value:string', 'object', 'Return the XML version of a string.'),
 ];
 
 /**
