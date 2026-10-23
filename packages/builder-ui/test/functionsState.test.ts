@@ -22,9 +22,9 @@ const mock = run(
 );
 
 describe('functions state', () => {
-	it('opens on String with concat selected (FR-10, AC-10.1)', () => {
+	it('opens with every group collapsed and concat selected (FR-10, AC-10.1)', () => {
 		expect(initialFunctionsState.selectedFunction).toBe('concat');
-		expect([...initialFunctionsState.expandedGroups]).toEqual(['String']);
+		expect([...initialFunctionsState.expandedGroups]).toEqual([]);
 		expect(deriveFunctions(initialFunctionsState).fn.name).toBe('concat');
 	});
 
@@ -33,8 +33,7 @@ describe('functions state', () => {
 		expect(all.map((group) => group.group))
 			.toEqual(['String', 'Collection', 'Logical', 'Math', 'Date and time', 'Conversion']);
 		expect(all[0].total).toBe(20);
-		expect(all[0].expanded).toBe(true);
-		expect(all[1].expanded).toBe(false);
+		expect(all.every((group) => !group.expanded)).toBe(true);
 
 		const filtered = navGroups(run({ type: 'setSearch', value: 'upper' }));
 		expect(filtered).toHaveLength(1);

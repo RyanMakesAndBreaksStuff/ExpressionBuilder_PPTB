@@ -178,4 +178,11 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-dock-actions button:focus-visible')).toMatch(/outline:\s*2px solid var\(--accent\);/);
     expect(rule('.eb-pv-item > summary')).toMatch(/overflow-wrap:\s*anywhere;/);
   });
+
+  it('uses the tightened padding and the taller dock', () => {
+    expect(rule('.eb-fn-panel')).toMatch(/padding:\s*15px;/);
+    expect(rule('.eb-fn-card')).toMatch(/padding:\s*10px;/);
+    expect(rule('.eb-fn-dock-code')).toMatch(/padding:\s*10px 14px;/);
+    expect(rule('.eb-fn-dock')).toMatch(/min-height:\s*180px;/);
+  });
 });

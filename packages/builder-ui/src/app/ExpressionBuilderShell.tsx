@@ -19,10 +19,10 @@ import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
 import { diffFields, type FieldDrift } from '../importExport/metadataCache';
 import {
-  createGraphiteFluentTheme,
-  graphiteTokens,
+  createPorcelainFluentTheme,
+  porcelainTokens,
   type PaletteId,
-  type GraphiteThemeMode,
+  type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
 import { isFieldDefinitionArray } from './fieldUtils';
@@ -80,7 +80,7 @@ export interface ExpressionBuilderShellProps {
   platform?: 'web' | 'pptb';
   /**
    * Host theme known before first paint. Without it the shell starts on
-   * graphite dark and animates to the real theme, and that in-between frame
+   * porcelain dark and animates to the real theme, and that in-between frame
    * fails color contrast.
    */
   initialTheme?: PlatformTheme;
@@ -96,7 +96,7 @@ export function ExpressionBuilderShell({
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
   const [paletteId, setPaletteId] = useState<PaletteId>(() =>
-    initialTheme ? normalizePalette(initialTheme) : 'graphiteDark',
+    initialTheme ? normalizePalette(initialTheme) : 'porcelainDark',
   );
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
@@ -198,7 +198,7 @@ export function ExpressionBuilderShell({
   const derived = useMemo(() => deriveBuilderState(document), [document]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
-  const theme = graphiteTokens[paletteId].mode;
+  const theme = porcelainTokens[paletteId].mode;
 
   useEffect(() => {
     let active = true;
@@ -451,10 +451,10 @@ export function ExpressionBuilderShell({
     }
   };
 
-  const paletteVars = graphiteTokens[paletteId].cssVariables;
+  const paletteVars = porcelainTokens[paletteId].cssVariables;
 
   return (
-    <FluentProvider theme={createGraphiteFluentTheme(paletteId)}>
+    <FluentProvider theme={createPorcelainFluentTheme(paletteId)}>
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <ShellHeader
           screen={screen}
@@ -729,7 +729,7 @@ export function ExpressionBuilderShell({
 }
 
 function normalizePalette(platformTheme: PlatformTheme): PaletteId {
-  const mode: GraphiteThemeMode =
+  const mode: PorcelainThemeMode =
     platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
-  return mode === 'dark' ? 'graphiteDark' : 'graphiteLight';
+  return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
 }

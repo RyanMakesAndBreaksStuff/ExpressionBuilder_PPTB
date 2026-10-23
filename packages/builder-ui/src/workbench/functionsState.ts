@@ -41,7 +41,7 @@ export type FunctionsAction =
 
 export const initialFunctionsState: FunctionsState = {
 	search: '',
-	expandedGroups: new Set<FunctionGroup>(['String']),
+	expandedGroups: new Set<FunctionGroup>(),
 	parsedValueExpanded: false,
 	selectedFunction: 'concat',
 	args: {},

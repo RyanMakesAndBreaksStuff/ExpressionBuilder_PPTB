@@ -13,7 +13,7 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe('theme color ownership', () => {
-  it('keeps raw theme colors outside the centralized Graphite token source', () => {
+  it('keeps raw theme colors outside the centralized Porcelain token source', () => {
     const offenders = sourceFiles(sourceRoot)
       .filter((path) => !path.endsWith('workbenchTokens.ts'))
       .filter((path) => {

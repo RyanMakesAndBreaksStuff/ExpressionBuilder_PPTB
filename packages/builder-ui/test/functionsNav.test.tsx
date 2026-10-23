@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { navGroups, initialFunctionsState } from '../src/workbench/functionsState';
 import { FunctionsNav } from '../src/workbench/FunctionsNav';
 import { buildParsedValueList } from '../src/workbench/parsedValueModel';
-import { formatPayloadRoot, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
+import { formatPayloadRoot, type FunctionGroup, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import { parsePayload } from '../src/importExport/jsonPayload';
 import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
 
@@ -29,13 +29,14 @@ function fixture(
 }
 
 const triggerBody: PayloadReferenceRoot = { kind: 'triggerBody' };
+const stringOpen = { ...initialFunctionsState, expandedGroups: new Set<FunctionGroup>(['String']) };
 const parsedValue = buildParsedValueList(
   [fixture({ Name: 'Ada', tags: ['a'] }, triggerBody)], '',
 );
 
 function renderNav(overrides: Partial<ComponentProps<typeof FunctionsNav>> = {}) {
   const props: ComponentProps<typeof FunctionsNav> = {
-    groups: navGroups(initialFunctionsState),
+    groups: navGroups(stringOpen),
     selectedFunction: 'concat',
     search: '',
     parsedValue,
@@ -69,7 +70,7 @@ describe('FunctionsNav', () => {
   });
 
   it('shows rows only for expanded groups and marks the selected function', () => {
-    const groups = navGroups(initialFunctionsState).map((group) => ({
+    const groups = navGroups(stringOpen).map((group) => ({
       ...group,
       expanded: group.group === 'String',
     }));
@@ -92,7 +93,7 @@ describe('FunctionsNav', () => {
       <>
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
-          groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
+          groups={navGroups(stringOpen)} selectedFunction="concat" search=""
           parsedValue={parsedValue} parsedValueExpanded={false}
           onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
@@ -111,7 +112,7 @@ describe('FunctionsNav', () => {
       <>
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
-          groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
+          groups={navGroups(stringOpen)} selectedFunction="concat" search=""
           parsedValue={parsedValue} parsedValueExpanded={false}
           onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
@@ -130,7 +131,7 @@ describe('FunctionsNav', () => {
       <>
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
-          groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
+          groups={navGroups(stringOpen)} selectedFunction="concat" search=""
           parsedValue={parsedValue} parsedValueExpanded={false}
           onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
@@ -157,7 +158,7 @@ describe('FunctionsNav', () => {
   });
 
   it('renders only the groups supplied by the caller', () => {
-    const [stringGroup] = navGroups(initialFunctionsState);
+    const [stringGroup] = navGroups(stringOpen);
     renderNav({ groups: [stringGroup] });
     expect(screen.getByRole('button', { name: 'String 20' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Collection/ })).toBeNull();
@@ -179,7 +180,7 @@ describe('FunctionsNav', () => {
     expect(onToggleParsedValue).toHaveBeenCalledOnce();
     rerender(
       <FunctionsNav
-        groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
+        groups={navGroups(stringOpen)} selectedFunction="concat" search=""
         parsedValue={parsedValue} parsedValueExpanded
         onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={onToggleParsedValue}
         onSelectFunction={vi.fn()} onInsertReference={vi.fn()}
@@ -236,7 +237,7 @@ describe('FunctionsNav', () => {
     expect(screen.getByText('No paths match this search')).toBeInTheDocument();
     rerender(
       <FunctionsNav
-        groups={navGroups(initialFunctionsState)} selectedFunction="concat" search=""
+        groups={navGroups(stringOpen)} selectedFunction="concat" search=""
         parsedValue={(() => {
           const rows = [parsedValue.sources[0].rows[0]];
           const entries = [{ kind: 'row' as const, row: rows[0] }];

@@ -55,8 +55,9 @@ describe('FunctionsWorkspace', () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
 
-    expect(screen.getByRole('button', { name: 'String 20' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: 'concat' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: 'String 20' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'concat' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Arguments concat' })).toBeInTheDocument();
     expect(screen.getByLabelText('text1')).toBeInTheDocument();
     expect(screen.getByLabelText('text2')).toBeInTheDocument();
     expect(screen.getByLabelText('text3')).toBeInTheDocument();
@@ -177,6 +178,7 @@ describe('FunctionsWorkspace', () => {
   it('wraps the focused argument repeatedly, while searching selects without wrapping', async () => {
     const user = userEvent.setup();
     render(<FunctionsWorkspace adapter={createAdapter()} sources={[]} />);
+    await user.click(screen.getByRole('button', { name: 'String 20' }));
     const text1 = screen.getByLabelText('text1');
     fireEvent.change(text1, { target: { value: "triggerBody()?['Name']" } });
     await user.click(text1);
@@ -299,9 +301,8 @@ describe('FunctionsWorkspace', () => {
     });
     expect(groups.map((button) => button.getAttribute('aria-label')))
       .toEqual(['String 20', 'Collection 14', 'Logical 12', 'Math 10', 'Date and time 23', 'Conversion 24']);
-    expect(groups[0]).toHaveAttribute('aria-expanded', 'true');
-    expect(groups.slice(1).every((button) => button.getAttribute('aria-expanded') === 'false')).toBe(true);
-    expect(nav.getByRole('button', { name: 'concat', exact: true })).toHaveAttribute('aria-current', 'true');
+    expect(groups.every((button) => button.getAttribute('aria-expanded') === 'false')).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Arguments concat' })).toBeInTheDocument();
     const conversion = nav.getByRole('button', { name: 'Conversion 24' });
     conversion.focus();
     await user.keyboard('{Enter}');
