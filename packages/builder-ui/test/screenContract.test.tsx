@@ -43,7 +43,7 @@ describe('screen contract', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
     await user.click(chip());
     expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
+      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
 
     await user.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
     expect(chip()).toHaveAccessibleName('Screen: JSON reference');

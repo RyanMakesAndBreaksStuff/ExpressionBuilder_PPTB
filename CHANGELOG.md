@@ -6,6 +6,37 @@ This file tracks the workspace as a whole (engine, platform, builder-ui, and bot
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-10-23
+
+### Added
+
+- **Functions** screen: pick a Workflow Definition Language function, fill its arguments, and copy the finished expression. The catalog holds 103 entries across six groups — String, Collection, Logical, Math, Date and time, and Conversion — each with its argument list, including required, optional, and variadic parameters, plus live validation. Picking a function while an argument is focused wraps that argument; dragging a function onto an argument inserts its call. Invalid arguments, missing required values, and unknown or misused functions are reported before copying.
+- **Conversion** functions group, 24 entries: `array`, `base64`, `base64ToBinary`, `base64ToJson`, `base64ToString`, `binary`, `bool`, `createArray`, `dataUri`, `dataUriToBinary`, `dataUriToString`, `decimal`, `decodeDataUri`, `decodeUriComponent`, `encodeBase64`, `encodeUriComponent`, `float`, `int`, `json`, `string`, `uriComponent`, `uriComponentToBinary`, `uriComponentToString`, and `xml`. The deprecated `decodeBase64` and `parse` functions are omitted. Conversion calls are accepted nested inside any argument.
+- **Multi-payload JSON reference workspace**: up to five independent payload cards, each with its own source, reference root, sample, selection, expansion state, and loop name. Cards show a parse-status dot and root, can be closed, and support arrow, Home, and End navigation. A **New payload** action adds an empty payload until the fifth.
+- **Cross-payload search** in JSON reference: search every parsed payload by path or value, see the payload label, path, and value preview for each match, and reveal the selected leaf in its own payload tree. Up to eight results are listed with the total match and parsed-payload counts.
+- **Parsed Value source groups** in Functions: one group per parsed payload, labelled with its action or trigger and reference root, so identical paths from different outputs produce the right reference. A shared cap of 200 rows, per-source collapse, and array-item accordions keep large samples usable.
+- **Alt+Down** in a Functions argument moves focus into Parsed Value while keeping that argument as the insert target.
+- Browser coverage for multi-payload sessions, cross-payload search, Functions argument editing, and the JSON reference → Functions round trip.
+
+### Changed
+
+- The shell header is now a 48px pill: title, mode chip menu, spacer, and screen actions. The mode chip switches between **Functions**, **Trigger / Filter**, and **JSON reference**; the last selected screen stays mounted with its state intact.
+- **Trigger / Filter** replaces **Condition builder** as the condition screen's name. It keeps the expression-mode control, **Import** in the overflow menu, and the **Export** primary action. **JSON reference** shows its privacy line in the header.
+- Pasting into **Sample JSON** now replaces the whole sample and parses it immediately; typing re-parses automatically after a 600 ms pause. A first successful parse raises **Parsed · N values**, and a material change to an already-parsed payload raises **Payload updated · N values**.
+- JSON reference feedback distinguishes cosmetic from material edits: whitespace, object key order, and equivalent number spellings refresh the status without a notification or a reset of tree selection and expansion. An invalid automatic parse keeps the last successful tree usable and labels it as retained output.
+- Payload cards carry visible status (good, pending or warning, danger) and a root; the strip adds an `N / 5` count and a **New payload** action, and at 900px and below the search moves to its own row. The workspace and JSON cards are capped to the viewport minus 80px of host chrome, and payload tabs cap their width so **Close** stays reachable.
+- `@pptb/types` is upgraded from 1.2.5 to 1.2.7. Workspace packages move to 1.3.1 (root manifest 1.0.3), and the product docs now carry the matching version.
+- Functions and JSON reference state remain in memory only: nothing is persisted, uploaded, or added to the exported condition document.
+
+### Fixed
+
+- Native undo and redo work after pasting into **Sample JSON**; undo rewrites the sample and the ordinary automatic-edit rules validate the result.
+- A pending automatic parse is cancelled when its payload closes or a paste completes, so it cannot parse a different payload or raise a duplicate paste notification.
+- Valid material payload changes raise exactly one **Parsed** or **Payload updated** notice per change; invalid, empty, or over-limit edits no longer reset the retained tree or repeat a success notice.
+- Payload close buttons stay inside narrow strips instead of being clipped by the tab width.
+
+## [1.2.1] — 2026-10-04
+
 ### Added
 
 - **JSON reference** builder, a second header tab next to **Condition builder**: paste an action or trigger output, select a value, and copy a correctly rooted reference, either bare or inside `@{…}`. It runs locally, saves nothing and never changes the condition document. Sample parsing is strict JSON, runs automatically on paste and after a typing pause, and checks its limits in order — 1 MiB, 10,000 values, 64 nesting levels — with a specific inline error for each failure.

@@ -1,12 +1,12 @@
 # Power Automate Expression Builder
 
-> **Version**: 1.2.1
+> **Version**: 1.3.1
 
-A visual composer for Power Automate **Trigger Condition** and **Filter Array** advanced-mode expressions. Instead of hand-writing `@and(...)` / `@or(...)` predicates, you build conditions in a UI and the app emits valid Power Automate expression syntax — with live preview and real-time diagnostics.
+A visual workbench for Power Automate expressions. Build **Trigger Condition** and **Filter Array** advanced-mode predicates, turn action or trigger outputs into correctly rooted **JSON references**, and assemble **Workflow Definition Language function calls** — with live preview and real-time diagnostics instead of hand-written `@and(...)` syntax.
 
 Ships two ways from one shared codebase: a standalone **web app** and a **Power Platform Toolbox (PPTB)** plugin.
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
+![Field toolbox on the left, the AND/OR condition canvas in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 <details>
 <summary>More screenshots</summary>
@@ -24,12 +24,14 @@ Schema import — Field JSON, a sample payload, JSON Schema, or CSV:
 ## Key Features
 
 - **Visual condition composer** — groups (AND/OR), rules, and nested logic, reorderable via drag handle or keyboard-accessible move buttons
-- **Live expression preview** — see the generated expression as you build
+- **Functions screen** — pick from 103 Workflow Definition Language functions across String, Collection, Logical, Math, Date and time, and Conversion; fill required, optional, and variadic arguments; wrap a value by choosing a function; and copy the result bare or inside `@{…}`
+- **Live expression preview** — see the generated expression as you build, with validity and argument-set status on the Functions screen
 - **Field discovery** — connect to Dataverse tables to auto-discover fields and types
 - **Schema import** — load fields from CSV, JSON, or JSON Schema without a live connection
 - **Field profiles** — save and reload field sets across sessions
-- **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators)
-- **JSON references** — paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted `outputs()`, `body()`, `triggerOutputs()` or `triggerBody()` reference; see the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references). Pasted JSON is processed locally and is not uploaded or saved. Samples are strict JSON and parse automatically on paste (or when you pause while typing), up to 1 MiB, 10,000 values and 64 nesting levels.
+- **Diagnostics** — real-time validation (type mismatches, unknown fields, unsupported operators, invalid function arguments)
+- **JSON references** — keep up to five action or trigger outputs open, search across them, and copy a correctly rooted `outputs()`, `body()`, `triggerOutputs()` or `triggerBody()` reference; see the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references). Pasted JSON is processed locally and is not uploaded or saved. Samples are strict JSON and parse automatically on paste (or when you pause while typing), up to 1 MiB, 10,000 values and 64 nesting levels.
+- **Parsed Value insertion** — every parsed payload appears in the Functions nav, so a sample path can be dropped into an argument by double-click, Enter, or **Alt+Down**
 - **Graphite theme system** — accessible light/dark semantic tokens on Fluent UI v9
 - **Dockable workspace** — collapsible toolbox/support panes around the central canvas
 
@@ -57,7 +59,7 @@ Two shared packages, two thin host apps:
                       │
 ┌─────────────────────┴─────────────────────────────────────┐
 │  packages/builder-ui                                       │
-│  Shared Fluent UI v9 composer + workbench + theme system   │
+│  Shared Fluent UI v9 screens + workbench + theme system    │
 │  Exports: ExpressionBuilderShell + query document types    │
 │  (QueryGroup, QueryRule, ...) and actions (addRule, ...)    │
 └─────────────────────┬───────────────────────────────────────┘
@@ -68,14 +70,14 @@ Two shared packages, two thin host apps:
        │ packages/  │    │ packages/ │
        │ engine     │    │ platform  │
        │ Pure TS    │    │ Platform  │
-       │ expression │    │ adapters  │
-       │ formatter  │    │ (web/pptb)│
+       │ formatter  │    │ adapters  │
+       │ + catalog  │    │ (web/pptb)│
        └────────────┘    └───────────┘
 ```
 
 **Design principles**
 
-1. **Pure engine** — `packages/engine` has zero UI dependencies; it only knows expression AST nodes, field definitions, and formatting rules.
+1. **Pure engine** — `packages/engine` has zero UI dependencies; it knows expression AST nodes, field definitions, formatting rules, and the Workflow Definition Language function catalog.
 2. **Platform abstraction** — `packages/platform` defines a `PlatformAdapter` interface; web and PPTB implement it differently (clipboard, notifications, Dataverse API access).
 3. **Shared UI** — `packages/builder-ui` holds all visual components; the apps are thin bootstraps that inject the right adapter.
 4. **Type safety** — every package is TypeScript with `type: "module"`; types flow `engine` → `builder-ui` → `apps`.
@@ -164,6 +166,7 @@ npm run preview:pptb
 
 - [User manual &amp; developer docs](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md)
 - [PPTB Usage](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/PPTB_USAGE.md)
+- [Changelog](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/CHANGELOG.md)
 
 ## License
 

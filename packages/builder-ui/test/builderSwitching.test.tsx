@@ -226,7 +226,8 @@ describe('builder switching', () => {
 		editSample('{ "a": 1 }');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		expect(screen.getByText('Parsed · 2 values')).toBeInTheDocument();
+		// Shown in the editor status and on the payload card.
+		expect(screen.getAllByText('Parsed · 2 values')).toHaveLength(2);
 		editSample('{"a":2}');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
@@ -245,9 +246,9 @@ describe('builder switching', () => {
 		editSample('{"a":');
 		await advanceParse();
 		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toHaveAttribute('aria-selected', 'true');
-		expect(screen.getByText(
+		expect(screen.getAllByText(
 			'Could not parse. Showing last successful payload.',
-		)).toBeInTheDocument();
+		)).toHaveLength(2);
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		editSample('{"a":1}');
 		await advanceParse();
@@ -282,7 +283,7 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		pasteSample('{"a":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ New payload' }));
 		pasteSample('{"b":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		workspaceMount.key += 1;
@@ -333,7 +334,7 @@ describe('builder switching', () => {
 		await advanceParse(300);
 
 		fireEvent.click(screen.getByRole('button', {
-			name: 'New payload',
+			name: '+ New payload',
 			exact: true,
 		}));
 		await advanceParse(600);
@@ -395,7 +396,7 @@ describe('builder switching', () => {
 		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
 
 		await goTo(user, 'JSON reference');
-		await user.click(screen.getByRole('button', { name: 'New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ New payload' }));
 		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
 		await goTo(user, 'Functions');
 		expect(text1).toHaveValue(inserted);

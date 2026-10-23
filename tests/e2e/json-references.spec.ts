@@ -236,7 +236,7 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await page.keyboard.press('Tab');
   await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'New payload' })).toBeFocused();
+  await expect(page.getByRole('button', { name: '+ New payload' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
   await page.keyboard.press('Tab');
@@ -321,7 +321,7 @@ for (const theme of THEMES) {
     await addTwoRules(page);
     await loadEmailReference(page);
     // A second, parsed payload so the strip, tabs and hidden panel are present.
-    await page.getByRole('button', { name: 'New payload', exact: true }).click();
+    await page.getByRole('button', { name: '+ New payload', exact: true }).click();
     await jsonPanel(page).getByLabel('Action name').fill('Get manager');
     await pasteSample(page, '{"Email":"boss@example.com"}');
     await expect(payloadMeta(page)).toHaveText('2 values');
@@ -472,7 +472,7 @@ for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.in
     // A small sample: the Reference card's own height at 900x700 is covered by the end-content checks above.
     const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
     for (let position = 1; position <= 5; position++) {
-      if (position > 1) await page.getByRole('button', { name: 'New payload', exact: true }).click();
+      if (position > 1) await page.getByRole('button', { name: '+ New payload', exact: true }).click();
       await jsonPanel(page).getByLabel('Action name').fill(longName(position));
       await pasteSample(page, layoutSample);
       await expect(payloadMeta(page)).toHaveText('5 values');

@@ -6,6 +6,32 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-10-23
+
+### Added
+
+- **Functions** screen: choose one of 103 Power Automate expression functions in six groups — String, Collection, Logical, Math, Date and time, and Conversion — fill its arguments, and copy the resulting expression. Argument badges show the expected type and whether a value is required. Picking a function while an argument is focused wraps that value; dragging a function onto an argument inserts its call.
+- **Conversion** group with 24 functions, including `int`, `float`, `decimal`, `string`, `bool`, `json`, `xml`, `array`, `createArray`, base64, data URI, and URI component conversions. Deprecated functions are omitted, and conversion calls work when nested inside other arguments.
+- **Multiple JSON payloads**: keep up to five action or trigger outputs open at once, each with its own source, reference root, sample, selection, and loop name. Add a payload with **New payload** and close any card except the last.
+- **Search across payloads** in JSON reference: find a path or value in any parsed payload, see which payload it belongs to, and jump straight to it in that payload's tree.
+- **Parsed Value groups** in Functions, one per parsed JSON payload, so you can insert a reference from the correct output with a double-click or Enter. **Alt+Down** in an argument jumps to Parsed Value and remembers which argument to fill.
+
+### Changed
+
+- The header is now a single compact pill with a mode chip that switches between **Functions**, **Trigger / Filter**, and **JSON reference**. Each screen keeps its state while you move between them.
+- The condition screen is now called **Trigger / Filter**. The expression-mode switch stays in the header, **Import** moves into the overflow menu, and **Export** remains the primary action.
+- Pasting into **Sample JSON** replaces the sample and parses it immediately; typing parses again after a short pause. Successful parses and material changes show a **Parsed** or **Payload updated** notification, while whitespace, key-order, and equivalent number changes update quietly.
+- Payload cards show a status dot and root expression; the strip shows an `N / 5` count, and both stay usable on narrow and short tool windows.
+- Pasted JSON remains local to the session. The tool still declares no `cspExceptions`, contacts no external domain, and stores only field profiles and UI preferences through the host `settings` API.
+
+### Fixed
+
+- Undo and redo work naturally after pasting a JSON sample.
+- An invalid edit keeps the last successfully parsed payload and its references available instead of clearing the tree.
+- Payload close buttons no longer get clipped in narrow tabs, and closing or replacing a payload cannot fire a stale automatic parse.
+
+## [1.2.1] — 2026-10-04
+
 ### Added
 
 - **JSON reference** builder: paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted reference. Pasted JSON is processed locally and is not uploaded or saved.

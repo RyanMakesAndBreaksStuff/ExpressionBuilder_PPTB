@@ -25,7 +25,7 @@ function renderHeader(overrides: Partial<ShellHeaderProps> = {}) {
 describe('ShellHeader', () => {
   it('names all three screens once, in design order (FR-3)', () => {
     expect(SCREENS.map((entry) => entry.label))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
+      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
   });
 
   it('shows the title and the active screen (FR-2, AC-2.1)', () => {
@@ -41,10 +41,10 @@ describe('ShellHeader', () => {
 
     const items = screen.getAllByRole('menuitemradio');
     expect(items.map((item) => item.textContent))
-      .toEqual(['Functions', 'Trigger / Filter', 'JSON reference']);
-    expect(items[1]).toHaveAttribute('aria-checked', 'true');
+      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
+    expect(items[0]).toHaveAttribute('aria-checked', 'true');
 
-    await user.click(items[0]);
+    await user.click(items[2]);
     expect(props.onScreenChange).toHaveBeenCalledWith('functions');
   });
 

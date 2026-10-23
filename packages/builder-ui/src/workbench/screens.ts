@@ -2,7 +2,7 @@
 export type ScreenId = 'functions' | 'condition' | 'jsonReference';
 
 export const SCREENS: ReadonlyArray<{ id: ScreenId; label: string }> = [
-  { id: 'functions', label: 'Functions' },
   { id: 'condition', label: 'Trigger / Filter' },
   { id: 'jsonReference', label: 'JSON reference' },
+  { id: 'functions', label: 'Functions' },
 ];

@@ -17,86 +17,109 @@
 
 .eb-payload-strip {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto 280px;
+  grid-template-columns: minmax(0, 1fr) auto 280px;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 26px;
-  background: var(--header-glass);
+  gap: 12px;
   flex: 0 0 auto;
   min-width: 0;
 }
 .eb-payload-tabs {
   display: flex;
-  gap: 4px;
+  align-items: stretch;
+  gap: 8px;
   min-width: 0;
   overflow-x: auto;
+}
+.eb-payload-tablist {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
 }
 .eb-payload-tab {
   position: relative;
   display: flex;
   flex: 0 0 auto;
-  max-width: min(220px, 100%);
+  width: 200px;
+  max-width: 100%;
 }
 .eb-payload-tab > [role="tab"] {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  min-width: 0;
-  max-width: min(220px, 100%);
-  padding: 0 34px 0 12px;
-  border: 1px solid transparent;
-  border-radius: 21px;
-  background: transparent;
-  color: var(--text);
-}
-.eb-payload-tab > [aria-selected="true"] {
-  background: var(--seg-selected);
-  border-color: var(--accent);
-}
-.eb-payload-labels {
-  display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
   min-width: 0;
+  padding: 10px 34px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text2);
   text-align: left;
+  cursor: pointer;
 }
-.eb-payload-labels strong { font-size: 13px; }
-.eb-payload-labels code {
-  font: 10.5px var(--eb-mono);
+.eb-payload-tab > [role="tab"]:hover { border-color: var(--border-strong, var(--text2)); }
+.eb-payload-tab > [aria-selected="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.eb-payload-name { font-size: 14px; font-weight: 600; }
+.eb-payload-root { font: 11px var(--eb-mono); color: var(--text2); }
+.eb-payload-tab > [aria-selected="true"] .eb-payload-root { color: var(--accent); }
+.eb-payload-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
   color: var(--text2);
 }
-.eb-payload-labels strong,
-.eb-payload-labels code {
+.eb-payload-name,
+.eb-payload-root,
+.eb-payload-state-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .eb-payload-close {
   position: absolute;
-  right: 4px;
+  right: 8px;
   top: 9px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 4px;
   background: transparent;
   color: var(--text2);
 }
-.eb-payload-dot { flex: 0 0 7px; font-size: 10px; }
-.eb-payload-dot.is-good { color: var(--good); }
-.eb-payload-dot.is-warn { color: var(--warn); }
-.eb-payload-dot.is-danger { color: var(--danger); }
-
-.eb-payload-strip > button {
-  min-height: 34px;
-  border: 1px solid var(--border);
-  border-radius: 17px;
-  background: var(--surface2);
-  color: var(--text);
+.eb-payload-close:hover { background: var(--seg-selected); color: var(--text); }
+.eb-payload-dot {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text2);
 }
-.eb-payload-strip > button:disabled { opacity: 0.5; }
+.eb-payload-dot.is-good { background: var(--good); }
+.eb-payload-dot.is-warn { background: var(--warn); }
+.eb-payload-dot.is-danger { background: var(--danger); }
+
+.eb-payload-add {
+  flex: 0 0 120px;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.eb-payload-add:hover { border-color: var(--accent); }
+.eb-payload-add:disabled { opacity: 0.5; cursor: default; }
+.eb-payload-count { font-size: 12px; color: var(--text2); }
 .eb-payload-search { min-width: 0; }
 .eb-payload-search input {
   width: 100%;
@@ -147,7 +170,7 @@
 }
 @media (max-width: 900px) {
   .eb-payload-strip {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
   .eb-payload-search { grid-column: 1 / -1; }
 }

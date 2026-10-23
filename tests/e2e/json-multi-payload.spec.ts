@@ -47,7 +47,7 @@ const editorOf = (page: Page) =>
   panel(page).getByRole('textbox', { name: 'Sample JSON', exact: true });
 const nameOf = (page: Page) => panel(page).getByLabel('Action name');
 const statusOf = (page: Page) => panel(page).locator('.eb-json-payload > .eb-json-help');
-const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('New payload'));
+const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('+ New payload'));
 const treeRow = (page: Page, label: string) =>
   panel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 

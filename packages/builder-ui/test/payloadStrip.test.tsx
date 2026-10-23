@@ -15,7 +15,7 @@ function Harness() {
 
 it('roves tabs, wraps arrows and focuses the surviving tab on close', () => {
   render(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: 'New payload' }));
+  fireEvent.click(screen.getByRole('button', { name: '+ New payload' }));
   const second = screen.getByRole('tab', { name: 'Payload 2, payload 2' });
   expect(second).toHaveFocus();
   fireEvent.keyDown(second, { key: 'ArrowRight' });
@@ -30,7 +30,7 @@ it('roves tabs, wraps arrows and focuses the surviving tab on close', () => {
 
 it('disables adding at five and exposes only one tab stop', () => {
   render(<Harness />);
-  for (let i = 0; i < 4; i += 1) fireEvent.click(screen.getByRole('button', { name: 'New payload' }));
-  expect(screen.getByRole('button', { name: 'New payload' })).toBeDisabled();
+  for (let i = 0; i < 4; i += 1) fireEvent.click(screen.getByRole('button', { name: '+ New payload' }));
+  expect(screen.getByRole('button', { name: '+ New payload' })).toBeDisabled();
   expect(screen.getAllByRole('tab').filter((tab) => tab.tabIndex === 0)).toHaveLength(1);
 });
