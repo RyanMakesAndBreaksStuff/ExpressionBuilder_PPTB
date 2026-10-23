@@ -1,6 +1,6 @@
 # Power Automate Expression Builder
 
-> **Version**: 1.1.1 · **License**: BSD-3-Clause · **Maintainer**: Ryan Rettinger
+> **Version**: 1.3.1 · **License**: BSD-3-Clause · **Maintainer**: Ryan Rettinger
 
 Build Power Automate **Trigger Condition** and **Filter array** advanced-mode expressions visually, inside the Power Platform Toolbox — instead of hand-writing `@and(...)` / `@or(...)` predicates and discovering the syntax errors at runtime.
 
@@ -36,7 +36,7 @@ To use Dataverse field discovery, select an environment connection in the Toolbo
 ## Run — Your First Expression
 
 1. **Load fields** — click **Connect Table** to pull them from Dataverse, **Import a schema** to paste CSV/JSON/JSON Schema, **Add a field manually**, or **Load sample fields** to try it out.
-2. **Pick a mode** — *Trigger condition* or *Filter array* in the header.
+2. **Pick a mode** — _Trigger condition_ or _Filter array_ in the header.
 3. **Add rules** — click a field in the Toolbox to add a rule, then choose an operator and a value. The value editor matches the field type (string, number, boolean, dateTime, choice).
 4. **Nest logic** — **+ Group** adds a nested AND/OR group; drag the grip handle or use the up/down buttons to reorder.
 5. **Check diagnostics** — the Details pane confirms the expression is valid or explains what is wrong.
@@ -45,7 +45,7 @@ To use Dataverse field discovery, select an environment connection in the Toolbo
 ## Permissions & External Connections
 
 - **`cspExceptions`: none.** The tool declares no CSP exceptions and makes no requests to any external domain. It has no telemetry, no analytics, and no backend of its own.
-- **Dataverse access** is performed entirely through the host's `dataverseAPI`, scoped to the environment connection you select in the Toolbox. The tool reads table and attribute *metadata* only — it never reads, writes, or deletes records.
+- **Dataverse access** is performed entirely through the host's `dataverseAPI`, scoped to the environment connection you select in the Toolbox. The tool reads table and attribute _metadata_ only — it never reads, writes, or deletes records.
 - **Storage** is limited to the host's `settings` API (saved field profiles and UI preferences).
 - **Pasted JSON** in the JSON reference builder is processed locally and is not uploaded or saved by this feature. It is never written to the host `settings` API, and it is gone when the tool reloads.
 

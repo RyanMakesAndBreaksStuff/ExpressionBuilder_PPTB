@@ -52,3 +52,9 @@ tasks/lessons.md
 *.json
 /tests/e2e/fixtures/toolboxApiMock.ts
 /package-lock.json
+function-update.md
+headerfunctionprogress.md
+parse-notifications.md
+tokensaudit.md
+undo-paste.md
+
