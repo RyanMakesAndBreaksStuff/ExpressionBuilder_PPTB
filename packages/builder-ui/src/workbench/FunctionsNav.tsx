@@ -2,7 +2,7 @@ import { useId, useRef } from 'react';
 import { ChevronRightRegular } from '@fluentui/react-icons';
 import type { FunctionGroup } from '@ryanmakes/eb_engine';
 import type { NavGroup } from './functionsState';
-import type { ParsedValueList } from './parsedValueModel';
+import { PARSED_VALUE_PLACEHOLDER_ID, type ParsedValueList } from './parsedValueModel';
 import { ParsedValueEntries } from './ParsedValueEntries';
 
 export interface FunctionsNavProps {
@@ -10,51 +10,83 @@ export interface FunctionsNavProps {
   selectedFunction: string;
   search: string;
   parsedValue: ParsedValueList;
-  parsedValueExpanded: boolean;
+  expandedSources: ReadonlySet<string>;
   onSearchChange: (value: string) => void;
   onToggleGroup: (group: FunctionGroup) => void;
-  onToggleParsedValue: () => void;
+  onToggleSource: (id: string) => void;
   /** The argument input focused when the pick began, else null (FR-15). */
   onSelectFunction: (name: string, wrapArg: string | null) => void;
   onInsertReference: (expression: string) => void;
 }
 
-function ParsedValueSources({
+function ParsedValueGroups({
   list,
+  expandedSources,
   baseId,
+  onToggleSource,
   onInsertReference,
 }: {
   list: ParsedValueList;
+  expandedSources: ReadonlySet<string>;
   baseId: string;
+  onToggleSource: (id: string) => void;
   onInsertReference: (expression: string) => void;
 }) {
+  if (list.sources.length === 0) {
+    const expanded = expandedSources.has(PARSED_VALUE_PLACEHOLDER_ID);
+    return (
+      <div className="eb-fn-group" data-pv-group={PARSED_VALUE_PLACEHOLDER_ID}>
+        <button
+          className="eb-fn-group-row"
+          type="button"
+          aria-expanded={expanded}
+          aria-label="Parsed Value 0"
+          data-pv-toggle=""
+          onClick={() => onToggleSource(PARSED_VALUE_PLACEHOLDER_ID)}
+        >
+          <ChevronRightRegular aria-hidden="true" />
+          <span>Parsed Value</span>
+          <span>0</span>
+        </button>
+        {expanded ? <div>{list.emptyMessage}</div> : null}
+      </div>
+    );
+  }
+
   return (
     <>
-      {list.emptyMessage ? <div>{list.emptyMessage}</div> : null}
       {list.sources.map((source) => {
-        const content = (
-          <>
-            <ParsedValueEntries
-              entries={source.entries}
-              baseId={`${baseId}-${source.id}`}
-              descriptionPrefix={list.sources.length > 1
-                ? `${source.label}, ${source.rootCaption}`
-                : undefined}
-              onInsertReference={onInsertReference}
-            />
-            {source.emptyMessage ? <div>{source.emptyMessage}</div> : null}
-          </>
+        const expanded = expandedSources.has(source.id);
+        return (
+          <div className="eb-fn-group" key={source.id} data-pv-group={source.id}>
+            <button
+              className="eb-fn-group-row"
+              type="button"
+              aria-expanded={expanded}
+              aria-label={source.label + ' ' + source.matchingCount}
+              title={source.rootCaption}
+              data-pv-toggle=""
+              onClick={() => onToggleSource(source.id)}
+            >
+              <ChevronRightRegular aria-hidden="true" />
+              <span>{source.label}</span>
+              <span>{source.matchingCount}</span>
+            </button>
+            {expanded ? (
+              <>
+                <ParsedValueEntries
+                  entries={source.entries}
+                  baseId={`${baseId}-${source.id}`}
+                  descriptionPrefix={list.sources.length > 1
+                    ? `${source.label}, ${source.rootCaption}`
+                    : undefined}
+                  onInsertReference={onInsertReference}
+                />
+                {source.emptyMessage ? <div>{source.emptyMessage}</div> : null}
+              </>
+            ) : null}
+          </div>
         );
-        return list.sources.length === 1
-          ? <div key={source.id}>{content}</div>
-          : (
-            <details key={source.id} className="eb-pv-item eb-pv-source">
-              <summary>
-                {source.label} · {source.rootCaption} · {source.matchingCount}
-              </summary>
-              {content}
-            </details>
-          );
       })}
       {list.hiddenCount > 0
         ? <div>+{list.hiddenCount} more — narrow with search</div>
@@ -68,10 +100,10 @@ export function FunctionsNav({
   selectedFunction,
   search,
   parsedValue,
-  parsedValueExpanded,
+  expandedSources,
   onSearchChange,
   onToggleGroup,
-  onToggleParsedValue,
+  onToggleSource,
   onSelectFunction,
   onInsertReference,
 }: FunctionsNavProps) {
@@ -132,27 +164,13 @@ export function FunctionsNav({
         </div>
       ))}
 
-      <div className="eb-fn-group">
-        <button
-          className="eb-fn-group-row"
-          type="button"
-          aria-expanded={parsedValueExpanded}
-          aria-label={'Parsed Value ' + parsedValue.visibleCount}
-          data-pv-toggle=""
-          onClick={onToggleParsedValue}
-        >
-          <ChevronRightRegular aria-hidden="true" />
-          <span>Parsed Value</span>
-          <span>{parsedValue.visibleCount}</span>
-        </button>
-        {parsedValueExpanded ? (
-          <ParsedValueSources
-            list={parsedValue}
-            baseId={baseId}
-            onInsertReference={onInsertReference}
-          />
-        ) : null}
-      </div>
+      <ParsedValueGroups
+        list={parsedValue}
+        expandedSources={expandedSources}
+        baseId={baseId}
+        onToggleSource={onToggleSource}
+        onInsertReference={onInsertReference}
+      />
     </nav>
   );
 }

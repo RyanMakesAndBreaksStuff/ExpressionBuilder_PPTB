@@ -15,7 +15,8 @@ export type CopyFormat = 'expression' | 'wrapped';
 export interface FunctionsState {
 	search: string;
 	expandedGroups: ReadonlySet<FunctionGroup>;
-	parsedValueExpanded: boolean;
+	/** Parsed-value source groups the user opened, by source id. */
+	expandedSources: ReadonlySet<string>;
 	selectedFunction: string;
 	/** Argument values by name, for the selected function only. */
 	args: Readonly<Record<string, string>>;
@@ -28,7 +29,8 @@ export interface FunctionsState {
 export type FunctionsAction =
 	| { type: 'setSearch'; value: string }
 	| { type: 'toggleGroup'; group: FunctionGroup }
-	| { type: 'toggleParsedValue' }
+	| { type: 'toggleSource'; id: string }
+	| { type: 'expandSource'; id: string }
 	| { type: 'selectFunction'; name: string }
 	/** FR-15: the caller saw `arg` focused when the pick of `fn` began. */
 	| { type: 'wrapArg'; arg: string; fn: string }
@@ -42,7 +44,7 @@ export type FunctionsAction =
 export const initialFunctionsState: FunctionsState = {
 	search: '',
 	expandedGroups: new Set<FunctionGroup>(),
-	parsedValueExpanded: false,
+	expandedSources: new Set<string>(),
 	selectedFunction: 'concat',
 	args: {},
 	lastFocusedArg: null,
@@ -61,8 +63,15 @@ export function functionsReducer(state: FunctionsState, action: FunctionsAction)
 			return { ...state, expandedGroups };
 		}
 
-		case 'toggleParsedValue':
-			return { ...state, parsedValueExpanded: !state.parsedValueExpanded };
+		case 'toggleSource': {
+			const expandedSources = new Set(state.expandedSources);
+			if (!expandedSources.delete(action.id)) expandedSources.add(action.id);
+			return { ...state, expandedSources };
+		}
+
+		case 'expandSource':
+			if (state.expandedSources.has(action.id)) return state;
+			return { ...state, expandedSources: new Set(state.expandedSources).add(action.id) };
 
 		// lastFocusedArg outlives the focus itself (FR-22 needs it after a blur), so
 		// it cannot decide a wrap; the nav dispatches wrapArg instead (FR-15).

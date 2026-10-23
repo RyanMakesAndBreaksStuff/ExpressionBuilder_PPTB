@@ -46,7 +46,7 @@ const panel = (page: Page) => page.getByRole('tabpanel');
 const editorOf = (page: Page) =>
   panel(page).getByRole('textbox', { name: 'Sample JSON', exact: true });
 const nameOf = (page: Page) => panel(page).getByLabel('Action name');
-const statusOf = (page: Page) => panel(page).locator('.eb-json-payload > .eb-json-help');
+const statusOf = (page: Page) => panel(page).locator('.eb-json-source .eb-json-status');
 const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('+ New payload'));
 const treeRow = (page: Page, label: string) =>
   panel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
@@ -83,7 +83,10 @@ const tabAt = (page: Page, position: number) =>
 const referenceOf = (page: Page) => panel(page).getByLabel('Reference expression');
 const chooseRoot = (page: Page, root: string) => panel(page).getByRole('radio', { name: root }).click();
 const parsedValue = (page: Page) => page.getByRole('button', { name: /^Parsed Value \d+$/ });
-const sources = (page: Page) => page.locator('details.eb-pv-source');
+const sourceToggle = (page: Page, label: string) =>
+  page.getByRole('button', { name: new RegExp(`^${label} \\d+$`) });
+const sourceGroup = (page: Page, label: string) =>
+  page.locator('[data-pv-group]').filter({ has: sourceToggle(page, label) });
 
 /** Freezes the page clock so the 600ms debounce only advances through runFor(). */
 async function pauseClock(page: Page): Promise<void> {
@@ -181,6 +184,8 @@ for (const size of [
     await expect(newPayload(page)).toBeDisabled();
 
     const strip = page.locator('.eb-payload-tabs');
+    // Five 168px cards only exceed a wide strip's width when it is narrower than their total, so cap the strip at 640px to keep this overflow case real at every viewport.
+    await strip.evaluate((element) => { element.style.maxWidth = '640px'; });
     const overflow = await strip.evaluate((element) => ({
       scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
     }));
@@ -401,14 +406,10 @@ test('Functions groups every parsed source and inserts correctly rooted referenc
   await expect(statusOf(page)).toHaveText('Parsed · 2 values');
 
   await openScreen(page, 'Functions');
-  await page.getByRole('button', { name: /^Parsed Value / }).click();
-  const group = (label: string) => page.locator('details.eb-pv-source')
-    .filter({ has: page.locator('summary', { hasText: new RegExp(`^${label}`) }) });
-  await expect(page.locator('details.eb-pv-source')).toHaveCount(2);
-  await expect(page.locator('details.eb-pv-source[open]')).toHaveCount(0);
-  await group('Get customer').locator('summary').click();
-  await group('Get manager').locator('summary').click();
-  await expect(page.locator('details.eb-pv-source[open]')).toHaveCount(2);
+  await expect(parsedValue(page)).toHaveCount(0);
+  await sourceToggle(page, 'Get customer').click();
+  await sourceToggle(page, 'Get manager').click();
+  const group = (label: string) => sourceGroup(page, label);
 
   const customerEmail = "body('Get_customer')?['Email']";
   const managerEmail = "outputs('Get_manager')?['Email']";
@@ -443,12 +444,13 @@ test('Functions groups every parsed source and inserts correctly rooted referenc
   await expect(text1).toHaveValue(customerEmail);
   await expect(text2).toHaveValue(managerEmail);
   // Only the surviving source remains, with its current root.
-  await expect(page.locator('details.eb-pv-source')).toHaveCount(0);
+  await expect(page.locator('[data-pv-group]')).toHaveCount(1);
+  await expect(sourceToggle(page, 'Get client')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('button', { name: 'Email', exact: true }))
     .toHaveAccessibleDescription("body('Get_client')?['Email']");
 });
 
-test('Alt+Down in a Functions argument picks a reference from a closed source group by keyboard alone', async ({ page }) => {
+test('Alt+Down in a Functions argument opens the first source group and picks its first reference by keyboard alone', async ({ page }) => {
   await start(page);
   await nameOf(page).fill('Get customer');
   await pasteSample(page, '{"Email":"c@x.com"}');
@@ -462,20 +464,14 @@ test('Alt+Down in a Functions argument picks a reference from a closed source gr
   await expect(text2).toBeFocused();
   await expect(text2).toHaveAttribute('aria-keyshortcuts', 'Alt+ArrowDown');
 
-  // Parsed Value is collapsed: Alt+Down expands it and lands on the first (closed) source summary.
+  // Alt+Down opens the first source group and lands on its first reference.
   await page.keyboard.press('Alt+ArrowDown');
-  await expect(parsedValue(page)).toHaveAttribute('aria-expanded', 'true');
-  await expect(sources(page)).toHaveCount(2);
-  await expect(sources(page).nth(0).locator('summary')).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(sources(page).nth(1).locator('summary')).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(sources(page).nth(1)).toHaveAttribute('open', '');
-  await page.keyboard.press('Tab');
-  await expect(sources(page).nth(1).getByRole('button', { name: 'Email', exact: true })).toBeFocused();
+  await expect(sourceToggle(page, 'Get customer')).toHaveAttribute('aria-expanded', 'true');
+  await expect(sourceToggle(page, 'Get manager')).toHaveAttribute('aria-expanded', 'false');
+  await expect(sourceGroup(page, 'Get customer').getByRole('button', { name: 'Email', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
 
-  await expect(text2).toHaveValue("outputs('Get_manager')?['Email']");
+  await expect(text2).toHaveValue("outputs('Get_customer')?['Email']");
   await expect(text1).toHaveValue('');
   await expect(text2).toBeFocused();
 });
@@ -486,12 +482,10 @@ test('Functions tells an unnamed Action source apart and keeps usable sources in
   await nameOf(page).fill('');
   await addPayload(page, 'Named', '{"Email":"n@x.com"}');
   await openScreen(page, 'Functions');
-  await page.getByRole('button', { name: /^Parsed Value / }).click();
-  await expect(page.locator('details.eb-pv-source')).toHaveCount(2);
-  await page.locator('details.eb-pv-source > summary').nth(0).click();
+  await sourceToggle(page, 'Payload 1').click();
   await expect(page.getByText('Set an action name in JSON reference')).toBeVisible();
-  await page.locator('details.eb-pv-source > summary').nth(1).click();
-  await page.locator('details.eb-pv-source').nth(1).getByRole('button', { name: 'Email', exact: true }).dblclick();
+  await sourceToggle(page, 'Named').click();
+  await sourceGroup(page, 'Named').getByRole('button', { name: 'Email', exact: true }).dblclick();
   await expect(page.getByRole('textbox', { name: 'text1', exact: true })).toHaveValue("outputs('Named')?['Email']");
 });
 
@@ -858,12 +852,11 @@ test('search covers displayed data only: it skips unparsed text, keeps retained 
   await expect(panel(page).getByRole('button', { name: 'Copy', exact: true })).toHaveCount(0);
 });
 
-test('Parsed Value says where to parse when nothing is parsed and keeps the flat list for one parsed source (AC-3.1)', async ({ page }) => {
+test('Parsed Value says where to parse when nothing is parsed and gives one parsed source its own group (AC-3.1)', async ({ page }) => {
   await start(page);
   await openScreen(page, 'Functions');
   await parsedValue(page).click();
   await expect(page.getByText('Parse a sample in JSON reference')).toBeVisible();
-  await expect(sources(page)).toHaveCount(0);
   await parsedValue(page).click();
 
   await openScreen(page, 'JSON reference');
@@ -871,11 +864,11 @@ test('Parsed Value says where to parse when nothing is parsed and keeps the flat
   await pasteSample(page, '{"Email":"c@x.com","items":[{"Email":"i@x.com"}]}');
   await addPayload(page, 'Draft only');
   await openScreen(page, 'Functions');
-  await parsedValue(page).click();
-  // An empty second payload is not a source: the single-source presentation stays.
-  await expect(page.getByRole('button', { name: 'Parsed Value 2', exact: true })).toBeVisible();
+  // An empty second payload is not a source: only the parsed one gets a group.
+  await expect(parsedValue(page)).toHaveCount(0);
+  await expect(page.locator('[data-pv-group]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Get customer 2', exact: true }).click();
   await expect(page.getByText('Parse a sample in JSON reference')).toHaveCount(0);
-  await expect(sources(page)).toHaveCount(0);
   await expect(page.locator('.eb-pv-row')).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Email', exact: true }))
     .toHaveAccessibleDescription("outputs('Get_customer')?['Email']");
@@ -891,19 +884,15 @@ test('Functions keeps to 200 rows across sources in tab order, and filtering pre
   await addPayload(page, 'Beta', keys('beta', 100));
 
   await openScreen(page, 'Functions');
-  await parsedValue(page).click();
-  await expect(page.getByRole('button', { name: 'Parsed Value 200', exact: true })).toBeVisible();
-  await expect(page.locator('details.eb-pv-source > summary')).toHaveText([
-    "Alpha · outputs('Alpha') · 150",
-    "Beta · outputs('Beta') · 100",
-  ]);
+  await page.getByRole('button', { name: 'Alpha 150', exact: true }).click();
+  await page.getByRole('button', { name: 'Beta 100', exact: true }).click();
   await expect(page.locator('.eb-pv-row')).toHaveCount(200);
-  await expect(sources(page).first().locator('.eb-pv-row')).toHaveCount(150);
-  await expect(sources(page).last().locator('.eb-pv-row')).toHaveCount(50);
+  await expect(sourceGroup(page, 'Alpha').locator('.eb-pv-row')).toHaveCount(150);
+  await expect(sourceGroup(page, 'Beta').locator('.eb-pv-row')).toHaveCount(50);
   await expect(page.getByText('+50 more — narrow with search')).toBeVisible();
 
   await page.getByRole('searchbox', { name: 'Search functions' }).fill('beta99');
-  await expect(page.getByRole('button', { name: 'Parsed Value 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Beta 1', exact: true })).toBeVisible();
   await expect(page.locator('.eb-pv-row')).toHaveText(['beta99']);
   await expect(page.getByText(/more — narrow with search/)).toHaveCount(0);
 });
@@ -915,11 +904,10 @@ test('array items start collapsed in every source and open independently (AC-3.6
   await pasteSample(page, sample);
   await addPayload(page, 'Get manager', sample);
   await openScreen(page, 'Functions');
-  await parsedValue(page).click();
-  await expect(sources(page)).toHaveCount(2);
-  for (const source of await sources(page).all()) await source.locator('summary').first().click();
+  await sourceToggle(page, 'Get customer').click();
+  await sourceToggle(page, 'Get manager').click();
 
-  const arrayItems = page.locator('details.eb-pv-item:not(.eb-pv-source)');
+  const arrayItems = page.locator('details.eb-pv-item');
   await expect(arrayItems).toHaveCount(2);
   for (const item of await arrayItems.all()) await expect(item).not.toHaveJSProperty('open', true);
   await arrayItems.first().locator('summary').click();
@@ -932,7 +920,7 @@ test('conditions, Functions arguments and payloads survive all three screens and
   await start(page);
   const generated = page.locator('[aria-label="Generated expression"]:visible');
   const args = page.locator('input[data-arg]');
-  const group = (label: string) => sources(page).filter({ hasText: label });
+  const group = (label: string) => sourceGroup(page, label);
 
   /** Export copies the condition document; a sentinel proves the read is this export's. */
   async function exportCondition(): Promise<string> {
@@ -960,9 +948,8 @@ test('conditions, Functions arguments and payloads survive all three screens and
   expect(conditionExport).not.toBe('');
 
   await openScreen(page, 'Functions');
-  await parsedValue(page).click();
   for (const [index, label] of ['Get customer', 'Get manager'].entries()) {
-    await group(label).locator('summary').click();
+    await sourceToggle(page, label).click();
     await args.nth(index).click();
     await group(label).getByRole('button', { name: 'Email', exact: true }).dblclick();
   }

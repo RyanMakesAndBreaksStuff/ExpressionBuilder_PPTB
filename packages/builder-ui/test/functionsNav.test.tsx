@@ -6,7 +6,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { navGroups, initialFunctionsState } from '../src/workbench/functionsState';
 import { FunctionsNav } from '../src/workbench/FunctionsNav';
-import { buildParsedValueList } from '../src/workbench/parsedValueModel';
+import { buildParsedValueList, PARSED_VALUE_PLACEHOLDER_ID } from '../src/workbench/parsedValueModel';
 import { formatPayloadRoot, type FunctionGroup, type PayloadReferenceRoot } from '@ryanmakes/eb_engine';
 import { parsePayload } from '../src/importExport/jsonPayload';
 import type { ParsedValueSource } from '../src/workbench/jsonPayloadSession';
@@ -40,10 +40,10 @@ function renderNav(overrides: Partial<ComponentProps<typeof FunctionsNav>> = {})
     selectedFunction: 'concat',
     search: '',
     parsedValue,
-    parsedValueExpanded: true,
+    expandedSources: new Set(['fixture-1']),
     onSearchChange: vi.fn(),
     onToggleGroup: vi.fn(),
-    onToggleParsedValue: vi.fn(),
+    onToggleSource: vi.fn(),
     onSelectFunction: vi.fn(),
     onInsertReference: vi.fn(),
     ...overrides,
@@ -94,8 +94,8 @@ describe('FunctionsNav', () => {
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
           groups={navGroups(stringOpen)} selectedFunction="concat" search=""
-          parsedValue={parsedValue} parsedValueExpanded={false}
-          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
+          parsedValue={parsedValue} expandedSources={new Set()}
+          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleSource={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
         />
       </>,
@@ -113,8 +113,8 @@ describe('FunctionsNav', () => {
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
           groups={navGroups(stringOpen)} selectedFunction="concat" search=""
-          parsedValue={parsedValue} parsedValueExpanded={false}
-          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
+          parsedValue={parsedValue} expandedSources={new Set()}
+          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleSource={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
         />
       </>,
@@ -132,8 +132,8 @@ describe('FunctionsNav', () => {
         <input data-arg="text1" aria-label="text1" />
         <FunctionsNav
           groups={navGroups(stringOpen)} selectedFunction="concat" search=""
-          parsedValue={parsedValue} parsedValueExpanded={false}
-          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
+          parsedValue={parsedValue} expandedSources={new Set()}
+          onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleSource={vi.fn()}
           onSelectFunction={onSelectFunction} onInsertReference={vi.fn()}
         />
       </>,
@@ -169,25 +169,33 @@ describe('FunctionsNav', () => {
     expect(screen.getByRole('button', { name: 'concat' })).toHaveAttribute('draggable', 'true');
   });
 
-  it('toggles the Parsed Value group and hides its rows while collapsed', async () => {
+  it('renders each source as a top-level group named after its payload and toggles it', async () => {
     const user = userEvent.setup();
-    const onToggleParsedValue = vi.fn();
-    const { rerender } = renderNav({ parsedValueExpanded: false, onToggleParsedValue });
-    const group = screen.getByRole('button', { name: 'Parsed Value 2' });
+    const onToggleSource = vi.fn();
+    const { rerender, props } = renderNav({ expandedSources: new Set(), onToggleSource });
+    const group = screen.getByRole('button', { name: 'Fixture 2' });
     expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(group).toHaveAttribute('title', 'triggerBody()');
+    expect(screen.queryByRole('button', { name: /^Parsed Value/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Name' })).toBeNull();
     await user.click(group);
-    expect(onToggleParsedValue).toHaveBeenCalledOnce();
-    rerender(
-      <FunctionsNav
-        groups={navGroups(stringOpen)} selectedFunction="concat" search=""
-        parsedValue={parsedValue} parsedValueExpanded
-        onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={onToggleParsedValue}
-        onSelectFunction={vi.fn()} onInsertReference={vi.fn()}
-      />,
-    );
+    expect(onToggleSource).toHaveBeenCalledWith('fixture-1');
+    rerender(<FunctionsNav {...props} expandedSources={new Set(['fixture-1'])} />);
     expect(screen.getByRole('button', { name: 'Name' })).toBeInTheDocument();
   });
+
+  it('shows a Parsed Value placeholder group when nothing is parsed', async () => {
+    const user = userEvent.setup();
+    const onToggleSource = vi.fn();
+    const { rerender, props } = renderNav({
+      parsedValue: buildParsedValueList([], ''), expandedSources: new Set(), onToggleSource,
+    });
+    await user.click(screen.getByRole('button', { name: 'Parsed Value 0' }));
+    expect(onToggleSource).toHaveBeenCalledWith(PARSED_VALUE_PLACEHOLDER_ID);
+    rerender(<FunctionsNav {...props} expandedSources={new Set([PARSED_VALUE_PLACEHOLDER_ID])} />);
+    expect(screen.getByText('Parse a sample in JSON reference')).toBeInTheDocument();
+  });
+
   it('renders Parsed Value rows with their expression as the accessible description', async () => {
     const user = userEvent.setup();
     renderNav();
@@ -249,8 +257,8 @@ describe('FunctionsNav', () => {
             visibleCount: rows.length, hiddenCount: 3, emptyMessage: null,
           };
         })()}
-        parsedValueExpanded
-        onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleParsedValue={vi.fn()}
+        expandedSources={new Set(['fixture-1'])}
+        onSearchChange={vi.fn()} onToggleGroup={vi.fn()} onToggleSource={vi.fn()}
         onSelectFunction={vi.fn()} onInsertReference={vi.fn()}
       />,
     );
@@ -269,26 +277,18 @@ describe('FunctionsNav', () => {
     expect(props.onInsertReference).toHaveBeenCalledTimes(2);
   });
 
-  it('groups several sources in collapsed details with label, root and match count', async () => {
+  it('lists several sources as separate top-level groups with their own match counts', async () => {
     const user = userEvent.setup();
     const list = buildParsedValueList([
       fixture({ id: 1, tags: ['a'] }, { kind: 'body', actionName: 'One' }, 'p1', 'One'),
       fixture({ id: 2 }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two'),
     ], '');
-    const { props } = renderNav({ parsedValue: list });
-    expect(screen.getByRole('button', { name: 'Parsed Value 3' })).toBeInTheDocument();
-    const one = screen.getByText("One · body('One') · 2", { selector: 'summary' });
-    const two = screen.getByText("Two · body('Two') · 1", { selector: 'summary' });
-    const oneDetails = one.parentElement as HTMLDetailsElement;
-    const twoDetails = two.parentElement as HTMLDetailsElement;
-    expect(oneDetails.open).toBe(false);
-    expect(twoDetails.open).toBe(false);
-    await user.click(one);
-    expect(oneDetails.open).toBe(true);
-    expect(twoDetails.open).toBe(false);
+    const { props } = renderNav({ parsedValue: list, expandedSources: new Set(['p1', 'p2']) });
+    expect(screen.getByRole('button', { name: 'One 2' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Two 1' })).toHaveAttribute('aria-expanded', 'true');
+    expect(document.querySelector('details.eb-pv-source')).toBeNull();
 
     // Equal paths stay separate: each id button inserts its own source's expression.
-    await user.click(two);
     const [idOne, idTwo] = screen.getAllByRole('button', { name: 'id' });
     expect(idOne).toHaveAccessibleDescription("One, body('One'). body('One')?['id']");
     await user.dblClick(idOne);
@@ -302,9 +302,7 @@ describe('FunctionsNav', () => {
     renderNav({ parsedValue: buildParsedValueList([
       fixture({ rows: [{ a: 1 }] }, { kind: 'body', actionName: 'One' }, 'p1', 'One'),
       fixture({ rows: [{ a: 2 }] }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two'),
-    ], '') });
-    await user.click(screen.getByText("One · body('One') · 1", { selector: 'summary' }));
-    await user.click(screen.getByText("Two · body('Two') · 1", { selector: 'summary' }));
+    ], ''), expandedSources: new Set(['p1', 'p2']) });
     const items = screen.getAllByText('rows[0]', { selector: 'summary' });
     expect(items).toHaveLength(2);
     await user.click(items[0]);

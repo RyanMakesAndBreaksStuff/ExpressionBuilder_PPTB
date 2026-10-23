@@ -375,7 +375,7 @@ describe('builder switching', () => {
 		pasteSample('{"a":1}');
 
 		await goTo(user, 'Functions');
-		await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
+		await user.click(screen.getByRole('button', { name: 'Get items 1' }));
 		const text1 = screen.getByLabelText('text1');
 		await user.click(text1);
 		await user.dblClick(screen.getByRole('button', { name: 'a' }));
@@ -387,7 +387,7 @@ describe('builder switching', () => {
 		await user.type(screen.getByLabelText('Action name'), 'Renamed');
 		await goTo(user, 'Functions');
 		expect(text1).toHaveValue(inserted);
-		expect(screen.getByRole('button', { name: 'Parsed Value 1' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Renamed 1' })).toBeInTheDocument();
 
 		await goTo(user, 'JSON reference');
 		await user.click(screen.getByRole('radio', { name: /Trigger.*Full output/ }));

@@ -96,6 +96,17 @@ async function selectEmail(user: UserEvent) {
 }
 
 describe('JSON reference workspace', () => {
+	it('shows the parse status under the sample, not in the Payload pane (mock image 7)', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const source = screen.getByRole('region', { name: 'Source' });
+		expect(within(source).getByText('Nothing parsed yet')).toHaveClass('eb-json-status', 'is-muted');
+
+		await pasteAndParse(user, fixtureA1, 'Get items');
+		expect(within(source).getByText('Parsed · 25 values')).toHaveClass('eb-json-status', 'is-good');
+		expect(within(screen.getByRole('region', { name: 'Payload' })).queryByText('Parsed · 25 values')).toBeNull();
+	});
+
 	it('builds, shows and copies the reference to Email (user story 1, scenarios 1 and 2)', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
@@ -401,5 +412,29 @@ describe('JSON reference workspace', () => {
 			expect(field).toHaveAttribute('autocapitalize', 'off');
 			expect(field).toHaveAttribute('autocomplete', 'off');
 		}
+	});
+
+	it('lays the Reference panel out as the mock (image 6)', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		await pasteAndParse(user, fixtureA1, 'Get items');
+		await selectEmail(user);
+
+		const crumbs = within(screen.getByRole('navigation', { name: 'Selected path' }))
+			.getAllByText(/./, { selector: '.eb-json-crumb' });
+		expect(crumbs[0]).toHaveClass('is-root');
+		expect(crumbs[1]).not.toHaveClass('is-root');
+
+		const reference = expression().closest('.eb-json-copy-block') as HTMLElement;
+		expect(within(reference).getByText('Fixed position [0] reads that item only.')).toBeInTheDocument();
+		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveTextContent('Copy');
+		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveClass('is-primary');
+
+		expect(screen.getByText('Apply to each · item()')).toBeInTheDocument();
+		expect(screen.getByText('Apply to each · items()')).toBeInTheDocument();
+		expect(screen.getByText('Enter the loop name to build items()')).toBeInTheDocument();
+		expect(screen.getByLabelText('Loop name')).toHaveAccessibleDescription(/Spaces become underscores/);
+		await user.type(screen.getByLabelText('Loop name'), 'Apply to each');
+		expect(screen.queryByText('Enter the loop name to build items()')).toBeNull();
 	});
 });

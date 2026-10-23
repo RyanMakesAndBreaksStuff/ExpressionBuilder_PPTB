@@ -96,7 +96,7 @@ body {
 	--focus-ring: var(--ring);
 	--r-control: var(--r-md);
 	--r-card: var(--r-sm);
-	/* --accent-2 is 4.4:1 on --surface2 and 4.2:1 on --accent-soft; function names
+	/* --accent-2 is under 4.5:1 on --surface2 and --accent-soft; function names
      and payload roots need 4.5:1, so light mode darkens it towards --text. */
 	--code-fn: color-mix(in srgb, var(--accent-2) 85%, var(--text));
 }
@@ -769,7 +769,7 @@ body {
 	border: none;
 	border-radius: 999px;
 	background: transparent;
-	color: var(--text3);
+	color: var(--text2);
 	font-size: 0.76rem;
 	font-weight: 800;
 	letter-spacing: 0.05em;
@@ -1522,7 +1522,7 @@ body {
 .eb-diag-where {
 	font-family: var(--eb-mono);
 	font-size: 0.72rem;
-	color: var(--text3);
+	color: var(--text2);
 	white-space: nowrap;
 }
 
@@ -2174,7 +2174,7 @@ body {
 
 .eb-json-sample .eb-textarea {
 	flex: 1 1 auto;
-	min-height: 180px;
+	min-height: 150px;
 }
 
 .eb-json-parse-row,
@@ -2206,10 +2206,18 @@ body {
 	margin-top: 0;
 }
 
+/* Each copy block is an inset code well (mock image 6); colors come from the
+   code-well tokens so it reads the same in both palettes. */
 .eb-json-copy-block {
+	position: relative; /* contains the visually-hidden loop help so it cannot extend the page */
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 10px;
+	padding: 14px 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-xl);
+	background: var(--code);
+	color: var(--code-text);
 }
 
 .eb-json-copy-block-label {
@@ -2217,11 +2225,73 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	font-size: 11px;
+	font-size: 13px;
 	font-weight: 600;
-	color: var(--text3);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	color: var(--code-text2);
+}
+
+.eb-json-copy-block .eb-copy-block-info {
+	color: var(--code-text3);
+}
+
+.eb-json-copy-block .eb-preview {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--code-text);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* The mock shows plain expression text inside the well. */
+.eb-json-copy-block .eb-preview span {
+	color: inherit;
+	font-weight: inherit;
+}
+
+.eb-json-copy-block .eb-json-note {
+	color: var(--code-warn);
+	font-weight: 400;
+}
+
+.eb-json-copy-block .eb-copy-action-btn {
+	padding: 6px 10px;
+	border-color: transparent;
+	background: var(--code-seg-track);
+	color: var(--code-text2);
+	font-size: 12px;
+}
+
+.eb-json-copy-block .eb-copy-action-btn:hover {
+	border-color: transparent;
+	background: var(--code-seg-selected);
+	color: var(--code-text);
+}
+
+.eb-json-copy-block .eb-copy-action-btn.is-primary,
+.eb-json-copy-block .eb-copy-action-btn.is-primary:hover {
+	background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+	color: var(--fg-onbrand);
+}
+
+.eb-json-loop-field {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: 10px;
+}
+
+.eb-json-loop-field .eb-label {
+	margin: 0;
+	color: var(--code-text2);
+}
+
+.eb-json-loop-hint {
+	margin: 0;
+	font-family: var(--eb-mono);
+	font-size: 13px;
+	color: var(--code-text2);
 }
 
 .eb-copy-block-info-wrap {
@@ -2581,9 +2651,12 @@ body {
 	color: var(--code-fn);
 }
 
-.eb-tree-label.is-index,
-.eb-tree-preview {
+.eb-tree-label.is-index {
 	color: var(--text3);
+}
+
+.eb-tree-preview {
+	color: var(--text2);
 }
 
 .eb-tree-more .eb-tree-label {
@@ -2635,14 +2708,18 @@ body {
 }
 
 .eb-json-crumb {
-	padding: 2px 8px;
+	padding: 4px 12px;
 	border-radius: var(--r-circ);
-	border: 1px solid var(--border);
-	background: var(--surface2);
-	color: var(--text2);
+	background: var(--warn-soft);
+	color: color-mix(in srgb, var(--warn) 65%, var(--text));
 	font-family: var(--eb-mono);
-	font-size: 12px;
+	font-size: 13px;
 	overflow-wrap: anywhere;
+}
+
+.eb-json-crumb.is-root {
+	background: var(--accent-soft);
+	color: color-mix(in srgb, var(--accent) 65%, var(--text));
 }
 
 .eb-json-crumb-separator {

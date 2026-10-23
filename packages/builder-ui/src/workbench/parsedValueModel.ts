@@ -40,6 +40,9 @@ export interface ParsedValueList {
 
 export const MAX_PARSED_VALUE_ROWS = 200;
 
+/** Expansion key of the "Parsed Value" group shown while no payload is parsed. */
+export const PARSED_VALUE_PLACEHOLDER_ID = 'parsed-value';
+
 function parsedPathLabel(path: PayloadPath): string {
   return path.reduce<string>(
     (label, segment) => typeof segment === 'number'

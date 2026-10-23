@@ -76,7 +76,7 @@ describe('FunctionsWorkspace', () => {
     render(
       <FunctionsWorkspace adapter={createAdapter()} sources={sources} />
     );
-    await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
+    await user.click(screen.getByRole('button', { name: 'Fixture 1' }));
 
     const text2 = screen.getByLabelText('text2');
     await user.click(text2);
@@ -97,7 +97,7 @@ describe('FunctionsWorkspace', () => {
       adapter={createAdapter()}
       sources={[fixture({ body: { value: [{ Name: 'Ada' }, { Name: 'Grace' }] } }, referenceRoot)]}
     />);
-    await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
+    await user.click(screen.getByRole('button', { name: 'Fixture 2' }));
     const first = screen.getByText('body.value[0]', { selector: 'summary' });
     const second = screen.getByText('body.value[1]', { selector: 'summary' });
     expect((first.parentElement as HTMLDetailsElement).open).toBe(false);
@@ -120,10 +120,10 @@ describe('FunctionsWorkspace', () => {
   });
 
   describe('Alt+ArrowDown from an argument', () => {
-    it('expands Parsed Value, focuses the first reference and inserts into the held argument', async () => {
+    it('expands the first source group, focuses its first reference and inserts into the held argument', async () => {
       const user = userEvent.setup();
       render(<FunctionsWorkspace adapter={createAdapter()} sources={sources} />);
-      const toggle = screen.getByRole('button', { name: 'Parsed Value 1' });
+      const toggle = screen.getByRole('button', { name: 'Fixture 1' });
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
       const text1 = screen.getByLabelText('text1');
       const text2 = screen.getByLabelText('text2');
@@ -155,13 +155,15 @@ describe('FunctionsWorkspace', () => {
       expect(toggle).toHaveFocus();
     });
 
-    it('focuses the summary of a closed source group instead of a hidden button', async () => {
+    it('opens only the first source group and focuses its first reference', async () => {
       const user = userEvent.setup();
       const two = [...sources, { ...sources[0], id: 'fixture-2', label: 'Other' }];
       render(<FunctionsWorkspace adapter={createAdapter()} sources={two} />);
       await user.click(screen.getByLabelText('text2'));
       await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
-      expect(screen.getAllByText(/^Fixture ·/, { selector: 'summary' })[0]).toHaveFocus();
+      expect(screen.getByRole('button', { name: 'Fixture 1' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Other 1' })).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: 'Name' })).toHaveFocus();
     });
 
     it('leaves plain ArrowDown alone', async () => {
@@ -170,7 +172,7 @@ describe('FunctionsWorkspace', () => {
       const text2 = screen.getByLabelText('text2');
       await user.click(text2);
       await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('button', { name: 'Parsed Value 1' })).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: 'Fixture 1' })).toHaveAttribute('aria-expanded', 'false');
       expect(text2).toHaveFocus();
     });
   });
@@ -257,9 +259,8 @@ describe('FunctionsWorkspace', () => {
     const one = fixture({ rows: [{ id: 1 }] }, { kind: 'body', actionName: 'One' }, 'p1', 'One');
     const two = fixture({ rows: [{ id: 2 }] }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two');
     const { rerender } = render(<FunctionsWorkspace adapter={createAdapter()} sources={[one, two]} />);
-    await user.click(screen.getByRole('button', { name: 'Parsed Value 2' }));
-    await user.click(screen.getByText("One · body('One') · 1", { selector: 'summary' }));
-    await user.click(screen.getByText("Two · body('Two') · 1", { selector: 'summary' }));
+    await user.click(screen.getByRole('button', { name: 'One 1' }));
+    await user.click(screen.getByRole('button', { name: 'Two 1' }));
     const items = screen.getAllByText('rows[0]', { selector: 'summary' });
     await user.click(items[0]);
     await user.click(items[1]);
@@ -281,14 +282,15 @@ describe('FunctionsWorkspace', () => {
     expect(text2).toHaveValue("body('Two')?['rows'][0]?['id']");
   });
 
-  it('excludes a missing-name source from the Parsed Value count', async () => {
+  it('shows the missing-name message inside that source\'s own group', async () => {
     const user = userEvent.setup();
     const unnamed: ParsedValueSource = { ...fixture({ a: 1 }, null, 'p1', 'Payload 1'), referenceRoot: null };
     render(<FunctionsWorkspace
       adapter={createAdapter()}
       sources={[unnamed, fixture({ b: 1 }, { kind: 'body', actionName: 'Two' }, 'p2', 'Two')]}
     />);
-    await user.click(screen.getByRole('button', { name: 'Parsed Value 1' }));
+    expect(screen.getByRole('button', { name: 'Two 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Payload 1 0' }));
     expect(screen.getByText('Set an action name in JSON reference')).toBeInTheDocument();
   });
 

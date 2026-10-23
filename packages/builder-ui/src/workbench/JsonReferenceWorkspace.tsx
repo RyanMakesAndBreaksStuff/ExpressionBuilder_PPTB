@@ -6,7 +6,6 @@ import type { PayloadReveal } from "./jsonPayloadSession";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
-	parseStatus,
 	rootExpression,
 	showBodyHint,
 	type CopyFormat,
@@ -112,7 +111,6 @@ interface PayloadPanelProps {
 function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
-	const status = parseStatus(state);
 
 	return (
 		<section
@@ -126,7 +124,6 @@ function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
 					</span>
 				) : null}
 			</div>
-			<p className="eb-json-help">{status.text}</p>
 			{showBodyHint(state) ? (
 				<p className="eb-json-hint">
 					This sample has a top-level <code>body</code> key. If you pasted the

@@ -44,6 +44,16 @@ describe('functions state', () => {
 		expect(navGroups(run({ type: 'setSearch', value: '' }))).toHaveLength(6);
 	});
 
+	it('toggles and expands parsed-value source groups independently', () => {
+		expect(initialFunctionsState.expandedSources.size).toBe(0);
+		const open = run({ type: 'toggleSource', id: 'p1' });
+		expect([...open.expandedSources]).toEqual(['p1']);
+		expect([...functionsReducer(open, { type: 'toggleSource', id: 'p1' }).expandedSources]).toEqual([]);
+		const both = functionsReducer(open, { type: 'expandSource', id: 'p2' });
+		expect([...both.expandedSources]).toEqual(['p1', 'p2']);
+		expect(functionsReducer(both, { type: 'expandSource', id: 'p2' })).toBe(both);
+	});
+
 	it('builds a slot per argument, required first (FR-12, AC-12.1)', () => {
 		const state = run({ type: 'selectFunction', name: 'substring' });
 		expect(deriveFunctions(state).slots.map((slot) => [slot.name, slot.required]))

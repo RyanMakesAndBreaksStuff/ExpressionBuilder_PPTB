@@ -75,11 +75,12 @@ function CopyActions({
 			</button>
 			<button
 				type="button"
-				className="eb-copy-action-btn"
+				className="eb-copy-action-btn is-primary"
 				aria-label={bareLabel}
 				title="Paste directly into the formula editor"
 				onClick={onCopyBare}>
 				<CopyIcon aria-hidden />
+				<span aria-hidden>Copy</span>
 			</button>
 		</div>
 	);
@@ -151,7 +152,7 @@ export function ReferencePanel({
 											›
 										</span>
 									) : null}
-									<span className="eb-json-crumb">{crumb}</span>
+									<span className={`eb-json-crumb${index === 0 ? " is-root" : ""}`}>{crumb}</span>
 								</li>
 							))}
 						</ol>
@@ -179,13 +180,13 @@ export function ReferencePanel({
 								expression={copyText(state, "bare")!}
 								label="Reference expression"
 							/>
+							{note ? <p className="eb-json-note">{note}</p> : null}
 						</div>
-						{note ? <p className="eb-json-note">{note}</p> : null}
 						{itemExpr !== null && (
 							<div className="eb-json-copy-block">
 								<div className="eb-copy-block-header">
 									<span className="eb-json-copy-block-label">
-										Apply to each — item()
+										Apply to each · item()
 										<InfoBtn k="item" label="item() info" {...infoBtnProps}>
 											Use inside an <strong>Apply to each</strong> loop body.
 										</InfoBtn>
@@ -208,7 +209,7 @@ export function ReferencePanel({
 							<div className="eb-json-copy-block">
 								<div className="eb-copy-block-header">
 									<span className="eb-json-copy-block-label">
-										Apply to each — items()
+										Apply to each · items()
 										<InfoBtn k="items" label="items() info" {...infoBtnProps}>
 											<code>items()</code> reads the current item of the named{" "}
 											<strong>Apply to each</strong>, so it still works inside a
@@ -224,7 +225,7 @@ export function ReferencePanel({
 										/>
 									)}
 								</div>
-								<div className="eb-json-field">
+								<div className="eb-json-loop-field">
 									<label className="eb-label" htmlFor={loopNameId}>
 										Loop name
 									</label>
@@ -232,20 +233,24 @@ export function ReferencePanel({
 										{...NO_TEXT_ASSISTANCE}
 										id={loopNameId}
 										className="eb-input"
+										placeholder="Apply_to_each"
 										value={state.loopName}
 										aria-describedby={`${loopNameId}-help`}
 										onChange={(event) => onLoopNameChange(event.target.value)}
 									/>
-									<p id={`${loopNameId}-help`} className="eb-json-help">
-										The Apply to each name as shown in the flow designer, not
-										the source action. Spaces become underscores.
-									</p>
 								</div>
-								{itemsExpr !== null && (
+								{/* The mock has no visible help line; the guidance stays available to assistive tech. */}
+								<p id={`${loopNameId}-help`} className="eb-visually-hidden">
+									The Apply to each name as shown in the flow designer, not
+									the source action. Spaces become underscores.
+								</p>
+								{itemsExpr !== null ? (
 									<ExpressionPreview
 										expression={itemsExpr}
 										label="Loop items() reference"
 									/>
+								) : (
+									<p className="eb-json-loop-hint">Enter the loop name to build items()</p>
 								)}
 							</div>
 						)}

@@ -513,6 +513,8 @@ for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.in
         expect([payload.top, reference.top], size).toEqual([source.top, source.top]);
       }
 
+      // Five 168px cards only exceed a wide strip's width when it is narrower than their total, so cap the strip at 640px to keep this overflow case real at every viewport.
+      await strip.evaluate((element) => { element.style.maxWidth = '640px'; });
       // Five long names overflow the strip, which scrolls on its own and keeps the focused tab in view.
       const overflow = await strip.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
       expect(overflow.scroll, `${size}: tabs overflow`).toBeGreaterThan(overflow.client);
@@ -546,8 +548,7 @@ for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.in
 
     await test.step('Functions with five expanded source groups fits and stays reachable', async () => {
       await openFunctions(page);
-      await page.getByRole('button', { name: /^Parsed Value \d+$/ }).click();
-      for (const summary of await page.locator('details.eb-pv-source > summary').all()) await summary.click();
+      for (const toggle of await page.locator('[data-pv-group] > .eb-fn-group-row').all()) await toggle.click();
       const layout = await measureLayout(page);
       expect(layout.pageScrollsSideways, `Functions at ${size}`).toBe(false);
       expect(layout.bodyScrollsSideways, `Functions at ${size}`).toBe(false);

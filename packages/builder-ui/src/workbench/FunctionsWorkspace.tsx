@@ -8,7 +8,7 @@ import {
   navGroups,
 } from './functionsState';
 import type { ParsedValueSource } from './jsonPayloadSession';
-import { buildParsedValueList } from './parsedValueModel';
+import { buildParsedValueList, PARSED_VALUE_PLACEHOLDER_ID } from './parsedValueModel';
 import { ArgumentsPanel } from './ArgumentsPanel';
 import { FunctionsDock } from './FunctionsDock';
 import { FunctionsNav } from './FunctionsNav';
@@ -23,7 +23,7 @@ export interface FunctionsWorkspaceProps {
 export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps) {
   const [state, dispatch] = useReducer(functionsReducer, initialFunctionsState);
   const rootRef = useRef<HTMLDivElement>(null);
-  const pendingPick = useRef(false);
+  const pendingPick = useRef<string | null>(null);
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const derived = useMemo(() => deriveFunctions(state), [state]);
   const groups = useMemo(() => navGroups(state), [state]);
@@ -41,18 +41,21 @@ export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps
     rootRef.current?.querySelector<HTMLInputElement>(`[data-arg="${name}"]`)?.focus();
   }
 
-  // Reference buttons are always in the DOM, even inside a closed <details>; a closed one
-  // can't take focus, so land on the outermost closed summary that hides the first reference.
-  function focusParsedValue() {
+  // Reference buttons inside a closed array <details> are in the DOM but can't take focus,
+  // so land on the outermost closed summary that hides the group's first reference.
+  function focusParsedValue(id: string) {
     const root = rootRef.current;
     if (root === null) return;
-    const row = root.querySelector<HTMLElement>('.eb-pv-row');
+    const group = [...root.querySelectorAll<HTMLElement>('[data-pv-group]')]
+      .find((element) => element.dataset.pvGroup === id);
+    if (group === undefined) return;
+    const row = group.querySelector<HTMLElement>('.eb-pv-row');
     if (row === null) {
-      root.querySelector<HTMLElement>('[data-pv-toggle]')?.focus();
+      group.querySelector<HTMLElement>('[data-pv-toggle]')?.focus();
       return;
     }
     let target: HTMLElement = row;
-    for (let el = row.parentElement; el !== null && el !== root; el = el.parentElement) {
+    for (let el = row.parentElement; el !== null && el !== group; el = el.parentElement) {
       if (el instanceof HTMLDetailsElement && !el.open) {
         target = el.querySelector<HTMLElement>(':scope > summary') ?? target;
       }
@@ -62,19 +65,22 @@ export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps
 
   function pickParsedValue(name: string) {
     dispatch({ type: 'focusArg', name });
-    if (state.parsedValueExpanded) {
-      focusParsedValue();
+    const source = parsedValue.sources.find((item) => item.rows.length > 0) ?? parsedValue.sources[0];
+    const id = source?.id ?? PARSED_VALUE_PLACEHOLDER_ID;
+    if (state.expandedSources.has(id)) {
+      focusParsedValue(id);
       return;
     }
-    pendingPick.current = true;
-    dispatch({ type: 'toggleParsedValue' });
+    pendingPick.current = id;
+    dispatch({ type: 'expandSource', id });
   }
 
   useEffect(() => {
-    if (!pendingPick.current || !state.parsedValueExpanded) return;
-    pendingPick.current = false;
-    focusParsedValue();
-  }, [state.parsedValueExpanded]);
+    const id = pendingPick.current;
+    if (id === null || !state.expandedSources.has(id)) return;
+    pendingPick.current = null;
+    focusParsedValue(id);
+  }, [state.expandedSources]);
 
   function selectFunction(name: string, wrapArg: string | null) {
     if (wrapArg === null) {
@@ -113,10 +119,10 @@ export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps
         selectedFunction={state.selectedFunction}
         search={state.search}
         parsedValue={parsedValue}
-        parsedValueExpanded={state.parsedValueExpanded}
+        expandedSources={state.expandedSources}
         onSearchChange={(value) => dispatch({ type: 'setSearch', value })}
         onToggleGroup={(group) => dispatch({ type: 'toggleGroup', group })}
-        onToggleParsedValue={() => dispatch({ type: 'toggleParsedValue' })}
+        onToggleSource={(id) => dispatch({ type: 'toggleSource', id })}
         onSelectFunction={selectFunction}
         onInsertReference={insertReference}
       />

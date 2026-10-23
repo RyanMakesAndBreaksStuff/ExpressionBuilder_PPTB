@@ -2,6 +2,7 @@ import { Fragment, useId, type Dispatch, type KeyboardEvent } from "react";
 import {
 	ACTION_NAME_PLACEHOLDER,
 	NO_TEXT_ASSISTANCE,
+	parseStatus,
 	rootExpressionFor,
 	showActionNameInvalid,
 	type JsonReferenceAction,
@@ -34,6 +35,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 	const errorId = `${id}-error`;
 	const nameInvalid = showActionNameInvalid(state);
 	const rootKey: ReferenceRootKey = `${state.outputFrom}-${state.shape}`;
+	const status = parseStatus(state);
 
 	const rootSections = [
 		{
@@ -198,6 +200,8 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 						}}
 					/>
 				</div>
+
+				<p className={`eb-json-status is-${status.tone}`}>{status.text}</p>
 
 				{state.error !== null ? (
 					<div id={errorId} role="alert" className="eb-json-error">
