@@ -68,6 +68,18 @@ describe('JSON reference styles', () => {
     expect(rule(css, '.eb-root[data-theme="dark"]')).toMatch(/--code-fn:\s*var\(--accent-2\);/);
   });
 
+  it('colors object and array badges with the reference blue, not the grey accent', () => {
+    const containers = rule(css, '.eb-field-type-badge.array');
+    expect(containers).toMatch(/background:\s*color-mix\(in srgb, var\(--accent-2\) 14%, transparent\);/);
+    expect(containers).toMatch(/color:\s*var\(--code-fn\);/);
+  });
+
+  it('puts payload values right after the key when the Payload toggle is Left', () => {
+    const left = rule(css, '.eb-json-payload.is-values-left .eb-tree-preview');
+    expect(left).toMatch(/flex:\s*0 1 auto;/);
+    expect(left).toMatch(/text-align:\s*left;/);
+  });
+
   it('shows a disabled Copy at 50% opacity (FR-052)', () => {
     expect(rule(css, '.eb-json-copy-row .eb-action-btn:disabled')).toMatch(/opacity:\s*0\.5;/);
   });

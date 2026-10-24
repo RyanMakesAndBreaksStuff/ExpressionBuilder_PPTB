@@ -45,25 +45,19 @@ const referenceCopy = (page: Page) => jsonPanel(page).getByRole('button', { name
 const treeRow = (page: Page, label: string) =>
   jsonPanel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
+const screenTab = (page: Page, name: string) =>
+  page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name, exact: true });
+
 async function openJsonReference(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', {
-    name: 'JSON reference',
-    exact: true,
-  }).click();
+  await screenTab(page, 'JSON reference').click();
 }
 
 async function openFunctions(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name: 'Functions', exact: true }).click();
+  await screenTab(page, 'Functions').click();
 }
 
 async function openConditionBuilder(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', {
-    name: 'Trigger / Filter',
-    exact: true,
-  }).click();
+  await screenTab(page, 'Trigger / Filter').click();
 }
 
 /** Native paste into the Sample JSON textarea — the flow the app auto-parses. */
@@ -137,7 +131,7 @@ test.describe('web build', () => {
       }
     });
 
-    test('makes no network requests and no storage writes while in use (SC-004)', async ({ page }) => {
+    test('makes no network requests and stores nothing but the last screen while in use (SC-004)', async ({ page }) => {
       const requests: string[] = [];
       await page.addInitScript(() => {
         const audit = { enabled: false, writes: [] as string[] };
@@ -148,7 +142,7 @@ test.describe('web build', () => {
         for (const method of ['setItem', 'removeItem', 'clear'] as const) {
           const original = Storage.prototype[method] as (...args: unknown[]) => unknown;
           Storage.prototype[method] = function (this: Storage, ...args: unknown[]) {
-            record(`Storage.${method}`);
+            record(method === 'setItem' ? `Storage.setItem ${String(args[0])}` : `Storage.${method}`);
             return original.apply(this, args);
           } as never;
         }
@@ -175,7 +169,7 @@ test.describe('web build', () => {
         if (window.__audit) window.__audit.enabled = true;
         const api = window.toolboxAPI as { settings?: Record<string, unknown> } | undefined;
         for (const method of ['set', 'setAll'] as const) {
-          if (api?.settings) api.settings[method] = async () => void window.__audit?.writes.push(`settings.${method}`);
+          if (api?.settings) api.settings[method] = async (key: unknown) => void window.__audit?.writes.push(`settings.${method} ${String(key)}`);
         }
       });
       page.on('request', (request) => requests.push(request.url()));
@@ -187,7 +181,9 @@ test.describe('web build', () => {
       await openJsonReference(page);
 
       expect(requests).toEqual([]);
-      expect(await page.evaluate(() => window.__audit?.writes)).toEqual([]);
+      // The last-open screen id is the only write; no payload data is stored.
+      const writes = (await page.evaluate(() => window.__audit?.writes)) ?? [];
+      expect(writes.filter((write) => !write.endsWith(' eb.screen.last.v1'))).toEqual([]);
     });
 
     for (const theme of THEMES) {
@@ -220,23 +216,19 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: /^Screen:/ })).toBeFocused();
+  await expect(screenTab(page, 'Trigger / Filter')).toBeFocused();
   // Header controls draw their focus ring as an outline rather than a box-shadow.
   expect(await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle)).not.toBe('none');
+  await page.keyboard.press('ArrowRight');
+  await expect(screenTab(page, 'JSON reference')).toBeFocused();
   await page.keyboard.press('Enter');
-  const jsonItem = page.getByRole('menuitemradio', { name: 'JSON reference', exact: true });
-  for (let step = 0; step < 3 && !(await jsonItem.evaluate((el) => el === document.activeElement)); step++) {
-    await page.keyboard.press('ArrowDown');
-  }
-  await expect(jsonItem).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeVisible();
+  await expect(screenTab(page, 'JSON reference')).toHaveAttribute('aria-selected', 'true');
 
   // Payload strip: the selected tab, New payload, then search, before the root radios.
   await page.keyboard.press('Tab');
   await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: '+ New payload' })).toBeFocused();
+  await expect(page.getByRole('button', { name: '+ Add' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
   await page.keyboard.press('Tab');
@@ -250,6 +242,9 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await page.keyboard.press('Control+V');
   await expect(payloadMeta(page)).toHaveText('25 values');
 
+  // The Payload header's value alignment toggle, then the tree.
+  await page.keyboard.press('Tab');
+  await expect(jsonPanel(page).getByRole('radio', { name: 'Right' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(treeRow(page, "outputs('Get_items')")).toBeFocused();
   // root → body → value → [0] → Requester → Email
@@ -321,7 +316,7 @@ for (const theme of THEMES) {
     await addTwoRules(page);
     await loadEmailReference(page);
     // A second, parsed payload so the strip, tabs and hidden panel are present.
-    await page.getByRole('button', { name: '+ New payload', exact: true }).click();
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
     await jsonPanel(page).getByLabel('Action name').fill('Get manager');
     await pasteSample(page, '{"Email":"boss@example.com"}');
     await expect(payloadMeta(page)).toHaveText('2 values');
@@ -472,7 +467,7 @@ for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.in
     // A small sample: the Reference card's own height at 900x700 is covered by the end-content checks above.
     const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
     for (let position = 1; position <= 5; position++) {
-      if (position > 1) await page.getByRole('button', { name: '+ New payload', exact: true }).click();
+      if (position > 1) await page.getByRole('button', { name: '+ Add', exact: true }).click();
       await jsonPanel(page).getByLabel('Action name').fill(longName(position));
       await pasteSample(page, layoutSample);
       await expect(payloadMeta(page)).toHaveText('5 values');

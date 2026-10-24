@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -24,29 +24,31 @@ function createAdapter(): PlatformAdapter {
   };
 }
 
-const chip = () => screen.getByRole('button', { name: /^Screen:/ });
+const screenTabs = () => within(screen.getByRole('tablist', { name: 'Screen' }));
+const activeTab = () => screenTabs().getByRole('tab', { selected: true });
 
 async function goTo(user: UserEvent, label: string) {
-  await user.click(chip());
-  await user.click(screen.getByRole('menuitemradio', { name: label }));
+  await user.click(screenTabs().getByRole('tab', { name: label }));
 }
 
 describe('screen contract', () => {
-  it('shows the pill title and the active screen in the chip (FR-2, AC-2.1)', () => {
+  it('shows the pill title and the active screen tab (FR-2, AC-2.1)', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
     expect(screen.getByText('Expression Builder')).toBeInTheDocument();
-    expect(chip()).toHaveAccessibleName('Screen: Trigger / Filter');
+    expect(activeTab()).toHaveAccessibleName('Trigger / Filter');
   });
 
   it('lists all three screens in order and switches (FR-3, AC-3.1)', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
-    await user.click(chip());
-    expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent))
-      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
+    // Accessible names, not textContent: Fluent's Tab repeats the label in a hidden width reserve.
+    const tabs = screenTabs().getAllByRole('tab');
+    expect(tabs).toHaveLength(3);
+    ['Trigger / Filter', 'JSON reference', 'Functions'].forEach((label, index) =>
+      expect(tabs[index]).toHaveAccessibleName(label));
 
-    await user.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
-    expect(chip()).toHaveAccessibleName('Screen: JSON reference');
+    await goTo(user, 'JSON reference');
+    expect(activeTab()).toHaveAccessibleName('JSON reference');
     expect(screen.getByLabelText('Sample JSON')).toBeInTheDocument();
   });
 

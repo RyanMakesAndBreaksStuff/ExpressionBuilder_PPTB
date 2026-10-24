@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { StrictMode } from 'react';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -29,7 +29,8 @@ vi.mock('../src/workbench/JsonReferenceWorkspace', async (importOriginal) => {
 	};
 });
 
-function createAdapter(): PlatformAdapter {
+/** Pass one store to several adapters to keep settings across a "reload". */
+function createAdapter(store = new Map<string, string>()): PlatformAdapter {
 	return {
 		copyToClipboard: vi.fn(async () => undefined),
 		notify: vi.fn(async () => undefined),
@@ -38,20 +39,22 @@ function createAdapter(): PlatformAdapter {
 		settings: {
 			// Onboarding already seen, so its modal does not take focus mid-test.
 			get: vi.fn(async (key: string) =>
-				key === 'eb.onboarding.seen.v1' ? '1' : null,
+				key === 'eb.onboarding.seen.v1' ? '1' : (store.get(key) ?? null),
 			),
-			set: vi.fn(async () => undefined),
+			set: vi.fn(async (key: string, value: string) => {
+				store.set(key, value);
+			}),
 			remove: vi.fn(async () => undefined),
 		},
 		getDataverseFields: vi.fn(async () => []),
 	};
 }
 
-const screenChip = () => screen.getByRole('button', { name: /^Screen:/ });
+const screenTab = (label: string) =>
+	within(screen.getByRole('tablist', { name: 'Screen' })).getByRole('tab', { name: label });
 
 async function goTo(user: UserEvent, label: string) {
-	await user.click(screenChip());
-	await user.click(screen.getByRole('menuitemradio', { name: label }));
+	await user.click(screenTab(label));
 }
 
 const sampleBox = () =>
@@ -193,23 +196,51 @@ describe('builder switching', () => {
 			screen.getByRole('radio', { name: 'Trigger condition' }),
 		).toHaveAttribute('aria-checked', 'true');
 		expect(await exportJson()).toBe(exportBefore);
-		expect(adapter.settings.set).not.toHaveBeenCalled();
+		// Only the last-open screen is saved; nothing from the JSON reference is.
+		expect(new Set(vi.mocked(adapter.settings.set).mock.calls.map(([key]) => key)))
+			.toEqual(new Set(['eb.screen.last.v1']));
 		expect(adapter.settings.remove).not.toHaveBeenCalled();
 	});
 
-	it('opens on Trigger / Filter with an empty JSON reference after a reload (user story 3, scenario 3)', async () => {
+	it('reopens on the last screen with an empty JSON reference after a reload (user story 3, scenario 3)', async () => {
 		const user = userEvent.setup();
+		const store = new Map<string, string>();
 		const { unmount } = render(
-			<ExpressionBuilderShell adapter={createAdapter()} />,
+			<ExpressionBuilderShell adapter={createAdapter(store)} />,
 		);
 		await exerciseJsonReference(user);
 		unmount();
 
-		render(<ExpressionBuilderShell adapter={createAdapter()} />);
-		expect(screenChip()).toHaveAccessibleName('Screen: Trigger / Filter');
-		await goTo(user, 'JSON reference');
+		render(<ExpressionBuilderShell adapter={createAdapter(store)} />);
+		await waitFor(() => expect(screenTab('JSON reference')).toHaveAttribute('aria-selected', 'true'));
 		expect(sampleBox()).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
+	});
+
+	it('opens on Trigger / Filter when no screen or an unknown one is saved', async () => {
+		for (const store of [new Map<string, string>(), new Map([['eb.screen.last.v1', 'reports']])]) {
+			const adapter = createAdapter(store);
+			const { unmount } = render(<ExpressionBuilderShell adapter={adapter} />);
+			await waitFor(() => expect(adapter.settings.get).toHaveBeenCalledWith('eb.screen.last.v1'));
+			expect(screenTab('Trigger / Filter')).toHaveAttribute('aria-selected', 'true');
+			unmount();
+		}
+	});
+
+	it('keeps a screen picked before the saved one loads', async () => {
+		const user = userEvent.setup();
+		let release: (value: string | null) => void = () => undefined;
+		const adapter = createAdapter();
+		vi.mocked(adapter.settings.get).mockImplementation(async (key) =>
+			key === 'eb.onboarding.seen.v1' ? '1'
+				: key === 'eb.screen.last.v1' ? new Promise((resolve) => { release = resolve; })
+				: null,
+		);
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'Functions');
+		await act(async () => release('jsonReference'));
+		expect(screenTab('Functions')).toHaveAttribute('aria-selected', 'true');
+		expect(adapter.settings.set).toHaveBeenLastCalledWith('eb.screen.last.v1', 'functions');
 	});
 
 	it('announces valid auto changes at 600ms and keeps formatting quiet', async () => {
@@ -226,8 +257,9 @@ describe('builder switching', () => {
 		editSample('{ "a": 1 }');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		// Shown in the editor status and on the payload card.
-		expect(screen.getAllByText('Parsed · 2 values')).toHaveLength(2);
+		// Shown in the editor status and as the payload tab's description.
+		expect(screen.getByText('Parsed · 2 values')).toBeInTheDocument();
+		expect(screen.getByRole('tab', { name: /, payload 1$/ })).toHaveAccessibleDescription(/Parsed · 2 values$/);
 		editSample('{"a":2}');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
@@ -246,9 +278,10 @@ describe('builder switching', () => {
 		editSample('{"a":');
 		await advanceParse();
 		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toHaveAttribute('aria-selected', 'true');
-		expect(screen.getAllByText(
-			'Could not parse. Showing last successful payload.',
-		)).toHaveLength(2);
+		expect(screen.getByText('Could not parse. Showing last successful payload.')).toBeInTheDocument();
+		expect(screen.getByRole('tab', { name: /, payload 1$/ })).toHaveAccessibleDescription(
+			/Could not parse\. Showing last successful payload\.$/,
+		);
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		editSample('{"a":1}');
 		await advanceParse();
@@ -283,7 +316,7 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		pasteSample('{"a":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		await user.click(screen.getByRole('button', { name: '+ New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
 		pasteSample('{"b":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		workspaceMount.key += 1;
@@ -311,12 +344,10 @@ describe('builder switching', () => {
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		editSample('{"a":2}');
 		await advanceParse(300);
-		fireEvent.click(screenChip());
-		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Trigger / Filter' }));
+		fireEvent.click(screenTab('Trigger / Filter'));
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		fireEvent.click(screenChip());
-		fireEvent.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
+		fireEvent.click(screenTab('JSON reference'));
 		await advanceParse(599);
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		await advanceParse(1);
@@ -334,7 +365,7 @@ describe('builder switching', () => {
 		await advanceParse(300);
 
 		fireEvent.click(screen.getByRole('button', {
-			name: '+ New payload',
+			name: '+ Add',
 			exact: true,
 		}));
 		await advanceParse(600);
@@ -396,7 +427,7 @@ describe('builder switching', () => {
 		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
 
 		await goTo(user, 'JSON reference');
-		await user.click(screen.getByRole('button', { name: '+ New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
 		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
 		await goTo(user, 'Functions');
 		expect(text1).toHaveValue(inserted);

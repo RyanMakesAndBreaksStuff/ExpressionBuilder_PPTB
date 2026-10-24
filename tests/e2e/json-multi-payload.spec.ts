@@ -38,16 +38,18 @@ async function openScreen(
   page: Page,
   name: 'Functions' | 'Trigger / Filter' | 'JSON reference',
 ): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name, exact: true }).click();
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name, exact: true }).click();
 }
+
+// The header's screen tabs are tabs too, so payload tab queries stay inside the payload tablist.
+const payloadTabs = (page: Page) => page.getByRole('tablist', { name: 'Payloads' });
 
 const panel = (page: Page) => page.getByRole('tabpanel');
 const editorOf = (page: Page) =>
   panel(page).getByRole('textbox', { name: 'Sample JSON', exact: true });
 const nameOf = (page: Page) => panel(page).getByLabel('Action name');
 const statusOf = (page: Page) => panel(page).locator('.eb-json-source .eb-json-status');
-const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('+ New payload'));
+const newPayload = (page: Page) => page.getByRole('button', ARIA_BUTTON('+ Add'));
 const treeRow = (page: Page, label: string) =>
   panel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
@@ -79,7 +81,7 @@ const emails = (domain: string, count: number) => JSON.stringify({
 });
 
 const tabAt = (page: Page, position: number) =>
-  page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
+  payloadTabs(page).getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
 const referenceOf = (page: Page) => panel(page).getByLabel('Reference expression');
 const chooseRoot = (page: Page, root: string) => panel(page).getByRole('radio', { name: root }).click();
 const parsedValue = (page: Page) => page.getByRole('button', { name: /^Parsed Value \d+$/ });
@@ -136,7 +138,7 @@ test('keeps samples independent and preserves native paste undo', async ({
   await expect(editor).toHaveValue('');
 
   await pasteSample(page, '{"second":3}');
-  await page.getByRole('tab', {
+  await payloadTabs(page).getByRole('tab', {
     name: /^Action, payload 1$/,
   }).click();
   await expect(editor).toHaveValue('{"new":2}');
@@ -145,8 +147,8 @@ test('keeps samples independent and preserves native paste undo', async ({
 test('starts with one empty payload, enforces the 1 and 5 limits and restores one empty payload on reload', async ({ page }) => {
   await start(page);
 
-  await expect(page.getByRole('tab')).toHaveCount(1);
-  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Payload 1, payload 1' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText('1 / 5')).toBeVisible();
   await expect(panel(page).getByRole('radio', { name: 'Action · Full output' })).toHaveAttribute('aria-checked', 'true');
   await expect(nameOf(page)).toHaveValue('');
@@ -156,7 +158,7 @@ test('starts with one empty payload, enforces the 1 and 5 limits and restores on
   await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
 
   for (let count = 2; count <= 5; count++) await newPayload(page).click();
-  await expect(page.getByRole('tab')).toHaveCount(5);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(5);
   await expect(page.getByText('5 / 5')).toBeVisible();
   await expect(newPayload(page)).toBeDisabled();
   await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(5);
@@ -165,8 +167,8 @@ test('starts with one empty payload, enforces the 1 and 5 limits and restores on
   await expect(editorOf(page)).toHaveValue('{"kept":1}');
   await page.reload();
   await openScreen(page, 'JSON reference');
-  await expect(page.getByRole('tab')).toHaveCount(1);
-  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeVisible();
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Payload 1, payload 1' })).toBeVisible();
   await expect(editorOf(page)).toHaveValue('');
   await expect(page.getByText('1 / 5')).toBeVisible();
 });
@@ -193,7 +195,7 @@ for (const size of [
     // Overflow stays local: the page itself never scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
-    const tabs = page.getByRole('tab');
+    const tabs = payloadTabs(page).getByRole('tab');
     await tabs.last().focus();
     for (const key of ['Home', 'End', 'ArrowLeft', 'ArrowLeft', 'Home', 'ArrowLeft']) {
       await page.keyboard.press(key);
@@ -245,14 +247,14 @@ test('payload tabs work by keyboard: arrows wrap, Home/End jump, close moves foc
   await nameOf(page).fill('Alpha');
   await addPayload(page, 'Bravo');
   await addPayload(page, 'Charlie');
-  const tab = (name: string) => page.getByRole('tab', { name: new RegExp(`^${name}, payload \\d$`) });
+  const tab = (name: string) => payloadTabs(page).getByRole('tab', { name: new RegExp(`^${name}, payload \\d$`) });
   await tab('Charlie').focus();
 
   async function expectSelectedAndFocused(name: string, position: number): Promise<void> {
     await expect(tab(name)).toBeFocused();
     await expect(tab(name)).toHaveAttribute('aria-selected', 'true');
     await expect(tab(name)).toHaveAttribute('tabindex', '0');
-    await expect(page.getByRole('tab', { selected: true })).toHaveCount(1);
+    await expect(payloadTabs(page).getByRole('tab', { selected: true })).toHaveCount(1);
     await expect(panel(page)).toHaveAccessibleName(`${name}, payload ${position}`);
     await expectVisibleFocusRing(page);
   }
@@ -274,13 +276,13 @@ test('payload tabs work by keyboard: arrows wrap, Home/End jump, close moves foc
   await expect(page.getByRole('button', ARIA_BUTTON('Close Bravo, payload 2'))).toBeFocused();
   await expectVisibleFocusRing(page);
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(2);
   await expectSelectedAndFocused('Charlie', 2);
 
   // Closing the last tab falls back to its predecessor.
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
   await expectSelectedAndFocused('Alpha', 1);
   await expect(page.getByRole('button', { name: /^Close / })).toHaveCount(0);
 
@@ -289,7 +291,7 @@ test('payload tabs work by keyboard: arrows wrap, Home/End jump, close moves foc
   await expect(newPayload(page)).toBeFocused();
   await expectVisibleFocusRing(page);
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(2);
   await expectSelectedAndFocused('Payload 2', 2);
   await page.keyboard.press('Tab');
   await page.keyboard.press('Tab');
@@ -348,7 +350,7 @@ test('search by keyboard reveals item 24 in the tree, selects and focuses its ro
   await expect(options).toHaveCount(1);
   await page.keyboard.press('Enter');
 
-  await expect(page.getByRole('tab', { name: 'Get items, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Get items, payload 1' })).toHaveAttribute('aria-selected', 'true');
   await expect(search).toHaveValue('');
   await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
   const row = treeRow(page, 'Email');
@@ -435,10 +437,10 @@ test('Functions groups every parsed source and inserts correctly rooted referenc
 
   // Rename one source and close the other: inserted text stays as it was.
   await openScreen(page, 'JSON reference');
-  await page.getByRole('tab', { name: 'Get customer, payload 1' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'Get customer, payload 1' }).click();
   await nameOf(page).fill('Get client');
   await page.getByRole('button', ARIA_BUTTON('Close Get manager, payload 2')).click();
-  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
 
   await openScreen(page, 'Functions');
   await expect(text1).toHaveValue(customerEmail);
@@ -509,7 +511,7 @@ test('native Undo restores the textarea at once without reverting the parsed tre
   await expect(treeRow(page, 'old')).toHaveCount(0);
   await expect(nameOf(page)).toHaveValue('Keep me');
   await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
-  await expect(page.getByRole('tab', { name: 'Keep me, payload 1' })).toBeVisible();
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Keep me, payload 1' })).toBeVisible();
 
   // Nothing validates before 600ms ...
   await page.clock.runFor(599);
@@ -539,7 +541,7 @@ test('every valid paste, including a repeated identical one, requests exactly on
   await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values']);
 
   await newPayload(page).click();
-  await page.getByRole('tab', { name: 'Action, payload 1' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'Action, payload 1' }).click();
   await openScreen(page, 'Functions');
   await openScreen(page, 'Trigger / Filter');
   await openScreen(page, 'JSON reference');
@@ -562,7 +564,7 @@ test('automatic edits keep prior output on invalid text; invalid paste clears it
   await expect(treeRow(page, 'a')).toBeVisible();
   await treeRow(page, 'a').click();
   await expect(panel(page).getByLabel('Reference expression')).toHaveText("outputs('Get_items')?['a']");
-  await expect(page.getByRole('tab', { name: 'Get items, payload 1' })).toHaveAccessibleDescription(/Could not parse/);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Get items, payload 1' })).toHaveAccessibleDescription(/Could not parse/);
 
   // Semantically identical correction clears the error without a success notice.
   await editor.fill('{ "a" : 1.0 }');
@@ -593,7 +595,7 @@ test('notices and baselines belong to their own payload', async ({ page }) => {
   // A material change in the second payload only produces one update notice for it.
   await editorOf(page).fill('{"x":2,"y":3}');
   await expect.poll(() => toasts(page)).toEqual(['Parsed · 2 values', 'Parsed · 2 values', 'Payload updated · 3 values']);
-  await page.getByRole('tab', { name: 'First, payload 1' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'First, payload 1' }).click();
   await expect(statusOf(page)).toHaveText('Parsed · 2 values');
   await expect(editorOf(page)).toHaveValue('{"x":1}');
   await page.waitForTimeout(800);
@@ -607,19 +609,19 @@ test('pending automatic validation is cancelled by tab change, screen change and
   await editorOf(page).fill('{"base":1}');
   await expect(statusOf(page)).toHaveText('Parsed · 2 values');
   await addPayload(page, 'Two');
-  await page.getByRole('tab', { name: 'One, payload 1' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'One, payload 1' }).click();
   expect(await toasts(page)).toEqual(['Parsed · 2 values']);
   await pauseClock(page);
 
   // Tab change: the edited payload is not parsed while inactive, nor is another payload changed.
   await editorOf(page).fill('{"tab":1}');
-  await page.getByRole('tab', { name: 'Two, payload 2' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'Two, payload 2' }).click();
   await page.clock.runFor(900);
   await expect(editorOf(page)).toHaveValue('');
   await expect(statusOf(page)).toHaveText('Nothing parsed yet');
   expect(await toasts(page)).toEqual(['Parsed · 2 values']);
   // Returning starts a fresh 600ms delay.
-  await page.getByRole('tab', { name: 'One, payload 1' }).click();
+  await payloadTabs(page).getByRole('tab', { name: 'One, payload 1' }).click();
   await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
   await page.clock.runFor(599);
   await expect(statusOf(page)).toHaveText('Sample changed. Waiting for valid JSON.');
@@ -647,8 +649,8 @@ test('pending automatic validation is cancelled by tab change, screen change and
   await editorOf(page).fill('{"closing":1}');
   await page.getByRole('button', ARIA_BUTTON('Close One, payload 1')).click();
   await page.clock.runFor(900);
-  await expect(page.getByRole('tab')).toHaveCount(1);
-  await expect(page.getByRole('tab', { name: 'Two, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Two, payload 1' })).toHaveAttribute('aria-selected', 'true');
   await expect(editorOf(page)).toHaveValue('');
   await expect(statusOf(page)).toHaveText('Nothing parsed yet');
   expect(await toasts(page)).toEqual(['Parsed · 2 values', 'Payload updated · 2 values', 'Payload updated · 2 values']);
@@ -713,9 +715,9 @@ test('closing an inactive payload keeps the active one and its selection (AC-1.5
 
   // An inactive tab before the active one: positions shift, the active payload does not.
   await page.getByRole('button', ARIA_BUTTON('Close Alpha, payload 1')).click();
-  await expect(page.getByRole('tab')).toHaveCount(2);
-  await expect(page.getByRole('tab', { name: 'Charlie, payload 2' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'false');
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(2);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Charlie, payload 2' })).toHaveAttribute('aria-selected', 'true');
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'false');
   await expect(nameOf(page)).toHaveValue('Charlie');
   await expect(editorOf(page)).toHaveValue('{"c":{"y":2}}');
   await expect(treeRow(page, 'y')).toHaveAttribute('aria-selected', 'true');
@@ -725,8 +727,8 @@ test('closing an inactive payload keeps the active one and its selection (AC-1.5
   await tabAt(page, 1).click();
   await expect(editorOf(page)).toHaveValue('{"b":1}');
   await page.getByRole('button', ARIA_BUTTON('Close Charlie, payload 2')).click();
-  await expect(page.getByRole('tab')).toHaveCount(1);
-  await expect(page.getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'true');
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab', { name: 'Bravo, payload 1' })).toHaveAttribute('aria-selected', 'true');
   await expect(nameOf(page)).toHaveValue('Bravo');
   await expect(editorOf(page)).toHaveValue('{"b":1}');
 });
@@ -759,7 +761,7 @@ test('equal action names and repeated Trigger roots stay distinguishable by posi
 
   // Closing the first Trigger renumbers the second; the others are untouched.
   await page.getByRole('button', ARIA_BUTTON('Close Trigger, payload 3')).click();
-  await expect(page.getByRole('tab')).toHaveCount(3);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(3);
   await expect(tabAt(page, 3)).toHaveAccessibleName('Trigger, payload 3');
   await expect(tabAt(page, 3)).toHaveAttribute('aria-selected', 'true');
   await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
@@ -767,7 +769,7 @@ test('equal action names and repeated Trigger roots stay distinguishable by posi
 
   // Closing one of the two equal names removes only that payload.
   await page.getByRole('button', ARIA_BUTTON('Close Same, payload 1')).click();
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(2);
   await expect(tabAt(page, 1)).toHaveAccessibleName('Same, payload 1');
   await tabAt(page, 1).click();
   await expect(editorOf(page)).toHaveValue('{"two":2}');
@@ -985,7 +987,7 @@ test('conditions, Functions arguments and payloads survive all three screens and
   await page.clock.resume();
   await page.reload();
   await openScreen(page, 'JSON reference');
-  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(payloadTabs(page).getByRole('tab')).toHaveCount(1);
   await expect(tabAt(page, 1)).toHaveAccessibleName('Payload 1, payload 1');
   await expect(page.getByText('1 / 5')).toBeVisible();
   await expect(editorOf(page)).toHaveValue('');
@@ -1001,7 +1003,7 @@ test('at 375x667 a long-named second tab keeps its Close button inside the strip
   await addPayload(page, longName);
   const strip = page.locator('.eb-payload-strip');
   const tabs = page.locator('.eb-payload-tabs');
-  const second = page.getByRole('tab', { name: `${longName}, payload 2`, exact: true });
+  const second = payloadTabs(page).getByRole('tab', { name: `${longName}, payload 2`, exact: true });
   const close = page.getByRole('button', ARIA_BUTTON(`Close ${longName}, payload 2`));
 
   // The strip scrolls inside .eb-payload-tabs, which clips there: the tab and its Close must fit that box, not merely the strip.

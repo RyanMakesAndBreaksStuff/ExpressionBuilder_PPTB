@@ -68,11 +68,10 @@ for (const theme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: theme });
       await page.addInitScript(() => localStorage.setItem('eb.onboarding.seen.v1', '1'));
       await page.goto('http://127.0.0.1:5173/');
-      await page.getByRole('button', { name: /^Screen:/ }).click();
-      await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
+      await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'JSON reference', exact: true }).click();
       // Two loaded payloads: only the active tabpanel is visible, so each check below is scoped to it.
       await loadSample(page, 'List Rows');
-      await page.getByRole('button', { name: '+ New payload', exact: true }).click();
+      await page.getByRole('button', { name: '+ Add', exact: true }).click();
       await loadSample(page, 'List Rows Again');
 
       for (const position of [2, 1]) await test.step('payload ' + position + ' is active', async () => {

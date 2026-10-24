@@ -30,19 +30,17 @@ describe('shell styles', () => {
     const header = rule('.eb-pill-header');
     expect(header).toMatch(/height:\s*48px;/);
     expect(header).toMatch(/padding:\s*0 18px;/);
-    expect(header).toMatch(/border-radius:\s*24px;/);
+    expect(header).toMatch(/border-radius:\s*var\(--r-card\);/);
     expect(header).toMatch(/gap:\s*12px;/);
     expect(header).toMatch(/background:\s*var\(--header-glass\);/);
     expect(rule('.eb-pill-title')).toMatch(/white-space:\s*nowrap;/);
     expect(rule('.eb-pill-title')).toMatch(/flex:\s*none;/);
   });
 
-  it('shapes the mode chip (FR-3)', () => {
-    const chipRule = rule('.eb-mode-chip');
-    expect(chipRule).toMatch(/height:\s*30px;/);
-    expect(chipRule).toMatch(/border-radius:\s*15px;/);
-    expect(chipRule).toMatch(/background:\s*var\(--accent-soft\);/);
-    expect(chipRule).toMatch(/color:\s*var\(--accent\);/);
+  it('marks the selected screen tab with the softened accent line (FR-3)', () => {
+    const tabs = rule('.eb-screen-tabs');
+    expect(tabs).toMatch(/--colorCompoundBrandStroke:\s*var\(--accent-line\);/);
+    expect(tabs).toMatch(/--colorCompoundBrandStrokeHover:\s*var\(--accent-line\);/);
   });
 
   it('rings every header control at 2px with a 2px offset (FR-6)', () => {
@@ -63,7 +61,7 @@ describe('shell styles', () => {
   });
 
   it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
-    expect(rule('.eb-mode-chip')).toMatch(/transition:\s*background-color 120ms ease;/);
+    expect(rule('.eb-pill-overflow')).toMatch(/transition:\s*background-color 120ms ease;/);
     const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
   });

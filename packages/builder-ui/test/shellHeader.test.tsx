@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SCREENS } from '../src/workbench/screens';
@@ -31,20 +31,21 @@ describe('ShellHeader', () => {
   it('shows the title and the active screen (FR-2, AC-2.1)', () => {
     renderHeader();
     expect(screen.getByText('Expression Builder')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Screen: Trigger / Filter' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Trigger / Filter' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('switches screens from the chip menu (FR-3, AC-3.1)', async () => {
+  it('switches screens from the tablist (FR-3, AC-3.1)', async () => {
     const user = userEvent.setup();
     const props = renderHeader();
-    await user.click(screen.getByRole('button', { name: 'Screen: Trigger / Filter' }));
 
-    const items = screen.getAllByRole('menuitemradio');
-    expect(items.map((item) => item.textContent))
-      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
-    expect(items[0]).toHaveAttribute('aria-checked', 'true');
+    const tabs = within(screen.getByRole('tablist', { name: 'Screen' })).getAllByRole('tab');
+    // Accessible names, not textContent: Fluent's Tab repeats the label in a hidden width reserve.
+    expect(tabs).toHaveLength(3);
+    ['Trigger / Filter', 'JSON reference', 'Functions'].forEach((label, index) =>
+      expect(tabs[index]).toHaveAccessibleName(label));
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
 
-    await user.click(items[2]);
+    await user.click(tabs[2]);
     expect(props.onScreenChange).toHaveBeenCalledWith('functions');
   });
 

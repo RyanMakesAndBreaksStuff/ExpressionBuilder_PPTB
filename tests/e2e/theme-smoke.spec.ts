@@ -3,8 +3,8 @@ import { expect, test, type Page } from 'playwright/test';
 async function expectPorcelainTheme(page: Page, mode: 'light' | 'dark'): Promise<void> {
   const expected =
     mode === 'light'
-      ? { accent: '#7458d8', surface: '#ffffff', ink: '#ffffff' }
-      : { accent: '#9f8cff', surface: '#211b22', ink: '#161216' };
+      ? { accent: '#111111', surface: '#ffffff', ink: '#ffffff' }
+      : { accent: '#f2f2f2', surface: '#0f0f0f', ink: '#0a0a0a' };
   const root = page.locator('.eb-root');
 
   await expect(root).toHaveAttribute('data-theme', mode);

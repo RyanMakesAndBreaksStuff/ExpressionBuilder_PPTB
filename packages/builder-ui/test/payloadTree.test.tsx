@@ -103,7 +103,7 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
     expect(item(/^triggerBody\(\)/)).toHaveFocus();
   });
 
-  it('toggles from the chevron without selecting, and selects from the rest of the row (FR-034)', async () => {
+  it('toggles from the chevron without selecting, and selects and toggles from the rest of the row (FR-034)', async () => {
     const user = userEvent.setup();
     const { container } = render(<TreeHarness text={fixtureA1} />);
     const bodyChevron = item(/^body, object$/).querySelector('[data-chevron]') as Element;
@@ -115,7 +115,13 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
     await user.click(item(/^value, array$/));
     expect(selectedPath()).toBe('["body","value"]');
     expect(item(/^value, array$/)).toHaveAttribute('aria-selected', 'true');
+    expect(item(/^value, array$/)).toHaveAttribute('aria-expanded', 'true');
     expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+
+    // A second click on the row collapses it and keeps it selected.
+    await user.click(item(/^value, array$/));
+    expect(item(/^value, array$/)).toHaveAttribute('aria-expanded', 'false');
+    expect(selectedPath()).toBe('["body","value"]');
   });
 
   it('keeps the selection when an ancestor collapses, and focuses the collapsed row', async () => {

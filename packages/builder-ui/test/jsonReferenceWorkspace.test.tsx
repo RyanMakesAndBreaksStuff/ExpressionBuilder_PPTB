@@ -358,13 +358,13 @@ describe('JSON reference workspace', () => {
 		expect(name).toHaveAccessibleDescription(
 			'Enter the action name to build the reference.',
 		);
-		expect(row(/^outputs\('Action_name'\), object$/)).toBeInTheDocument();
+		expect(row(/^outputs\('Action'\), object$/)).toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
 		).toBeChecked();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
-		).toHaveAccessibleDescription("outputs('Action_name')");
+		).toHaveAccessibleDescription('outputs()');
 	});
 
 	it('never claims a copy the host refused (user story 4, scenario 6)', async () => {
@@ -427,7 +427,8 @@ describe('JSON reference workspace', () => {
 
 		const reference = expression().closest('.eb-json-copy-block') as HTMLElement;
 		expect(within(reference).getByText('Fixed position [0] reads that item only.')).toBeInTheDocument();
-		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveTextContent('Copy');
+		// Icon only: the name comes from aria-label, with no visible text.
+		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveTextContent(/^$/);
 		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveClass('is-primary');
 
 		expect(screen.getByText('Apply to each · item()')).toBeInTheDocument();
