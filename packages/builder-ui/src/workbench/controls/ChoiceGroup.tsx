@@ -5,6 +5,8 @@ export interface ChoiceOption<T extends string> {
   label: string;
   /** Optional second line, such as the root an option card produces; exposed as the description. */
   detail?: ReactNode;
+  /** Shown in place of the label, which stays as the accessible name and tooltip. */
+  icon?: ReactNode;
 }
 
 interface ChoiceGroupProps<T extends string> {
@@ -59,15 +61,23 @@ export function ChoiceGroup<T extends string>({
             type="button"
             role="radio"
             aria-checked={checked}
+            aria-label={option.icon ? option.label : undefined}
+            title={option.icon ? option.label : undefined}
             aria-labelledby={option.detail ? labelId : undefined}
             aria-describedby={option.detail ? detailId : undefined}
             tabIndex={checked ? 0 : -1}
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
           >
-            <span id={labelId} className="eb-choice-label">
-              {option.label}
-            </span>
+            {option.icon ? (
+              <span className="eb-choice-icon" aria-hidden="true">
+                {option.icon}
+              </span>
+            ) : (
+              <span id={labelId} className="eb-choice-label">
+                {option.label}
+              </span>
+            )}
             {option.detail ? (
               <span id={detailId} className="eb-choice-detail">
                 {option.detail}

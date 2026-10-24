@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
+import { ChoiceGroup } from "./controls/ChoiceGroup";
+import { TextAlignLeftIcon, TextAlignRightIcon } from "./icons/BuilderIcons";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
 import type { PayloadReveal } from "./jsonPayloadSession";
@@ -14,6 +16,14 @@ import {
 } from "./jsonReferenceState";
 import { countLabel } from "./payloadTreeModel";
 
+/** Where payload values sit in a tree row: after the key, or at the pane's right edge. */
+export type ValueAlign = "left" | "right";
+
+const VALUE_ALIGN_OPTIONS = [
+	{ value: "left", label: "Left", icon: <TextAlignLeftIcon /> },
+	{ value: "right", label: "Right", icon: <TextAlignRightIcon /> },
+] as const;
+
 interface JsonReferenceWorkspaceProps {
 	adapter: PlatformAdapter;
 	/** False while another screen is selected; the workspace stays mounted so its state survives (FR-008). */
@@ -21,6 +31,9 @@ interface JsonReferenceWorkspaceProps {
 	state: JsonReferenceState;
 	dispatch: Dispatch<JsonReferenceAction>;
 	reveal?: PayloadReveal | null;
+	valueAlign?: ValueAlign;
+	/** Omit to hide the alignment toggle. */
+	onValueAlignChange?: (value: ValueAlign) => void;
 }
 
 export function JsonReferenceWorkspace({
@@ -29,6 +42,8 @@ export function JsonReferenceWorkspace({
 	state,
 	dispatch,
 	reveal,
+	valueAlign = "right",
+	onValueAlignChange,
 }: JsonReferenceWorkspaceProps) {
 	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
@@ -90,7 +105,13 @@ export function JsonReferenceWorkspace({
 		<div className="eb-json-workspace">
 			<JsonSourcePane state={state} dispatch={dispatch} />
 			<div className="eb-json-content">
-				<PayloadPanel state={state} dispatch={dispatch} reveal={reveal} />
+				<PayloadPanel
+					state={state}
+					dispatch={dispatch}
+					reveal={reveal}
+					valueAlign={valueAlign}
+					onValueAlignChange={onValueAlignChange}
+				/>
 				<ReferencePanel
 					state={state}
 					onCopy={(format) => void copy(format)}
@@ -106,15 +127,23 @@ interface PayloadPanelProps {
 	state: JsonReferenceState;
 	dispatch: Dispatch<JsonReferenceAction>;
 	reveal?: PayloadReveal | null;
+	valueAlign: ValueAlign;
+	onValueAlignChange?: (value: ValueAlign) => void;
 }
 
-function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
+function PayloadPanel({
+	dispatch,
+	onValueAlignChange,
+	reveal,
+	state,
+	valueAlign,
+}: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
 
 	return (
 		<section
-			className="eb-json-card eb-json-payload"
+			className={`eb-json-card eb-json-payload is-values-${valueAlign}`}
 			aria-labelledby={headingId}>
 			<div className="eb-json-card-header">
 				<h2 id={headingId}>Payload</h2>
@@ -122,6 +151,15 @@ function PayloadPanel({ dispatch, reveal, state }: PayloadPanelProps) {
 					<span className="eb-dock-meta">
 						{countLabel(parsed.valueCount, "value")}
 					</span>
+				) : null}
+				{parsed && onValueAlignChange ? (
+					<ChoiceGroup
+						className="eb-json-value-align"
+						ariaLabel="Value alignment"
+						options={VALUE_ALIGN_OPTIONS}
+						value={valueAlign}
+						onChange={onValueAlignChange}
+					/>
 				) : null}
 			</div>
 			{showBodyHint(state) ? (

@@ -292,7 +292,7 @@ export function rootExpression(
 	shape: PayloadShape = state.shape,
 ): string {
 	const actionName = isActionNameMissing(state)
-		? "Action_name"
+		? ACTION_NAME_PLACEHOLDER
 		: state.actionName;
 	return formatPayloadRoot(referenceRoot(state, shape, actionName));
 }
@@ -305,7 +305,7 @@ export function rootExpressionFor(
 ): string {
 	const actionName =
 		outputFrom === "action" && state.actionName.trim() === ""
-			? "Action_name"
+			? ACTION_NAME_PLACEHOLDER
 			: state.actionName;
 	return formatPayloadRoot(
 		referenceRoot({ ...state, outputFrom }, shape, actionName),

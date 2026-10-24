@@ -18,7 +18,7 @@
 	height: 48px;
 	padding: 0 18px;
 	border: 1px solid var(--border);
-	border-radius: 24px;
+	border-radius: var(--r-card);
 	background: var(--header-glass);
 	box-shadow: var(--dock-shadow);
 }
@@ -31,33 +31,28 @@
 	white-space: nowrap;
 }
 
-.eb-pill-sep {
-	color: var(--text3);
-}
-
 .eb-pill-spacer {
 	flex: 1;
 }
 
-.eb-mode-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	height: 30px;
-	padding: 0 12px;
-	border: none;
-	border-radius: 15px;
-	background: var(--accent-soft);
-	color: var(--accent);
-	font-size: 14px;
-	cursor: pointer;
-	transition: background-color 120ms ease;
+/* Screen switcher: a Fluent TabList. Its selected indicator follows the
+   palette accent rather than Fluent's default brand blue. */
+.eb-screen-tabs {
+	flex: none;
+	--colorCompoundBrandStroke: var(--accent-line);
+	--colorCompoundBrandStrokeHover: var(--accent-line);
+	--colorCompoundBrandStrokePressed: var(--accent-line);
 }
 
-.eb-mode-chip svg {
-	width: 10px;
-	height: 10px;
-	stroke-width: 3;
+.eb-pill-header .eb-action-btn {
+	border-radius: var(--r-control);
+}
+
+/* Filled header controls use the softened fill (a grey step in dark). */
+.eb-pill-header .eb-action-primary,
+.eb-pill-header .eb-segmented [aria-checked="true"] {
+	background: var(--accent-fill);
+	color: var(--accent-fill-ink);
 }
 
 .eb-pill-overflow {
@@ -65,14 +60,13 @@
 	width: 30px;
 	height: 30px;
 	border: none;
-	border-radius: 15px;
+	border-radius: var(--r-control);
 	background: transparent;
 	color: var(--text2);
 	cursor: pointer;
 	transition: background-color 120ms ease;
 }
 
-.eb-mode-chip:hover,
 .eb-pill-overflow:hover {
 	background: var(--seg-selected);
 }
@@ -116,7 +110,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.eb-mode-chip,
 	.eb-pill-overflow {
 		transition: none;
 	}

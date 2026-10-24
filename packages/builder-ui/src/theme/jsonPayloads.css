@@ -49,9 +49,9 @@
   gap: 2px;
   width: 100%;
   min-width: 0;
-  padding: 6px 28px 6px 10px;
+  padding: 8px 28px 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-control);
   background: var(--surface);
   color: var(--text2);
   line-height: 1.3;
@@ -61,24 +61,15 @@
 .eb-payload-tab > [role="tab"]:hover { border-color: var(--border-strong, var(--text2)); }
 .eb-payload-tab > [aria-selected="true"] {
   background: var(--accent-soft);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   color: var(--text);
   box-shadow: var(--shadow-sm);
 }
 .eb-payload-name { font-size: 13px; font-weight: 600; }
 .eb-payload-root { font: 11px var(--eb-mono); color: var(--text2); }
 .eb-payload-tab > [aria-selected="true"] .eb-payload-root { color: var(--accent); }
-.eb-payload-state {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  font-size: 11px;
-  color: var(--text2);
-}
 .eb-payload-name,
-.eb-payload-root,
-.eb-payload-state-text {
+.eb-payload-root {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -91,34 +82,24 @@
   width: 20px;
   height: 20px;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--r-inset);
   background: transparent;
   color: var(--text2);
 }
 .eb-payload-close:hover { background: var(--seg-selected); color: var(--text); }
-.eb-payload-dot {
-  flex: 0 0 7px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text2);
-}
-.eb-payload-dot.is-good { background: var(--good); }
-.eb-payload-dot.is-warn { background: var(--warn); }
-.eb-payload-dot.is-danger { background: var(--danger); }
 
 .eb-payload-add {
-  flex: 0 0 104px;
+  flex: 0 0 84px;
   padding: 6px 10px;
   border: 1px dashed var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
-.eb-payload-add:hover { border-color: var(--accent); }
+.eb-payload-add:hover { border-color: var(--accent-line); }
 .eb-payload-add:disabled { opacity: 0.5; cursor: default; }
 .eb-payload-count { font-size: 12px; color: var(--text2); }
 .eb-payload-search { min-width: 0; }
@@ -127,7 +108,7 @@
   height: 34px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--r-control);
   background: var(--surface);
   color: var(--text);
 }
@@ -136,7 +117,7 @@
   z-index: 1000;
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-sm);

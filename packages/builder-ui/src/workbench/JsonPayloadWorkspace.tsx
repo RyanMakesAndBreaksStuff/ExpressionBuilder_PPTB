@@ -1,10 +1,12 @@
-import { useCallback, useId, type Dispatch } from 'react';
+import { useCallback, useEffect, useId, useState, type Dispatch } from 'react';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import type { JsonReferenceAction } from './jsonReferenceState';
 import type { PayloadTab, PayloadReveal, JsonPayloadSession, JsonPayloadAction } from './jsonPayloadSession';
-import { JsonReferenceWorkspace } from './JsonReferenceWorkspace';
+import { JsonReferenceWorkspace, type ValueAlign } from './JsonReferenceWorkspace';
 import { PayloadStrip } from './PayloadStrip';
 import { PayloadSearch } from './PayloadSearch';
+
+const VALUE_ALIGN_KEY = 'eb.json.valueAlign.v1';
 
 function JsonPayloadPane({
   payload,
@@ -12,12 +14,16 @@ function JsonPayloadPane({
   adapter,
   dispatch,
   reveal,
+  valueAlign,
+  onValueAlignChange,
 }: {
   payload: PayloadTab;
   active: boolean;
   adapter: PlatformAdapter;
   dispatch: Dispatch<JsonPayloadAction>;
   reveal: PayloadReveal | null;
+  valueAlign: ValueAlign;
+  onValueAlignChange: (value: ValueAlign) => void;
 }) {
   const payloadId = payload.id;
   const edit = useCallback((action: JsonReferenceAction) => {
@@ -31,6 +37,8 @@ function JsonPayloadPane({
       state={payload.state}
       dispatch={edit}
       reveal={reveal}
+      valueAlign={valueAlign}
+      onValueAlignChange={onValueAlignChange}
     />
   );
 }
@@ -47,6 +55,23 @@ export function JsonPayloadWorkspace({
   active: boolean;
 }) {
   const baseId = useId();
+  // One choice for every payload tab, remembered in the host's settings.
+  const [valueAlign, setValueAlign] = useState<ValueAlign>('right');
+
+  useEffect(() => {
+    let current = true;
+    adapter.settings.get(VALUE_ALIGN_KEY).then((stored) => {
+      if (current && (stored === 'left' || stored === 'right')) setValueAlign(stored);
+    }, () => undefined);
+    return () => {
+      current = false;
+    };
+  }, [adapter]);
+
+  const changeValueAlign = useCallback((value: ValueAlign) => {
+    setValueAlign(value);
+    adapter.settings.set(VALUE_ALIGN_KEY, value).catch(() => undefined);
+  }, [adapter]);
 
   return (
     <div className="eb-json-session">
@@ -75,6 +100,8 @@ export function JsonPayloadWorkspace({
             reveal={session.reveal?.payloadId === payload.id
               ? session.reveal
               : null}
+            valueAlign={valueAlign}
+            onValueAlignChange={changeValueAlign}
           />
         </section>
       ))}

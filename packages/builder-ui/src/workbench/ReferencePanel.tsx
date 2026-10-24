@@ -80,7 +80,6 @@ function CopyActions({
 				title="Paste directly into the formula editor"
 				onClick={onCopyBare}>
 				<CopyIcon aria-hidden />
-				<span aria-hidden>Copy</span>
 			</button>
 		</div>
 	);

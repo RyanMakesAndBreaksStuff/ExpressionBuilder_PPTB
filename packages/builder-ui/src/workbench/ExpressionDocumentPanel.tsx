@@ -36,9 +36,7 @@ export function ExpressionDocumentPanel({
         <div className="eb-preview-body" id={bodyId}>
           <ExpressionPreview expression={expression} />
           <div className="eb-copy-row">
-            <ActionButton onClick={onCopy} icon={<CopyIcon />}>
-              Copy
-            </ActionButton>
+            <ActionButton onClick={onCopy} icon={<CopyIcon />} label="Copy" />
             {/* The live region stays mounted so a later update is announced, but its
                 text is empty while idle: opacity:0 hides it visually and leaves it in
                 the accessibility tree, so kept text would be read on any traversal. No
