@@ -173,7 +173,7 @@ describe('Functions screen styles', () => {
     expect(css).not.toContain('.eb-fn-dock-side');
     expect(rule('.eb-fn-dock-code')).toMatch(/flex:\s*1;/);
     expect(rule('.eb-fn-dock-actions')).toMatch(/flex-wrap:\s*wrap;/);
-    expect(rule('.eb-fn-dock-actions .eb-action-primary')).toMatch(/color:\s*var\(--fg-onbrand\);/);
+    expect(rule('.eb-fn-dock-actions .eb-action-primary')).toMatch(/color:\s*var\(--code\);/);
     expect(rule('.eb-fn-copy-wrapped')).toMatch(/color:\s*var\(--code-text2\);/);
     expect(rule('.eb-fn-dock-actions button:focus-visible')).toMatch(/outline:\s*2px solid var\(--accent\);/);
     expect(rule('.eb-pv-item > summary')).toMatch(/overflow-wrap:\s*anywhere;/);

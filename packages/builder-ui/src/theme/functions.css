@@ -277,6 +277,8 @@
 	--text2: var(--code-text2);
 	--text3: var(--code-text3);
 	--accent: var(--code-accent);
+	/* --focus-ring resolves --accent at .eb-root, so re-point it at the well's accent. */
+	--focus-ring: 0 0 0 2px var(--code-accent);
 	--good: var(--code-good);
 	--warn: var(--code-warn);
 	--danger: var(--code-danger);
@@ -286,6 +288,13 @@
 	font-family: var(--eb-mono);
 	font-size: 16px;
 	line-height: 1.5;
+}
+
+/* Mockup: status pill sits on the well's faint track. */
+.eb-fn-dock-header .eb-json-status {
+	padding: 0 8px;
+	border-radius: 9px;
+	background: var(--code-seg-track);
 }
 
 .eb-fn-dock-header > span:first-child {
@@ -351,9 +360,14 @@
 	font-family: var(--eb-font);
 }
 
+/* Graphite light's accent matches the dark well, so filled buttons here use the well's accent. */
 .eb-fn-dock-actions .eb-action-primary {
-	background: linear-gradient(135deg, var(--brand), var(--brand-hover));
-	color: var(--fg-onbrand);
+	background: var(--code-accent);
+	color: var(--code);
+}
+
+.eb-fn-dock-actions .eb-action-primary:hover {
+	background: var(--code-text);
 }
 
 .eb-fn-copy-wrapped {
@@ -393,27 +407,25 @@
 	align-items: center;
 	padding: 0 10px;
 	border-radius: 13px;
+	/* Mockup: every chip shares the well's track; only the text carries the tone. */
+	background: var(--code-seg-track);
 	font-family: var(--eb-mono);
 	font-size: 12px;
 }
 
 .eb-fn-crumb[data-tone="fn"] {
-	background: var(--accent-soft);
 	color: var(--accent);
 }
 
 .eb-fn-crumb[data-tone="ref"] {
-	background: var(--warn-soft);
 	color: var(--warn);
 }
 
 .eb-fn-crumb[data-tone="value"] {
-	background: var(--good-soft);
 	color: var(--good);
 }
 
 .eb-fn-crumb[data-tone="error"] {
-	background: var(--danger-soft);
 	color: var(--danger);
 }
 

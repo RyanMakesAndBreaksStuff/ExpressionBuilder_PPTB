@@ -2164,6 +2164,13 @@ body {
 	color: var(--danger);
 }
 
+.eb-json-source .eb-input {
+	border-color: var(--border);
+	border-bottom-color: var(--interactive-stroke);
+	border-radius: 12px;
+	background: var(--surface2);
+}
+
 .eb-input[aria-invalid="true"] {
 	border-color: var(--danger);
 }
@@ -2175,6 +2182,16 @@ body {
 .eb-json-sample .eb-textarea {
 	flex: 1 1 auto;
 	min-height: 150px;
+	border-color: var(--border);
+	border-radius: 12px;
+	background: var(--code);
+	color: var(--code-text2);
+	caret-color: var(--code-text);
+	font: 12px/1.6 var(--eb-mono);
+}
+
+.eb-json-sample .eb-textarea::placeholder {
+	color: var(--code-text3);
 }
 
 .eb-json-parse-row,
@@ -2215,9 +2232,11 @@ body {
 	gap: 10px;
 	padding: 14px 16px;
 	border: 1px solid var(--border);
-	border-radius: var(--r-xl);
+	border-radius: 12px;
 	background: var(--code);
 	color: var(--code-text);
+	--accent: var(--code-accent);
+	--focus-ring: 0 0 0 2px var(--code-accent);
 }
 
 .eb-json-copy-block-label {
@@ -2269,10 +2288,15 @@ body {
 	color: var(--code-text);
 }
 
-.eb-json-copy-block .eb-copy-action-btn.is-primary,
+/* Graphite light's accent matches the dark well, so the filled button uses the well's accent. */
+.eb-json-copy-block .eb-copy-action-btn.is-primary {
+	background: var(--code-accent);
+	color: var(--code);
+}
+
 .eb-json-copy-block .eb-copy-action-btn.is-primary:hover {
-	background: linear-gradient(135deg, var(--brand), var(--brand-hover));
-	color: var(--fg-onbrand);
+	background: var(--code-text);
+	color: var(--code);
 }
 
 .eb-json-loop-field {
@@ -2515,6 +2539,21 @@ body {
 	overflow-wrap: anywhere;
 }
 
+.eb-root-grid [role="radio"] {
+	min-width: 0;
+}
+
+.eb-root-grid [aria-checked="false"] {
+	background: var(--surface2);
+}
+
+.eb-root-grid .eb-choice-detail {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .eb-choice-cards code,
 .eb-choice-grid code,
 .eb-root-grid code {
@@ -2595,12 +2634,23 @@ body {
 }
 
 .eb-tree-row:hover {
-	border-color: var(--border-strong);
+	background: var(--surface2);
 }
 
 .eb-tree-row[aria-selected="true"] {
-	border-color: var(--accent);
+	position: relative;
 	background: var(--accent-soft);
+}
+
+.eb-tree-row[aria-selected="true"]::before {
+	position: absolute;
+	top: 6px;
+	left: 0;
+	width: 3px;
+	height: 20px;
+	border-radius: 2px;
+	background: var(--accent);
+	content: "";
 }
 
 .eb-tree-row:focus-visible {
@@ -2672,13 +2722,37 @@ body {
 	text-overflow: ellipsis;
 }
 
+/* Mockup: badges are a soft tint with toned text; .eb-type glyphs keep the solid fill. */
+.eb-field-type-badge.choice,
 .eb-field-type-badge.object,
 .eb-field-type-badge.array {
-	background: var(--accent);
+	background: var(--accent-soft);
+	color: var(--accent);
+}
+
+.eb-field-type-badge.string {
+	background: var(--good-soft);
+	color: var(--good);
+}
+
+.eb-field-type-badge.number {
+	background: var(--warn-soft);
+	color: var(--warn);
+}
+
+.eb-field-type-badge.dateTime {
+	background: var(--danger-soft);
+	color: var(--danger);
+}
+
+.eb-field-type-badge.boolean {
+	background: var(--info-soft);
+	color: var(--info);
 }
 
 .eb-field-type-badge.null {
-	background: var(--text3);
+	background: var(--surface3);
+	color: var(--text3);
 }
 
 /* Reference card (FR-043 to FR-046, FR-050 to FR-054) */

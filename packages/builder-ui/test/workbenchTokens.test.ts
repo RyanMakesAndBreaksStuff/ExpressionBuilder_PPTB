@@ -25,73 +25,77 @@ function contrastRatio(foreground: string, background: string): number {
 
 const PALETTES = ['porcelainLight', 'porcelainDark'] satisfies PaletteId[];
 
-describe('workbench Porcelain tokens', () => {
-  it('uses ui-ux/theme/porcelain.txt, with light-mode foregrounds darkened to AA', () => {
-    expect(porcelainTokens.porcelainLight.swatches).toEqual(['#faf7f4', '#ffffff', '#7458d8', '#287d7a']);
+describe('workbench Graphite tokens', () => {
+  it('uses assets/graphtokenss graphite-tokens.json under the existing palette ids', () => {
+    expect(porcelainTokens.porcelainLight.label).toBe('Graphite');
+    expect(porcelainTokens.porcelainLight.swatches).toEqual(['#f6f6f6', '#ffffff', '#111111', '#0a5aa8']);
     expect(porcelainTokens.porcelainLight.cssVariables).toMatchObject({
-      '--bg': '#f7f3f0',
-      '--bg2': '#fcfaf8',
+      '--bg': '#f6f6f6',
+      '--bg2': '#fbfbfb',
       '--surface': '#ffffff',
-      '--surface2': '#f8f4f1',
-      '--surface3': '#eee6e0',
-      '--panel': 'rgba(255, 252, 250, 0.95)',
-      '--border': '#e2d7cf',
-      '--border-strong': '#cab9ad',
-      '--text': '#2a1f22',
-      '--text2': '#5b4a52',
-      '--text3': '#7e6b74',
-      '--accent': '#7458d8',
-      '--accent-strong': '#6046c3',
-      '--accent-soft': 'rgba(116, 88, 216, 0.12)',
-      '--accent-2': '#287d7a',
-      '--danger': '#af5648',
-      '--danger-soft': 'rgba(203, 100, 84, 0.12)',
-      '--warn': '#916823',
-      '--warn-soft': 'rgba(194, 139, 47, 0.13)',
-      '--good': '#287e62',
-      '--good-soft': 'rgba(47, 147, 114, 0.12)',
-      '--info': '#546bc2',
-      '--info-soft': 'rgba(95, 121, 219, 0.12)',
+      '--surface2': '#eeeeee',
+      '--surface3': '#e0e0e0',
+      '--border': '#cfcfcf',
+      '--border-strong': '#9c9c9c',
+      '--interactive-stroke': '#666666',
+      '--text': '#0a0a0a',
+      '--text2': '#333333',
+      '--text3': '#555555',
+      '--accent': '#111111',
+      '--accent-strong': '#000000',
+      '--accent-ink': '#ffffff',
+      '--accent-soft': 'rgba(17, 17, 17, 0.12)',
+      '--accent-2': '#0a5aa8',
+      '--danger': '#a8281f',
+      '--danger-soft': 'rgba(168, 40, 31, 0.12)',
+      '--warn': '#7a4d00',
+      '--warn-soft': 'rgba(122, 77, 0, 0.12)',
+      '--good': '#17663f',
+      '--good-soft': 'rgba(23, 102, 63, 0.12)',
+      '--info': '#2a4bb0',
+      '--info-soft': 'rgba(42, 75, 176, 0.12)',
     });
 
-    expect(porcelainTokens.porcelainDark.swatches).toEqual(['#1b171b', '#241f25', '#9f8cff', '#47b7a8']);
+    expect(porcelainTokens.porcelainDark.label).toBe('Graphite Dark');
+    expect(porcelainTokens.porcelainDark.swatches).toEqual(['#000000', '#0f0f0f', '#f2f2f2', '#8ec5ff']);
     expect(porcelainTokens.porcelainDark.cssVariables).toMatchObject({
-      '--bg': '#161216',
-      '--bg2': '#1d1820',
-      '--surface': '#211b22',
-      '--surface2': '#2a222c',
-      '--surface3': '#362d38',
-      '--panel': 'rgba(31, 25, 32, 0.92)',
-      '--border': '#463a48',
-      '--border-strong': '#5a4b5d',
-      '--text': '#f3eaf0',
-      '--text2': '#d2c0ca',
-      '--text3': '#a58f9a',
-      '--accent': '#9f8cff',
-      '--accent-strong': '#8671ea',
-      '--accent-soft': 'rgba(159, 140, 255, 0.14)',
-      '--accent-2': '#47b7a8',
-      '--danger': '#ef7f72',
-      '--danger-soft': 'rgba(239, 127, 114, 0.14)',
-      '--warn': '#e4ad56',
-      '--warn-soft': 'rgba(228, 173, 86, 0.14)',
-      '--good': '#4bbd97',
-      '--good-soft': 'rgba(75, 189, 151, 0.14)',
-      '--info': '#8ea4ff',
-      '--info-soft': 'rgba(142, 164, 255, 0.14)',
+      '--bg': '#000000',
+      '--bg2': '#060606',
+      '--surface': '#0f0f0f',
+      '--surface2': '#191919',
+      '--surface3': '#262626',
+      '--border': '#3a3a3a',
+      '--border-strong': '#595959',
+      '--interactive-stroke': '#a0a0a0',
+      '--text': '#fafafa',
+      '--text2': '#d4d4d4',
+      '--text3': '#a5a5a5',
+      '--accent': '#f2f2f2',
+      '--accent-strong': '#ffffff',
+      '--accent-ink': '#0a0a0a',
+      '--accent-soft': 'rgba(242, 242, 242, 0.16)',
+      '--accent-2': '#8ec5ff',
+      '--danger': '#ff8f86',
+      '--danger-soft': 'rgba(255, 143, 134, 0.16)',
+      '--warn': '#f0c460',
+      '--warn-soft': 'rgba(240, 196, 96, 0.16)',
+      '--good': '#62d69b',
+      '--good-soft': 'rgba(98, 214, 155, 0.16)',
+      '--info': '#92b2ff',
+      '--info-soft': 'rgba(146, 178, 255, 0.16)',
     });
   });
 
-  it('keeps Fluent aliases aligned with Porcelain', () => {
+  it('keeps Fluent aliases aligned with Graphite', () => {
     expect(createPorcelainFluentTheme('porcelainLight')).toMatchObject({
-      colorBrandBackground: '#7458d8',
+      colorBrandBackground: '#111111',
       colorNeutralForegroundOnBrand: '#ffffff',
-      colorNeutralStrokeAccessible: '#7e6b74',
+      colorNeutralStrokeAccessible: '#666666',
     });
     expect(createPorcelainFluentTheme('porcelainDark')).toMatchObject({
-      colorBrandBackground: '#9f8cff',
-      colorNeutralForegroundOnBrand: '#161216',
-      colorNeutralStrokeAccessible: '#a58f9a',
+      colorBrandBackground: '#f2f2f2',
+      colorNeutralForegroundOnBrand: '#0a0a0a',
+      colorNeutralStrokeAccessible: '#a0a0a0',
     });
   });
 
@@ -114,7 +118,7 @@ describe('workbench Porcelain tokens', () => {
     expect(migratePaletteId(null)).toBeNull();
   });
 
-  it('keeps compatibility theme exports aligned with the live Porcelain palette', () => {
+  it('keeps compatibility theme exports aligned with the live Graphite palette', () => {
     expect(builderLightTheme).toMatchObject(createPorcelainFluentTheme('porcelainLight'));
     expect(builderDarkTheme).toMatchObject(createPorcelainFluentTheme('porcelainDark'));
   });
@@ -133,20 +137,20 @@ describe('11a shell tokens (FR-7)', () => {
     }
   });
 
-  it('derives glass and glow from the Porcelain surfaces and accents', () => {
+  it('derives glass and glow from the Graphite surfaces and accents', () => {
     expect(porcelainTokens.porcelainDark.cssVariables).toMatchObject({
-      '--code': '#120e13',
-      '--header-glass': 'rgba(42, 34, 44, 0.92)',
-      '--panel-glass': 'rgba(33, 27, 34, 0.85)',
-      '--glow-1': 'rgba(159, 140, 255, 0.2)',
-      '--glow-2': 'rgba(71, 183, 168, 0.16)',
+      '--code': '#000000',
+      '--header-glass': 'rgba(25, 25, 25, 0.92)',
+      '--panel-glass': 'rgba(15, 15, 15, 0.85)',
+      '--glow-1': 'rgba(242, 242, 242, 0.2)',
+      '--glow-2': 'rgba(142, 197, 255, 0.16)',
     });
     expect(porcelainTokens.porcelainLight.cssVariables).toMatchObject({
-      '--code': '#120e13',
-      '--header-glass': 'rgba(248, 244, 241, 0.92)',
+      '--code': '#0f0f0f',
+      '--header-glass': 'rgba(238, 238, 238, 0.92)',
       '--panel-glass': 'rgba(255, 255, 255, 0.85)',
-      '--glow-1': 'rgba(116, 88, 216, 0.14)',
-      '--glow-2': 'rgba(40, 125, 122, 0.12)',
+      '--glow-1': 'rgba(17, 17, 17, 0.14)',
+      '--glow-2': 'rgba(10, 90, 168, 0.12)',
     });
   });
 });
