@@ -164,7 +164,13 @@ function buildSlots(fn: CatalogFunction, args: Readonly<Record<string, string>>)
 		const base = tail.name.replace(/\d+$/, '');
 		let index = Number.parseInt(tail.name.slice(base.length), 10);
 		if (!Number.isFinite(index)) index = fn.args.length;
-		while ((args[`${base}${index}`] ?? '').trim() !== '') {
+		// Extend to the highest populated index, not the first hole (FR-20); gap validation flags holes.
+		const pattern = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d+)$`);
+		const last = Object.entries(args).reduce((max, [name, value]) => {
+			const match = pattern.exec(name);
+			return match !== null && value.trim() !== '' ? Math.max(max, Number(match[1])) : max;
+		}, index - 1);
+		while (index <= last) {
 			index += 1;
 			slots.push(slotFor(`${base}${index}`, tail.type, false, args, tail.sample));
 		}

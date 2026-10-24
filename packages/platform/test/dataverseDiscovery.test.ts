@@ -77,6 +77,43 @@ describe('PPTB adapter discovery', () => {
     expect(result?.fields).toEqual([]);
     expect(showNotification).toHaveBeenCalled();
   });
+
+  it('recovers a rejected primary attribute fetch as an empty field list', async () => {
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    const getEntityRelatedMetadata = vi.fn().mockRejectedValue(new Error('primary metadata unavailable'));
+    const adapter = createPptbAdapter({ utils: { showNotification } }, { getEntityRelatedMetadata });
+    await expect(adapter.discoverFields?.({ table: 'account' })).resolves.toEqual({ fields: [] });
+    expect(showNotification).toHaveBeenCalledWith({
+      title: 'Error',
+      body: 'Could not load fields for account.',
+      type: 'error',
+    });
+  });
+
+  it('maps Lookup, Customer, and Owner payload leaves without changing id or logicalName', async () => {
+    const getEntityRelatedMetadata = vi.fn().mockResolvedValue({
+      value: [
+        { LogicalName: 'parentaccountid', AttributeType: 'Lookup' },
+        { LogicalName: 'customerid', AttributeType: 'Customer' },
+        { LogicalName: 'ownerid', AttributeType: 'Owner' },
+        { LogicalName: 'accountid', AttributeType: 'Uniqueidentifier' },
+        { LogicalName: 'from', AttributeType: 'PartyList' },
+      ],
+    });
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    const result = await adapter.discoverFields?.({ table: 'account' });
+    expect(result?.fields.map((field) => ({
+      id: field.id,
+      logicalName: field.logicalName,
+      path: field.path,
+    }))).toEqual([
+      { id: 'parentaccountid', logicalName: 'parentaccountid', path: ['_parentaccountid_value'] },
+      { id: 'customerid', logicalName: 'customerid', path: ['_customerid_value'] },
+      { id: 'ownerid', logicalName: 'ownerid', path: ['_ownerid_value'] },
+      { id: 'accountid', logicalName: 'accountid', path: ['accountid'] },
+      { id: 'from', logicalName: 'from', path: ['from'] },
+    ]);
+  });
 });
 
 describe('PPTB adapter related discovery', () => {
@@ -92,5 +129,112 @@ describe('PPTB adapter related discovery', () => {
     // Related attributes use the same base 'Attributes' fetch; choice options (if any)
     // load via the same second-phase OptionSet navigation as primary fields.
     expect(getEntityRelatedMetadata).toHaveBeenCalledWith('systemuser', 'Attributes');
+  });
+
+  const ownerRelationship = {
+    value: [{ ReferencingEntityNavigationPropertyName: 'ownerid', ReferencedEntity: 'systemuser' }],
+  };
+  const fullNameAttribute = {
+    value: [
+      {
+        LogicalName: 'fullname',
+        AttributeType: 'String',
+        DisplayName: { UserLocalizedLabel: { Label: 'Full Name' } },
+      },
+    ],
+  };
+
+  it('rejects when the related attribute fetch fails', async () => {
+    const failure = new Error('related attribute metadata unavailable');
+    const getEntityRelatedMetadata = vi
+      .fn()
+      .mockResolvedValueOnce(ownerRelationship)
+      .mockRejectedValueOnce(failure);
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    await expect(adapter.discoverRelatedFields?.('account', 'ownerid')).rejects.toBe(failure);
+    expect(getEntityRelatedMetadata).toHaveBeenNthCalledWith(2, 'systemuser', 'Attributes');
+  });
+
+  it('resolves fields: [] when related attributes are successfully empty', async () => {
+    const getEntityRelatedMetadata = vi
+      .fn()
+      .mockResolvedValueOnce(ownerRelationship)
+      .mockResolvedValueOnce({ value: [] });
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    await expect(adapter.discoverRelatedFields?.('account', 'ownerid')).resolves.toEqual({
+      fields: [],
+      fetchedAt: expect.any(Number),
+    });
+  });
+
+  it('returns related fields on a later successful retry', async () => {
+    const failure = new Error('related attribute metadata unavailable');
+    const getEntityRelatedMetadata = vi
+      .fn()
+      .mockResolvedValueOnce(ownerRelationship)
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(ownerRelationship)
+      .mockResolvedValueOnce(fullNameAttribute);
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    await expect(adapter.discoverRelatedFields?.('account', 'ownerid')).rejects.toBe(failure);
+    const result = await adapter.discoverRelatedFields?.('account', 'ownerid');
+    expect(result?.fields[0].path).toEqual(['ownerid', 'fullname']);
+    expect(result?.fields[0].group).toBe('systemuser');
+  });
+
+  it('still returns related fields when OptionSet enrichment fails', async () => {
+    const getEntityRelatedMetadata = vi
+      .fn()
+      .mockResolvedValueOnce(ownerRelationship)
+      .mockResolvedValueOnce({
+        value: [
+          {
+            LogicalName: 'statuscode',
+            AttributeType: 'Status',
+            DisplayName: { UserLocalizedLabel: { Label: 'Status' } },
+          },
+        ],
+      })
+      .mockRejectedValueOnce(new Error('option set unavailable'));
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    const result = await adapter.discoverRelatedFields?.('account', 'ownerid');
+    expect(result?.fields[0]).toMatchObject({
+      path: ['ownerid', 'statuscode'],
+      type: 'choice',
+      group: 'systemuser',
+    });
+    expect(result?.fields[0].choices).toBeUndefined();
+    expect(getEntityRelatedMetadata).toHaveBeenCalledWith(
+      'systemuser',
+      "Attributes(LogicalName='statuscode')/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet",
+    );
+  });
+
+  it('keeps an expanded navigation prefix and rewrites only a lookup leaf', async () => {
+    const getEntityRelatedMetadata = vi
+      .fn()
+      .mockResolvedValueOnce({
+        value: [{ ReferencingEntityNavigationPropertyName: 'customerid_account', ReferencedEntity: 'account' }],
+      })
+      .mockResolvedValueOnce({
+        value: [
+          { LogicalName: 'name', AttributeType: 'String' },
+          { LogicalName: 'ownerid', AttributeType: 'Lookup' },
+          { LogicalName: 'accountid', AttributeType: 'Uniqueidentifier' },
+          { LogicalName: 'from', AttributeType: 'PartyList' },
+        ],
+      });
+    const adapter = createPptbAdapter(undefined, { getEntityRelatedMetadata });
+    const result = await adapter.discoverRelatedFields?.('incident', 'customerid_account');
+    expect(result?.fields.map((field) => ({
+      id: field.id,
+      logicalName: field.logicalName,
+      path: field.path,
+    }))).toEqual([
+      { id: 'customerid_account.name', logicalName: 'name', path: ['customerid_account', 'name'] },
+      { id: 'customerid_account.ownerid', logicalName: 'ownerid', path: ['customerid_account', '_ownerid_value'] },
+      { id: 'customerid_account.accountid', logicalName: 'accountid', path: ['customerid_account', 'accountid'] },
+      { id: 'customerid_account.from', logicalName: 'from', path: ['customerid_account', 'from'] },
+    ]);
   });
 });

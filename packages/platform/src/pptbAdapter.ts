@@ -34,8 +34,8 @@ const OPTIONSET_CAST_BY_TYPE: Record<string, string> = {
 
 /**
  * Local mirror of the real `@pptb/types` API surface (1.2.5), narrowed to the
- * three namespaces this adapter actually uses (`utils`, `settings`, `events`)
- * and with every member made optional. Optionality matters for two reasons:
+ * namespaces this adapter actually uses (`utils`, `settings`, `events`,
+ * `connections`) and with every member made optional. Optionality matters for two reasons:
  * tests construct partial fakes, and the adapter must degrade gracefully when
  * running off-host (e.g. in a browser during local dev) where `toolboxAPI` is
  * entirely absent. There must be no members here beyond what `ToolBoxAPI.API`
@@ -46,6 +46,7 @@ export interface PptbToolboxApi {
   utils?: Partial<ToolBoxAPI.UtilsAPI>;
   settings?: Partial<ToolBoxAPI.SettingsAPI>;
   events?: Partial<ToolBoxAPI.EventsAPI>;
+  connections?: Partial<ToolBoxAPI.ConnectionsAPI>;
 }
 
 function getWindowToolboxApi(): PptbToolboxApi | undefined {
@@ -99,6 +100,61 @@ function normalizeTheme(theme: string | null | undefined): PlatformTheme {
   }
 
   return 'light';
+}
+
+/**
+ * Cache identity for the active connection. `env:` plus a JSON pair is injective:
+ * connection id and environment URL cannot collide across a delimiter.
+ * The URL keeps scheme, host, non-default port, and resolved path. Root and
+ * trailing slashes collapse; default ports, query, and fragment are dropped.
+ * Userinfo is rejected so credentials never enter a cache key. Null means the
+ * scope is unverified — callers must discover fresh and must not persist.
+ */
+function metadataCacheScopeFromConnection(connection: unknown): string | null {
+  if (typeof connection !== 'object' || connection === null || Array.isArray(connection)) {
+    return null;
+  }
+
+  const { id, url } = connection as { id?: unknown; url?: unknown };
+  if (typeof id !== 'string' || typeof url !== 'string') {
+    return null;
+  }
+
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    return null;
+  }
+
+  const environmentUrl = normalizeEnvironmentUrl(url);
+  if (!environmentUrl) {
+    return null;
+  }
+
+  return `env:${JSON.stringify([trimmedId, environmentUrl])}`;
+}
+
+function normalizeEnvironmentUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    return null;
+  }
+  if (!parsed.hostname || parsed.username !== '' || parsed.password !== '') {
+    return null;
+  }
+
+  const path = parsed.pathname.length > 1 ? parsed.pathname.replace(/\/+$/, '') : '';
+  return `${parsed.protocol}//${parsed.host}${path}`;
 }
 
 export function createPptbAdapter(
@@ -259,22 +315,29 @@ export function createPptbAdapter(
         (r) => r.navigationProperty === navigationProperty,
       );
       if (!related || !dv?.getEntityRelatedMetadata) return { fields: [] };
-      let attrs: DataverseAttributeMetadata[];
-      try {
-        const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
-          | { value?: DataverseAttributeMetadata[] }
-          | DataverseAttributeMetadata[]
-          | undefined;
-        attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
-      } catch {
-        return { fields: [] };
-      }
+      // An empty attribute payload is a successful retrieval (`fields: []`).
+      // A rejected fetch must reach the caller — do not report it as empty success.
+      const raw = (await dv.getEntityRelatedMetadata(related.table, 'Attributes')) as
+        | { value?: DataverseAttributeMetadata[] }
+        | DataverseAttributeMetadata[]
+        | undefined;
+      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
       await enrichOptionSets(dv, related.table, attrs);
       const fields = mapDataverseAttributes(attrs, [navigationProperty]).map((f) => ({
         ...f,
         group: related.displayName,
       }));
       return { fields, fetchedAt: Date.now() };
+    },
+
+    async getMetadataCacheScope() {
+      try {
+        const connection = await api?.connections?.getActiveConnection?.();
+        return metadataCacheScopeFromConnection(connection);
+      } catch {
+        // Identity is optional. A failed read must not block fresh discovery.
+        return null;
+      }
     },
 
     /** @deprecated shim over discoverFields */

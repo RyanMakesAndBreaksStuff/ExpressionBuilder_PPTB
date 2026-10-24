@@ -1,7 +1,7 @@
 import {
   formatExpression,
-  isOperatorSupported,
   OPERATORS_BY_FIELD_TYPE,
+  wrapperChainContract,
   type ExpressionMode,
   type ExpressionNode,
   type FieldDefinition,
@@ -77,12 +77,16 @@ export function findField(fields: FieldDefinition[], fieldId: string): FieldDefi
 // Re-exported here so app-layer consumers keep importing from builderState.
 export { findRule, findParentGroupId, findFirstRule } from '../composer/queryActions';
 
-export function getOperatorsForField(field?: FieldDefinition): readonly string[] {
-  return field ? OPERATORS_BY_FIELD_TYPE[field.type] : [];
+/** Operators the engine accepts for the field after `wrappers` (outer-last). Empty for an invalid chain. */
+export function getOperatorsForField(field?: FieldDefinition, wrappers: readonly string[] = []): readonly string[] {
+  if (!field) return [];
+  return wrappers.length ? wrapperChainContract(field, wrappers).operators : OPERATORS_BY_FIELD_TYPE[field.type];
 }
 
-export function getSafeOperator(field: FieldDefinition, operator: string): string {
-  return isOperatorSupported(field.type, operator) ? operator : OPERATORS_BY_FIELD_TYPE[field.type][0];
+/** Keeps `operator` when it fits; an invalid chain keeps it too, so the engine can diagnose it visibly. */
+export function getSafeOperator(field: FieldDefinition, operator: string, wrappers: readonly string[] = []): string {
+  const operators = getOperatorsForField(field, wrappers);
+  return operators.includes(operator) ? operator : (operators[0] ?? operator);
 }
 
 export function remapRulePatch(target: FieldDefinition, currentOperator: string): RulePatch {

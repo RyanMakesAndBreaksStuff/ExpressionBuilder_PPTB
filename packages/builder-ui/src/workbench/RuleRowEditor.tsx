@@ -6,7 +6,7 @@ import {
   MenuPopover,
   MenuTrigger,
 } from '@fluentui/react-components';
-import type { FieldDefinition } from '@ryanmakes/eb_engine';
+import { wrapperChainContract, type FieldDefinition } from '@ryanmakes/eb_engine';
 import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
@@ -146,6 +146,11 @@ export function RuleRowEditor({
     ));
   }
 
+  const operators = getOperatorsForField(field, appliedWraps);
+  // An imported operator outside the chain contract stays selectable so the user can see and correct it.
+  const operatorOptions = operators.includes(rule.operator) ? operators : [rule.operator, ...operators];
+  const appendableWrappers: readonly string[] = wrapperChainContract(field, appliedWraps).appendableWrappers;
+
   return renderDraggableRow((sourceRef, handle, isDragging = false) => (
     <div
       ref={sourceRef}
@@ -166,7 +171,7 @@ export function RuleRowEditor({
           if (!nextField) return;
           onUpdate(rule.id, {
             fieldId: nextField.id,
-            operator: getSafeOperator(nextField, rule.operator),
+            operator: getSafeOperator(nextField, rule.operator, appliedWraps),
             value: getDefaultValue(nextField),
           });
         }}
@@ -197,7 +202,7 @@ export function RuleRowEditor({
         aria-label={`Operator for ${fieldLabel}`}
         title="Select operator"
       >
-        {getOperatorsForField(field).map((operator) => (
+        {operatorOptions.map((operator) => (
           <option key={operator} value={operator}>
             {operator}
           </option>
@@ -295,7 +300,8 @@ export function RuleRowEditor({
             // keep already-applied in their current order, then append newly-checked in click order
             const kept = appliedWraps.filter((id) => set.has(id));
             const added = checkedItems.filter((id) => !appliedWraps.includes(id));
-            onUpdate(rule.id, { wrappers: [...kept, ...added] });
+            const wrappers = [...kept, ...added];
+            onUpdate(rule.id, { wrappers, operator: getSafeOperator(field, rule.operator, wrappers) });
           }}
         >
           <MenuTrigger disableButtonEnhancement>
@@ -317,6 +323,7 @@ export function RuleRowEditor({
                   name="wrappers"
                   value={w.id}
                   title={w.detail}
+                  disabled={!appliedWraps.includes(w.id) && !appendableWrappers.includes(w.id)}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span className="eb-menu-item-label">{w.label}</span>

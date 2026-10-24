@@ -150,7 +150,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 				{state.outputFrom === "action" ? (
 					<div className="eb-json-field">
 						<label className="eb-label" htmlFor={nameId}>
-							Action name
+							Action
 						</label>
 						<input
 							{...NO_TEXT_ASSISTANCE}
@@ -168,7 +168,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 							className={`eb-json-help${nameInvalid ? " is-invalid" : ""}`}>
 							{nameInvalid
 								? "Enter the action name to build the reference."
-								: "As shown in the flow designer. Spaces become underscores."}
+								: "Spaces become underscores."}
 						</p>
 					</div>
 				) : null}

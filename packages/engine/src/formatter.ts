@@ -1,6 +1,16 @@
 import { diagnostic } from './diagnostics';
 import { formatFieldReference } from './fieldReferences';
-import { inferFunctionReturnType, isTicksCall } from './functions';
+import {
+  acceptsStringLike,
+  describeEffectiveType,
+  effectiveReturnType,
+  effectsCompatible,
+  isRuleWrapperName,
+  isTicksCall,
+  operatorFitsEffective,
+  resolveEffectiveType,
+  type EffectiveType,
+} from './functions';
 import { formatLiteral } from './literals';
 import { isDateComparison, isOperatorSupported, needsRightOperand } from './operators';
 import type {
@@ -68,6 +78,11 @@ function formatNode(node: ExpressionNode, context: FormatContext, path: string, 
     case 'field':
       return formatField(node, context, path);
     case 'literal':
+      if (typeof node.value === 'number' && !Number.isFinite(node.value)) {
+        context.diagnostics.push(diagnostic('INVALID_LITERAL', 'Numeric literals must be finite.', path));
+        return { expression: 'null', returnType: 'null' };
+      }
+
       return { expression: formatLiteral(node), returnType: node.valueType };
   }
 }
@@ -92,19 +107,33 @@ function formatGroup(
 }
 
 function formatRule(node: RuleNode, context: FormatContext, path: string, depth: number): NodeFormat {
+  const lookup = fieldLookup(context);
   const left = formatNode(node.left, context, `${path}.left`, depth + 1);
-  const leftField = node.left.kind === 'field' ? resolveField(node.left, context, `${path}.left`) : undefined;
-  const fieldType = leftField?.type ?? left.returnType;
+  const leftEffect = resolveEffectiveType(node.left, lookup);
+  const typed = node.left.kind === 'field' || (node.left.kind === 'function' && isRuleWrapperName(node.left.name));
 
-  if (leftField && !isOperatorSupported(leftField.type, node.operator)) {
+  if (typed && leftEffect.type && !isOperatorSupported(leftEffect.type, node.operator)) {
+    const subject = node.left.kind === 'field' ? `${leftEffect.type} fields` : `${leftEffect.type} values`;
     context.diagnostics.push(
-      diagnostic('UNSUPPORTED_OPERATOR', `Operator "${node.operator}" is not supported for ${leftField.type} fields.`, path),
+      diagnostic('UNSUPPORTED_OPERATOR', `Operator "${node.operator}" is not supported for ${subject}.`, path),
     );
   }
 
-  if ((node.operator === 'empty' || node.operator === 'notEmpty') && (fieldType === 'number' || fieldType === 'boolean')) {
+  if ((node.operator === 'empty' || node.operator === 'notEmpty') && (leftEffect.type === 'number' || leftEffect.type === 'boolean')) {
     context.diagnostics.push(
-      diagnostic('TYPE_MISMATCH', `Operator "${node.operator}" cannot be used with ${fieldType} values.`, path),
+      diagnostic('TYPE_MISMATCH', `Operator "${node.operator}" cannot be used with ${leftEffect.type} values.`, path),
+    );
+  }
+
+  const mixed = typed && leftEffect.types.length > 1;
+  const mixedOperatorRejected = mixed && !operatorFitsEffective(leftEffect, node.operator);
+  if (mixedOperatorRejected) {
+    context.diagnostics.push(
+      diagnostic(
+        'TYPE_MISMATCH',
+        `Operator "${node.operator}" cannot be used with ${describeEffectiveType(leftEffect)} values.`,
+        path,
+      ),
     );
   }
 
@@ -122,16 +151,24 @@ function formatRule(node: RuleNode, context: FormatContext, path: string, depth:
   }
 
   const right = formatNode(node.right, context, `${path}.right`, depth + 1);
-  const rightType =
-    node.right.kind === 'field' ? (resolveField(node.right, context, `${path}.right`)?.type ?? 'unknown') : right.returnType;
+  const rightEffect = resolveEffectiveType(node.right, lookup);
+  const explicitTicks =
+    leftEffect.type === 'dateTime' &&
+    isDateComparison(node.operator) &&
+    node.right.kind === 'function' &&
+    isTicksCall(node.right);
 
-  if (leftField && rightType !== 'unknown' && rightType !== 'null' && !isCompatibleType(leftField.type, rightType)) {
+  if (typed && !explicitTicks && !mixedOperatorRejected && !effectsCompatible(leftEffect, rightEffect, node.operator)) {
     context.diagnostics.push(
-      diagnostic('TYPE_MISMATCH', `Operator "${node.operator}" compares ${leftField.type} to ${rightType}.`, path),
+      diagnostic(
+        'TYPE_MISMATCH',
+        `Operator "${node.operator}" compares ${describeEffectiveType(leftEffect)} to ${describeEffectiveType(rightEffect)}.`,
+        path,
+      ),
     );
   }
 
-  const operands = formatOperandsForOperator(node, left, right, leftField);
+  const operands = formatOperandsForOperator(node, left, right, leftEffect);
   const expression = formatOperator(node.operator, operands.left, operands.right);
   return { expression, returnType: 'boolean' };
 }
@@ -139,11 +176,13 @@ function formatRule(node: RuleNode, context: FormatContext, path: string, depth:
 function formatFunction(node: FunctionCallNode, context: FormatContext, path: string, depth: number): NodeFormat {
   const args = node.args.map((arg, index) => formatNode(arg, context, `${path}.args[${index}]`, depth + 1));
 
+  const lookup = fieldLookup(context);
+
   if (
     (node.name === 'toLower' || node.name === 'toUpper' || node.name === 'trim') &&
     node.args[0]?.kind === 'field'
   ) {
-    const field = resolveField(node.args[0], context, `${path}.args[0]`);
+    const field = lookupField(node.args[0], context);
     if (field?.nullable) {
       context.diagnostics.push(
         diagnostic(
@@ -156,9 +195,17 @@ function formatFunction(node: FunctionCallNode, context: FormatContext, path: st
     }
   }
 
+  if (node.name === 'toLower' || node.name === 'toUpper' || node.name === 'trim' || node.name === 'length') {
+    reportStringLikeInput(node, context, path, lookup);
+  } else if (node.name === 'coalesce' && resolveEffectiveType(node, lookup).unmodelled) {
+    context.diagnostics.push(
+      diagnostic('UNMODELLED_RESULT', 'Compatibility could not be established for this result.', path, 'warning'),
+    );
+  }
+
   return {
     expression: `${node.name}(${args.map((arg) => arg.expression).join(', ')})`,
-    returnType: inferFunctionReturnType(node),
+    returnType: effectiveReturnType(resolveEffectiveType(node, lookup)),
   };
 }
 
@@ -174,8 +221,47 @@ function formatField(node: FieldReferenceNode, context: FormatContext, path: str
   };
 }
 
+function lookupField(node: FieldReferenceNode, context: FormatContext): FieldDefinition | undefined {
+  return context.fieldsById.get(node.fieldId);
+}
+
+function fieldLookup(context: FormatContext): (fieldId: string) => { type: FieldDefinition['type']; nullable?: boolean } | undefined {
+  return (fieldId: string) => {
+    const field = context.fieldsById.get(fieldId);
+    return field ? { type: field.type, nullable: field.nullable } : undefined;
+  };
+}
+
+function reportStringLikeInput(
+  node: FunctionCallNode,
+  context: FormatContext,
+  path: string,
+  lookup: (fieldId: string) => { type: FieldDefinition['type']; nullable?: boolean } | undefined,
+): void {
+  const arg = node.args[0];
+  if (!arg) {
+    context.diagnostics.push(diagnostic('TYPE_MISMATCH', `Function "${node.name}" requires a string input.`, path));
+    return;
+  }
+
+  const input = resolveEffectiveType(arg, lookup);
+  if (input.unresolved || input.inert) return;
+  if (input.unmodelled) {
+    context.diagnostics.push(
+      diagnostic('UNMODELLED_RESULT', 'Compatibility could not be established for this result.', path, 'warning'),
+    );
+    return;
+  }
+
+  if (!acceptsStringLike(input)) {
+    context.diagnostics.push(
+      diagnostic('TYPE_MISMATCH', `Function "${node.name}" does not accept ${describeEffectiveType(input)} inputs.`, path),
+    );
+  }
+}
+
 function resolveField(node: FieldReferenceNode, context: FormatContext, path: string): FieldDefinition | undefined {
-  const field = context.fieldsById.get(node.fieldId);
+  const field = lookupField(node, context);
   if (!field) {
     context.diagnostics.push(diagnostic('UNKNOWN_FIELD', `Unknown field "${node.fieldId}".`, path));
   }
@@ -187,9 +273,9 @@ function formatOperandsForOperator(
   node: RuleNode,
   left: NodeFormat,
   right: NodeFormat,
-  leftField: FieldDefinition | undefined,
+  leftEffect: EffectiveType,
 ): { left: string; right: string } {
-  if (leftField?.type === 'dateTime' && isDateComparison(node.operator)) {
+  if (leftEffect.type === 'dateTime' && isDateComparison(node.operator)) {
     return {
       left: wrapTicks(left.expression),
       right: node.right?.kind === 'function' && isTicksCall(node.right) ? right.expression : wrapTicks(right.expression),
@@ -210,12 +296,4 @@ function operatorFunction(operator: string): string {
 
 function wrapTicks(expression: string): string {
   return expression.startsWith('ticks(') ? expression : `ticks(${expression})`;
-}
-
-function isCompatibleType(fieldType: FieldDefinition['type'], valueType: ValueType | PredicateType): boolean {
-  if (fieldType === 'choice') {
-    return valueType === 'choice' || valueType === 'string' || valueType === 'number';
-  }
-
-  return fieldType === valueType;
 }

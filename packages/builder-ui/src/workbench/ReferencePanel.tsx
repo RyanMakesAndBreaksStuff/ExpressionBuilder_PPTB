@@ -140,25 +140,6 @@ export function ReferencePanel({
 				</h2>
 			</div>
 			<div className="eb-json-card-body">
-				{state.parsed ? (
-					<nav className="eb-json-breadcrumb" aria-label="Selected path">
-						<ol>
-							{crumbs.map((crumb, index) => (
-								<li key={index}>
-									{index > 0 ? (
-										<span
-											className="eb-json-crumb-separator"
-											aria-hidden="true">
-											›
-										</span>
-									) : null}
-									<span className={`eb-json-crumb${index === 0 ? " is-root" : ""}`}>{crumb}</span>
-								</li>
-							))}
-						</ol>
-					</nav>
-				) : null}
-
 				{ready ? (
 					<div className="eb-json-copy-blocks">
 						<div className="eb-json-copy-block">

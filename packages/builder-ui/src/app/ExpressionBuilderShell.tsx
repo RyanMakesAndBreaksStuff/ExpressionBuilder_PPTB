@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -31,6 +31,7 @@ import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, 
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
+import type { RelatedLoadStatus } from '../workbench/types';
 import { ImportSchemaDialog } from '../workbench/ImportSchemaDialog';
 import { ImportExpressionDialog } from '../workbench/ImportExpressionDialog';
 import { AddFieldForm } from '../workbench/AddFieldForm';
@@ -163,6 +164,58 @@ export function ExpressionBuilderShell({
   const [relatedSections, setRelatedSections] = useState<
     Array<{ navigationProperty: string; displayName: string }>
   >([]);
+  /**
+   * Accepted source/document replacement, refresh, and adapter change bump this.
+   * Related-section and related-field completions carry the generation and adapter
+   * they started with and no-op once either has moved. Not a busy-overlay owner.
+   */
+  const sourceGeneration = useRef(0);
+  /** Related-section load status for the current source generation; reset with it. */
+  const [relatedStatus, setRelatedStatus] = useState<Record<string, RelatedLoadStatus>>({});
+  const adapterRef = useRef(adapter);
+  useLayoutEffect(() => {
+    if (adapterRef.current === adapter) return;
+    adapterRef.current = adapter;
+    sourceGeneration.current += 1;
+    // Old-adapter requests are dropped, so their pending flags must not block a retry.
+    setRelatedStatus({});
+  }, [adapter]);
+
+  const isCurrentSourceRequest = (generation: number, requestAdapter: PlatformAdapter) =>
+    generation === sourceGeneration.current && requestAdapter === adapterRef.current;
+
+  const acceptSourceReplacement = () => {
+    sourceGeneration.current += 1;
+    setRelatedSections([]);
+    setRelatedStatus({});
+  };
+
+  const loadRelatedSections = (table: string) => {
+    const generation = sourceGeneration.current;
+    const requestAdapter = adapter;
+    if (!requestAdapter.getRelatedTables) {
+      setRelatedSections([]);
+      return;
+    }
+    void requestAdapter
+      .getRelatedTables(table)
+      .then((rels) => {
+        if (!isCurrentSourceRequest(generation, requestAdapter)) return;
+        setRelatedSections(
+          rels.map((r) => ({
+            navigationProperty: r.navigationProperty,
+            displayName: r.displayName,
+          })),
+        );
+      })
+      .catch((err) => {
+        if (!isCurrentSourceRequest(generation, requestAdapter)) return;
+        void requestAdapter.notify(
+          `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
+          'warning',
+        );
+      });
+  };
 
   // Pending state for the switch-source confirmation dialog (T18).
   type PendingSwitch = {
@@ -182,16 +235,30 @@ export function ExpressionBuilderShell({
    * Blocking overlay for retrieve/load operations. Without it the user can edit
    * rules or start a second discovery while the first promise is still in
    * flight, and the late result overwrites what they just did.
-   * ponytail: single label, not a counter — these operations are mutually
-   * exclusive because the overlay itself blocks starting a second one.
+   * Each run owns a token and clears only its own overlay, so a superseded run
+   * cannot hide a newer one. A rejection (primary discovery or cache access) is
+   * reported once against the adapter that started it, unless that adapter was
+   * replaced; nothing was applied, so the current document stays and the user
+   * can retry. Related-field work catches its own errors before reaching here.
    */
-  const [busy, setBusy] = useState<string | null>(null);
+  // Overlapping runs stack; the overlay shows the newest one until every run finishes.
+  const [busyRuns, setBusyRuns] = useState<Array<{ owner: object; label: string }>>([]);
+  const busy = busyRuns.at(-1) ?? null;
   const runBusy = async <T,>(label: string, work: () => Promise<T>): Promise<T | undefined> => {
-    setBusy(label);
+    const owner = {};
+    const requestAdapter = adapter;
+    setBusyRuns((runs) => [...runs, { owner, label }]);
     try {
       return await work();
+    } catch (err) {
+      if (requestAdapter !== adapterRef.current) return undefined;
+      void requestAdapter.notify(
+        `Could not load fields: ${err instanceof Error ? err.message : 'unknown error'}`,
+        'error',
+      );
+      return undefined;
     } finally {
-      setBusy(null);
+      setBusyRuns((runs) => runs.filter((run) => run.owner !== owner));
     }
   };
 
@@ -256,6 +323,7 @@ export function ExpressionBuilderShell({
     setDocument(result.document);
     setImportDiagnostics([]);
     setDialog('none');
+    acceptSourceReplacement();
   };
 
   /** Discover fields (cache-first). On refresh, diffs and shows the drift dialog (T19). */
@@ -265,7 +333,10 @@ export function ExpressionBuilderShell({
     includeRelated: boolean,
     refresh = false,
   ) => {
+    const generation = sourceGeneration.current;
+    const requestAdapter = adapter;
     const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, refresh);
+    if (!isCurrentSourceRequest(generation, requestAdapter)) return;
     if (!isFieldDefinitionArray(fields) || fields.length === 0) {
       await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
@@ -289,21 +360,8 @@ export function ExpressionBuilderShell({
         fields,
       ),
     );
-
-    if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table)
-        .then((rels) =>
-          setRelatedSections(
-            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-          ),
-        )
-        .catch((err) => {
-          void adapter.notify(
-            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
-            'warning',
-          );
-        });
-    }
+    acceptSourceReplacement();
+    loadRelatedSections(table);
   };
 
   /** Legacy path used when no table is known (backward compat). */
@@ -312,7 +370,10 @@ export function ExpressionBuilderShell({
       await connectFieldsCached(table, table, includeRelated ?? false);
       return;
     }
+    const generation = sourceGeneration.current;
+    const requestAdapter = adapter;
     const result = await discoverThroughAdapter(adapter, undefined, includeRelated);
+    if (!isCurrentSourceRequest(generation, requestAdapter)) return;
     if (!isFieldDefinitionArray(result.fields) || result.fields.length === 0) {
       await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
@@ -329,13 +390,23 @@ export function ExpressionBuilderShell({
         result.fields,
       ),
     );
+    acceptSourceReplacement();
   };
 
   const handleExpandRelated = (navigationProperty: string) => {
     const table = document.source?.tableLogicalName;
-    if (!table || !adapter.discoverRelatedFields) return;
-    void runBusy('Loading related fields…', () => adapter.discoverRelatedFields!(table, navigationProperty)
+    const discoverRelatedFields = adapter.discoverRelatedFields;
+    const current = relatedStatus[navigationProperty];
+    if (!table || !discoverRelatedFields || current === 'pending' || current === 'succeeded') return;
+    const generation = sourceGeneration.current;
+    const requestAdapter = adapter;
+    const setStatus = (status: RelatedLoadStatus) =>
+      setRelatedStatus((prev) => ({ ...prev, [navigationProperty]: status }));
+    setStatus('pending');
+    void runBusy('Loading related fields…', () => discoverRelatedFields(table, navigationProperty)
       .then((result) => {
+        if (!isCurrentSourceRequest(generation, requestAdapter)) return;
+        setStatus('succeeded');
         if (result.fields.length === 0) return;
         setDocument((current) => ({
           ...current,
@@ -346,7 +417,9 @@ export function ExpressionBuilderShell({
         }));
       })
       .catch((err) => {
-        void adapter.notify(
+        if (!isCurrentSourceRequest(generation, requestAdapter)) return;
+        setStatus('failed');
+        void requestAdapter.notify(
           `Could not expand related fields: ${err instanceof Error ? err.message : 'unknown error'}`,
           'warning',
         );
@@ -390,10 +463,10 @@ export function ExpressionBuilderShell({
   };
 
   const loadSampleFields = () => {
+    acceptSourceReplacement();
     setDocument((current) =>
       applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
     );
-    setRelatedSections([]);
   };
 
   /**
@@ -401,7 +474,11 @@ export function ExpressionBuilderShell({
    * become orphans, shows SwitchSourceDialog before applying. Otherwise applies directly.
    */
   const handleTableConfirm = async (table: string, tableLabel: string, includeRelated: boolean) => {
+    const generation = sourceGeneration.current;
+    const requestAdapter = adapter;
     const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, false);
+    // A newer source change or adapter swap supersedes this discovery.
+    if (!isCurrentSourceRequest(generation, requestAdapter)) return;
     if (!isFieldDefinitionArray(fields) || fields.length === 0) {
       await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
       return;
@@ -433,22 +510,8 @@ export function ExpressionBuilderShell({
       );
       return removeAffected?.length ? removeRules(base, removeAffected) : base;
     });
-    if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table)
-        .then((rels) =>
-          setRelatedSections(
-            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-          ),
-        )
-        .catch((err) => {
-          void adapter.notify(
-            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
-            'warning',
-          );
-        });
-    } else {
-      setRelatedSections([]);
-    }
+    acceptSourceReplacement();
+    loadRelatedSections(table);
   };
 
   const paletteVars = porcelainTokens[paletteId].cssVariables;
@@ -508,6 +571,7 @@ export function ExpressionBuilderShell({
                   );
                 }}
                 relatedSections={relatedSections}
+                relatedStatus={relatedStatus}
                 onExpandRelated={handleExpandRelated}
                 onCreateRuleFromField={createRuleFromField}
               />
@@ -615,7 +679,7 @@ export function ExpressionBuilderShell({
 
         {busy ? (
           <div className="eb-busy-overlay" role="alert" aria-busy="true" aria-live="polite">
-            <Spinner label={busy} />
+            <Spinner label={busy.label} />
           </div>
         ) : null}
       </div>
@@ -624,8 +688,8 @@ export function ExpressionBuilderShell({
         open={dialog === 'import'}
         onDismiss={() => setDialog('none')}
         onImport={(fields, label) => {
+          acceptSourceReplacement();
           setDocument((current) => applySource(current, { kind: 'import', label }, fields));
-          setRelatedSections([]);
           setDialog('none');
         }}
       />
@@ -660,8 +724,8 @@ export function ExpressionBuilderShell({
         currentFields={document.fields}
         onDismiss={() => setDialog('none')}
         onLoad={(name, fields) => {
+          acceptSourceReplacement();
           setDocument((current) => applySource(current, { kind: 'profile', label: name }, fields));
-          setRelatedSections([]);
           setDialog('none');
         }}
         onNotify={adapter.notify}

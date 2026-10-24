@@ -68,13 +68,34 @@ export async function discoverCached(
   includeRelated: boolean,
   refresh: boolean,
 ): Promise<FieldDefinition[]> {
+  const scope = await metadataCacheScope(adapter);
+  // No verified environment identity: never touch the persistent cache.
+  if (scope === null) {
+    return (await discoverThroughAdapter(adapter, table, includeRelated)).fields;
+  }
+  const assertSameScope = async () => {
+    if ((await metadataCacheScope(adapter)) !== scope) {
+      throw new Error('The environment changed while loading fields. Please retry.');
+    }
+  };
   if (!refresh) {
-    const cached = await readCache(settings, table, includeRelated);
+    const cached = await readCache(settings, scope, table, includeRelated);
+    await assertSameScope();
     if (cached) return cached;
   }
   const result = await discoverThroughAdapter(adapter, table, includeRelated);
-  await writeCache(settings, table, includeRelated, result.fields);
+  await assertSameScope();
+  await writeCache(settings, scope, table, includeRelated, result.fields);
+  await assertSameScope();
   return result.fields;
+}
+
+async function metadataCacheScope(adapter: PlatformAdapter): Promise<string | null> {
+  try {
+    return (await adapter.getMetadataCacheScope?.()) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Collect every fieldId referenced by rules in the tree. */

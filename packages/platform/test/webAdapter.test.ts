@@ -136,7 +136,123 @@ describe('createWebAdapter', () => {
     expect(handler).toHaveBeenLastCalledWith('dark');
     unsubscribe();
   });
+
+  it('uses both system schemes when storage access or getItem throws', async () => {
+    await withBlockedStorage('access', async () => {
+      await expectBothSystemSchemes();
+    });
+    await withBlockedStorage('getItem', async () => {
+      await expectBothSystemSchemes();
+    });
+  });
+
+  it('does not swallow a rejected theme or settings write', async () => {
+    const storage = stubLocalStorage();
+    storage.setItem.mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    stubMatchMedia(false);
+    const quotaAdapter = createWebAdapter();
+    const quotaHandler = vi.fn();
+    quotaAdapter.onThemeChanged(quotaHandler);
+
+    expect(quotaAdapter.getThemeSnapshot()).toBe('light');
+    expect(() => quotaAdapter.setTheme('dark')).toThrow('quota exceeded');
+    expect(quotaHandler).not.toHaveBeenCalled();
+    expect(quotaAdapter.getThemeSnapshot()).toBe('light');
+    await expect(quotaAdapter.settings.set('draft', 'value')).rejects.toThrow('quota exceeded');
+    await expect(quotaAdapter.settings.get('draft')).resolves.toBeNull();
+
+    vi.unstubAllGlobals();
+    stubMatchMedia(true);
+    const restore = blockStorageAccess();
+    try {
+      const adapter = createWebAdapter();
+      const handler = vi.fn();
+      adapter.onThemeChanged(handler);
+
+      await expect(adapter.getTheme()).resolves.toBe('dark');
+      expect(() => adapter.setTheme('light')).toThrow('Access is denied for this document.');
+      expect(handler).not.toHaveBeenCalled();
+      expect(adapter.getThemeSnapshot()).toBe('dark');
+      await expect(adapter.settings.set('draft', 'value')).rejects.toThrow(
+        'Access is denied for this document.',
+      );
+    } finally {
+      restore();
+    }
+  });
 });
+
+const storageAccessDenied =
+  "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.";
+
+async function expectBothSystemSchemes() {
+  for (const prefersDark of [false, true]) {
+    const mediaQuery = stubMatchMedia(prefersDark);
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+    const initial = prefersDark ? 'dark' : 'light';
+    const next = prefersDark ? 'light' : 'dark';
+
+    expect(adapter.getThemeSnapshot()).toBe(initial);
+    await expect(adapter.getTheme()).resolves.toBe(initial);
+
+    mediaQuery.dispatch(!prefersDark);
+    expect(adapter.getThemeSnapshot()).toBe(next);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith(next);
+    await expect(adapter.getTheme()).resolves.toBe(next);
+
+    mediaQuery.dispatch(prefersDark);
+    expect(adapter.getThemeSnapshot()).toBe(initial);
+    expect(handler).toHaveBeenLastCalledWith(initial);
+
+    unsubscribe();
+    mediaQuery.dispatch(!prefersDark);
+    expect(handler).toHaveBeenCalledTimes(2);
+  }
+}
+
+async function withBlockedStorage(mode: 'access' | 'getItem', run: () => Promise<void>) {
+  if (mode === 'getItem') {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    });
+    try {
+      await run();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    return;
+  }
+
+  const restore = blockStorageAccess();
+  try {
+    await run();
+  } finally {
+    restore();
+  }
+}
+
+function blockStorageAccess() {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    get() {
+      throw new DOMException(storageAccessDenied, 'SecurityError');
+    },
+  });
+  return () => {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+    else Reflect.deleteProperty(globalThis, 'localStorage');
+  };
+}
 
 function stubLocalStorage() {
   const values = new Map<string, string>();

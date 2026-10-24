@@ -26,6 +26,9 @@ export interface ModeContext {
   note: string;
 }
 
+/** Shell-owned load state for one related section; a missing entry is idle. */
+export type RelatedLoadStatus = 'idle' | 'pending' | 'succeeded' | 'failed';
+
 export interface FieldToolboxPaneProps {
   fields: FieldDefinition[];
   source: DataSourceDescriptor;
@@ -41,7 +44,9 @@ export interface FieldToolboxPaneProps {
   canConnectTable?: boolean;
   /** Related navigation sections available for the active dataverse table (T14). */
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
-  /** Called once when a related section is first expanded; resolves and appends its fields. */
+  /** Load status per navigation property for the current source generation. */
+  relatedStatus?: Record<string, RelatedLoadStatus>;
+  /** Called when an idle section is expanded or a failed one is retried; resolves and appends its fields. */
   onExpandRelated?: (navigationProperty: string) => void;
   /** Called when the user clicks a field row in the toolbox. */
   onCreateRuleFromField?: (field: FieldDefinition) => void;

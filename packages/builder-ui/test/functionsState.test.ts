@@ -66,6 +66,30 @@ describe('functions state', () => {
 			.toEqual(['text1', 'text2', 'text3', 'text4']);
 	});
 
+	it('keeps the full variadic extent across a hole (D9, FR-20)', () => {
+		const full = run(
+			{ type: 'setArg', name: 'text1', value: '1' },
+			{ type: 'setArg', name: 'text2', value: '2' },
+			{ type: 'setArg', name: 'text3', value: '3' },
+			{ type: 'setArg', name: 'text4', value: '4' },
+		);
+		const holed = functionsReducer(full, { type: 'setArg', name: 'text3', value: '' });
+		const derived = deriveFunctions(holed);
+		expect(derived.slots.map((slot) => slot.name)).toEqual(['text1', 'text2', 'text3', 'text4', 'text5']);
+		expect(derived.slots[3]?.value).toBe('4');
+		expect(derived.valid).toBe(false);
+		expect(derived.error).toBe('Fill text3 first.');
+		expect(derived.expression).not.toBe('concat(1, 2)');
+
+		const refilled = deriveFunctions(functionsReducer(holed, { type: 'setArg', name: 'text3', value: '3' }));
+		expect(refilled.valid).toBe(true);
+		expect(refilled.expression).toBe('concat(1, 2, 3, 4)');
+
+		const trimmed = deriveFunctions(functionsReducer(full, { type: 'setArg', name: 'text4', value: '' }));
+		expect(trimmed.slots.map((slot) => slot.name)).toEqual(['text1', 'text2', 'text3', 'text4']);
+		expect(trimmed.expression).toBe('concat(1, 2, 3)');
+	});
+
 	it('wraps the named argument and keeps the selection (FR-15, AC-15.1)', () => {
 		const state = run(
 			{ type: 'setArg', name: 'text1', value: "triggerBody()?['Name']" },

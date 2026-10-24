@@ -9,5 +9,9 @@ export function formatLiteral(node: LiteralNode): string {
     return `'${node.value.replaceAll("'", "''")}'`;
   }
 
+  if (typeof node.value === 'number' && !Number.isFinite(node.value)) {
+    throw new Error('Numeric literals must be finite.');
+  }
+
   return String(node.value);
 }

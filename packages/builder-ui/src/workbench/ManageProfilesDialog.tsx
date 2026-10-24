@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -113,9 +113,30 @@ function ManageProfilesDialogBody({
   const [names, setNames] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // One profile call at a time, so a double-click cannot fire a second save/load/delete.
+  const [pending, setPending] = useState(false);
+  const runExclusive = async (work: () => Promise<void>) => {
+    if (pending) return;
+    setPending(true);
+    try {
+      await work();
+    } finally {
+      setPending(false);
+    }
+  };
 
+  // Bumped per listing and on unmount so a late older/dismissed completion is ignored.
+  const listGeneration = useRef(0);
   const refresh = () => {
-    void listProfiles(settings).then(setNames);
+    const generation = ++listGeneration.current;
+    listProfiles(settings).then(
+      (listed) => {
+        if (generation === listGeneration.current) setNames(listed);
+      },
+      () => {
+        if (generation === listGeneration.current) onNotify('Could not list field profiles.', 'error');
+      },
+    );
   };
 
   useEffect(() => {
@@ -123,7 +144,11 @@ function ManageProfilesDialogBody({
     // the dialog opens — see the comment above) rather than on every
     // listProfiles() call, so the rare cleanup write doesn't run on every
     // list read or app init.
+    const generationRef = listGeneration;
     void sweepOrphanedProfiles(settings).then(refresh, refresh);
+    return () => {
+      generationRef.current++;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -143,12 +168,17 @@ function ManageProfilesDialogBody({
           />
           <Button
             appearance="primary"
-            disabled={!trimmedNew || currentFields.length === 0}
-            onClick={async () => {
-              await saveProfile(settings, { name: trimmedNew, fields: currentFields });
+            disabled={pending || !trimmedNew || currentFields.length === 0}
+            onClick={() => runExclusive(async () => {
+              try {
+                await saveProfile(settings, { name: trimmedNew, fields: currentFields });
+              } catch {
+                onNotify(`Could not save profile "${trimmedNew}".`, 'error');
+                return;
+              }
               setNewName('');
               refresh();
-            }}
+            })}
           >
             {overwrites ? 'Overwrite' : 'Save current'}
           </Button>
@@ -167,7 +197,8 @@ function ManageProfilesDialogBody({
                 <Button
                   size="small"
                   appearance="primary"
-                  onClick={async () => {
+                  disabled={pending}
+                  onClick={() => runExclusive(async () => {
                     try {
                       await deleteProfile(settings, name);
                       setConfirmDelete(null);
@@ -175,7 +206,7 @@ function ManageProfilesDialogBody({
                     } catch {
                       onNotify(`Could not delete profile "${name}".`, 'error');
                     }
-                  }}
+                  })}
                 >
                   Delete
                 </Button>
@@ -192,10 +223,17 @@ function ManageProfilesDialogBody({
                 <Text className={styles.grow}>{name}</Text>
                 <Button
                   size="small"
-                  onClick={async () => {
-                    const profile = await loadProfile(settings, name);
+                  disabled={pending}
+                  onClick={() => runExclusive(async () => {
+                    let profile: Awaited<ReturnType<typeof loadProfile>>;
+                    try {
+                      profile = await loadProfile(settings, name);
+                    } catch {
+                      onNotify(`Could not load profile "${name}".`, 'error');
+                      return;
+                    }
                     if (profile) onLoad(profile.name, profile.fields);
-                  }}
+                  })}
                 >
                   Load
                 </Button>

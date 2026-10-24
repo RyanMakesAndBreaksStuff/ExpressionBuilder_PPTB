@@ -79,9 +79,23 @@ function TablePickerBody({
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
-    void loadTables().then(setTables);
-  }, [loadTables]);
+    let current = true;
+    loadTables().then(
+      (loaded) => { if (current) setTables(loaded); },
+      () => { if (current) setLoadFailed(true); },
+    );
+    return () => { current = false; };
+  }, [loadTables, attempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setTables(null);
+    setAttempt((n) => n + 1);
+  };
 
   const filtered = useMemo(() => {
     const list = tables ?? [];
@@ -142,7 +156,12 @@ function TablePickerBody({
           checked={includeRelated}
           onChange={(_, d) => setIncludeRelated(d.checked)}
         />
-        {tables === null ? (
+        {loadFailed ? (
+          <div role="alert">
+            <Text size={200}>Could not load tables. </Text>
+            <Button size="small" onClick={retryLoad}>Retry</Button>
+          </div>
+        ) : tables === null ? (
           <Spinner size="tiny" label="Loading tables..." />
         ) : filtered.length === 0 ? (
           <Text size={200}>No tables match.</Text>

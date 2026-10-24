@@ -42,7 +42,7 @@ export function parseSavedExpression(source: string): SavedExpressionParseResult
     value.fields.forEach((field, index) => validateField(field, `fields[${index}]`, errors));
   }
 
-  validateNode(value.root, 'root', errors);
+  validateDocumentRoot(value.root, errors);
 
   if (errors.length > 0) {
     return { ok: false, errors };
@@ -80,17 +80,44 @@ function validateField(value: unknown, path: string, errors: string[]): value is
   }
 
   if ('options' in value && value.options !== undefined) {
-    if (
-      !Array.isArray(value.options) ||
-      value.options.some(
-        (option) => !isRecord(option) || typeof option.label !== 'string' || typeof option.value !== 'number',
-      )
-    ) {
+    if (!Array.isArray(value.options)) {
       errors.push(`Import failed: ${path}.options must be {label, value} pairs.`);
+    } else {
+      let malformed = false;
+      let nonFinite = false;
+      for (const option of value.options) {
+        if (!isRecord(option) || typeof option.label !== 'string' || typeof option.value !== 'number') {
+          malformed = true;
+          continue;
+        }
+        if (!Number.isFinite(option.value)) {
+          nonFinite = true;
+        }
+      }
+      if (malformed) {
+        errors.push(`Import failed: ${path}.options must be {label, value} pairs.`);
+      }
+      if (nonFinite) {
+        errors.push(`Import failed: ${path}.options values must be finite numbers.`);
+      }
     }
   }
 
   return true;
+}
+
+function validateDocumentRoot(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push('Import failed: root must be an object.');
+    return;
+  }
+
+  if (value.kind !== 'group') {
+    errors.push('Import failed: root must be a group.');
+    return;
+  }
+
+  validateGroup(value, 'root', errors);
 }
 
 function validateNode(value: unknown, path: string, errors: string[]): value is QueryNode {
@@ -140,6 +167,10 @@ function validateRule(value: Record<string, unknown>, path: string, errors: stri
 
   if (typeof value.operator !== 'string' || value.operator.length === 0) {
     errors.push(`Import failed: ${path}.operator is required.`);
+  }
+
+  if (typeof value.value === 'number' && !Number.isFinite(value.value)) {
+    errors.push(`Import failed: ${path}.value must be a finite number.`);
   }
 
   if ('wrappers' in value && value.wrappers !== undefined) {

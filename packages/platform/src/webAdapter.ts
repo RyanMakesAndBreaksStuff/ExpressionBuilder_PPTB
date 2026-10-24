@@ -11,9 +11,15 @@ export interface WebPlatformAdapter extends PlatformAdapter {
 
 const themeOverrideKey = 'eb.web.theme.override.v1';
 
+// A blocked storage binding or a throwing getItem is an absent override.
+// Theme and profile writes stay outside this guard so a rejected save still rejects.
 function readThemeOverride(): WebTheme | null {
-  const value = localStorage.getItem(themeOverrideKey);
-  return value === 'light' || value === 'dark' ? value : null;
+  try {
+    const value = localStorage.getItem(themeOverrideKey);
+    return value === 'light' || value === 'dark' ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 const TOAST_COLORS: Record<string, string> = {

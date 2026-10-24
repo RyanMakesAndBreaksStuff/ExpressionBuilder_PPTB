@@ -65,7 +65,9 @@ export interface FormatDiagnostic {
     | 'UNSUPPORTED_OPERATOR'
     | 'TYPE_MISMATCH'
     | 'UNSAFE_NULL_STRING_WRAPPER'
-    | 'MAX_DEPTH';
+    | 'MAX_DEPTH'
+    | 'INVALID_LITERAL'
+    | 'UNMODELLED_RESULT';
   message: string;
   severity: 'error' | 'warning';
   path: string;

@@ -521,6 +521,61 @@ describe('shared builder UI', () => {
     expect(screen.queryByText(/Import failed/i)).not.toBeInTheDocument();
   });
 
+  it('rejects a rule root and a non-finite value without replacing the document', async () => {
+    const user = userEvent.setup();
+    render(<ExpressionBuilderShell adapter={createAdapter()} initialDocument={sampleDocument} />);
+    const expressionBefore = conditionExpression().textContent;
+
+    const openImport = async () => {
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Import', hidden: true }));
+      return screen.findByRole('dialog', { hidden: true });
+    };
+
+    const ruleRoot = JSON.stringify({
+      version: 1,
+      mode: 'triggerCondition',
+      fields: [{ id: 'n', label: 'N', type: 'number', path: ['n'] }],
+      root: { id: 'rule-1', kind: 'rule', fieldId: 'n', operator: 'equals', value: 1 },
+    });
+
+    const dialog = await openImport();
+    const input = within(dialog).getByLabelText('Saved expression JSON to import');
+    await user.click(input);
+    await user.paste(ruleRoot);
+    expect(within(dialog).getByText('Import failed: root must be a group.')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Import', hidden: true })).toBeDisabled();
+    expect(conditionExpression().textContent).toBe(expressionBefore);
+    expect(document.querySelector('[data-node-id="rule-status"]')).toHaveClass('is-selected');
+    expect(screen.getByRole('group', { name: /Approver contains finance/i, hidden: true })).toBeInTheDocument();
+
+    const overflow = `{
+      "version": 2,
+      "mode": "triggerCondition",
+      "fields": [{ "id": "n", "label": "N", "type": "number", "path": ["n"] }],
+      "root": {
+        "id": "root",
+        "kind": "group",
+        "conjunction": "and",
+        "children": [
+          { "id": "rule-1", "kind": "rule", "fieldId": "n", "operator": "equals", "value": 1e309 }
+        ]
+      }
+    }`;
+
+    await user.clear(input);
+    await user.paste(overflow);
+    expect(
+      within(dialog).getByText('Import failed: root.children[0].value must be a finite number.'),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Import', hidden: true })).toBeDisabled();
+    expect(conditionExpression().textContent).toBe(expressionBefore);
+    expect(screen.getByRole('group', { name: /Status equals Approved/i, hidden: true })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel', hidden: true }));
+    expect(conditionExpression().textContent).toBe(expressionBefore);
+    expect(document.querySelector('[data-node-id="rule-status"]')).toHaveClass('is-selected');
+  });
+
   it('hides the "Connect a table" entry points in the web build', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} platform="web" />);

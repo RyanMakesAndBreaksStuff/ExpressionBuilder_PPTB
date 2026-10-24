@@ -90,6 +90,14 @@ export interface PlatformAdapter {
   discoverRelatedFields?(table: string, navigationProperty: string): Promise<DiscoverFieldsResult>;
 
   /**
+   * Opaque scope for authenticated metadata caching, or `null` when the active
+   * environment cannot be verified. `null` means skip persistent cache reads and
+   * writes and continue with fresh discovery — it must not block that discovery.
+   * The string is an internal cache discriminator. Do not log or display it.
+   */
+  getMetadataCacheScope?(): Promise<string | null>;
+
+  /**
    * @deprecated Use discoverFields({}) instead.
    */
   getDataverseFields(): Promise<unknown[]>;

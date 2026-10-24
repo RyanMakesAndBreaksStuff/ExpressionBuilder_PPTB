@@ -23,7 +23,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b && node -e \"require('fs').mkdirSync('dist/theme', { recursive: true }); require('fs').copyFileSync('src/theme/tokens.css', 'dist/theme/tokens.css');\"",
+    "build": "tsc -b && node -e \"require('fs').mkdirSync('dist/theme', { recursive: true }); for (const f of require('fs').readdirSync('src/theme')) if (f.endsWith('.css')) require('fs').copyFileSync('src/theme/' + f, 'dist/theme/' + f);\"",
     "test": "vitest run",
     "typecheck": "tsc -b"
   },
