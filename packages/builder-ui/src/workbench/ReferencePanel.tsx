@@ -102,10 +102,6 @@ export function ReferencePanel({
 	const headingId = useId();
 	const loopNameId = useId();
 	const note = fixedPositionNote(state);
-	const crumbs = [
-		rootExpression(state),
-		...state.selectedPath.map(segmentLabel),
-	];
 	const ready = canCopy(state);
 	const itemExpr = loopItemExpression(state);
 	const itemsExpr = loopItemsExpression(state);

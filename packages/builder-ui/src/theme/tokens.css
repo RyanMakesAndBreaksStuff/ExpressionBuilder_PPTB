@@ -1016,15 +1016,18 @@ body {
 	text-overflow: ellipsis;
 }
 
+/* A pill outlined and tinted from one per-type color, so its shape reads on any surface in either theme. */
 .eb-field-type-badge {
-	padding: 1px 4px;
-	border-radius: 4px;
-	border: 0;
-	color: var(--fg-onbrand);
+	--badge: var(--text3);
+	padding: 1px 6px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, var(--badge) 60%, transparent);
+	background: color-mix(in srgb, var(--badge) 18%, transparent);
+	color: var(--badge);
 	font-size: 8px;
 	font-weight: 800;
 	line-height: 1.4;
-	letter-spacing: 0.01em;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	white-space: nowrap;
 	flex: 0 0 auto;
@@ -1045,28 +1048,23 @@ body {
 	flex: 0 0 auto;
 }
 
-.eb-type.choice,
-.eb-field-type-badge.choice {
+.eb-type.choice {
 	background: var(--accent);
 }
 
-.eb-type.string,
-.eb-field-type-badge.string {
+.eb-type.string {
 	background: var(--accent-2);
 }
 
-.eb-type.number,
-.eb-field-type-badge.number {
+.eb-type.number {
 	background: var(--warn);
 }
 
-.eb-type.dateTime,
-.eb-field-type-badge.dateTime {
+.eb-type.dateTime {
 	background: var(--danger);
 }
 
-.eb-type.boolean,
-.eb-field-type-badge.boolean {
+.eb-type.boolean {
 	background: var(--info);
 }
 
@@ -2205,7 +2203,7 @@ body {
 .eb-json-copy-blocks {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
 }
 
 /* Layout C section header */
@@ -2229,10 +2227,10 @@ body {
 	position: relative; /* contains the visually-hidden loop help so it cannot extend the page */
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
-	padding: 14px 16px;
+	gap: 8px;
+	padding: 10px 12px;
 	border: 1px solid var(--border);
-	border-radius: 12px;
+	border-radius: 10px;
 	background: var(--code);
 	color: var(--code-text);
 	--accent: var(--code-accent);
@@ -2244,7 +2242,7 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	font-size: 13px;
+	font-size: 11px;
 	font-weight: 600;
 	color: var(--code-text2);
 }
@@ -2253,13 +2251,18 @@ body {
 	color: var(--code-text3);
 }
 
+.eb-json-copy-block .eb-copy-block-info svg {
+	width: 13px;
+	height: 13px;
+}
+
 .eb-json-copy-block .eb-preview {
 	padding: 0;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
 	color: var(--code-text);
-	font-size: 14px;
+	font-size: 12px;
 	line-height: 1.6;
 }
 
@@ -2271,32 +2274,37 @@ body {
 
 .eb-json-copy-block .eb-json-note {
 	color: var(--code-warn);
+	font-size: 11px;
 	font-weight: 400;
 }
 
 .eb-json-copy-block .eb-copy-action-btn {
-	padding: 6px 10px;
-	border-color: transparent;
+	padding: 4px 8px;
+	border-color: var(--code-seg-selected);
+	border-radius: 6px;
 	background: var(--code-seg-track);
 	color: var(--code-text2);
-	font-size: 12px;
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .eb-json-copy-block .eb-copy-action-btn:hover {
-	border-color: transparent;
+	border-color: var(--code-text3);
 	background: var(--code-seg-selected);
 	color: var(--code-text);
 }
 
-/* Graphite light's accent matches the dark well, so the filled button uses the well's accent. */
+/* The well is dark in both themes, so one filled blue action reads in either. */
 .eb-json-copy-block .eb-copy-action-btn.is-primary {
-	background: var(--code-accent);
-	color: var(--code);
+	border-color: var(--code-action);
+	background: var(--code-action);
+	color: var(--code-text);
 }
 
 .eb-json-copy-block .eb-copy-action-btn.is-primary:hover {
-	background: var(--code-text);
-	color: var(--code);
+	border-color: var(--code-action-hover);
+	background: var(--code-action-hover);
+	color: var(--code-text);
 }
 
 .eb-json-loop-field {
@@ -2314,7 +2322,7 @@ body {
 .eb-json-loop-hint {
 	margin: 0;
 	font-family: var(--eb-mono);
-	font-size: 13px;
+	font-size: 12px;
 	color: var(--code-text2);
 }
 
@@ -2722,37 +2730,30 @@ body {
 	text-overflow: ellipsis;
 }
 
-/* Mockup: badges are a soft tint with toned text; .eb-type glyphs keep the solid fill. */
+/* Each type gets its own hue; null keeps the neutral default. */
 .eb-field-type-badge.choice,
-.eb-field-type-badge.object,
+.eb-field-type-badge.object {
+	--badge: var(--violet);
+}
+
 .eb-field-type-badge.array {
-	background: var(--accent-soft);
-	color: var(--accent);
+	--badge: var(--accent-2);
 }
 
 .eb-field-type-badge.string {
-	background: var(--good-soft);
-	color: var(--good);
+	--badge: var(--good);
 }
 
 .eb-field-type-badge.number {
-	background: var(--warn-soft);
-	color: var(--warn);
+	--badge: var(--warn);
 }
 
 .eb-field-type-badge.dateTime {
-	background: var(--danger-soft);
-	color: var(--danger);
+	--badge: var(--danger);
 }
 
 .eb-field-type-badge.boolean {
-	background: var(--info-soft);
-	color: var(--info);
-}
-
-.eb-field-type-badge.null {
-	background: var(--surface3);
-	color: var(--text3);
+	--badge: var(--info);
 }
 
 /* Reference card (FR-043 to FR-046, FR-050 to FR-054) */

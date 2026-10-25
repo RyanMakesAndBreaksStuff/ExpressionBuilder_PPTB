@@ -38,8 +38,7 @@ async function openScreen(
   page: Page,
   name: 'Functions' | 'Trigger / Filter' | 'JSON reference',
 ): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name, exact: true }).click();
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name, exact: true }).click();
 }
 
 const panel = (page: Page) => page.getByRole('tabpanel');

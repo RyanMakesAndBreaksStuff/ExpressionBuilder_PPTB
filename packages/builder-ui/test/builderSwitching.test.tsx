@@ -47,11 +47,11 @@ function createAdapter(): PlatformAdapter {
 	};
 }
 
-const screenChip = () => screen.getByRole('button', { name: /^Screen:/ });
+const screenTab = (label: string) =>
+	within(screen.getByRole('tablist', { name: 'Screen' })).getByRole('tab', { name: label });
 
 async function goTo(user: UserEvent, label: string) {
-	await user.click(screenChip());
-	await user.click(screen.getByRole('menuitemradio', { name: label }));
+	await user.click(screenTab(label));
 }
 
 const sampleBox = () =>
@@ -206,7 +206,7 @@ describe('builder switching', () => {
 		unmount();
 
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
-		expect(screenChip()).toHaveAccessibleName('Screen: Trigger / Filter');
+		expect(screenTab('Trigger / Filter')).toHaveAttribute('aria-selected', 'true');
 		await goTo(user, 'JSON reference');
 		expect(sampleBox()).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
@@ -311,12 +311,10 @@ describe('builder switching', () => {
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		editSample('{"a":2}');
 		await advanceParse(300);
-		fireEvent.click(screenChip());
-		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Trigger / Filter' }));
+		fireEvent.click(screenTab('Trigger / Filter'));
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		fireEvent.click(screenChip());
-		fireEvent.click(screen.getByRole('menuitemradio', { name: 'JSON reference' }));
+		fireEvent.click(screenTab('JSON reference'));
 		await advanceParse(599);
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		await advanceParse(1);

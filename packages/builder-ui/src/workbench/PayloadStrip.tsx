@@ -80,7 +80,6 @@ export function PayloadStrip({
                   })}
                   onKeyDown={(event) => navigate(event, index)}
                 >
-                  <strong className="eb-payload-name">{label}</strong>
                   <code className="eb-payload-root" title={rootExpression(payload.state)}>
                     {rootExpression(payload.state)}
                   </code>

@@ -5,8 +5,7 @@ test('Functions gives the dock at least 10% more height and takes it from the pa
   await page.addInitScript(() => localStorage.setItem('eb.onboarding.seen.v1', '1'));
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name: 'Functions', exact: true }).click();
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'Functions', exact: true }).click();
 
   const height = async (selector: string) => (await page.locator(selector).first().boundingBox())!.height;
   expect(await height('.eb-fn-dock')).toBeGreaterThanOrEqual(174);

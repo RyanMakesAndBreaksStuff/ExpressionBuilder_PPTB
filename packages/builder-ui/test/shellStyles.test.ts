@@ -37,12 +37,14 @@ describe('shell styles', () => {
     expect(rule('.eb-pill-title')).toMatch(/flex:\s*none;/);
   });
 
-  it('shapes the mode chip (FR-3)', () => {
-    const chipRule = rule('.eb-mode-chip');
-    expect(chipRule).toMatch(/height:\s*30px;/);
-    expect(chipRule).toMatch(/border-radius:\s*15px;/);
-    expect(chipRule).toMatch(/background:\s*var\(--accent-soft\);/);
-    expect(chipRule).toMatch(/color:\s*var\(--accent\);/);
+  it('shapes the screen tabs as concentric pills (FR-3)', () => {
+    expect(rule('.eb-pill-header .eb-tab-strip')).toMatch(/border-radius:\s*18px;/);
+    const tab = rule('.eb-pill-header .eb-tab-strip button');
+    expect(tab).toMatch(/height:\s*28px;/);
+    expect(tab).toMatch(/border-radius:\s*14px;/);
+    const active = rule('.eb-pill-header .eb-tab-strip button.active');
+    expect(active).toMatch(/background:\s*var\(--accent\);/);
+    expect(active).toMatch(/color:\s*var\(--accent-ink\);/);
   });
 
   it('rings every header control at 2px with a 2px offset (FR-6)', () => {
@@ -63,7 +65,7 @@ describe('shell styles', () => {
   });
 
   it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
-    expect(rule('.eb-mode-chip')).toMatch(/transition:\s*background-color 120ms ease;/);
+    expect(rule('.eb-pill-header .eb-tab-strip button')).toMatch(/transition:\s*background-color 120ms ease;/);
     const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
   });

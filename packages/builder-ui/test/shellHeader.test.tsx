@@ -31,18 +31,18 @@ describe('ShellHeader', () => {
   it('shows the title and the active screen (FR-2, AC-2.1)', () => {
     renderHeader();
     expect(screen.getByText('Expression Builder')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Screen: Trigger / Filter' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Trigger / Filter' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('switches screens from the chip menu (FR-3, AC-3.1)', async () => {
+  it('switches screens from the tab list (FR-3, AC-3.1)', async () => {
     const user = userEvent.setup();
     const props = renderHeader();
-    await user.click(screen.getByRole('button', { name: 'Screen: Trigger / Filter' }));
 
-    const items = screen.getAllByRole('menuitemradio');
+    const items = screen.getAllByRole('tab');
+    expect(screen.getByRole('tablist', { name: 'Screen' })).toBeInTheDocument();
     expect(items.map((item) => item.textContent))
       .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
-    expect(items[0]).toHaveAttribute('aria-checked', 'true');
+    expect(items[0]).toHaveAttribute('aria-selected', 'true');
 
     await user.click(items[2]);
     expect(props.onScreenChange).toHaveBeenCalledWith('functions');

@@ -49,9 +49,9 @@ test('web header switches theme across screens and persists the choice', async (
   await expect(header.getByRole('button', { name: 'Export', exact: true })).toBeVisible();
 
   for (const name of ['JSON reference', 'Functions', 'Trigger / Filter']) {
-    await page.getByRole('button', { name: /^Screen:/ }).click();
-    await page.getByRole('menuitemradio', { name, exact: true }).click();
-    await expect(page.getByRole('button', { name: `Screen: ${name}` })).toBeVisible();
+    const tab = page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name, exact: true });
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(header.getByRole('button', { name: 'Switch to light theme' })).toBeVisible();
   }
   await expect.poll(() => page.evaluate(() => localStorage.getItem('eb.web.theme.override.v1')))

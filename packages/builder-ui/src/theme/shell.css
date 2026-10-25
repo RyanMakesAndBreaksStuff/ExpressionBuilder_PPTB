@@ -39,25 +39,31 @@
 	flex: 1;
 }
 
-.eb-mode-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	height: 30px;
-	padding: 0 12px;
+/* Screen tabs: a pill track whose radius is the tab radius plus its inset, so the curves stay concentric. */
+.eb-pill-header .eb-tab-strip {
+	flex: none;
+	gap: 2px;
+	padding: 3px;
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	background: var(--seg-track);
+}
+
+.eb-pill-header .eb-tab-strip button {
+	height: 28px;
+	padding: 0 14px;
 	border: none;
-	border-radius: 15px;
-	background: var(--accent-soft);
-	color: var(--accent);
-	font-size: 14px;
-	cursor: pointer;
+	border-radius: 14px;
+	background: transparent;
+	color: var(--text2);
+	font-size: 13px;
+	font-weight: 600;
 	transition: background-color 120ms ease;
 }
 
-.eb-mode-chip svg {
-	width: 10px;
-	height: 10px;
-	stroke-width: 3;
+.eb-pill-header .eb-tab-strip button.active {
+	background: var(--accent);
+	color: var(--accent-ink);
 }
 
 .eb-pill-overflow {
@@ -72,7 +78,7 @@
 	transition: background-color 120ms ease;
 }
 
-.eb-mode-chip:hover,
+.eb-pill-header .eb-tab-strip button:not(.active):hover,
 .eb-pill-overflow:hover {
 	background: var(--seg-selected);
 }
@@ -116,7 +122,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.eb-mode-chip,
+	.eb-pill-header .eb-tab-strip button,
 	.eb-pill-overflow {
 		transition: none;
 	}

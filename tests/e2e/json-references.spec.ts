@@ -46,21 +46,18 @@ const treeRow = (page: Page, label: string) =>
   jsonPanel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
 async function openJsonReference(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', {
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', {
     name: 'JSON reference',
     exact: true,
   }).click();
 }
 
 async function openFunctions(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name: 'Functions', exact: true }).click();
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'Functions', exact: true }).click();
 }
 
 async function openConditionBuilder(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', {
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', {
     name: 'Trigger / Filter',
     exact: true,
   }).click();
@@ -220,17 +217,14 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: /^Screen:/ })).toBeFocused();
+  const screenTabs = page.getByRole('tablist', { name: 'Screen' });
+  await expect(screenTabs.getByRole('tab', { name: 'Trigger / Filter', exact: true })).toBeFocused();
   // Header controls draw their focus ring as an outline rather than a box-shadow.
   expect(await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle)).not.toBe('none');
-  await page.keyboard.press('Enter');
-  const jsonItem = page.getByRole('menuitemradio', { name: 'JSON reference', exact: true });
-  for (let step = 0; step < 3 && !(await jsonItem.evaluate((el) => el === document.activeElement)); step++) {
-    await page.keyboard.press('ArrowDown');
-  }
+  await page.keyboard.press('ArrowRight');
+  const jsonItem = screenTabs.getByRole('tab', { name: 'JSON reference', exact: true });
   await expect(jsonItem).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: 'Screen: JSON reference' })).toBeVisible();
+  await expect(jsonItem).toHaveAttribute('aria-selected', 'true');
 
   // Payload strip: the selected tab, New payload, then search, before the root radios.
   await page.keyboard.press('Tab');

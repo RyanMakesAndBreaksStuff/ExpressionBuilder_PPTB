@@ -25,7 +25,6 @@ dist-ssr
 .agents
 .claude
 /.vs
-docs
 research
 tasks
 ui-ux

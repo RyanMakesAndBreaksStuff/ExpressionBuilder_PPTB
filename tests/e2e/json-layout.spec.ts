@@ -4,8 +4,7 @@ async function openJson(page: Page): Promise<void> {
   await page.addInitScript(() => localStorage.setItem('eb.onboarding.seen.v1', '1'));
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await page.getByRole('button', { name: /^Screen:/ }).click();
-  await page.getByRole('menuitemradio', { name: 'JSON reference', exact: true }).click();
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'JSON reference', exact: true }).click();
 }
 
 // Baseline before this change: 200×82px.
@@ -13,9 +12,9 @@ test('payload cards are compact and keep readable text', async ({ page }) => {
   await openJson(page);
   const box = (await page.locator('.eb-payload-tab').first().boundingBox())!;
   expect(box.width).toBeLessThanOrEqual(168);
-  expect(box.height).toBeLessThanOrEqual(64);
+  expect(box.height).toBeLessThanOrEqual(48);
   const sizes = await page.locator('.eb-payload-tab').first().evaluate((tab) =>
-    ['.eb-payload-name', '.eb-payload-root', '.eb-payload-state-text']
+    ['.eb-payload-root', '.eb-payload-state-text']
       .map((selector) => Number.parseFloat(getComputedStyle(tab.querySelector(selector)!).fontSize)));
   for (const size of sizes) expect(size).toBeGreaterThanOrEqual(11);
 });
