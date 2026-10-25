@@ -10,6 +10,9 @@ body,
 
 body {
 	margin: 0;
+	/* The root is already viewport-sized; anything the host appends to the body
+	   (PPTB status bar) must not make the whole page scroll under the panes. */
+	overflow: hidden;
 }
 
 .eb-root {

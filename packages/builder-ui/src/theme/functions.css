@@ -21,6 +21,10 @@
 	gap: 2px;
 	padding: 14px;
 	overflow-y: auto;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--panel-glass);
+	box-shadow: var(--panel-shadow);
 }
 
 .eb-fn-search {
