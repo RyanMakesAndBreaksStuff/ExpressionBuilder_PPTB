@@ -813,4 +813,19 @@ describe('primary discovery rejection', () => {
     await settle(harness.relatedFields[1].pending, { fields: [] });
     expect(overlay()).not.toBeInTheDocument();
   });
+
+  it('does not reload tables when the shell re-renders while the picker is open', async () => {
+    const harness = createAdapter();
+    render(<ExpressionBuilderShell adapter={harness.adapter} />);
+    const user = setupUser();
+    await user.click(await screen.findByRole('button', { name: 'Connect a table' }));
+    await screen.findByRole('option', { name: /Account/, hidden: true });
+    expect(harness.adapter.getTables).toHaveBeenCalledTimes(1);
+
+    const handler = vi.mocked(harness.adapter.onThemeChanged).mock.calls[0][0];
+    act(() => handler('dark'));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(harness.adapter.getTables).toHaveBeenCalledTimes(1);
+  });
 });

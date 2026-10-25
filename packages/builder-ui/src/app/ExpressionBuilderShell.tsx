@@ -134,6 +134,7 @@ export function ExpressionBuilderShell({
     setScreen(next);
     adapter.settings.set(LAST_SCREEN_KEY, next).catch(() => undefined);
   }, [adapter]);
+  const loadTables = useCallback(() => adapter.getTables?.() ?? Promise.resolve([]), [adapter]);
   const [jsonSession, jsonDispatch] = useReducer(
     jsonPayloadSessionReducer,
     undefined,
@@ -761,7 +762,7 @@ export function ExpressionBuilderShell({
 
       <TablePickerDialog
         open={dialog === 'tablePicker'}
-        loadTables={() => adapter.getTables?.() ?? Promise.resolve([])}
+        loadTables={loadTables}
         onDismiss={() => setDialog('none')}
         onConfirm={(table, includeRelated) => {
           setDialog('none');
