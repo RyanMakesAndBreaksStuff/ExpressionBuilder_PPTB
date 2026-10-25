@@ -148,7 +148,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 
 				{state.outputFrom === "action" ? (
 					<div className="eb-json-field">
-						<label className="eb-label" htmlFor={nameId}>
+						<label className="eb-label is-required" htmlFor={nameId}>
 							Action
 						</label>
 						<input

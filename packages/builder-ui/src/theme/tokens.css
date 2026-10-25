@@ -1202,6 +1202,13 @@ body {
 	font-weight: 700;
 }
 
+/* Visual-only required marker; empty alt text keeps it out of the accessible name. */
+.eb-label.is-required::after {
+	content: "*" / "";
+	margin-left: 2px;
+	color: var(--danger);
+}
+
 /* Action Buttons */
 .eb-action-btn {
 	height: 38px;
