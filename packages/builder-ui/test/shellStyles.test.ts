@@ -30,21 +30,17 @@ describe('shell styles', () => {
     const header = rule('.eb-pill-header');
     expect(header).toMatch(/height:\s*48px;/);
     expect(header).toMatch(/padding:\s*0 18px;/);
-    expect(header).toMatch(/border-radius:\s*24px;/);
+    expect(header).toMatch(/border-radius:\s*var\(--r-card\);/);
     expect(header).toMatch(/gap:\s*12px;/);
     expect(header).toMatch(/background:\s*var\(--header-glass\);/);
     expect(rule('.eb-pill-title')).toMatch(/white-space:\s*nowrap;/);
     expect(rule('.eb-pill-title')).toMatch(/flex:\s*none;/);
   });
 
-  it('shapes the screen tabs as concentric pills (FR-3)', () => {
-    expect(rule('.eb-pill-header .eb-tab-strip')).toMatch(/border-radius:\s*18px;/);
-    const tab = rule('.eb-pill-header .eb-tab-strip button');
-    expect(tab).toMatch(/height:\s*28px;/);
-    expect(tab).toMatch(/border-radius:\s*14px;/);
-    const active = rule('.eb-pill-header .eb-tab-strip button.active');
-    expect(active).toMatch(/background:\s*var\(--accent\);/);
-    expect(active).toMatch(/color:\s*var\(--accent-ink\);/);
+  it('themes the Fluent screen tabs with the palette accent (FR-3)', () => {
+    const tabs = rule('.eb-screen-tabs');
+    expect(tabs).toMatch(/flex:\s*none;/);
+    expect(tabs).toMatch(/--colorCompoundBrandStroke:\s*var\(--accent-line\);/);
   });
 
   it('rings every header control at 2px with a 2px offset (FR-6)', () => {
@@ -65,7 +61,7 @@ describe('shell styles', () => {
   });
 
   it('transitions in 120ms and stops under reduced motion (FR-24)', () => {
-    expect(rule('.eb-pill-header .eb-tab-strip button')).toMatch(/transition:\s*background-color 120ms ease;/);
+    expect(rule('.eb-pill-overflow')).toMatch(/transition:\s*background-color 120ms ease;/);
     const reduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(css);
     expect(reduced?.[1]).toMatch(/transition:\s*none;/);
   });
