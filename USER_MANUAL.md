@@ -482,7 +482,7 @@ const webAdapter = createWebAdapter();
 const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 ```
 
-**PlatformAdapter interface** (`discoverFields`/`getTables`/`getRelatedTables`/`discoverRelatedFields`/`listDataSources` are all optional — hosts may omit them):
+**PlatformAdapter interface** (`discoverFields`/`getTables`/`getRelatedTables`/`discoverRelatedFields` are all optional — hosts may omit them):
 
 | Method                            | Purpose                                |
 | --------------------------------- | -------------------------------------- |
@@ -494,7 +494,6 @@ const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 | `getTables()`                     | List available Dataverse tables        |
 | `getRelatedTables()`              | Get one-hop navigation properties      |
 | `discoverRelatedFields()`         | Expand a related table's fields        |
-| `listDataSources()`               | Enumerate selectable data sources (optional) |
 | `getDataverseFields()` *(deprecated)* | Use `discoverFields({})` instead   |
 
 ### 6.3 `packages/builder-ui` — Shared UI Composer

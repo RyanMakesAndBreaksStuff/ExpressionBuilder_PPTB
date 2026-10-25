@@ -89,7 +89,6 @@ describe('createWebAdapter', () => {
     stubLocalStorage();
     stubMatchMedia(false);
     const adapter = createWebAdapter();
-    expect(await adapter.listDataSources?.()).toEqual([]);
     expect(await adapter.getTables?.()).toEqual([]);
     expect(await adapter.discoverFields?.()).toEqual({ fields: [] });
   });

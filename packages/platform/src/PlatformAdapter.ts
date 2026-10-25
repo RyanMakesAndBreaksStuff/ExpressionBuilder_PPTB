@@ -23,13 +23,6 @@ export interface PlatformSettings {
   setAll?(values: Record<string, string>): Promise<void>;
 }
 
-/** A selectable data source the host can enumerate (e.g. a Dataverse connection). */
-export interface DataSourceRef {
-  id: string;
-  label: string;
-  kind: 'dataverse' | 'sharepoint' | 'sql';
-}
-
 /** A table/entity within a data source. */
 export interface TableRef {
   /** Logical/internal name used for discovery calls. */
@@ -53,14 +46,10 @@ export interface RelatedTableRef {
 }
 
 export interface DiscoverFieldsOptions {
-  /** Source id from listDataSources; omit for the host default. */
-  sourceId?: string;
   /** Logical name of the table to discover; omit to use host's current table. */
   table?: string;
   /** When true, also surface one-hop related navigation properties. */
   includeRelated?: boolean;
-  /** Bypass any adapter-side cache. */
-  refresh?: boolean;
 }
 
 export interface DiscoverFieldsResult {
@@ -78,10 +67,8 @@ export interface PlatformAdapter {
   onThemeChanged(handler: (theme: PlatformTheme) => void): () => void;
   settings: PlatformSettings;
 
-  /** Enumerate selectable sources. Optional — absent hosts are import-only. */
-  listDataSources?(): Promise<DataSourceRef[]>;
-  /** List tables for a source. Optional — absent hosts hide the table picker. */
-  getTables?(sourceId?: string): Promise<TableRef[]>;
+  /** List tables. Optional — absent hosts hide the table picker. */
+  getTables?(): Promise<TableRef[]>;
   /** Source-agnostic field discovery. Optional — absent hosts degrade to import/manual. */
   discoverFields?(options?: DiscoverFieldsOptions): Promise<DiscoverFieldsResult>;
   /** One-hop related navigation properties for a table. Optional. */

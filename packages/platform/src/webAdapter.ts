@@ -127,10 +127,6 @@ export function createWebAdapter(): WebPlatformAdapter {
       },
     },
 
-    async listDataSources() {
-      return [];
-    },
-
     async getTables() {
       return [];
     },

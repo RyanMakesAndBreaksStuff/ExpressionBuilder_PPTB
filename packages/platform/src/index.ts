@@ -7,7 +7,6 @@ export type {
   PlatformAdapter,
   PlatformSettings,
   PlatformTheme,
-  DataSourceRef,
   TableRef,
   RelatedTableRef,
   DiscoverFieldsOptions,
