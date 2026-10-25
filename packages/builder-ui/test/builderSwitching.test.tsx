@@ -76,7 +76,7 @@ async function advanceParse(ms = 600) {
 
 async function exerciseJsonReference(user: UserEvent) {
 	await goTo(user, 'JSON reference');
-	await user.type(screen.getByLabelText('Action name'), 'Get items');
+	await user.type(screen.getByLabelText('Action'), 'Get items');
 	await user.click(sampleBox());
 	await user.paste(fixtureA1);
 	await user.click(screen.getByRole('treeitem', { name: /^body, object$/ }));
@@ -147,7 +147,7 @@ describe('builder switching', () => {
 		await goTo(user, 'Trigger / Filter');
 		await goTo(user, 'JSON reference');
 
-		expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
+		expect(screen.getByLabelText('Action')).toHaveValue('Get items');
 		expect(sampleBox()).toHaveValue(fixtureA1);
 		expect(
 			screen.getByRole('treeitem', { name: /^body, object$/ }),
@@ -193,7 +193,9 @@ describe('builder switching', () => {
 			screen.getByRole('radio', { name: 'Trigger condition' }),
 		).toHaveAttribute('aria-checked', 'true');
 		expect(await exportJson()).toBe(exportBefore);
-		expect(adapter.settings.set).not.toHaveBeenCalled();
+		// Only the last-screen preference is persisted; no JSON reference data is.
+		const persisted = vi.mocked(adapter.settings.set).mock.calls.map(([key]) => key);
+		expect(new Set(persisted)).toEqual(new Set(['eb.screen.last.v1']));
 		expect(adapter.settings.remove).not.toHaveBeenCalled();
 	});
 
@@ -226,8 +228,10 @@ describe('builder switching', () => {
 		editSample('{ "a": 1 }');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		// Shown in the editor status and on the payload card.
-		expect(screen.getAllByText('Parsed · 2 values')).toHaveLength(2);
+		// Shown in the editor status; the payload tab carries it as its description.
+		expect(screen.getAllByText('Parsed · 2 values')).toHaveLength(1);
+		expect(screen.getByRole('tab', { name: /^Payload 1, payload 1$/ }))
+			.toHaveAccessibleDescription(/Parsed · 2 values/);
 		editSample('{"a":2}');
 		await advanceParse();
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
@@ -248,7 +252,9 @@ describe('builder switching', () => {
 		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toHaveAttribute('aria-selected', 'true');
 		expect(screen.getAllByText(
 			'Could not parse. Showing last successful payload.',
-		)).toHaveLength(2);
+		)).toHaveLength(1);
+		expect(screen.getByRole('tab', { name: /, payload 1$/ }))
+			.toHaveAccessibleDescription(/Could not parse. Showing last successful payload./);
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
 		editSample('{"a":1}');
 		await advanceParse();
@@ -283,7 +289,7 @@ describe('builder switching', () => {
 		await goTo(user, 'JSON reference');
 		pasteSample('{"a":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(1);
-		await user.click(screen.getByRole('button', { name: '+ New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
 		pasteSample('{"b":1}');
 		expect(adapter.notify).toHaveBeenCalledTimes(2);
 		workspaceMount.key += 1;
@@ -332,7 +338,7 @@ describe('builder switching', () => {
 		await advanceParse(300);
 
 		fireEvent.click(screen.getByRole('button', {
-			name: '+ New payload',
+			name: '+ Add',
 			exact: true,
 		}));
 		await advanceParse(600);
@@ -369,7 +375,7 @@ describe('builder switching', () => {
 		const user = userEvent.setup();
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
 		await goTo(user, 'JSON reference');
-		await user.type(screen.getByLabelText('Action name'), 'Get items');
+		await user.type(screen.getByLabelText('Action'), 'Get items');
 		pasteSample('{"a":1}');
 
 		await goTo(user, 'Functions');
@@ -381,8 +387,8 @@ describe('builder switching', () => {
 		expect(text1).toHaveValue(inserted);
 
 		await goTo(user, 'JSON reference');
-		await user.clear(screen.getByLabelText('Action name'));
-		await user.type(screen.getByLabelText('Action name'), 'Renamed');
+		await user.clear(screen.getByLabelText('Action'));
+		await user.type(screen.getByLabelText('Action'), 'Renamed');
 		await goTo(user, 'Functions');
 		expect(text1).toHaveValue(inserted);
 		expect(screen.getByRole('button', { name: 'Renamed 1' })).toBeInTheDocument();
@@ -394,7 +400,7 @@ describe('builder switching', () => {
 		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
 
 		await goTo(user, 'JSON reference');
-		await user.click(screen.getByRole('button', { name: '+ New payload' }));
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
 		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
 		await goTo(user, 'Functions');
 		expect(text1).toHaveValue(inserted);

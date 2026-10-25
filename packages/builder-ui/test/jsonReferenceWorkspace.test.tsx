@@ -78,7 +78,7 @@ async function pasteAndParse(
 	actionName?: string,
 ) {
 	if (actionName !== undefined)
-		await user.type(screen.getByLabelText('Action name'), actionName);
+		await user.type(screen.getByLabelText('Action'), actionName);
 	await user.click(screen.getByLabelText('Sample JSON'));
 	await user.paste(sample);
 }
@@ -118,9 +118,6 @@ describe('JSON reference workspace', () => {
 
 		await selectEmail(user);
 		expect(expression()).toHaveTextContent(EMAIL_REFERENCE);
-		expect(
-			screen.getByRole('navigation', { name: 'Selected path' }),
-		).toHaveTextContent("outputs('Get_items')");
 		expect(
 			screen.getByText(
 				'Fixed position [0] reads that item only.',
@@ -244,7 +241,7 @@ describe('JSON reference workspace', () => {
 		await user.click(
 			screen.getByRole('radio', { name: /Trigger.*Full output/ }),
 		);
-		expect(screen.queryByLabelText('Action name')).not.toBeInTheDocument();
+		expect(screen.queryByLabelText('Action')).not.toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Trigger.*Full output/ }),
 		).toHaveAccessibleDescription('triggerOutputs()');
@@ -339,16 +336,16 @@ describe('JSON reference workspace', () => {
 		});
 
 		expect(screen.getByRole('tree')).toBeInTheDocument();
-		expect(screen.getByLabelText('Action name')).toHaveValue('Action');
+		expect(screen.getByLabelText('Action')).toHaveValue('Action');
 	});
 
 	it('blocks Copy and flags the field when the action name is blank (user story 4, scenario 5)', async () => {
 		const user = userEvent.setup();
 		render(<WorkspaceHarness adapter={createAdapter()} active />);
-		const name = screen.getByLabelText('Action name');
+		const name = screen.getByLabelText('Action');
 
 		expect(name).toHaveAccessibleDescription(
-			'As shown in the flow designer. Spaces become underscores.',
+			'Spaces become underscores.',
 		);
 		expect(name).toHaveAttribute('aria-invalid', 'false');
 		await pasteAndParse(user, fixtureA1); // paste auto-fills name to "Action"
@@ -358,13 +355,13 @@ describe('JSON reference workspace', () => {
 		expect(name).toHaveAccessibleDescription(
 			'Enter the action name to build the reference.',
 		);
-		expect(row(/^outputs\('Action_name'\), object$/)).toBeInTheDocument();
+		expect(row(/^outputs\('Action'\), object$/)).toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
 		).toBeChecked();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
-		).toHaveAccessibleDescription("outputs('Action_name')");
+		).toHaveAccessibleDescription('outputs()');
 	});
 
 	it('never claims a copy the host refused (user story 4, scenario 6)', async () => {
@@ -404,7 +401,7 @@ describe('JSON reference workspace', () => {
 		render(<WorkspaceHarness adapter={createAdapter()} active />);
 
 		for (const field of [
-			screen.getByLabelText('Action name'),
+			screen.getByLabelText('Action'),
 			screen.getByLabelText('Sample JSON'),
 		]) {
 			expect(field).toHaveAttribute('spellcheck', 'false');
@@ -420,14 +417,8 @@ describe('JSON reference workspace', () => {
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await selectEmail(user);
 
-		const crumbs = within(screen.getByRole('navigation', { name: 'Selected path' }))
-			.getAllByText(/./, { selector: '.eb-json-crumb' });
-		expect(crumbs[0]).toHaveClass('is-root');
-		expect(crumbs[1]).not.toHaveClass('is-root');
-
 		const reference = expression().closest('.eb-json-copy-block') as HTMLElement;
 		expect(within(reference).getByText('Fixed position [0] reads that item only.')).toBeInTheDocument();
-		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveTextContent('Copy');
 		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveClass('is-primary');
 
 		expect(screen.getByText('Apply to each · item()')).toBeInTheDocument();

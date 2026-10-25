@@ -40,8 +40,10 @@ describe('ShellHeader', () => {
 
     const items = screen.getAllByRole('tab');
     expect(screen.getByRole('tablist', { name: 'Screen' })).toBeInTheDocument();
-    expect(items.map((item) => item.textContent))
-      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
+    // Fluent Tab repeats its label in a hidden width-reserving span, so textContent doubles.
+    ['Trigger / Filter', 'JSON reference', 'Functions'].forEach((name, i) => {
+      expect(items[i]).toHaveAccessibleName(name);
+    });
     expect(items[0]).toHaveAttribute('aria-selected', 'true');
 
     await user.click(items[2]);

@@ -41,8 +41,11 @@ describe('screen contract', () => {
   it('lists all three screens in order and switches (FR-3, AC-3.1)', async () => {
     const user = userEvent.setup();
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
-    expect(screenTabs().getAllByRole('tab').map((item) => item.textContent))
-      .toEqual(['Trigger / Filter', 'JSON reference', 'Functions']);
+    // Fluent Tab repeats its label in a hidden width-reserving span, so textContent doubles.
+    const tabs = screenTabs().getAllByRole('tab');
+    ['Trigger / Filter', 'JSON reference', 'Functions'].forEach((name, i) => {
+      expect(tabs[i]).toHaveAccessibleName(name);
+    });
 
     await goTo(user, 'JSON reference');
     expect(activeScreen()).toHaveTextContent('JSON reference');
@@ -54,7 +57,7 @@ describe('screen contract', () => {
     render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
     await goTo(user, 'JSON reference');
-    await user.type(screen.getByLabelText('Action name'), 'Get items');
+    await user.type(screen.getByLabelText('Action'), 'Get items');
 
     await goTo(user, 'Functions');
     await user.type(screen.getByLabelText('text2'), "' - '");
@@ -64,7 +67,7 @@ describe('screen contract', () => {
     expect(screen.getByLabelText('text2')).toHaveValue("' - '");
 
     await goTo(user, 'JSON reference');
-    expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
+    expect(screen.getByLabelText('Action')).toHaveValue('Get items');
   });
 
   it('shows mode, Import and Export only on Trigger / Filter (FR-5, AC-5.1, AC-5.2)', async () => {
