@@ -38,14 +38,17 @@ describe('web entry when the theme preference cannot be read', () => {
   });
 });
 
-const createWebAdapterCalls = vi.hoisted(() => ({ count: 0 }));
+const createWebAdapterCalls = vi.hoisted(() => ({ count: 0, rejectTheme: false }));
 vi.mock('@ryanmakes/eb_platformadapter', async (importActual) => {
   const actual = await importActual<typeof import('@ryanmakes/eb_platformadapter')>();
   return {
     ...actual,
     createWebAdapter: () => {
       createWebAdapterCalls.count += 1;
-      return actual.createWebAdapter();
+      const real = actual.createWebAdapter();
+      return createWebAdapterCalls.rejectTheme
+        ? { ...real, getTheme: () => Promise.reject(new Error('theme unavailable')) }
+        : real;
     },
   };
 });
@@ -143,3 +146,18 @@ function stubColorScheme(prefersDark: boolean) {
     })),
   );
 }
+
+describe('web entry when getTheme rejects', () => {
+  it('still renders the app with the light fallback', async () => {
+    createWebAdapterCalls.rejectTheme = true;
+    try {
+      await importBlockedEntry(true);
+      await waitFor(() => {
+        expect(document.querySelector('#root .eb-root')).toHaveAttribute('data-theme', 'light');
+      });
+      expect(screen.getByText('Expression Builder')).toBeInTheDocument();
+    } finally {
+      createWebAdapterCalls.rejectTheme = false;
+    }
+  });
+});

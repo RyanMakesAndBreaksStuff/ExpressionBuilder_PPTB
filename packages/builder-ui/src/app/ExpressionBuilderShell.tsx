@@ -289,7 +289,7 @@ export function ExpressionBuilderShell({
 
   useEffect(() => {
     let active = true;
-    void adapter.getTheme().then((t) => { if (active) setPaletteId(normalizePalette(t)); });
+    void adapter.getTheme().then((t) => { if (active) setPaletteId(normalizePalette(t)); }, () => undefined);
     const unsubscribe = adapter.onThemeChanged((t) => setPaletteId(normalizePalette(t)));
     return () => { active = false; unsubscribe(); };
   }, [adapter]);
