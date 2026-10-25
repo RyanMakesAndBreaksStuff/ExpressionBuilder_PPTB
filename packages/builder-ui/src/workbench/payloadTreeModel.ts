@@ -209,3 +209,12 @@ export function collectPayloadLeaves(value: unknown): PayloadLeaf[] {
   visit(value, [], '');
   return leaves;
 }
+
+/** The tab index a key moves to within a tablist of `count` tabs, or null when the key is not a navigation key. */
+export function nextTabIndex(key: string, index: number, count: number): number | null {
+  if (key === 'Home') return 0;
+  if (key === 'End') return count - 1;
+  if (key === 'ArrowRight') return (index + 1) % count;
+  if (key === 'ArrowLeft') return (index + count - 1) % count;
+  return null;
+}

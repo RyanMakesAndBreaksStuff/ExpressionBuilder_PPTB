@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type Dispatch, type KeyboardEvent, type ReactNode } from 'react';
 import { payloadLabel, type JsonPayloadSession, type JsonPayloadAction } from './jsonPayloadSession';
+import { nextTabIndex } from './payloadTreeModel';
 import { parseStatus, rootExpression, type JsonReferenceState } from './jsonReferenceState';
 
 /** The tab's name already is the action name, so its root line drops it: outputs(), not outputs('Get_items'). */
@@ -32,11 +33,7 @@ export function PayloadStrip({
 
   function navigate(event: KeyboardEvent, index: number): void {
     const count = session.payloads.length;
-    const next = event.key === 'Home' ? 0
-      : event.key === 'End' ? count - 1
-      : event.key === 'ArrowRight' ? (index + 1) % count
-      : event.key === 'ArrowLeft' ? (index + count - 1) % count
-      : null;
+    const next = nextTabIndex(event.key, index, count);
     if (next === null) return;
     event.preventDefault();
     pendingFocus.current = true;
