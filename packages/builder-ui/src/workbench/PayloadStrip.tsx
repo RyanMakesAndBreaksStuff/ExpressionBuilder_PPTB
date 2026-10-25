@@ -1,6 +1,12 @@
 import { useLayoutEffect, useRef, type Dispatch, type KeyboardEvent, type ReactNode } from 'react';
 import { payloadLabel, type JsonPayloadSession, type JsonPayloadAction } from './jsonPayloadSession';
-import { parseStatus, rootExpression } from './jsonReferenceState';
+import { parseStatus, rootExpression, type JsonReferenceState } from './jsonReferenceState';
+
+/** The tab's name already is the action name, so its root line drops it: outputs(), not outputs('Get_items'). */
+function rootFunction({ outputFrom, shape }: JsonReferenceState): string {
+  if (outputFrom === 'trigger') return shape === 'body' ? 'triggerBody()' : 'triggerOutputs()';
+  return shape === 'body' ? 'body()' : 'outputs()';
+}
 
 export function PayloadStrip({
   baseId,
@@ -55,9 +61,7 @@ export function PayloadStrip({
               payload.state.text !== payload.state.lastAttemptedText &&
               (payload.state.text.trim() !== '' ||
                payload.state.lastSuccessfulPayload !== null);
-            const status = parseStatus(payload.state);
-            const tone = pending ? 'warn' : status.tone;
-            const statusText = pending ? 'Pending validation' : status.text;
+            const statusText = pending ? 'Pending validation' : parseStatus(payload.state).text;
   
             return (
               <div key={payload.id} role="presentation" className="eb-payload-tab">
@@ -80,13 +84,11 @@ export function PayloadStrip({
                   })}
                   onKeyDown={(event) => navigate(event, index)}
                 >
+                  {/* No visible status: it is read from the description below. */}
+                  <strong className="eb-payload-name">{label}</strong>
                   <code className="eb-payload-root" title={rootExpression(payload.state)}>
-                    {rootExpression(payload.state)}
+                    {rootFunction(payload.state)}
                   </code>
-                  <span aria-hidden="true" className="eb-payload-state">
-                    <span className={`eb-payload-dot is-${tone}`}></span>
-                    <span className="eb-payload-state-text">{statusText}</span>
-                  </span>
                 </button>
                 <span id={`${baseId}-status-${payload.id}`}
                   className="eb-visually-hidden">
@@ -115,7 +117,7 @@ export function PayloadStrip({
             pendingFocus.current = true;
             dispatch({ type: 'add' });
           }}
-        >+ New payload</button>
+        >+ Add</button>
       </div>
       <span className="eb-payload-count">{session.payloads.length} / 5</span>
       {searchControl}

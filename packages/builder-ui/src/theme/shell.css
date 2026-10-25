@@ -18,7 +18,7 @@
 	height: 48px;
 	padding: 0 18px;
 	border: 1px solid var(--border);
-	border-radius: 24px;
+	border-radius: var(--r-card);
 	background: var(--header-glass);
 	box-shadow: var(--dock-shadow);
 }
@@ -31,39 +31,28 @@
 	white-space: nowrap;
 }
 
-.eb-pill-sep {
-	color: var(--text3);
-}
-
 .eb-pill-spacer {
 	flex: 1;
 }
 
-/* Screen tabs: a pill track whose radius is the tab radius plus its inset, so the curves stay concentric. */
-.eb-pill-header .eb-tab-strip {
+/* Screen switcher: a Fluent TabList. Its selected indicator follows the
+   palette accent rather than Fluent's default brand blue. */
+.eb-screen-tabs {
 	flex: none;
-	gap: 2px;
-	padding: 3px;
-	border: 1px solid var(--border);
-	border-radius: 18px;
-	background: var(--seg-track);
+	--colorCompoundBrandStroke: var(--accent-line);
+	--colorCompoundBrandStrokeHover: var(--accent-line);
+	--colorCompoundBrandStrokePressed: var(--accent-line);
 }
 
-.eb-pill-header .eb-tab-strip button {
-	height: 28px;
-	padding: 0 14px;
-	border: none;
-	border-radius: 14px;
-	background: transparent;
-	color: var(--text2);
-	font-size: 13px;
-	font-weight: 600;
-	transition: background-color 120ms ease;
+.eb-pill-header .eb-action-btn {
+	border-radius: var(--r-control);
 }
 
-.eb-pill-header .eb-tab-strip button.active {
-	background: var(--accent);
-	color: var(--accent-ink);
+/* Filled header controls use the softened fill (a grey step in dark). */
+.eb-pill-header .eb-action-primary,
+.eb-pill-header .eb-segmented [aria-checked="true"] {
+	background: var(--accent-fill);
+	color: var(--accent-fill-ink);
 }
 
 .eb-pill-overflow {
@@ -71,14 +60,13 @@
 	width: 30px;
 	height: 30px;
 	border: none;
-	border-radius: 15px;
+	border-radius: var(--r-control);
 	background: transparent;
 	color: var(--text2);
 	cursor: pointer;
 	transition: background-color 120ms ease;
 }
 
-.eb-pill-header .eb-tab-strip button:not(.active):hover,
 .eb-pill-overflow:hover {
 	background: var(--seg-selected);
 }
@@ -122,7 +110,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.eb-pill-header .eb-tab-strip button,
 	.eb-pill-overflow {
 		transition: none;
 	}

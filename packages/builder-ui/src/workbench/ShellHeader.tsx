@@ -1,9 +1,16 @@
 import type { ReactNode } from 'react';
-import { Menu, MenuItem, MenuList, MenuPopover, MenuTrigger } from '@fluentui/react-components';
+import {
+  Menu,
+  MenuItem,
+  MenuList,
+  MenuPopover,
+  MenuTrigger,
+  Tab,
+  TabList,
+} from '@fluentui/react-components';
 import type { ExpressionMode } from '@ryanmakes/eb_engine';
 import { ModeSegmentedControl } from '../components/ModeSegmentedControl';
 import { ActionButton } from './controls/ActionButton';
-import { TabStrip } from './controls/TabStrip';
 import { ExportIcon, ImportIcon } from './icons/BuilderIcons';
 import { SCREENS, type ScreenId } from './screens';
 
@@ -32,11 +39,19 @@ export function ShellHeader({
   return (
     <header className="eb-pill-header">
       <h1 className="eb-pill-title">Expression Builder</h1>
-      <span className="eb-pill-sep" aria-hidden="true">
-        &rsaquo;
-      </span>
 
-      <TabStrip label="Screen" tabs={[...SCREENS]} activeTab={screen} onChange={onScreenChange} />
+      <TabList
+        className="eb-screen-tabs"
+        aria-label="Screen"
+        selectedValue={screen}
+        onTabSelect={(_event, data) => onScreenChange(data.value as ScreenId)}
+      >
+        {SCREENS.map((entry) => (
+          <Tab key={entry.id} value={entry.id} className="eb-screen-tab">
+            {entry.label}
+          </Tab>
+        ))}
+      </TabList>
 
       <div className="eb-pill-spacer" />
 

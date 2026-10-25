@@ -39,8 +39,8 @@ interface PayloadTreeProps {
 
 /**
  * A flat WAI-ARIA tree view with single selection (FR-036): one tab stop that
- * roves between rows, the chevron toggles without selecting while a row click
- * selects and toggles (FR-034), and
+ * roves between rows, the chevron toggles without selecting (FR-034), the
+ * rest of a parent row selects and toggles, and
  * sample content is only ever rendered as text (FR-038).
  */
 export function PayloadTree({
@@ -115,6 +115,7 @@ export function PayloadTree({
     } else {
       setFocusedKey(row.key);
       onSelect(row.path);
+      // The rest of a parent row also expands or collapses it.
       if (row.expandable) onToggle(row.key);
     }
   };

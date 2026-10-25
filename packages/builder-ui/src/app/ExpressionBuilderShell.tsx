@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -49,7 +49,7 @@ import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
 import {
   createJsonPayloadSession, getParsedSources, jsonPayloadSessionReducer,
 } from '../workbench/jsonPayloadSession';
-import type { ScreenId } from '../workbench/screens';
+import { SCREENS, type ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
   isShortViewport,
@@ -61,6 +61,8 @@ import '../theme/tokens.css';
 import '../theme/shell.css';
 import '../theme/functions.css';
 import '../theme/jsonPayloads.css';
+
+const LAST_SCREEN_KEY = 'eb.screen.last.v1';
 
 const createRuleSeed = (field: FieldDefinition) => ({
   fieldId: field.id,
@@ -113,6 +115,24 @@ export function ExpressionBuilderShell({
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);
 
   const [screen, setScreen] = useState<ScreenId>('condition');
+  // Reopen on the screen last used. Only the screen id is saved: JSON payloads
+  // still clear on reload. A switch made before the read lands wins.
+  const screenChosen = useRef(false);
+  useEffect(() => {
+    let current = true;
+    adapter.settings.get(LAST_SCREEN_KEY).then((stored) => {
+      const saved = SCREENS.find((entry) => entry.id === stored);
+      if (current && saved && !screenChosen.current) setScreen(saved.id);
+    }, () => undefined);
+    return () => {
+      current = false;
+    };
+  }, [adapter]);
+  const changeScreen = useCallback((next: ScreenId) => {
+    screenChosen.current = true;
+    setScreen(next);
+    adapter.settings.set(LAST_SCREEN_KEY, next).catch(() => undefined);
+  }, [adapter]);
   const [jsonSession, jsonDispatch] = useReducer(
     jsonPayloadSessionReducer,
     undefined,
@@ -521,7 +541,7 @@ export function ExpressionBuilderShell({
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <ShellHeader
           screen={screen}
-          onScreenChange={setScreen}
+          onScreenChange={changeScreen}
           mode={document.mode}
           onModeChange={updateMode}
           onImport={() => setDialog('importExpression')}

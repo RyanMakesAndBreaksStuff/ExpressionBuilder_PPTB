@@ -36,6 +36,11 @@ body {
 	--r-xl: 16px;
 	--r-circ: 999px;
 	--r-panel: 20px;
+	/* Flat scale for the header and JSON reference (matches Functions):
+	   cards and wells, controls inside them, and parts inset in a control. */
+	--r-card: 10px;
+	--r-control: 6px;
+	--r-inset: 4px;
 	--duration-fast: 160ms;
 	--duration-med: 220ms;
 	/* Floor for the workspace's single row. Keeps the canvas and preview from
@@ -94,11 +99,13 @@ body {
 	--info-stroke: var(--info);
 	--ring: 0 0 0 3px var(--accent);
 	--focus-ring: var(--ring);
-	--r-control: var(--r-md);
-	--r-card: var(--r-sm);
 	/* --accent-2 is under 4.5:1 on --surface2 and --accent-soft; function names
      and payload roots need 4.5:1, so light mode darkens it towards --text. */
 	--code-fn: color-mix(in srgb, var(--accent-2) 85%, var(--text));
+	/* Selected borders and filled controls on the header and JSON reference. */
+	--accent-line: var(--accent);
+	--accent-fill: var(--accent);
+	--accent-fill-ink: var(--accent-ink);
 }
 
 .eb-root[data-theme="dark"] {
@@ -131,9 +138,12 @@ body {
 	--info-stroke: var(--info);
 	--ring: 0 0 0 3px var(--accent);
 	--focus-ring: var(--ring);
-	--r-control: var(--r-md);
-	--r-card: var(--r-sm);
 	--code-fn: var(--accent-2);
+	/* Dark's accent is near-white, so selected borders and filled controls on
+	   the header and JSON reference step it down to a softer grey. */
+	--accent-line: color-mix(in srgb, var(--accent) 55%, var(--surface));
+	--accent-fill: color-mix(in srgb, var(--accent) 24%, var(--surface));
+	--accent-fill-ink: var(--text);
 }
 
 .eb-root {
@@ -180,7 +190,7 @@ body {
 	display: inline-flex;
 	gap: 4px;
 	padding: 4px;
-	border-radius: 999px;
+	border-radius: var(--r-control);
 	border: 1px solid var(--interactive-stroke);
 	background: var(--surface2);
 	flex: 0 0 auto;
@@ -190,7 +200,7 @@ body {
 	height: 36px;
 	padding: 0 16px;
 	border: none;
-	border-radius: 999px;
+	border-radius: var(--r-inset);
 	background: transparent;
 	color: var(--text2);
 	font-size: 0.86rem;
@@ -1392,7 +1402,7 @@ body {
 	gap: 4px;
 	padding: 5px 10px;
 	border: 1px solid var(--border);
-	border-radius: var(--r-sm);
+	border-radius: var(--r-control);
 	background: var(--surface2);
 	color: var(--text3);
 	font-size: 11px;
@@ -2038,7 +2048,7 @@ body {
 	min-width: 0;
 	display: flex;
 	align-items: stretch;
-	gap: 12px;
+	gap: 8px;
 	padding: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
@@ -2049,7 +2059,7 @@ body {
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	border-radius: var(--r-panel);
+	border-radius: var(--r-card);
 	border: 1px solid var(--border);
 	background: var(--surface);
 	box-shadow: var(--shadow-sm);
@@ -2165,7 +2175,7 @@ body {
 .eb-json-source .eb-input {
 	border-color: var(--border);
 	border-bottom-color: var(--interactive-stroke);
-	border-radius: 12px;
+	border-radius: var(--r-control);
 	background: var(--surface2);
 }
 
@@ -2177,19 +2187,20 @@ body {
 	flex: 1 1 auto;
 }
 
+/* Same box as the Action name input above it; only the font stays mono. */
 .eb-json-sample .eb-textarea {
 	flex: 1 1 auto;
 	min-height: 150px;
 	border-color: var(--border);
-	border-radius: 12px;
-	background: var(--code);
-	color: var(--code-text2);
-	caret-color: var(--code-text);
+	border-bottom-color: var(--interactive-stroke);
+	border-radius: var(--r-control);
+	background: var(--surface2);
+	color: var(--text);
 	font: 12px/1.6 var(--eb-mono);
 }
 
 .eb-json-sample .eb-textarea::placeholder {
-	color: var(--code-text3);
+	color: var(--text3);
 }
 
 .eb-json-parse-row,
@@ -2230,11 +2241,17 @@ body {
 	gap: 8px;
 	padding: 10px 12px;
 	border: 1px solid var(--border);
-	border-radius: 10px;
+	border-radius: var(--r-card);
 	background: var(--code);
 	color: var(--code-text);
 	--accent: var(--code-accent);
 	--focus-ring: 0 0 0 2px var(--code-accent);
+	/* Syntax colors (.fn/.str/.num/.sym) re-pointed at the well's palette:
+	   blue functions, coral strings, amber numbers, muted symbols. */
+	--code-fn: var(--code-info);
+	--danger: var(--code-danger);
+	--warn: var(--code-warn);
+	--text3: var(--code-text3);
 }
 
 .eb-json-copy-block-label {
@@ -2262,19 +2279,14 @@ body {
 	border-radius: 0;
 	background: transparent;
 	color: var(--code-text);
-	font-size: 12px;
+	font-size: 13px;
 	line-height: 1.6;
 }
 
-/* The mock shows plain expression text inside the well. */
-.eb-json-copy-block .eb-preview span {
-	color: inherit;
-	font-weight: inherit;
-}
-
+/* Styled like the Source help text (.eb-json-help), in the well's muted tone. */
 .eb-json-copy-block .eb-json-note {
-	color: var(--code-warn);
-	font-size: 11px;
+	color: var(--code-text3);
+	font-size: 12px;
 	font-weight: 400;
 }
 
@@ -2294,16 +2306,15 @@ body {
 	color: var(--code-text);
 }
 
-/* The well is dark in both themes, so one filled blue action reads in either. */
+/* A soft blue tint rather than a white fill, so Copy reads as the action
+   without glaring against the dark well in either palette. */
 .eb-json-copy-block .eb-copy-action-btn.is-primary {
-	border-color: var(--code-action);
-	background: var(--code-action);
-	color: var(--code-text);
+	background: color-mix(in srgb, var(--code-info) 22%, transparent);
+	color: var(--code-info);
 }
 
 .eb-json-copy-block .eb-copy-action-btn.is-primary:hover {
-	border-color: var(--code-action-hover);
-	background: var(--code-action-hover);
+	background: color-mix(in srgb, var(--code-info) 32%, transparent);
 	color: var(--code-text);
 }
 
@@ -2312,6 +2323,17 @@ body {
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: 10px;
+}
+
+.eb-json-loop-field .eb-input {
+	border-color: var(--code-seg-selected);
+	border-radius: var(--r-control);
+	background: var(--code-seg-track);
+	color: var(--code-text);
+}
+
+.eb-json-loop-field .eb-input::placeholder {
+	color: var(--code-text3);
 }
 
 .eb-json-loop-field .eb-label {
@@ -2362,7 +2384,7 @@ body {
 	max-width: 260px;
 	padding: 8px 10px;
 	border: 1px solid var(--border);
-	border-radius: var(--r-lg);
+	border-radius: var(--r-card);
 	background: var(--surface);
 	box-shadow: var(--shadow-md);
 	font-size: 11.5px;
@@ -2407,7 +2429,7 @@ body {
 .eb-json-hint {
 	margin: 0;
 	padding: 10px 12px;
-	border-radius: var(--r-lg);
+	border-radius: var(--r-card);
 	color: var(--text);
 	font-size: 0.8rem;
 	overflow-wrap: anywhere;
@@ -2487,13 +2509,13 @@ body {
 .eb-choice-cards {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 4px;
 }
 
 .eb-choice-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 6px;
+	gap: 4px;
 }
 
 .eb-choice-cards [role="radio"],
@@ -2503,9 +2525,9 @@ body {
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 4px;
-	padding: 8px 12px;
+	padding: 6px 10px;
 	border: 1px solid var(--border);
-	border-radius: var(--r-lg);
+	border-radius: var(--r-control);
 	background: var(--surface);
 	color: var(--text);
 	text-align: left;
@@ -2527,7 +2549,7 @@ body {
 .eb-choice-grid [aria-checked="true"]:hover,
 .eb-root-grid [aria-checked="true"],
 .eb-root-grid [aria-checked="true"]:hover {
-	border-color: var(--accent);
+	border-color: var(--accent-line);
 	background: var(--accent-soft);
 }
 
@@ -2542,7 +2564,7 @@ body {
 .eb-choice-grid .eb-choice-detail,
 .eb-root-grid .eb-choice-detail {
 	font-family: var(--eb-mono);
-	font-size: 10px;
+	font-size: 9px;
 	color: var(--code-fn);
 	overflow-wrap: anywhere;
 }
@@ -2627,11 +2649,11 @@ body {
 	align-items: center;
 	gap: 4px;
 	flex: 0 0 auto;
-	min-height: 32px;
+	min-height: 28px;
 	min-width: max-content;
 	padding: 0 10px 0 calc(10px + (var(--eb-tree-level) - 1) * 9px);
 	border: 1px solid transparent;
-	border-radius: var(--r-sm);
+	border-radius: var(--r-control);
 	color: var(--text);
 	font-size: 12.5px;
 	white-space: nowrap;
@@ -2657,7 +2679,7 @@ body {
 	width: 3px;
 	height: 20px;
 	border-radius: 2px;
-	background: var(--accent);
+	background: var(--accent-line);
 	content: "";
 }
 
@@ -2730,30 +2752,95 @@ body {
 	text-overflow: ellipsis;
 }
 
-/* Each type gets its own hue; null keeps the neutral default. */
-.eb-field-type-badge.choice,
-.eb-field-type-badge.object {
-	--badge: var(--violet);
+/* Payload header toggle "Left": the value follows its key, as before the mock. */
+.eb-json-payload.is-values-left .eb-tree-preview {
+	flex: 0 1 auto;
+	padding-left: 4px;
+	text-align: left;
 }
 
+/* Compact Left / Right segmented pair in the Payload header. */
+.eb-json-value-align {
+	display: inline-flex;
+	gap: 2px;
+	padding: 2px;
+	border-radius: var(--r-control);
+	background: var(--seg-track);
+	flex: 0 0 auto;
+}
+
+.eb-json-value-align [role="radio"] {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 6px;
+	border: 0;
+	border-radius: var(--r-inset);
+	background: transparent;
+	color: var(--text3);
+	font: inherit;
+	font-size: 11px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.eb-json-value-align .eb-choice-icon,
+.eb-json-value-align svg {
+	display: block;
+	width: 14px;
+	height: 14px;
+}
+
+.eb-json-value-align [role="radio"]:hover {
+	color: var(--text);
+}
+
+.eb-json-value-align [aria-checked="true"] {
+	background: var(--seg-selected);
+	color: var(--text);
+}
+
+.eb-json-value-align [role="radio"]:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+
+/* Mockup: badges are a soft tint with toned text; .eb-type glyphs keep the solid fill. */
+.eb-field-type-badge.choice {
+	background: var(--accent-soft);
+	color: var(--accent);
+}
+
+/* Graphite's accent is grey, so containers take the reference blue of the
+   payload root instead (--code-fn is the contrast-checked text tone). */
+.eb-field-type-badge.object,
 .eb-field-type-badge.array {
-	--badge: var(--accent-2);
+	background: color-mix(in srgb, var(--accent-2) 14%, transparent);
+	color: var(--code-fn);
 }
 
 .eb-field-type-badge.string {
-	--badge: var(--good);
+	background: var(--good-soft);
+	color: var(--good);
 }
 
 .eb-field-type-badge.number {
-	--badge: var(--warn);
+	background: var(--warn-soft);
+	color: var(--warn);
 }
 
 .eb-field-type-badge.dateTime {
-	--badge: var(--danger);
+	background: var(--danger-soft);
+	color: var(--danger);
 }
 
 .eb-field-type-badge.boolean {
-	--badge: var(--info);
+	background: var(--info-soft);
+	color: var(--info);
+}
+
+.eb-field-type-badge.null {
+	background: var(--surface3);
+	color: var(--text3);
 }
 
 /* Reference card (FR-043 to FR-046, FR-050 to FR-054) */
