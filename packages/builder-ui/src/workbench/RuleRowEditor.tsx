@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import {
   Menu,
   MenuItemCheckbox,
@@ -7,12 +7,13 @@ import {
   MenuTrigger,
 } from '@fluentui/react-components';
 import { wrapperChainContract, type FieldDefinition } from '@ryanmakes/eb_engine';
-import { chainYieldsNumber, coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
+import { chainYieldsNumber, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 import { ConditionDragHandle } from './ConditionDragHandle';
 import { ConditionMoveButtons } from './ConditionMoveButtons';
 import { listGroupMoveTargets } from './dragDropModel';
+import { ValueEditor } from './ValueEditor';
 import { WRAPPERS } from './wrappers';
 
 export function RuleRowEditor({
@@ -35,7 +36,6 @@ export function RuleRowEditor({
   const fieldLabel = field?.label ?? rule.fieldId;
   const valueMissing = rule.value === undefined || rule.value === null || rule.value === '';
   const hasError = valueMissing && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
-  const [rawValue, setRawValue] = useState(false);
   const appliedWraps = rule.wrappers ?? [];
   const nodeLabel = field?.label ?? `unknown field ${rule.fieldId}`;
   const hasReorderMetadata =
@@ -210,81 +210,14 @@ export function RuleRowEditor({
         ))}
       </select>
       <div className="eb-value-wrap">
-        {field.options?.length && !rawValue ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? field.options[0].value)}
-            onChange={(event) => onUpdate(rule.id, { value: Number(event.target.value) })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            {field.options.map((option) => (
-              <option key={option.value} value={String(option.value)}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        ) : field.options?.length && rawValue ? (
-          <input
-            className="eb-input"
-            type="number"
-            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value === '' ? null : Number(event.target.value) })}
-            onClick={(e) => e.stopPropagation()}
-            placeholder="Raw value"
-            aria-label={`Raw value for ${fieldLabel}`}
-          />
-        ) : field.choices?.length ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? '')}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            {field.choices.map((choice) => (
-              <option key={choice} value={choice}>
-                {choice}
-              </option>
-            ))}
-          </select>
-        ) : field.type === 'boolean' ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? false)}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value === 'true' })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
-        ) : (
-          <input
-            className="eb-input"
-            type={numericValue ? 'number' : 'text'}
-            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
-            onChange={(event) => onUpdate(rule.id, { value: coerceValueForField(event.target.value, numericValue ? { ...field, type: 'number' } : field) })}
-            onClick={(e) => e.stopPropagation()}
-            placeholder={hasError ? 'Enter a value' : 'Value'}
-            aria-label={`Value for ${fieldLabel}`}
-          />
-        )}
-        {field.options?.length ? (
-          <button
-            type="button"
-            className="eb-icon-btn"
-            aria-label="Toggle raw value"
-            title="Toggle raw value"
-            aria-pressed={rawValue}
-            onClick={(e) => {
-              e.stopPropagation();
-              setRawValue((current) => !current);
-            }}
-          >
-            #
-          </button>
-        ) : null}
+        <ValueEditor
+          field={field}
+          rule={rule}
+          fieldLabel={fieldLabel}
+          hasError={hasError}
+          numericValue={numericValue}
+          onUpdate={onUpdate}
+        />
         {appliedWraps.length ? (
           <span className="eb-wrap-chip" aria-label={`Applied wraps: ${appliedWraps.join(', ')}`}>
             <WrapIcon />
