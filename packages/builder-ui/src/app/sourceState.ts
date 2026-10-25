@@ -13,21 +13,6 @@ import type {
 import { deleteNode } from '../composer/queryActions';
 import { readCache, writeCache } from '../importExport/metadataCache';
 
-/** The runtime view of the active source: the descriptor plus its resolved fields. */
-export interface ActiveSource {
-  descriptor: DataSourceDescriptor;
-  fields: FieldDefinition[];
-}
-
-const EMPTY_SOURCE: ActiveSource = {
-  descriptor: { kind: 'unknown' },
-  fields: [],
-};
-
-export function emptySource(): ActiveSource {
-  return EMPTY_SOURCE;
-}
-
 /** Apply a discovered/imported field set to a document, recording provenance. */
 export function applySource(
   document: QueryDocument,
@@ -168,7 +153,6 @@ export interface NewFieldInput {
   choices?: string[];
   nullable?: boolean;
   idOverride?: string;
-  pathOverride?: string[];
 }
 
 /** Build a user `FieldDefinition`; returns null if label is empty or the id collides. */
@@ -183,7 +167,7 @@ export function buildUserField(input: NewFieldInput, existing: FieldDefinition[]
     id,
     label,
     type: input.type,
-    path: input.pathOverride?.length ? input.pathOverride : [id],
+    path: [id],
     source: 'user',
   };
   if (input.type === 'choice' && input.choices?.length) field.choices = input.choices;

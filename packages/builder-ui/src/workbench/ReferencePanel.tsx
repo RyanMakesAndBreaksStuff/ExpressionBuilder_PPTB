@@ -8,11 +8,9 @@ import {
 	fixedPositionNote,
 	loopItemExpression,
 	loopItemsExpression,
-	rootExpression,
 	type CopyFormat,
 	type JsonReferenceState,
 } from "./jsonReferenceState";
-import { segmentLabel } from "./payloadTreeModel";
 
 type InfoKey = "bare" | "item" | "items";
 

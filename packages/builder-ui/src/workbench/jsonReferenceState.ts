@@ -297,21 +297,6 @@ export function rootExpression(
 	return formatPayloadRoot(referenceRoot(state, shape, actionName));
 }
 
-/** Root expression for any explicit outputFrom/shape combination. */
-export function rootExpressionFor(
-	state: JsonReferenceState,
-	outputFrom: OutputFrom,
-	shape: PayloadShape,
-): string {
-	const actionName =
-		outputFrom === "action" && state.actionName.trim() === ""
-			? ACTION_NAME_PLACEHOLDER
-			: state.actionName;
-	return formatPayloadRoot(
-		referenceRoot({ ...state, outputFrom }, shape, actionName),
-	);
-}
-
 export function canCopy(state: JsonReferenceState): boolean {
 	return state.parsed !== null && !isActionNameMissing(state);
 }

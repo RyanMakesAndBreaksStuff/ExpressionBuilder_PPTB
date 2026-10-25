@@ -2,7 +2,6 @@ import {
   formatExpression,
   OPERATORS_BY_FIELD_TYPE,
   wrapperChainContract,
-  type ExpressionMode,
   type ExpressionNode,
   type FieldDefinition,
   type FormatDiagnostic,
@@ -127,10 +126,6 @@ export function coerceValueForField(value: string, field?: FieldDefinition): Que
   }
 
   return value;
-}
-
-export function modeLabel(mode: ExpressionMode): string {
-  return mode === 'triggerCondition' ? 'Trigger condition' : 'Filter array';
 }
 
 export function getDefaultValue(field?: FieldDefinition): QueryRule['value'] {
