@@ -36,7 +36,7 @@ export interface QueryRule {
   fieldId: string;
   operator: string;
   value?: string | number | boolean | null;
-  /** Ordered function wrappers applied to BOTH operands (e.g. ['trim','toLower']). */
+  /** Ordered function wrappers (e.g. ['trim','toLower']). Text wrappers (toLower/toUpper/trim) apply to BOTH operands; length/coalesce apply to the field side only. */
   wrappers?: string[];
 }
 

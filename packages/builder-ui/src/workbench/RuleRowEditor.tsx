@@ -7,7 +7,7 @@ import {
   MenuTrigger,
 } from '@fluentui/react-components';
 import { wrapperChainContract, type FieldDefinition } from '@ryanmakes/eb_engine';
-import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
+import { chainYieldsNumber, coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 import { ConditionDragHandle } from './ConditionDragHandle';
@@ -146,6 +146,7 @@ export function RuleRowEditor({
     ));
   }
 
+  const numericValue = field.type === 'number' || chainYieldsNumber(field, appliedWraps);
   const operators = getOperatorsForField(field, appliedWraps);
   // An imported operator outside the chain contract stays selectable so the user can see and correct it.
   const operatorOptions = operators.includes(rule.operator) ? operators : [rule.operator, ...operators];
@@ -261,9 +262,9 @@ export function RuleRowEditor({
         ) : (
           <input
             className="eb-input"
-            type={field.type === 'number' ? 'number' : 'text'}
+            type={numericValue ? 'number' : 'text'}
             value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
-            onChange={(event) => onUpdate(rule.id, { value: coerceValueForField(event.target.value, field) })}
+            onChange={(event) => onUpdate(rule.id, { value: coerceValueForField(event.target.value, numericValue ? { ...field, type: 'number' } : field) })}
             onClick={(e) => e.stopPropagation()}
             placeholder={hasError ? 'Enter a value' : 'Value'}
             aria-label={`Value for ${fieldLabel}`}

@@ -47,7 +47,9 @@ export function queryNodeToAst(node: QueryNode, fields: FieldDefinition[]): Expr
   const field = findField(fields, node.fieldId);
   const wrappers = node.wrappers ?? [];
   const left = applyWrappers({ kind: 'field', fieldId: node.fieldId }, wrappers);
-  const right = needsValue(node.operator) ? applyWrappers(literalForRule(node, field), wrappers) : undefined;
+  const right = needsValue(node.operator)
+    ? applyWrappers(literalForRule(node, field), wrappers.filter((name) => TEXT_WRAPPERS.has(name)))
+    : undefined;
 
   return {
     kind: 'rule',
@@ -55,6 +57,14 @@ export function queryNodeToAst(node: QueryNode, fields: FieldDefinition[]): Expr
     left,
     right,
   };
+}
+
+// Only these mirror onto the right operand; length/coalesce describe the field, not the typed value.
+const TEXT_WRAPPERS: ReadonlySet<string> = new Set(['toLower', 'toUpper', 'trim']);
+
+/** True when the wrapper chain turns a non-number field into a number (e.g. length), so the right literal is numeric. */
+export function chainYieldsNumber(field: FieldDefinition | undefined, wrappers: readonly string[]): boolean {
+  return !!field && field.type !== 'number' && wrapperChainContract(field, wrappers).outputType === 'number';
 }
 
 function applyWrappers(operand: ExpressionNode, wrappers: string[]): ExpressionNode {
@@ -145,7 +155,11 @@ export function getDefaultValue(field?: FieldDefinition): QueryRule['value'] {
 }
 
 function literalForRule(rule: QueryRule, field?: FieldDefinition): LiteralNode {
-  const value: LiteralNode['value'] = rule.value === undefined ? defaultValueForField(field) : rule.value;
+  let value: LiteralNode['value'] = rule.value === undefined ? defaultValueForField(field) : rule.value;
+  // Legacy saved rules stored the length comparand as a string ('4').
+  if (typeof value === 'string' && value.trim() !== '' && chainYieldsNumber(field, rule.wrappers ?? []) && !Number.isNaN(Number(value))) {
+    value = Number(value);
+  }
 
   return {
     kind: 'literal',

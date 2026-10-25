@@ -125,4 +125,9 @@ describe('RuleRowEditor', () => {
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
     expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['length'], operator: 'equals' });
   });
+
+  it('renders a number input for a length rule on a string field', () => {
+    renderRow({ ...baseRule, operator: 'greater', value: 4, wrappers: ['length'] });
+    expect(screen.getByLabelText('Value for Name')).toHaveAttribute('type', 'number');
+  });
 });
