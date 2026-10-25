@@ -78,16 +78,12 @@ describe('PPTB adapter discovery', () => {
     expect(showNotification).toHaveBeenCalled();
   });
 
-  it('recovers a rejected primary attribute fetch as an empty field list', async () => {
+  it('rejects when the primary attribute fetch fails, without notifying', async () => {
     const showNotification = vi.fn().mockResolvedValue(undefined);
     const getEntityRelatedMetadata = vi.fn().mockRejectedValue(new Error('primary metadata unavailable'));
     const adapter = createPptbAdapter({ utils: { showNotification } }, { getEntityRelatedMetadata });
-    await expect(adapter.discoverFields?.({ table: 'account' })).resolves.toEqual({ fields: [] });
-    expect(showNotification).toHaveBeenCalledWith({
-      title: 'Error',
-      body: 'Could not load fields for account.',
-      type: 'error',
-    });
+    await expect(adapter.discoverFields?.({ table: 'account' })).rejects.toThrow('primary metadata unavailable');
+    expect(showNotification).not.toHaveBeenCalled();
   });
 
   it('maps Lookup, Customer, and Owner payload leaves without changing id or logicalName', async () => {

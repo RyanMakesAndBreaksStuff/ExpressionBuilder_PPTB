@@ -270,17 +270,12 @@ export function createPptbAdapter(
         return { fields: [] };
       }
 
-      let attrs: DataverseAttributeMetadata[];
-      try {
-        const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
-          | { value?: DataverseAttributeMetadata[] }
-          | DataverseAttributeMetadata[]
-          | undefined;
-        attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
-      } catch {
-        await adapter.notify(`Could not load fields for ${table}.`, 'error');
-        return { fields: [] };
-      }
+      // A rejected fetch must reach the caller (reported once there), not become `fields: []`.
+      const raw = (await dv.getEntityRelatedMetadata(table, 'Attributes')) as
+        | { value?: DataverseAttributeMetadata[] }
+        | DataverseAttributeMetadata[]
+        | undefined;
+      const attrs = Array.isArray(raw) ? raw : (raw?.value ?? []);
 
       await enrichOptionSets(dv, table, attrs);
       const fields = mapDataverseAttributes(attrs);

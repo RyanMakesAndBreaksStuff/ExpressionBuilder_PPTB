@@ -70,8 +70,11 @@ export async function discoverCached(
   }
   const result = await discoverThroughAdapter(adapter, table, includeRelated);
   await assertSameScope();
-  await writeCache(settings, scope, table, includeRelated, result.fields);
-  await assertSameScope();
+  // Never cache an empty result: it would pin a transient failure / no-connection placeholder.
+  if (result.fields.length > 0) {
+    await writeCache(settings, scope, table, includeRelated, result.fields);
+    await assertSameScope();
+  }
   return result.fields;
 }
 

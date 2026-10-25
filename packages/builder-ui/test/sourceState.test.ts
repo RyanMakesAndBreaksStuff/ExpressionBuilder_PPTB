@@ -79,6 +79,19 @@ describe('sourceState', () => {
       expect(a.discoverFields).toHaveBeenCalledTimes(1);
     });
 
+    it('never caches an empty result; the next call discovers again and caches', async () => {
+      const settings = sharedStore();
+      const set = vi.spyOn(settings, 'set');
+      const a = adapterFor(() => 'envA', 'a');
+      a.discoverFields.mockResolvedValueOnce({ fields: [] });
+      expect(await discoverCached(a, settings, 'account', false, false)).toEqual([]);
+      expect(set).not.toHaveBeenCalled();
+      expect(await discoverCached(a, settings, 'account', false, false)).toEqual([f('a')]);
+      expect(set).toHaveBeenCalledTimes(1);
+      expect(await discoverCached(a, settings, 'account', false, false)).toEqual([f('a')]);
+      expect(a.discoverFields).toHaveBeenCalledTimes(2);
+    });
+
     it('refresh bypasses the cache within scope', async () => {
       const settings = sharedStore();
       const a = adapterFor(() => 'envA', 'a');
