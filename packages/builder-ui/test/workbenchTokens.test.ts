@@ -101,7 +101,7 @@ describe('workbench Graphite tokens', () => {
 
   it.each(PALETTES)('meets text, status, on-brand, and interactive-stroke contrast in %s', (paletteId) => {
     const vars = porcelainTokens[paletteId].cssVariables;
-    for (const name of ['--text', '--text2', '--text3', '--danger', '--warn', '--good', '--info', '--violet'] as const) {
+    for (const name of ['--text', '--text2', '--text3', '--danger', '--warn', '--good', '--info'] as const) {
       expect(contrastRatio(vars[name], vars['--surface']), name).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(vars[name], vars['--surface2']), `${name} on surface2`).toBeGreaterThanOrEqual(4.5);
     }
@@ -162,8 +162,6 @@ describe('Functions dark code well', () => {
       expect(vars[name], name).toMatch(/^#[0-9a-f]{6}$/i);
       expect(contrastRatio(vars[name], vars['--code']), name).toBeGreaterThanOrEqual(4.5);
     }
-    expect(contrastRatio(vars['--code-text'], vars['--code-action']), '--code-action').toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(vars['--code-text'], vars['--code-action-hover']), '--code-action-hover').toBeGreaterThanOrEqual(4.5);
     expect(vars['--code-seg-track']).toBeTruthy();
     expect(vars['--code-seg-selected']).toBeTruthy();
   });

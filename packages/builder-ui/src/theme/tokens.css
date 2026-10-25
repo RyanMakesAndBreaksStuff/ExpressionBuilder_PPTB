@@ -24,19 +24,8 @@ body {
 		"Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas,
 		monospace;
 	--t-caption2: 11px;
-	--t-caption1: 12px;
-	--t-body1: 14px;
-	--t-body2: 16px;
-	--t-subtitle2: 16px;
-	--t-subtitle1: 20px;
-	--t-title3: 24px;
-	--t-title2: 28px;
 	--lh-tight: 1.2;
-	--lh-body: 1.43;
 	--r-sm: 10px;
-	--r-md: 12px;
-	--r-lg: 14px;
-	--r-xl: 16px;
 	--r-circ: 999px;
 	--r-panel: 20px;
 	/* Flat scale for the header and JSON reference (matches Functions):
@@ -62,7 +51,6 @@ body {
 	overflow: hidden;
 	font-family: var(--eb-font);
 	color: var(--text);
-	background: var(--bg);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
@@ -73,25 +61,10 @@ body {
 }
 
 .eb-root[data-theme="light"] {
-	--bg-canvas: var(--bg);
-	--bg1: var(--surface);
-	--bg1-hover: var(--surface2);
-	--bg1-pressed: var(--surface3);
 	--bg2: var(--surface2);
-	--bg3: var(--surface3);
-	--bg-sel: var(--accent-soft);
-	--stroke1: var(--border);
-	--stroke2: var(--border);
-	--stroke-acc: var(--interactive-stroke);
 	--fg1: var(--text);
-	--fg2: var(--text2);
 	--fg3: var(--text3);
 	--fg-onbrand: var(--accent-ink);
-	--brand: var(--accent);
-	--brand-hover: var(--accent-strong);
-	--brand-pressed: var(--accent-strong);
-	--brand-fg: var(--accent);
-	--brand-subtle: var(--accent-soft);
 	--danger-bg: var(--danger-soft);
 	--danger-stroke: var(--danger);
 	--warn-bg: var(--warn-soft);
@@ -112,25 +85,10 @@ body {
 }
 
 .eb-root[data-theme="dark"] {
-	--bg-canvas: var(--bg);
-	--bg1: var(--surface);
-	--bg1-hover: var(--surface2);
-	--bg1-pressed: var(--bg2);
 	--bg2: var(--surface2);
-	--bg3: var(--surface3);
-	--bg-sel: var(--accent-soft);
-	--stroke1: var(--border);
-	--stroke2: var(--border);
-	--stroke-acc: var(--interactive-stroke);
 	--fg1: var(--text);
-	--fg2: var(--text2);
 	--fg3: var(--text3);
 	--fg-onbrand: var(--accent-ink);
-	--brand: var(--accent);
-	--brand-hover: var(--accent-strong);
-	--brand-pressed: var(--accent-strong);
-	--brand-fg: var(--accent);
-	--brand-subtle: var(--accent-soft);
 	--danger-bg: var(--danger-soft);
 	--danger-stroke: var(--danger);
 	--warn-bg: var(--warn-soft);
@@ -147,11 +105,6 @@ body {
 	--accent-line: color-mix(in srgb, var(--accent) 55%, var(--surface));
 	--accent-fill: color-mix(in srgb, var(--accent) 24%, var(--surface));
 	--accent-fill-ink: var(--text);
-}
-
-.eb-root {
-	--eb-left-dock-width: 286px;
-	--eb-right-dock-width: 330px;
 }
 
 .eb-root button,
@@ -923,10 +876,6 @@ body {
 	font-size: 12px;
 }
 
-.eb-rule-row-grid {
-	display: contents;
-}
-
 .eb-menu-item-label {
 	display: block;
 }
@@ -1079,13 +1028,6 @@ body {
 
 .eb-type.boolean {
 	background: var(--info);
-}
-
-/* Wrap Grid */
-.eb-wrap-grid {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
 }
 
 .eb-wrap-chip {
@@ -1504,26 +1446,6 @@ body {
 	border-color: var(--danger-stroke);
 }
 
-.eb-diag-good {
-	background: var(--good-bg);
-	border-color: var(--good-stroke);
-}
-
-.eb-diag-warn {
-	background: var(--warn-bg);
-	border-color: var(--warn-stroke);
-}
-
-.eb-diag-info {
-	background: var(--info-bg);
-	border-color: var(--info-stroke);
-}
-
-.eb-diag-error {
-	background: var(--danger-bg);
-	border-color: var(--danger-stroke);
-}
-
 .eb-diag-title {
 	font-size: 0.88rem;
 	font-weight: 700;
@@ -1589,55 +1511,6 @@ body {
 	font-size: 0.82rem;
 	line-height: 1.55;
 	color: var(--text2);
-}
-
-/* Validation */
-.eb-validation {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	padding: 12px 14px;
-}
-
-/* Import/Export Panel */
-.eb-import-export-panel {
-	padding: 14px;
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-}
-
-.eb-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-/* Toast */
-.eb-toast {
-	position: fixed;
-	left: 50%;
-	bottom: 20px;
-	transform: translateX(-50%) translateY(12px);
-	padding: 12px 16px;
-	border-radius: 14px;
-	border: 1px solid var(--border);
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: var(--shadow-md);
-	opacity: 0;
-	pointer-events: none;
-	transition:
-		opacity var(--duration-fast) ease,
-		transform var(--duration-fast) ease;
-	font-size: 0.84rem;
-	font-weight: 700;
-	z-index: 100;
-}
-
-.eb-toast.on {
-	opacity: 1;
-	transform: translateX(-50%) translateY(0);
 }
 
 /* Screen reader only */
@@ -1707,53 +1580,6 @@ body {
 /* Clip content inside accordion panels to prevent field rows from bleeding */
 .eb-accordion-panel-content {
 	overflow: hidden;
-}
-
-.eb-toolbox-actions {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-
-.eb-master {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-.eb-master-actions,
-.eb-command-actions,
-.eb-button-row,
-.eb-chip-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px;
-}
-
-.eb-condition-card,
-.eb-inspector {
-	padding: 14px;
-}
-
-.eb-choice-row {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-}
-
-.eb-import-export {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	margin-top: 12px;
-}
-
-.eb-import-diagnostics {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
 }
 
 /* Beats Fluent TabList clipping on a 375px dialog. Wrap misplaces the
@@ -2213,14 +2039,6 @@ body {
 	color: var(--text3);
 }
 
-.eb-json-parse-row,
-.eb-json-copy-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 10px;
-}
-
 .eb-json-copy-blocks {
 	display: flex;
 	flex-direction: column;
@@ -2228,19 +2046,6 @@ body {
 }
 
 /* Layout C section header */
-.eb-json-section-label {
-	display: block;
-	margin-top: 4px;
-	font-size: 9px;
-	font-weight: 800;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
-	color: var(--text3);
-}
-
-.eb-json-section-label:first-child {
-	margin-top: 0;
-}
 
 /* Each copy block is an inset code well (mock image 6); colors come from the
    code-well tokens so it reads the same in both palettes. */
@@ -2406,23 +2211,16 @@ body {
 	line-height: 1.5;
 }
 
-.eb-json-status,
-.eb-json-copy-status {
+.eb-json-status {
 	font-size: 12.5px;
 	font-weight: 700;
 }
 
-.eb-json-copy-status {
-	margin-left: auto;
-}
-
-.eb-json-status.is-muted,
-.eb-json-copy-status.is-muted {
+.eb-json-status.is-muted {
 	color: var(--text3);
 }
 
-.eb-json-status.is-good,
-.eb-json-copy-status.is-good {
+.eb-json-status.is-good {
 	color: var(--good);
 }
 
@@ -2430,8 +2228,7 @@ body {
 	color: var(--warn);
 }
 
-.eb-json-status.is-danger,
-.eb-json-copy-status.is-danger {
+.eb-json-status.is-danger {
 	color: var(--danger);
 }
 
@@ -2516,20 +2313,6 @@ body {
 	color: var(--accent-ink);
 }
 
-.eb-choice-cards {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.eb-choice-grid {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 4px;
-}
-
-.eb-choice-cards [role="radio"],
-.eb-choice-grid [role="radio"],
 .eb-root-grid [role="radio"] {
 	display: flex;
 	flex-direction: column;
@@ -2547,31 +2330,21 @@ body {
 		background var(--duration-fast) ease;
 }
 
-.eb-choice-cards [role="radio"]:hover,
-.eb-choice-grid [role="radio"]:hover,
 .eb-root-grid [role="radio"]:hover {
 	border-color: var(--border-strong);
 }
 
-.eb-choice-cards [aria-checked="true"],
-.eb-choice-cards [aria-checked="true"]:hover,
-.eb-choice-grid [aria-checked="true"],
-.eb-choice-grid [aria-checked="true"]:hover,
 .eb-root-grid [aria-checked="true"],
 .eb-root-grid [aria-checked="true"]:hover {
 	border-color: var(--accent-line);
 	background: var(--accent-soft);
 }
 
-.eb-choice-cards .eb-choice-label,
-.eb-choice-grid .eb-choice-label,
 .eb-root-grid .eb-choice-label {
 	font-size: 0.85rem;
 	font-weight: 700;
 }
 
-.eb-choice-cards .eb-choice-detail,
-.eb-choice-grid .eb-choice-detail,
 .eb-root-grid .eb-choice-detail {
 	font-family: var(--eb-mono);
 	font-size: 9px;
@@ -2594,8 +2367,6 @@ body {
 	white-space: nowrap;
 }
 
-.eb-choice-cards code,
-.eb-choice-grid code,
 .eb-root-grid code {
 	font: inherit;
 }
@@ -2854,54 +2625,6 @@ body {
 }
 
 /* Reference card (FR-043 to FR-046, FR-050 to FR-054) */
-.eb-json-summary {
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	font-family: var(--eb-mono);
-}
-
-.eb-json-breadcrumb ol {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 4px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.eb-json-breadcrumb li {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	min-width: 0;
-}
-
-.eb-json-crumb {
-	padding: 4px 12px;
-	border-radius: var(--r-circ);
-	background: var(--warn-soft);
-	color: color-mix(in srgb, var(--warn) 65%, var(--text));
-	font-family: var(--eb-mono);
-	font-size: 13px;
-	overflow-wrap: anywhere;
-}
-
-.eb-json-crumb.is-root {
-	background: var(--accent-soft);
-	color: color-mix(in srgb, var(--accent) 65%, var(--text));
-}
-
-.eb-json-crumb-separator {
-	color: var(--text3);
-}
-
-.eb-json-placeholder {
-	color: var(--text3);
-	font-family: var(--eb-font);
-}
 
 .eb-json-note {
 	margin: 0;
@@ -2911,10 +2634,6 @@ body {
 }
 
 /* FR-052: not operable, and shown at 50% opacity. */
-.eb-json-copy-row .eb-action-btn:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
 
 /* Stacked (FR-092): the JSON panes stack with Source first, and the
    workspace scrolls as one. */

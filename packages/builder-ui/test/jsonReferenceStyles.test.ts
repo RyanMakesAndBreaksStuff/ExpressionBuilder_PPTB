@@ -68,10 +68,6 @@ describe('JSON reference styles', () => {
     expect(rule(css, '.eb-root[data-theme="dark"]')).toMatch(/--code-fn:\s*var\(--accent-2\);/);
   });
 
-  it('shows a disabled Copy at 50% opacity (FR-052)', () => {
-    expect(rule(css, '.eb-json-copy-row .eb-action-btn:disabled')).toMatch(/opacity:\s*0\.5;/);
-  });
-
   it('animates only through the shared duration token, which reduced motion shortens (FR-093)', () => {
     expect(rule(css, '.eb-tree-chevron')).toMatch(/transition:\s*transform var\(--duration-fast\) ease;/);
   });
