@@ -235,14 +235,6 @@ export function createPptbAdapter(
         delete rest[key];
         await api?.settings?.setAll?.(rest);
       },
-
-      async getAll() {
-        return (await api?.settings?.getAll?.()) ?? null;
-      },
-
-      async setAll(values) {
-        await api?.settings?.setAll?.(values);
-      },
     },
 
     async getTables() {

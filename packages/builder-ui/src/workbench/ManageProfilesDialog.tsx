@@ -21,7 +21,6 @@ import {
   listProfiles,
   loadProfile,
   saveProfile,
-  sweepOrphanedProfiles,
 } from '../importExport/fieldProfiles';
 
 export interface ManageProfilesDialogProps {
@@ -140,12 +139,8 @@ function ManageProfilesDialogBody({
   };
 
   useEffect(() => {
-    // Sweep once per dialog open (this component is mounted fresh each time
-    // the dialog opens — see the comment above) rather than on every
-    // listProfiles() call, so the rare cleanup write doesn't run on every
-    // list read or app init.
     const generationRef = listGeneration;
-    void sweepOrphanedProfiles(settings).then(refresh, refresh);
+    void refresh();
     return () => {
       generationRef.current++;
     };
