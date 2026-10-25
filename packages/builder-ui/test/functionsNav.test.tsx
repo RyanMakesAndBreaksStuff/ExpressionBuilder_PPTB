@@ -196,21 +196,18 @@ describe('FunctionsNav', () => {
     expect(screen.getByText('Parse a sample in JSON reference')).toBeInTheDocument();
   });
 
-  it('renders Parsed Value rows with their expression as the accessible description', async () => {
-    const user = userEvent.setup();
+  it('renders Parsed Value rows with their expression as the accessible description', () => {
     renderNav();
     expect(screen.getByRole('button', { name: 'Name' }))
       .toHaveAccessibleDescription("triggerBody()?['Name']");
-    const summary = screen.getByText('tags[0]', { selector: 'summary' });
-    await user.click(summary);
-    const leaf = summary.parentElement!.querySelector<HTMLButtonElement>('.eb-pv-row')!;
-    expect(leaf).toHaveAccessibleDescription("triggerBody()?['tags'][0]");
+    expect(screen.getByRole('button', { name: 'tags[0]' }))
+      .toHaveAccessibleDescription("triggerBody()?['tags'][0]");
   });
 
   it('starts every item closed and toggles sibling and nested items independently', async () => {
     const user = userEvent.setup();
     renderNav({ parsedValue: buildParsedValueList(
-      [fixture({ rows: [{ Name: 'Ada', tags: ['a'] }, { Name: 'Grace' }] }, triggerBody)], '',
+      [fixture({ rows: [{ Name: 'Ada', tags: [{ v: 'a' }] }, { Name: 'Grace' }] }, triggerBody)], '',
     ) });
     const first = screen.getByText('rows[0]', { selector: 'summary' });
     const second = screen.getByText('rows[1]', { selector: 'summary' });

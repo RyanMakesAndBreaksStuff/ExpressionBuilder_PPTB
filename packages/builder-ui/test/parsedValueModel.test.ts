@@ -104,7 +104,15 @@ describe('parsed value model', () => {
     expect(buildParsedValueList(sources, '').sources[0].entries).toHaveLength(2);
   });
 
-  it('groups nested, primitive and empty array items without grouping string keys', () => {
+  it('keeps primitive array elements as plain rows without wrapper items', () => {
+    const list = buildParsedValueList(fixture({ tags: ['a', 'b'] }, triggerBody), '');
+    expect(list.sources[0].entries).toMatchObject([
+      { kind: 'row', row: { label: 'tags[0]', path: ['tags', 0] } },
+      { kind: 'row', row: { label: 'tags[1]', path: ['tags', 1] } },
+    ]);
+  });
+
+  it('groups nested array items, leaves primitive and empty elements plain, and ignores string keys', () => {
     const list = buildParsedValueList(
       fixture({ rows: [[{ value: 1 }], 2, {}, []], '2024.[x]': { value: 3 } }, triggerBody), '',
     );
@@ -118,11 +126,9 @@ describe('parsed value model', () => {
         ] },
       ] },
       ...[1, 2, 3].map((index) => ({
-        kind: 'arrayItem', label: 'rows[' + index + ']', entries: [
-          { kind: 'row', row: {
-            path: ['rows', index], expression: "triggerBody()?['rows'][" + index + ']',
-          } },
-        ],
+        kind: 'row', row: {
+          path: ['rows', index], expression: "triggerBody()?['rows'][" + index + ']',
+        },
       })),
       { kind: 'row', row: { path: ['2024.[x]', 'value'] } },
     ]);

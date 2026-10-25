@@ -70,7 +70,7 @@ function buildParsedValueEntries(
     const index = row.path.findIndex(
       (segment, position) => position >= parentPath.length && typeof segment === 'number',
     );
-    if (index === -1) {
+    if (index === -1 || index === row.path.length - 1) {
       ordered.push({ kind: 'row', row });
       continue;
     }
