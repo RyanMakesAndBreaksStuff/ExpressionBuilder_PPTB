@@ -199,3 +199,58 @@ describe('savedExpressionSchema — root and finite numbers', () => {
     }
   });
 });
+
+describe('savedExpressionSchema — ids and values', () => {
+  const field = { id: 'n', label: 'N', type: 'number', path: ['n'] };
+  const rule = (id: string, extra: object = {}) => ({ id, kind: 'rule', fieldId: 'n', operator: 'equals', value: 1, ...extra });
+  const doc = (children: unknown[], extra: object = {}, fields: unknown[] = [field]) =>
+    JSON.stringify({
+      version: 2,
+      mode: 'triggerCondition',
+      fields,
+      root: { id: 'root', kind: 'group', conjunction: 'and', children },
+      ...extra,
+    });
+
+  it('rejects duplicate field ids', () => {
+    expect(parseSavedExpression(doc([], {}, [field, field]))).toEqual({
+      ok: false,
+      errors: ['Import failed: fields[1].id "n" is duplicated.'],
+    });
+  });
+
+  it('rejects duplicate node ids across groups and rules', () => {
+    const nested = { id: 'dup', kind: 'group', conjunction: 'or', children: [] };
+    expect(parseSavedExpression(doc([rule('dup'), nested]))).toEqual({
+      ok: false,
+      errors: ['Import failed: root.children[1].id "dup" is duplicated.'],
+    });
+  });
+
+  it('rejects object and array rule values', () => {
+    for (const value of [{ a: 1 }, [1]]) {
+      expect(parseSavedExpression(doc([rule('r1', { value })]))).toEqual({
+        ok: false,
+        errors: ['Import failed: root.children[0].value must be a string, number, boolean or null.'],
+      });
+    }
+  });
+
+  it('drops stale selectedRuleId and activeGroupId but keeps valid ones', () => {
+    const stale = parseSavedExpression(doc([rule('r1')], { selectedRuleId: 'gone', activeGroupId: 'gone' }));
+    expect(stale.ok).toBe(true);
+    if (stale.ok) {
+      expect(stale.document).not.toHaveProperty('selectedRuleId');
+      expect(stale.document).not.toHaveProperty('activeGroupId');
+    }
+
+    const kept = parseSavedExpression(doc([rule('r1')], { selectedRuleId: 'r1', activeGroupId: 'root' }));
+    expect(kept.ok && kept.document.selectedRuleId).toBe('r1');
+    expect(kept.ok && kept.document.activeGroupId).toBe('root');
+
+    // a group id is not a rule id, and vice versa
+    const swapped = parseSavedExpression(doc([rule('r1')], { selectedRuleId: 'root', activeGroupId: 'r1' }));
+    expect(swapped.ok && swapped.document.selectedRuleId).toBeUndefined();
+    expect(swapped.ok && swapped.document.activeGroupId).toBeUndefined();
+  });
+});
