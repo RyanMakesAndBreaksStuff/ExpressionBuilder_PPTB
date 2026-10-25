@@ -25,6 +25,7 @@ import {
   type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
 import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
+import { ErrorBoundary } from './ErrorBoundary';
 import { isFieldDefinitionArray } from './fieldUtils';
 import { emptyStarterDocument, sampleFields } from './sampleData';
 import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
@@ -538,6 +539,7 @@ export function ExpressionBuilderShell({
 
   return (
     <FluentProvider theme={createPorcelainFluentTheme(paletteId)}>
+      <ErrorBoundary>
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
         <ShellHeader
           screen={screen}
@@ -558,6 +560,7 @@ export function ExpressionBuilderShell({
         >
           {/* One main landmark contains every screen. */}
           <main className="eb-builder-main">
+            <ErrorBoundary>
             <div
               aria-label="Trigger / Filter"
               hidden={screen !== 'condition'}
@@ -670,7 +673,9 @@ export function ExpressionBuilderShell({
                 }
               />
             </div>
+            </ErrorBoundary>
 
+            <ErrorBoundary>
             <div
               aria-label="Functions"
               hidden={screen !== 'functions'}
@@ -681,7 +686,9 @@ export function ExpressionBuilderShell({
                 sources={parsedSources}
               />
             </div>
+            </ErrorBoundary>
 
+            <ErrorBoundary>
             <div
               aria-label="JSON reference"
               hidden={screen !== 'jsonReference'}
@@ -694,6 +701,7 @@ export function ExpressionBuilderShell({
                 dispatch={jsonDispatch}
               />
             </div>
+            </ErrorBoundary>
           </main>
         </BuilderDragDropProvider>
 
@@ -808,6 +816,7 @@ export function ExpressionBuilderShell({
       />
 
       <OnboardingPanel settings={adapter.settings} canConnectTable={canConnectTable} />
+      </ErrorBoundary>
     </FluentProvider>
   );
 }
