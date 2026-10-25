@@ -21,7 +21,7 @@ body {
 		"Segoe UI", "Segoe UI Web (West European)", -apple-system,
 		BlinkMacSystemFont, system-ui, "Helvetica Neue", sans-serif;
 	--eb-mono:
-		"Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas,
+		"JetBrains Mono", "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas,
 		monospace;
 	--t-caption2: 11px;
 	--lh-tight: 1.2;

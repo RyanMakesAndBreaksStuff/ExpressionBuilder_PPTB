@@ -48,11 +48,10 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-panel h2 span')).toMatch(/font-size:\s*15px;/);
     expect(rule('.eb-fn-panel h2 span')).toMatch(/color:\s*var\(--accent\);/);
     expect(rule('.eb-fn-arg + .eb-fn-arg')).toMatch(/margin-top:\s*14px;/);
-    const secondaryCopy = rule('.eb-fn-copy-wrapped');
-    expect(secondaryCopy).toMatch(/background:\s*transparent;/);
-    expect(secondaryCopy).toMatch(/border:\s*0;/);
-    expect(secondaryCopy).toMatch(/color:\s*var\(--code-text2\);/);
-    expect(secondaryCopy).toMatch(/font-size:\s*12px;/);
+    expect(rule('.eb-fn-split-toggle')).toMatch(/background:\s*var\(--code-accent\);/);
+    expect(rule('.eb-fn-split-toggle')).toMatch(/border-left:\s*1px solid var\(--code-split-divider\);/);
+    expect(rule('.eb-fn-copy-menu')).toMatch(/background:\s*var\(--code-menu\);/);
+    expect(rule('.eb-fn-copy-menu code')).toMatch(/color:\s*var\(--code-text3\);/);
   });
 
   it('styles status cards with token-based label and caption text', () => {
@@ -74,7 +73,7 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-arg label > .eb-fn-arg-type')).toMatch(/font-weight:\s*600;/);
   });
 
-  it('keeps the expression preview and format selector in the functions code theme', () => {
+  it('keeps the expression preview in the functions code theme', () => {
     const code = rule('.eb-fn-dock-code');
     expect(code).toMatch(/color:\s*var\(--text\);/);
     const preview = rule('.eb-fn-dock-code .eb-preview');
@@ -84,15 +83,6 @@ describe('Functions screen styles', () => {
     expect(preview).toMatch(/padding:\s*0;/);
     expect(preview).toMatch(/font-family:\s*var\(--eb-mono\);/);
     expect(preview).toMatch(/font-size:\s*16px;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--code-seg-track\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/padding:\s*2px;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/margin-left:\s*auto;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/font-size:\s*12px;/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--code-text3\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
-      .toMatch(/background:\s*var\(--code-seg-selected\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
-      .toMatch(/font-weight:\s*600;/);
     expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--code-text3\);/);
     expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/font-size:\s*12px;/);
   });
@@ -111,12 +101,6 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-dock-code')).toMatch(/--seg-track:\s*var\(--code-seg-track\);/);
     expect(rule('.eb-fn-dock-code')).toMatch(/--seg-selected:\s*var\(--code-seg-selected\);/);
     expect(rule('.eb-fn-dock-header > span:first-child')).toMatch(/color:\s*var\(--code-text3\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented')).toMatch(/background:\s*var\(--code-seg-track\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button')).toMatch(/color:\s*var\(--code-text3\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
-      .toMatch(/background:\s*var\(--code-seg-selected\);/);
-    expect(rule('.eb-fn-dock .eb-choice-segmented button[aria-checked="true"]'))
-      .toMatch(/color:\s*var\(--code-text\);/);
     expect(rule('.eb-fn-dock-code .eb-preview')).toMatch(/color:\s*var\(--code-text2\);/);
     expect(rule('.eb-fn-dock-code .str')).toMatch(/color:\s*var\(--code-good\);/);
     expect(rule('.eb-fn-dock-code .num')).toMatch(/color:\s*var\(--code-good\);/);
@@ -174,7 +158,7 @@ describe('Functions screen styles', () => {
     expect(rule('.eb-fn-dock-code')).toMatch(/flex:\s*1;/);
     expect(rule('.eb-fn-dock-actions')).toMatch(/flex-wrap:\s*wrap;/);
     expect(rule('.eb-fn-dock-actions .eb-action-primary')).toMatch(/color:\s*var\(--code\);/);
-    expect(rule('.eb-fn-copy-wrapped')).toMatch(/color:\s*var\(--code-text2\);/);
+    expect(rule('.eb-fn-split')).toMatch(/overflow:\s*hidden;/);
     expect(rule('.eb-fn-dock-actions button:focus-visible')).toMatch(/outline:\s*2px solid var\(--accent\);/);
     expect(rule('.eb-pv-item > summary')).toMatch(/overflow-wrap:\s*anywhere;/);
   });

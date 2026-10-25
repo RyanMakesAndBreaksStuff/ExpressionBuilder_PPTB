@@ -6,6 +6,7 @@ import {
   initialFunctionsState,
   insertTarget,
   navGroups,
+  type CopyFormat,
 } from './functionsState';
 import type { ParsedValueSource } from './jsonPayloadSession';
 import { buildParsedValueList, PARSED_VALUE_PLACEHOLDER_ID } from './parsedValueModel';
@@ -97,7 +98,7 @@ export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps
     focusArg(target);
   }
 
-  async function copy(format: 'expression' | 'wrapped') {
+  async function copy(format: CopyFormat) {
     try {
       await adapter.copyToClipboard(format === 'wrapped' ? derived.wrapped : derived.expression);
       dispatch({ type: 'copySucceeded' });
@@ -137,9 +138,7 @@ export function FunctionsWorkspace({ adapter, sources }: FunctionsWorkspaceProps
         <FunctionsStatusCards derived={derived} />
         <FunctionsDock
           derived={derived}
-          copyFormat={state.copyFormat}
           copyState={state.copyState}
-          onCopyFormatChange={(format) => dispatch({ type: 'setCopyFormat', value: format })}
           onCopy={copy}
         />
       </div>

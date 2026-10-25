@@ -46,7 +46,7 @@ The web build deploys automatically to GitHub Pages on every push to `main` — 
 
 ## Architecture
 
-Two shared packages, two thin host apps:
+Three shared packages, two thin host apps:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐

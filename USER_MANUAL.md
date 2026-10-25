@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.3.1 | **Last updated**: 2026-10-23 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.3.1 | **Last updated**: 2026-10-25 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -51,7 +51,7 @@
 
 ## 2. Architecture Overview
 
-The workspace follows a **layered architecture** with two shared packages and two thin host apps.
+The workspace follows a **layered architecture** with three shared packages and two thin host apps.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -147,8 +147,8 @@ ExpressionBuilder/
 │               ├── ConditionMoveButtons.tsx  # Up/down keyboard-accessible reorder buttons
 │               ├── ConditionPositionTarget.tsx  # Drop-position targets between/inside groups
 │               ├── dragDropModel.ts          # Drag metadata + id encoding for condition nodes
-│               ├── ShellHeader.tsx           # 48px pill header, mode chip and screen actions
-│               ├── screens.ts                # Functions, Trigger / Filter, JSON reference
+│               ├── ShellHeader.tsx           # 48px pill header, screen tabs and screen actions
+│               ├── screens.ts                # Trigger / Filter, JSON reference, Functions
 │               ├── JsonReferenceWorkspace.tsx  # JSON reference screen
 │               ├── JsonPayloadWorkspace.tsx    # One payload's source and tree panes
 │               ├── PayloadStrip.tsx          # Payload tabs, status, New payload, close
@@ -242,34 +242,38 @@ npm run dev:pptb
 
 ### 5.2 The Workbench Layout
 
-The 48px pill header holds the title, the **mode chip**, and the current screen's actions. The mode chip switches between **Functions**, **Trigger / Filter**, and **JSON reference**; all three screens stay mounted, so their state survives switching. The layout below is Trigger / Filter; JSON reference is described in [5.8](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references) and Functions in [5.9](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#59-functions).
+The 48px pill header holds the title, a tab for each screen, and the current screen's actions. The tabs, in order, are **Trigger / Filter**, **JSON reference**, and **Functions**; all three screens stay mounted, so their state survives switching, and the app reopens on the last screen you used. The expression-mode control, the **Import** overflow menu, and **Export** belong to **Trigger / Filter**, and **JSON reference** shows its privacy line in the header. The layout below is Trigger / Filter; JSON reference is described in [5.8](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references) and Functions in [5.9](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#59-functions).
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────────────┐
 │  ShellHeader (48px pill)                                          │
-│  Expression Builder › [Trigger / Filter ▾]   [···] [Export]       │
+│  Expression Builder                                               │
+│  [Trigger / Filter] [JSON reference] [Functions]                  │
+│                                     [segmented] [···] [Export]    │
 ├──────────────────┬────────────────────────┬───────────────────────┤
 │                  │                        │                       │
 │  FieldToolbox    │    ConditionCanvas     │    SupportPane        │
 │  (Left Dock)     │    (Center)            │    (Right Dock)       │
 │                  │                        │                       │
-│  • Table Picker  │    ┌─ AND ─┐          │    • Diagnostics      │
+│  • Table Picker  │    ┌─ AND ──┐          │    • Diagnostics      │
 │  • Field List    │    │ Rule 1 │          │    • Expression Help  │
 │  • Import/Export │    │ Rule 2 │          │    • Onboarding       │
-│  • Sample Data   │    └─ OR ──┘          │                       │
+│  • Sample Data   │    └─ OR ──┘           │                       │
 │                  │                        │                       │
 ├──────────────────┴────────────────────────┴───────────────────────┤
 │  ExpressionDocumentPanel                                          │
 │  @and(equals(triggerBody()['status'], 'active'), ...)             │
 │  [Copy] [Collapse]                                                │
-└─────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────────────┘
 ```
+
+> **Screenshot placeholder — Screen tabs:** Capture the header showing the **Trigger / Filter**, **JSON reference**, and **Functions** tabs, with enough of the active workspace to locate them. Do not show a dropdown or menu; the tabs are always visible.
 
 ### 5.3 Building Your First Expression
 
 #### Step 1: Load Fields
 
-- **Option A — Connect to Dataverse** (PPTB only): Click **Connect Table** → select a table → click **Confirm**. The app discovers all fields and their types.
+- **Option A — Connect to Dataverse** (PPTB only): Click **Connect a table** → select a table → click **Connect**. The app discovers all fields and their types.
 - **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste.
 
   ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
@@ -315,7 +319,7 @@ The **Expression Preview** panel at the bottom updates live as you edit. The gen
 | **Trigger Condition** | Filter when a flow should run | `triggerBody()` references  |
 | **Filter Array**      | Filter items in an array      | `item()` references         |
 
-Switch modes with the segmented control in the pill header while **Trigger / Filter** is active. The expression syntax changes automatically. **Functions** and **JSON reference** are separate screens reached through the mode chip, not expression modes.
+Switch modes with the segmented control in the pill header while **Trigger / Filter** is active. The expression syntax changes automatically. **Functions** and **JSON reference** are separate screens reached through the header tabs, not expression modes.
 
 ### 5.5 Field Types & Supported Operators
 
@@ -344,8 +348,8 @@ Checked wrappers stay in their applied order, and newly checked wrappers append.
 
 #### Switch Data Source
 
-1. Click **Switch Table** in the left panel.
-2. Select a new table and click **Confirm**.
+1. Open the data source menu in the left panel and choose **Switch table…**.
+2. Select a new table and click **Connect**.
 3. If existing rules reference fields not in the new table, the **Switch Source Dialog** appears:
    - **Keep rules** — Retains all rules; orphaned fields show as "unknown" in diagnostics.
    - **Remove affected rules** — Deletes rules that would become invalid.
@@ -375,7 +379,7 @@ Both paths call the same `moveNode`/`reorderNode` document actions, so diagnosti
 
 The **JSON reference** screen turns a sample action or trigger output into a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']`. Using it never changes your condition document: when you switch to **Trigger / Filter**, the rules, mode and Export output are exactly as you left them.
 
-**Payloads.** The screen starts with one empty payload. **New payload** adds another, up to five, and each payload is independent: its own source, reference root, sample, parsed tree, selection, expansion state, and loop name. Payload cards show the label, a status dot, the root, and a close button. Use Left/Right or Home/End while a card is focused, and close a card with its **Close** button — the last remaining card cannot be closed. Closing the active card activates its nearest neighbour. Action payloads are labelled by action name (or **Payload N** while the name is blank); multiple triggers become **Trigger**, **Trigger 2**, and so on.
+**Payloads.** The screen starts with one empty payload. **New payload** adds another, up to five, and each payload is independent: its own source, reference root, sample, parsed tree, selection, expansion state, and loop name. Payload cards show the label and the root function (`outputs()`, `body()`, `triggerOutputs()`, or `triggerBody()`), with the full root expression and parse status announced to screen readers. Use Left/Right or Home/End while a card is focused, and close a card with its **Close** button — the last remaining card cannot be closed. Closing the active card activates its nearest neighbour. Action payloads are labelled by action name (or **Payload N** while the name is blank); multiple triggers become **Trigger**, **Trigger 2**, and so on.
 
 1. **Reference root** — under **Action** or **Trigger**, choose:
    - **Full output** roots the reference at `outputs('<name>')`, or `triggerOutputs()` for a trigger. Choose it for a run's whole output (`statusCode`, `headers` and `body`), and for Compose and other actions whose output has no `body` wrapper.
@@ -387,13 +391,19 @@ The **JSON reference** screen turns a sample action or trigger output into a cor
    - **Copy** puts the bare reference on the clipboard, for the expression editor.
    - **Copy @{}** wraps it as `@{<reference>}`, for use inside a text field. An inline expression always produces text.
 
-**Parsing.** Parsing is strict JSON, checked in order, and the first failure stops it with an inline message: an empty sample, a sample larger than 1 MiB, invalid JSON, more than 10,000 values, or nesting deeper than 64 levels. Comments, trailing commas and single quotes are rejected, and a repeated key keeps its last value. A successful first parse reports the value count in the payload status and shows a **Parsed · N values** notification; a material change to an already-parsed payload shows **Payload updated · N values** instead. Whitespace, object key order, and equivalent number spellings refresh the status quietly without clearing selection or expansion. An invalid automatic parse keeps the previous tree usable and status reads **Could not parse. Showing last successful payload.**; before any successful parse the status is **Nothing parsed yet**, and a pending edit shows **Sample changed. Waiting for valid JSON.**
+**Parsing.** Parsing is strict JSON, checked in order, and the first failure stops it with an inline message: an empty sample, a sample larger than 1 MiB, invalid JSON, more than 10,000 values, or nesting deeper than 64 levels. Comments, trailing commas and single quotes are rejected, and a repeated key keeps its last value. A successful parse shows **Parsed · N values** in the payload status; a successful paste also raises that notification even when the payload is materially unchanged, while a material change made by typing raises **Payload updated · N values** instead. Whitespace, object key order, and equivalent number spellings refresh the status quietly without clearing selection or expansion. An invalid automatic parse keeps the previous tree usable and the status reads **Could not parse. Showing last successful payload.**; an invalid paste clears the tree, selection and expansion, and the status reads **Could not parse**. Before any parse attempt the status is **Nothing parsed yet**, and a pending edit shows **Sample changed. Waiting for valid JSON.**
+
+> **Screenshot placeholder — Retained typed edit:** Parse valid JSON, then make it invalid by typing and let the automatic parse run. Capture the invalid editor, the retained tree, and **Could not parse. Showing last successful payload.** beneath Sample JSON. Do not paste the invalid sample, because a paste clears the tree.
 
 **Search across payloads.** The **Search all payloads** box matches text in a leaf's path or value across every parsed payload. Results show the payload label, path, and a value preview, with a **N matches · M parsed payloads** count and up to eight results listed (or **No matches in parsed payloads.**). Use Up/Down and Enter to choose a result; choosing one activates that payload, expands its ancestors, and selects the leaf. Esc clears the search.
+
+> **Screenshot placeholder — Multi-payload search:** Capture two named payloads containing a shared leaf path, the search results identifying both, and the selected leaf revealed in its own tree. Include the payload count and the **New payload** action.
 
 **Fixed positions.** An index such as `[0]` reads that one item, not each item in a loop, and the Reference card says so whenever the path contains one. To act on every item, use an Apply to each or a Filter array.
 
 **Loop references.** When the selected path contains an index, the Reference card also offers the part after the last index as `item()` and `items()` references for use inside an Apply to each over that array. `item()` reads the innermost loop's current item. `items('<loop name>')` reads the named loop's current item, so it still works inside a nested loop; type the Apply to each's name in **Loop name** — not the name of the action that produced the sample. Spaces become underscores. Loop name is stored per payload.
+
+> **Screenshot placeholder — Loop references:** Capture a selected path that contains an array index, showing the fixed-position reference, the `item()` and `items()` cards, a populated **Loop name**, the generated named-loop expression, and the Copy controls.
 
 **Privacy.** Pasted JSON is processed locally and is not uploaded or saved by this feature. The sample is never sent anywhere, written to settings or browser storage, or added to the condition document or its Export, and reloading the app clears every payload.
 
@@ -401,7 +411,7 @@ The **JSON reference** screen turns a sample action or trigger output into a cor
 
 ### 5.9 Functions
 
-The **Functions** screen builds a Workflow Definition Language call without hand-writing its syntax. Open it from the header's mode chip. Its state is memory-only: switching screens preserves it, but nothing is persisted or added to the condition document.
+The **Functions** screen builds a Workflow Definition Language call without hand-writing its syntax. Select the **Functions** tab to open it. Its state is memory-only: switching screens preserves it, but its contents are not persisted or added to the condition document.
 
 **Catalog.** The catalog contains 103 functions in six groups:
 
@@ -414,7 +424,9 @@ The **Functions** screen builds a Workflow Definition Language call without hand
 | Date and time | 23 |
 | Conversion | 24 |
 
-String is expanded initially and **concat** is selected, so the screen is usable immediately. Expand or collapse a group with its row; the search box filters function names and, at the same time, Parsed Value row labels. Deprecated `decodeBase64` and `parse` are not offered.
+All groups start collapsed and **concat** is selected, so the screen is usable immediately. Expand or collapse a group with its row; the search box filters function names, expands the groups that still have matches, and at the same time filters Parsed Value row labels. Deprecated `decodeBase64` and `parse` are not offered.
+
+> **Screenshot placeholder — Functions navigation:** Capture **concat** selected, all six catalog groups collapsed, and two named payload groups with their match counts; expand one payload group so its reference rows are visible.
 
 **Arguments.** The selected function's name appears above its argument list. Each argument has a type badge and a required or optional marker; variadic functions reveal another empty slot once the current last one is filled. An optional argument can stay blank, but an empty optional before a later filled argument must be filled first. An argument accepts:
 
@@ -422,11 +434,13 @@ String is expanded initially and **concat** is selected, so the screen is usable
 - another function call, such as `toLower(triggerBody()?['name'])`;
 - an accessor, such as `triggerBody()?['email']` or `outputs('Get_items')?['body']?['value']`.
 
-Bare text is not a valid literal and is diagnosed. Picking a function while an argument is focused wraps that argument (for example, `trim` turns `triggerBody()?['name']` into `trim(triggerBody()?['name'])`). Dragging a function onto an argument inserts its call at that position. Invalid argument types, missing required arguments, and unknown or misused functions are reported in the status cards, and **Copy expression** is disabled while the call is invalid.
+Bare text is not a valid literal and is diagnosed. Picking a function while an argument is focused wraps that argument (for example, `trim` turns `triggerBody()?['name']` into `trim(triggerBody()?['name'])`). Dragging a function onto an argument inserts its call at that position. Missing required arguments, an empty optional before a filled one, and an argument that is not a valid literal, reference, or call are reported in the status cards, and **Copy expression** is disabled while the call is invalid. Argument types are checked for structure, not against the runtime types of your flow's data.
 
-**Parsed Value.** The **Parsed Value** group appears below the function groups. It lists one source per parsed JSON payload; with more than one parsed payload, each source is labelled with the action or trigger and its reference root, so identical paths from different outputs insert the correct reference. Rows insert the bare reference on double-click or Enter, into the last focused argument (or the first empty argument when none is focused). **Alt+Down** from any argument expands Parsed Value and moves focus there without changing that insert target. A shared cap of 200 matching rows keeps large samples responsive; filtering runs before the cap, and **+N more — narrow with search** reports the remainder. Sources without an action name show **Set an action name in JSON reference**; with no parsed payload at all, the group says **Parse a sample in JSON reference**.
+**Parsed Value.** Each parsed payload is its own collapsible group below the function groups, labelled with its action or trigger and showing its match count; the reference root is available as a tooltip, so identical paths from different outputs insert the correct reference. Groups start collapsed, and primitive array elements are listed once as plain rows. Rows insert the bare reference on double-click or Enter, into the last focused argument (or the first empty argument when none is focused). **Alt+Down** from any argument expands Parsed Value and moves focus there without changing that insert target. A shared cap of 200 matching rows keeps large samples responsive; filtering runs before the cap, and **+N more — narrow with search** reports the remainder. Sources without an action name show **Set an action name in JSON reference**; with no parsed payload at all, a single **Parsed Value** group says **Parse a sample in JSON reference**.
 
 **Output.** The dock shows **Valid** or **Invalid**, the generated expression, and a breadcrumb of the active function and argument. Copy either the bare expression (for an expression editor) or the `@{…}` form (for text).
+
+> **Screenshot placeholder — Function insertion and copy:** Capture a parsed path inserted into a **concat** argument, with the expected-type badges, required markers, status cards, the generated expression, and **Copy expression**. Use a structurally valid example.
 
 ---
 
@@ -488,7 +502,7 @@ const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 | --------------------------------- | -------------------------------------- |
 | `copyToClipboard(text)`           | Copy text to the clipboard. Rejects when the host cannot copy: the PPTB adapter rejects when the host has no clipboard API, and the web adapter when the browser has none or refuses. |
 | `notify(message, level)`          | Show toast notification                |
-| `getTheme()` / `onThemeChanged()` | Light/dark/high-contrast theme         |
+| `getTheme()` / `onThemeChanged()` | Light or dark theme. The PPTB adapter reads `utils.getCurrentTheme()` and listens for `settings:updated`, because the host emits no dedicated theme event. |
 | `settings.get/set/remove`         | Persistent key-value storage           |
 | `discoverFields(options)`         | Discover fields from a connected table |
 | `getTables()`                     | List available Dataverse tables        |
@@ -502,9 +516,9 @@ The main application shell and all visual components.
 
 The package also re-exports the query-document types (`QueryDocument`, `QueryGroup`, `QueryNode`, `QueryRule`, `RulePatch`, `DataSourceDescriptor`, `DataSourceKind`) and document-mutation actions (`addGroup`, `addRule`, `changeGroupConjunction`, `deleteNode`, `duplicateRule`, `moveNode`, `reorderNode`, `selectRule`, `updateRule`) individually — see `packages/builder-ui/src/index.ts` for the exact list.
 
-The shell renders one of three screens, switched by the header's mode chip: **Trigger / Filter** (`ShellHeader.tsx`, `ConditionCanvas.tsx`), **JSON reference** (`JsonReferenceWorkspace.tsx`, `JsonPayloadWorkspace.tsx`, `PayloadStrip.tsx`, `PayloadSearch.tsx`), and **Functions** (`FunctionsWorkspace.tsx`, `FunctionsNav.tsx`, `ArgumentsPanel.tsx`, `FunctionsDock.tsx`). Screen IDs and labels live in `workbench/screens.ts`.
+The shell renders one of three screens, switched by the header tabs: **Trigger / Filter** (`ShellHeader.tsx`, `ConditionCanvas.tsx`), **JSON reference** (`JsonReferenceWorkspace.tsx`, `JsonPayloadWorkspace.tsx`, `PayloadStrip.tsx`, `PayloadSearch.tsx`), and **Functions** (`FunctionsWorkspace.tsx`, `FunctionsNav.tsx`, `ArgumentsPanel.tsx`, `FunctionsDock.tsx`). Screen IDs and labels live in `workbench/screens.ts`.
 
-JSON reference holds up to five payloads in `workbench/jsonPayloadSession.ts`; parsing with its limits is `importExport/jsonPayload.ts`, per-payload state is `workbench/jsonReferenceState.ts`, and cross-payload search is `workbench/payloadSearchModel.ts`. Functions state, argument slots, and validity are in `workbench/functionsState.ts`; parsed-value grouping and the 200-row cap are in `workbench/parsedValueModel.ts`. Both screens are memory-only: their state is not part of `QueryDocument`, not exported from the package, and gone after a reload.
+JSON reference holds up to five payloads in `workbench/jsonPayloadSession.ts`; parsing with its limits is `importExport/jsonPayload.ts`, per-payload state is `workbench/jsonReferenceState.ts`, and cross-payload search is `workbench/payloadSearchModel.ts`. Functions state, argument slots, and validity are in `workbench/functionsState.ts`; parsed-value grouping and the 200-row cap are in `workbench/parsedValueModel.ts`. Both screens are memory-only: their state is not part of `QueryDocument`, not exported from the package, and gone after a reload. Each screen, and the shell itself, is wrapped in an error boundary, so a render error shows a `role="alert"` fallback with a **Reset** button instead of blanking the window.
 
 ```typescript
 import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
@@ -523,6 +537,8 @@ import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
 | `adapter`         | `PlatformAdapter` | ✅       | Host environment adapter                                   |
 | `platform`        | `'web' \| 'pptb'` | ❌       | `'pptb'` (default) — affects table connection availability |
 | `initialDocument` | `QueryDocument`   | ❌       | Pre-load a saved expression document                       |
+| `hostActions`     | `ReactNode`       | ❌       | Extra header controls, rendered before the screen actions  |
+| `initialTheme`    | `PlatformTheme`   | ❌       | Theme to use until the host reports the current one        |
 
 ---
 
@@ -616,7 +632,7 @@ npm run test -w @ryanmakes/eb_builder-ui
 
 ### 8.2 E2E Tests (Playwright)
 
-End-to-end tests verify the full application in a real browser. Multi-payload sessions, cross-payload search, Functions argument editing, Alt+Down insertion, the 200-row Parsed Value cap, and switching across all three screens are covered by `tests/e2e/json-multi-payload.spec.ts`.
+End-to-end tests verify the full application in a real browser. The Playwright config defines one `chromium` project that runs on installed Microsoft Edge (`devices['Desktop Edge']` with `channel: 'msedge'`), so Edge must be present. Multi-payload sessions, cross-payload search, Functions argument editing, Alt+Down insertion, the 200-row Parsed Value cap, and switching across all three screens are covered by `tests/e2e/json-multi-payload.spec.ts`.
 
 ```bash
 # Run E2E tests
@@ -774,7 +790,7 @@ npm run dev:web
 
 ---
 
-### Error 4: PPTB build fails with `pptb-validate` not found
+### Error 4: `pptb-validate` not found when running the validate script
 
 **Full error message:**
 
@@ -782,15 +798,16 @@ npm run dev:web
 'pptb-validate' is not recognized as an internal or external command
 ```
 
-**Cause:** The `pptb-validate` tool is not installed globally or not in your PATH. This tool is only needed for packaging, not for development.
+**Cause:** The PPTB app's `validate` script runs `pptb-validate`, which is not a dependency of this workspace. Validation is separate from the build — `npm run build:pptb` never calls it — so a missing CLI does not break packaging.
 
 **Solution:**
 
 ```bash
-# Skip the validate step during development
+# Build the package without validation
 npm run build:pptb
 
-# Or install the PPTB CLI globally (if available)
+# Or run validation from the PPTB app workspace, if the CLI is installed
+npm run validate -w @ryanmakes/expressionbuilder_pptb
 ```
 
 **Verify the fix:** Check that `apps/pptb/dist/index.html` exists.
@@ -820,16 +837,19 @@ npm run build
 **Full error message:**
 
 ```
-Error: browserType.launch: Executable doesn't exist at ...chromium...
+Error: browserType.launch: Executable doesn't exist at ...msedge...
 ```
 
-**Cause:** Playwright browsers are not installed.
+**Cause:** The project runs on the installed Microsoft Edge channel, and Edge is missing or Playwright cannot find it.
 
 **Solution:**
 
 ```bash
-npx playwright install
+# Install the Edge channel Playwright expects
+npx playwright install msedge
 ```
+
+Or install Microsoft Edge itself, then rerun the tests.
 
 **Verify the fix:**
 
@@ -864,7 +884,7 @@ error  React Hook useEffect is called conditionally  react-hooks/rules-of-hooks
 | **Expression Mode**  | Either `triggerCondition` (for flow triggers) or `filterArray` (for array filtering).                         |
 | **Field Definition** | A typed schema describing a field: `id`, `label`, `type`, `path`, `choices`, `nullable`, etc.                 |
 | **Function Catalog** | The 103 Workflow Definition Language functions, their groups, signatures, return types, and argument metadata. |
-| **Mode Chip**        | The pill header control that switches between Functions, Trigger / Filter, and JSON reference.                 |
+| **Screen Tabs**      | The three pill-header tabs, in order **Trigger / Filter**, **JSON reference**, and **Functions**.              |
 | **Parsed Value**     | A leaf from a parsed JSON payload, listed in Functions as an insertable reference grouped by payload.         |
 | **Payload**          | One action or trigger sample in JSON reference, with its own root, sample, tree, selection, and loop name.     |
 | **PPTB**             | Power Platform Toolbox — a desktop app for Power Platform developers that hosts custom tools.                 |

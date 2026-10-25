@@ -85,21 +85,22 @@
 	white-space: nowrap;
 }
 
+/* Function rows and parsed-value rows share one box and the nav's inherited font. */
+.eb-pv-row,
 .eb-fn-row {
 	position: relative;
 	display: flex;
-	height: 34px;
+	min-height: 34px;
 	align-items: center;
 	margin-left: 22px;
 	padding: 0 12px;
 	border-radius: 6px;
 	color: var(--text2);
-	font-family: var(--eb-mono);
-	font-size: 13px;
 	border: 0;
 	background: transparent;
 	text-align: left;
 	cursor: pointer;
+	overflow-wrap: anywhere;
 	transition: background-color 120ms ease, border-color 120ms ease;
 }
 
@@ -121,7 +122,8 @@
 }
 
 .eb-fn-row:hover,
-.eb-pv-row:hover {
+.eb-pv-row:hover,
+.eb-pv-item > summary:hover {
 	background: var(--surface2);
 }
 
@@ -307,30 +309,6 @@
 	letter-spacing: 0.06em;
 }
 
-.eb-fn-dock .eb-choice-segmented {
-	margin-left: auto;
-	padding: 2px;
-	border-radius: 6px;
-	background: var(--code-seg-track);
-}
-
-.eb-fn-dock .eb-choice-segmented button {
-	padding: 4px 10px;
-	border: 0;
-	border-radius: 4px;
-	background: transparent;
-	color: var(--code-text3);
-	font: inherit;
-	font-size: 12px;
-	cursor: pointer;
-}
-
-.eb-fn-dock .eb-choice-segmented button[aria-checked="true"] {
-	background: var(--code-seg-selected);
-	color: var(--code-text);
-	font-weight: 600;
-}
-
 .eb-fn-dock-code .eb-preview {
 	margin: 0;
 	padding: 0;
@@ -356,6 +334,8 @@
 }
 
 .eb-fn-dock-actions {
+	position: relative;
+	margin-left: auto;
 	display: inline-flex;
 	align-items: center;
 	flex-wrap: wrap;
@@ -374,35 +354,125 @@
 	background: var(--code-text);
 }
 
-.eb-fn-copy-wrapped {
-	padding: 4px 0;
+.eb-fn-split {
+	display: inline-flex;
+	border-radius: 14px;
+	overflow: hidden;
+}
+
+.eb-fn-split .eb-action-primary {
+	height: 38px;
+	padding: 0 14px;
+	border-radius: 0;
+	font-size: 0.85rem;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.eb-fn-split-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 38px;
+	padding: 0;
 	border: 0;
-	background: transparent;
-	color: var(--code-text2);
-	font: inherit;
-	font-size: 12px;
+	border-left: 1px solid var(--code-split-divider);
+	background: var(--code-accent);
+	color: var(--code);
 	cursor: pointer;
 }
 
+.eb-fn-split-toggle:hover:not(:disabled) {
+	background: var(--code-text);
+}
+
+.eb-fn-split-toggle:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.eb-fn-split-toggle svg {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+
+/* The split clips overflow, so its focus ring sits inside the button. */
+.eb-fn-split button:focus-visible {
+	outline-color: var(--code);
+	outline-offset: -4px;
+}
+
+.eb-fn-copy-menu {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	width: 300px;
+	max-width: 80vw;
+	padding: 6px;
+	border: 1px solid var(--code-seg-selected);
+	border-radius: 12px;
+	background: var(--code-menu);
+}
+
+.eb-fn-copy-menu button {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 3px;
+	padding: 8px 10px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--code-text);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+
+.eb-fn-copy-menu button:hover,
+.eb-fn-copy-menu button:focus-visible {
+	background: var(--code-seg-track);
+	outline: none;
+}
+
+.eb-fn-copy-menu code {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--code-text3);
+	font-family: var(--eb-mono);
+	font-size: 11px;
+	font-weight: 400;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Array items indent like a row; nested rows and items stack another 22px each. */
+.eb-pv-item {
+	margin-left: 22px;
+}
+
 .eb-pv-item > summary {
-	min-height: 30px;
-	padding: 6px 8px;
+	padding: 7px 12px;
 	border-radius: 6px;
 	color: var(--text2);
-	font-size: 12px;
+	line-height: 20px;
 	cursor: pointer;
 	overflow-wrap: anywhere;
+	transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .eb-pv-item > summary:focus-visible,
 .eb-fn-dock-actions button:focus-visible {
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
-}
-
-.eb-pv-item .eb-pv-row {
-	padding-inline-start: 16px;
-	overflow-wrap: anywhere;
 }
 
 .eb-fn-crumb {
@@ -431,21 +501,6 @@
 
 .eb-fn-crumb[data-tone="error"] {
 	color: var(--danger);
-}
-
-.eb-pv-row {
-	display: flex;
-	height: 30px;
-	align-items: center;
-	border: 0;
-	border-radius: 6px;
-	background: transparent;
-	text-align: left;
-	cursor: pointer;
-	color: var(--text2);
-	font-family: var(--eb-mono);
-	font-size: 12px;
-	transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 @media (max-width: 900px) {
@@ -482,6 +537,7 @@
 @media (prefers-reduced-motion: reduce) {
 	.eb-fn-row,
 	.eb-pv-row,
+	.eb-pv-item > summary,
 	.eb-fn-input {
 		transition: none;
 	}

@@ -6,7 +6,7 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 
 ## [Unreleased]
 
-## [1.3.1] — 2026-10-23
+## [1.3.1] — 2026-10-25
 
 ### Added
 
@@ -14,21 +14,27 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 - **Conversion** group with 24 functions, including `int`, `float`, `decimal`, `string`, `bool`, `json`, `xml`, `array`, `createArray`, base64, data URI, and URI component conversions. Deprecated functions are omitted, and conversion calls work when nested inside other arguments.
 - **Multiple JSON payloads**: keep up to five action or trigger outputs open at once, each with its own source, reference root, sample, selection, and loop name. Add a payload with **New payload** and close any card except the last.
 - **Search across payloads** in JSON reference: find a path or value in any parsed payload, see which payload it belongs to, and jump straight to it in that payload's tree.
-- **Parsed Value groups** in Functions, one per parsed JSON payload, so you can insert a reference from the correct output with a double-click or Enter. **Alt+Down** in an argument jumps to Parsed Value and remembers which argument to fill.
+- **Parsed Value groups** in Functions: each parsed payload is its own collapsible group, labelled with its action or trigger and showing its match count, so you can insert a reference from the correct output with a double-click or Enter. The reference root is available as a tooltip, and primitive array values are listed once. **Alt+Down** in an argument jumps to Parsed Value and remembers which argument to fill.
 
 ### Changed
 
-- The header is now a single compact pill with a mode chip that switches between **Functions**, **Trigger / Filter**, and **JSON reference**. Each screen keeps its state while you move between them.
-- The condition screen is now called **Trigger / Filter**. The expression-mode switch stays in the header, **Import** moves into the overflow menu, and **Export** remains the primary action.
-- Pasting into **Sample JSON** replaces the sample and parses it immediately; typing parses again after a short pause. Successful parses and material changes show a **Parsed** or **Payload updated** notification, while whitespace, key-order, and equivalent number changes update quietly.
-- Payload cards show a status dot and root expression; the strip shows an `N / 5` count, and both stay usable on narrow and short tool windows.
-- Pasted JSON remains local to the session. The tool still declares no `cspExceptions`, contacts no external domain, and stores only field profiles and UI preferences through the host `settings` API.
+- The header is now a single compact pill with three screen tabs, in order **Trigger / Filter**, **JSON reference**, and **Functions**. Each screen keeps its state while you move between them, and the tool reopens on the last screen you used.
+- The condition screen is now called **Trigger / Filter**. The expression-mode switch stays in the header, **Import** moves into the overflow menu, and **Export** remains the primary action; all three appear on that screen only.
+- Pasting into **Sample JSON** replaces the sample and parses it immediately; typing parses again after a short pause. A successful paste shows **Parsed · N values**, a material change made by typing shows **Payload updated · N values**, and whitespace, key-order, and equivalent number changes update quietly.
+- Payload cards show their root function, and the strip shows an `N / 5` count; both stay usable on narrow and short tool windows.
+- Pasted JSON remains local to the session. The tool still declares no `cspExceptions`, contacts no external domain, and stores only field profiles, UI preferences, and cached Dataverse metadata through the host `settings` API.
+- Cached Dataverse metadata is scoped to the selected environment, so changing connections no longer shows the previous environment's tables or fields.
 
 ### Fixed
 
 - Undo and redo work naturally after pasting a JSON sample.
-- An invalid edit keeps the last successfully parsed payload and its references available instead of clearing the tree.
+- An invalid edit while typing keeps the last successfully parsed payload and its references available; an invalid paste clears the tree, selection, and expansion and reports **Could not parse**.
 - Payload close buttons no longer get clipped in narrow tabs, and closing or replacing a payload cannot fire a stale automatic parse.
+- One screen failing no longer blanks the workspace: it shows an alert with a **Reset** button while the other screens keep working.
+- Importing a saved condition rejects duplicate fields or nodes and non-text rule values with a message instead of loading a broken document.
+- Primitive array values appear once in the parsed tree, and the `length` and `coalesce` wrappers apply to the field side only.
+- A failed Dataverse field fetch is reported once and retried on the next connect instead of leaving an empty table.
+- Theme and settings failures at startup fall back to the default theme or a closed dialog, the switch-source dialog always opens on **Keep rules**, and the **Action name** field is marked as required.
 
 ## [1.2.1] — 2026-10-04
 

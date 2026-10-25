@@ -28,6 +28,6 @@
     "typecheck": "tsc -b"
   },
   "devDependencies": {
-    "@pptb/types": "1.2.5"
+    "@pptb/types": "1.2.7"
   }
 }

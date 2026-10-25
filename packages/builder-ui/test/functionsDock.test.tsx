@@ -21,17 +21,14 @@ function deriveWith(...actions: FunctionsAction[]) {
 
 function renderDock({
   valid = true,
-  copyFormat = 'expression',
   copyState = 'idle',
-}: { valid?: boolean; copyFormat?: CopyFormat; copyState?: 'idle' | 'copied' } = {}) {
+}: { valid?: boolean; copyState?: 'idle' | 'copied' } = {}) {
   const props = {
     derived: deriveWith(
       { type: 'setArg', name: 'text1', value: "triggerBody()?['Name']" },
       { type: 'setArg', name: 'text2', value: "' - '" },
     ),
-    copyFormat,
     copyState,
-    onCopyFormatChange: vi.fn<(format: CopyFormat) => void>(),
     onCopy: vi.fn<(format: CopyFormat) => void>(),
   };
   if (!valid) props.derived = deriveWith();
@@ -40,36 +37,13 @@ function renderDock({
 }
 
 describe('FunctionsDock', () => {
-  it('shows its label, validity, expression and accessible format choices', () => {
+  it('shows its label, validity and the bare expression without a format toggle', () => {
     renderDock();
 
-    expect(screen.getAllByText('Expression')).toHaveLength(2);
+    expect(screen.getByText('Expression')).toBeInTheDocument();
     expect(screen.getByText('Valid')).toBeInTheDocument();
-    const formats = screen.getByRole('radiogroup', { name: 'Expression format' });
-    expect(within(formats).getByRole('radio', { name: 'Expression' })).toBeInTheDocument();
-    expect(within(formats).getByRole('radio', { name: '@{…}' })).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("concat(triggerBody()?['Name'], ' - ')");
-  });
-
-  it('shows the wrapped expression when that format is active', () => {
-    const { derived } = renderDock({ copyFormat: 'wrapped' });
-
-    expect(screen.getByLabelText('Generated expression')).toHaveTextContent(derived.wrapped);
-  });
-
-  it('reports format selection from click and supports arrow-key radio navigation', async () => {
-    const user = userEvent.setup();
-    const props = renderDock();
-    const expressionRadio = screen.getByRole('radio', { name: 'Expression' });
-    const wrappedRadio = screen.getByRole('radio', { name: '@{…}' });
-
-    await user.click(wrappedRadio);
-    expect(props.onCopyFormatChange).toHaveBeenLastCalledWith('wrapped');
-
-    expressionRadio.focus();
-    fireEvent.keyDown(expressionRadio, { key: 'ArrowRight' });
-    expect(props.onCopyFormatChange).toHaveBeenLastCalledWith('wrapped');
-    expect(wrappedRadio).toHaveFocus();
   });
 
   it('renders crumbs in order with their matching tones', () => {
@@ -80,29 +54,64 @@ describe('FunctionsDock', () => {
     expect(Array.from(crumbs, (crumb) => crumb.getAttribute('data-tone'))).toEqual(derived.crumbs.map((crumb) => crumb.tone));
   });
 
-  it('copies the active format, shows copied state, and always offers wrapped copy', async () => {
+  it('copies the bare expression from the primary button and shows copied state', async () => {
     const user = userEvent.setup();
-    const expressionDock = renderDock({ copyState: 'copied' });
-    const copyExpression = screen.getByRole('button', { name: 'Copied' });
-    await user.click(copyExpression);
-    expect(expressionDock.onCopy).toHaveBeenCalledWith('expression');
-    await user.click(screen.getByRole('button', { name: 'Copy as @{…}' }));
-    expect(expressionDock.onCopy).toHaveBeenCalledWith('wrapped');
+    const props = renderDock({ copyState: 'copied' });
 
-    cleanup();
-    const wrappedDock = renderDock({ copyFormat: 'wrapped' });
-    await user.click(screen.getByRole('button', { name: 'Copy as @{…}' }));
-    expect(wrappedDock.onCopy).toHaveBeenCalledWith('wrapped');
-    await user.click(screen.getByRole('button', { name: 'Copy expression' }));
-    expect(wrappedDock.onCopy).toHaveBeenCalledWith('wrapped');
+    await user.click(screen.getByRole('button', { name: 'Copied' }));
+    expect(props.onCopy).toHaveBeenCalledWith('expression');
   });
 
-  it('disables both copy actions when the expression is invalid', () => {
+  it('opens a menu that shows the exact text of each format and copies the chosen one', async () => {
+    const user = userEvent.setup();
+    const props = renderDock();
+    const chevron = screen.getByRole('button', { name: 'More copy formats' });
+    expect(chevron).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(chevron);
+    expect(chevron).toHaveAttribute('aria-expanded', 'true');
+    const items = screen.getAllByRole('menuitem');
+    expect(items[0]).toHaveTextContent(props.derived.expression);
+    expect(items[1]).toHaveTextContent(props.derived.wrapped);
+    expect(items[0]).toHaveFocus();
+
+    await user.click(screen.getByRole('menuitem', { name: /^Copy with @\{ \}/ }));
+    expect(props.onCopy).toHaveBeenCalledWith('wrapped');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(chevron).toHaveFocus();
+  });
+
+  it('supports arrow keys, Escape with focus return, and outside click', async () => {
+    const user = userEvent.setup();
+    renderDock();
+    const chevron = screen.getByRole('button', { name: 'More copy formats' });
+    chevron.focus();
+    fireEvent.keyDown(chevron, { key: 'ArrowDown' });
+    const items = screen.getAllByRole('menuitem');
+    expect(items[0]).toHaveFocus();
+    fireEvent.keyDown(items[0], { key: 'ArrowDown' });
+    expect(items[1]).toHaveFocus();
+    fireEvent.keyDown(items[1], { key: 'ArrowDown' });
+    expect(items[0]).toHaveFocus();
+    fireEvent.keyDown(items[0], { key: 'ArrowUp' });
+    expect(items[1]).toHaveFocus();
+
+    fireEvent.keyDown(items[1], { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(chevron).toHaveFocus();
+
+    await user.click(chevron);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.click(screen.getByText('Valid'));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('disables both copy controls when the expression is invalid', () => {
     renderDock({ valid: false });
 
     expect(screen.getByText('Invalid')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy expression' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Copy as @{…}' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'More copy formats' })).toBeDisabled();
   });
 
   it('does not show a sample result', () => {
@@ -111,15 +120,11 @@ describe('FunctionsDock', () => {
     expect(screen.queryByText(/Sample result/i)).not.toBeInTheDocument();
   });
 
-  it('keeps both copy controls inline with the expression format', () => {
+  it('keeps the split copy button inline in the expression controls', () => {
     renderDock();
     const controls = screen.getByRole('group', { name: 'Expression controls' });
-    expect(within(controls).getByRole('radiogroup', { name: 'Expression format' }))
-      .toBeInTheDocument();
-    expect(within(controls).getByRole('button', { name: 'Copy expression' }))
-      .toBeEnabled();
-    expect(within(controls).getByRole('button', { name: 'Copy as @{…}' }))
-      .toBeEnabled();
+    expect(within(controls).getByRole('button', { name: 'Copy expression' })).toBeEnabled();
+    expect(within(controls).getByRole('button', { name: 'More copy formats' })).toBeEnabled();
     expect(document.querySelector('.eb-fn-dock-side')).toBeNull();
   });
 });

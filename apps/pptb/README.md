@@ -26,6 +26,22 @@ No Dataverse connection? Import a field schema as Field JSON, a sample payload, 
 - **Two condition modes** — Trigger Condition (`triggerBody()`) and Filter array (`item()`).
 - **JSON reference builder** — keep up to five action or trigger outputs open, search across them, select any value in a tree, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Title']`, bare or as `@{…}` for text. Parsed values can be inserted into Functions arguments by double-click, Enter, or **Alt+Down**.
 
+## Screens
+
+Three tabs in the header — **Trigger / Filter**, **JSON reference**, and **Functions** — switch screens, and each keeps its state while you move between them.
+
+> **Screenshot placeholder — Screen tabs:** Capture the header showing the **Trigger / Filter**, **JSON reference**, and **Functions** tabs, with enough of the active workspace to locate them. Do not show a dropdown or menu; the tabs are always visible.
+
+> **Screenshot placeholder — Functions navigation:** Capture **concat** selected, all six catalog groups collapsed, and two named payload groups with their match counts; expand one payload group so its reference rows are visible.
+
+> **Screenshot placeholder — Function insertion and copy:** Capture a parsed path inserted into a **concat** argument, with the expected-type badges, required markers, status cards, the generated expression, and **Copy expression**. Use a structurally valid example.
+
+> **Screenshot placeholder — Multi-payload search:** Capture two named payloads containing a shared leaf path, the search results identifying both, and the selected leaf revealed in its own tree. Include the payload count and the **New payload** action.
+
+> **Screenshot placeholder — Loop references:** Capture a selected path that contains an array index, showing the fixed-position reference, the `item()` and `items()` cards, a populated **Loop name**, the generated named-loop expression, and the Copy controls.
+
+> **Screenshot placeholder — Retained typed edit:** Parse valid JSON, then make it invalid by typing and let the automatic parse run. Capture the invalid editor, the retained tree, and **Could not parse. Showing last successful payload.** beneath Sample JSON. Do not paste the invalid sample, because a paste clears the tree.
+
 ## Install
 
 1. Open **Power Platform Toolbox** (host API `1.0.17` or later — see the `features.minAPI` manifest field).
@@ -36,8 +52,8 @@ To use Dataverse field discovery, select an environment connection in the Toolbo
 
 ## Run — Your First Expression
 
-1. **Load fields** — click **Connect Table** to pull them from Dataverse, **Import a schema** to paste CSV/JSON/JSON Schema, **Add a field manually**, or **Load sample fields** to try it out.
-2. **Pick a screen and mode** — open **Trigger / Filter** with the header's mode chip, then choose _Trigger condition_ or _Filter array_. **Functions** and **JSON reference** are one chip click away.
+1. **Load fields** — click **Connect a table** to pull them from Dataverse, **Import a schema** to paste CSV/JSON/JSON Schema, **Add a field manually**, or **Load sample fields** to try it out.
+2. **Pick a screen and mode** — select the **Trigger / Filter** tab, then choose _Trigger condition_ or _Filter array_. **JSON reference** and **Functions** are one tab click away.
 3. **Add rules** — click a field in the Toolbox to add a rule, then choose an operator and a value. The value editor matches the field type (string, number, boolean, dateTime, choice).
 4. **Nest logic** — **+ Group** adds a nested AND/OR group; drag the grip handle or use the up/down buttons to reorder.
 5. **Check diagnostics** — the Details pane confirms the expression is valid or explains what is wrong.
@@ -52,12 +68,12 @@ Other screens:
 
 - **`cspExceptions`: none.** The tool declares no CSP exceptions and makes no requests to any external domain. It has no telemetry, no analytics, and no backend of its own.
 - **Dataverse access** is performed entirely through the host's `dataverseAPI`, scoped to the environment connection you select in the Toolbox. The tool reads table and attribute _metadata_ only — it never reads, writes, or deletes records.
-- **Storage** is limited to the host's `settings` API (saved field profiles and UI preferences).
+- **Storage** is limited to the host's `settings` API (saved field profiles, UI preferences, and cached Dataverse metadata for the environment you connected).
 - **Pasted JSON** in the JSON reference builder (up to five payloads) is processed locally and is not uploaded or saved by this feature. It is never written to the host `settings` API, and it is gone when the tool reloads.
 
 ## Theme & Accessibility
 
-The tool follows the Power Platform Toolbox app theme automatically — light, dark, and high contrast — via the host `getTheme()` / `onThemeChanged()` APIs. No manual configuration. Reordering, field selection, function arguments, payload tabs (arrow/Home/End), and every dialog are reachable by keyboard; **Alt+Down** moves from a Functions argument to Parsed Value.
+The tool follows the Power Platform Toolbox app theme automatically — light or dark — by reading `utils.getCurrentTheme()` and listening for the host's `settings:updated` event. No manual configuration. Reordering, field selection, function arguments, payload tabs (arrow/Home/End), and every dialog are reachable by keyboard; **Alt+Down** moves from a Functions argument to Parsed Value.
 
 ## Support & Maintenance
 

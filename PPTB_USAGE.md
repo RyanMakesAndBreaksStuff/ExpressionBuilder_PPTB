@@ -10,22 +10,24 @@ Install **Expression Builder** from the Power Platform Toolbox marketplace (host
 
 ## Screens
 
-The mode chip in the header switches between three screens:
+Three tabs in the header switch between the screens, in this order:
 
-- **Functions** — assemble a Workflow Definition Language call from the 103-function catalog.
 - **Trigger / Filter** — build the AND/OR predicate used by a trigger condition or a Filter array action.
 - **JSON reference** — turn a sample action or trigger output into a correctly rooted reference.
+- **Functions** — assemble a Workflow Definition Language call from the 103-function catalog.
 
-Each screen stays mounted while another is showing, so its state survives switching. Functions and JSON reference state is held in memory only and is never saved or included in the exported condition document.
+Each screen stays mounted while another is showing, so its state survives switching, and the tool reopens on the last screen you used. Functions and JSON reference state is held in memory only: its contents are never saved or included in the exported condition document.
+
+> **Screenshot placeholder — Screen tabs:** Capture the header showing the **Trigger / Filter**, **JSON reference**, and **Functions** tabs, with enough of the active workspace to locate them. Do not show a dropdown or menu; the tabs are always visible.
 
 ## Permissions & External Connections
 
-The tool declares **no `cspExceptions`** and contacts no external domain — no telemetry, no backend. Dataverse access goes through the host `dataverseAPI` against the connection you pick, and reads table/attribute **metadata only** (never records). Persistence uses the host `settings` API for field profiles and UI preferences. Pasted JSON in the JSON reference builder (up to five payloads) is processed locally and is not uploaded or saved by this feature.
+The tool declares **no `cspExceptions`** and contacts no external domain — no telemetry, no backend. Dataverse access goes through the host `dataverseAPI` against the connection you pick, and reads table/attribute **metadata only** (never records). Persistence uses the host `settings` API for field profiles, UI preferences, and cached Dataverse metadata (table and field details for the environment you connected). Pasted JSON in the JSON reference builder (up to five payloads) is processed locally and is not uploaded or saved by this feature.
 
 ## Trigger / Filter
 
-1. **Pick the screen and mode** — choose **Trigger / Filter** in the header, then _Trigger condition_ (`triggerBody()`) or _Filter array_ (`item()`).
-2. **Connect Table** — pull field metadata live from a connected Dataverse table.
+1. **Pick the screen and mode** — select the **Trigger / Filter** tab, then _Trigger condition_ (`triggerBody()`) or _Filter array_ (`item()`).
+2. **Connect a table** — pull field metadata live from a connected Dataverse table.
 3. **Add Field** — click a field in the Field Toolbox to add a rule to the active group.
 4. **Set operator/value** — the type (string, number, boolean, dateTime, choice) drives which operators and value editor show.
 5. **Add Group** — nest AND/OR logic as needed. The **Wrappers** menu on a rule applies `toLower`, `toUpper`, `trim`, `length`, or `coalesce` to both of its operands, in the order you check them.
@@ -50,7 +52,7 @@ Both paths update the same underlying document via `moveNode`/`reorderNode`, so 
 
 ## Functions
 
-Choose **Functions** in the header to build a Workflow Definition Language call without writing its syntax.
+Select the **Functions** tab to build a Workflow Definition Language call without writing its syntax.
 
 1. **Find a function** — browse String, Collection, Logical, Math, Date and time, or Conversion, or type in the catalog search.
 2. **Pick it** — the function becomes active and its argument list appears. Required arguments are marked; optional arguments may stay blank; variadic functions accept any number of trailing values.
@@ -58,11 +60,15 @@ Choose **Functions** in the header to build a Workflow Definition Language call 
 4. **Jump to values** — press **Alt+Down** in any argument to move to Parsed Value; the argument remains the insert target. Double-click or press Enter on a row to insert it.
 5. **Copy** — use the bare expression in an expression editor, or the `@{…}` form inside text.
 
-Parsed Value lists one group per parsed JSON payload; with more than one parsed payload, each group is labelled with its action or trigger, so identical paths from different outputs insert the correct reference. A shared cap of 200 rows, collapsible sources, and array-item accordions keep large samples workable. Status cards report whether the call is valid and how many required arguments are set; invalid types, missing required values, and unknown or misused functions are diagnosed inline.
+> **Screenshot placeholder — Functions navigation:** Capture **concat** selected, all six catalog groups collapsed, and two named payload groups with their match counts; expand one payload group so its reference rows are visible.
+
+Parsed Value lists each parsed payload as its own collapsible group, labelled with its action or trigger and its match count, with the reference root in the tooltip, so identical paths from different outputs insert the correct reference. Primitive array values appear once, as plain rows. A shared cap of 200 rows and array-item accordions keep large samples workable. Status cards report whether the call is valid and how many required arguments are set; missing required arguments, gaps before a filled optional, and arguments that are not a valid literal, reference, or call are reported inline.
+
+> **Screenshot placeholder — Function insertion and copy:** Capture a parsed path inserted into a **concat** argument, with the expected-type badges, required markers, status cards, the generated expression, and **Copy expression**. Use a structurally valid example.
 
 ## JSON References
 
-Open **JSON reference** in the header to build a reference into a flow-run output:
+Open the **JSON reference** tab to build a reference into a flow-run output:
 
 1. **Start with the first payload** — the first payload card is ready to use. **New payload** adds another, up to five. Each card holds its own source, reference root, sample, selection, expansion state, and loop name.
 2. **Choose the reference root** — under **Action** or **Trigger**, pick **Full output** for `outputs('<name>')` / `triggerOutputs()` (also right for Compose), or **Body only** for `body('<name>')` / `triggerBody()`.
@@ -70,11 +76,17 @@ Open **JSON reference** in the header to build a reference into a flow-run outpu
 4. **Paste or type the sample** — pasting replaces the sample and parses immediately; typing re-parses after a 600 ms pause. Samples up to 1 MiB, with up to 10,000 values and 64 nesting levels, are accepted, and only strict JSON is valid — comments, trailing commas, and single quotes are rejected.
 5. **Select a value** in the tree and **Copy** it for the expression editor, or copy the `@{…}` form for use inside text.
 
-**Payload cards** show a status dot, their root, and a close button; use Left/Right or Home/End to move between them. Invalid edits leave the last successful tree available and label it as retained output; the status reads **Could not parse** (or **Could not parse. Showing last successful payload.**). Material changes to a parsed sample raise one **Parsed · N values** or **Payload updated · N values** notification, while whitespace, key-order, and equivalent number changes update quietly.
+**Payload cards** show the payload label and its root function (`outputs()`, `body()`, `triggerOutputs()`, or `triggerBody()`), with the full root expression and parse status announced to screen readers, plus a close button once more than one payload is open; use Left/Right or Home/End to move between them. An invalid edit while typing leaves the last successful tree available and labels it as retained output; an invalid paste clears the tree, selection, and expansion. Status reads **Could not parse**, **Could not parse. Showing last successful payload.**, or **Nothing parsed yet** before the first parse. A successful paste raises one **Parsed · N values** notification; a material change made by typing raises **Payload updated · N values**, while whitespace, key-order, and equivalent number changes update quietly.
+
+> **Screenshot placeholder — Retained typed edit:** Parse valid JSON, then make it invalid by typing and let the automatic parse run. Capture the invalid editor, the retained tree, and **Could not parse. Showing last successful payload.** beneath Sample JSON. Do not paste the invalid sample, because a paste clears the tree.
 
 **Search across payloads** filters every parsed payload by path or value. Results show the payload, path, and a value preview, with the total match and parsed-payload counts; up to eight are listed. Selecting a result switches to that payload and reveals the leaf. Esc clears the search.
 
+> **Screenshot placeholder — Multi-payload search:** Capture two named payloads containing a shared leaf path, the search results identifying both, and the selected leaf revealed in its own tree. Include the payload count and the **New payload** action.
+
 An index such as `[0]` reads one fixed item, not each item in a loop. A generated reference does not prove that the action exists, has run, or has this shape at run time. Switching to **Trigger / Filter** leaves your conditions exactly as they were. See the [user manual](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references) for details.
+
+> **Screenshot placeholder — Loop references:** Capture a selected path that contains an array index, showing the fixed-position reference, the `item()` and `items()` cards, a populated **Loop name**, the generated named-loop expression, and the Copy controls.
 
 ## Shared
 

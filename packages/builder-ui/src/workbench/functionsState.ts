@@ -22,7 +22,6 @@ export interface FunctionsState {
 	args: Readonly<Record<string, string>>;
 	/** Last argument the user focused; Parsed Value inserts here (FR-22). */
 	lastFocusedArg: string | null;
-	copyFormat: CopyFormat;
 	copyState: 'idle' | 'copied';
 }
 
@@ -37,7 +36,6 @@ export type FunctionsAction =
 	| { type: 'setArg'; name: string; value: string }
 	| { type: 'focusArg'; name: string }
 	| { type: 'insertReference'; expression: string }
-	| { type: 'setCopyFormat'; value: CopyFormat }
 	| { type: 'copySucceeded' }
 	| { type: 'resetCopyState' };
 
@@ -48,7 +46,6 @@ export const initialFunctionsState: FunctionsState = {
 	selectedFunction: 'concat',
 	args: {},
 	lastFocusedArg: null,
-	copyFormat: 'expression',
 	copyState: 'idle',
 };
 
@@ -111,9 +108,6 @@ export function functionsReducer(state: FunctionsState, action: FunctionsAction)
 				copyState: 'idle',
 			};
 		}
-
-		case 'setCopyFormat':
-			return { ...state, copyFormat: action.value, copyState: 'idle' };
 
 		case 'copySucceeded':
 			return { ...state, copyState: 'copied' };

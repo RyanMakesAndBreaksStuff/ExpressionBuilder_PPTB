@@ -211,7 +211,8 @@ describe('FunctionsWorkspace', () => {
     expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("concat(triggerBody()?['Name'], ' - ')");
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Copy as @{…}' }));
+    await user.click(screen.getByRole('button', { name: 'More copy formats' }));
+    await user.click(screen.getByRole('menuitem', { name: /^Copy with @\{ \}/ }));
     expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("@{concat(triggerBody()?['Name'], ' - ')}");
   });
 
@@ -335,7 +336,7 @@ describe('FunctionsWorkspace', () => {
     const status = screen.getByRole('region', { name: 'Status' });
     expect(status).toHaveTextContent('Invalid');
     expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Copy as @{…}' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'More copy formats' })).toBeDisabled();
     const value = screen.getByLabelText('value');
     fireEvent.change(value, { target: { value: "triggerBody()?['Qty']" } });
     expect(status).toHaveTextContent('Valid');
@@ -344,12 +345,13 @@ describe('FunctionsWorkspace', () => {
     expect(screen.getByLabelText('Generated expression')).toHaveTextContent("int(triggerBody()?['Qty'])");
     await user.click(screen.getByRole('button', { name: 'Copy expression', exact: true }));
     expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("int(triggerBody()?['Qty'])");
-    await user.click(screen.getByRole('button', { name: 'Copy as @{…}' }));
+    await user.click(screen.getByRole('button', { name: 'More copy formats' }));
+    await user.click(screen.getByRole('menuitem', { name: /^Copy with @\{ \}/ }));
     expect(adapter.copyToClipboard).toHaveBeenLastCalledWith("@{int(triggerBody()?['Qty'])}");
     fireEvent.change(value, { target: { value: '' } });
     expect(status).toHaveTextContent('Invalid');
     expect(screen.getByRole('button', { name: 'Copy expression', exact: true })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Copy as @{…}' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'More copy formats' })).toBeDisabled();
   });
 
   it('omits an empty float locale and includes a filled locale', async () => {
