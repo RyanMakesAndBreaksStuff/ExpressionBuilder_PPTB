@@ -1939,7 +1939,7 @@ body {
 }
 
 .eb-json-source {
-	flex: 1 1 300px;
+	flex: 1 1 250px;
 	/* 560px gives the textarea room on tall hosts, but a bare floor overflows
 	   short hosts (PPTB routinely gives ~420px): the JSON view opened already
 	   needing a vertical scrollbar. Cap the floor at what the frame supplies
@@ -2317,8 +2317,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 4px;
-	padding: 6px 10px;
+	padding: 3px 10px;
 	border: 1px solid var(--border);
 	border-radius: var(--r-control);
 	background: var(--surface);
@@ -2371,10 +2370,11 @@ body {
 	font: inherit;
 }
 
-/* Sectioned reference root grid (replaces flat eb-choice-grid for source pane) */
+/* Sectioned reference root grid (replaces flat eb-choice-grid for source pane).
+   Columns stop at 112px so the buttons stay compact on a wide Source pane. */
 .eb-root-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(2, minmax(0, 112px));
 	gap: 4px 6px;
 }
 

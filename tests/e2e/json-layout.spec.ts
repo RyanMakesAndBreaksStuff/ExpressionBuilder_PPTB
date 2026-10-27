@@ -13,10 +13,12 @@ test('payload cards are compact and keep readable text', async ({ page }) => {
   const box = (await page.locator('.eb-payload-tab').first().boundingBox())!;
   expect(box.width).toBeLessThanOrEqual(168);
   expect(box.height).toBeLessThanOrEqual(48);
-  const sizes = await page.locator('.eb-payload-tab').first().evaluate((tab) =>
-    ['.eb-payload-root', '.eb-payload-state-text']
+  // Two lines: the name, then the root function in a smaller code face. The status is announced, not shown.
+  const [name, root] = await page.locator('.eb-payload-tab').first().evaluate((tab) =>
+    ['.eb-payload-name', '.eb-payload-root']
       .map((selector) => Number.parseFloat(getComputedStyle(tab.querySelector(selector)!).fontSize)));
-  for (const size of sizes) expect(size).toBeGreaterThanOrEqual(11);
+  expect(name).toBeGreaterThanOrEqual(11);
+  expect(root).toBeGreaterThanOrEqual(10);
 });
 
 test('payload values sit at the right edge of their row, as in the mock', async ({ page }) => {

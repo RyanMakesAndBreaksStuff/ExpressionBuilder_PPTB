@@ -74,6 +74,7 @@ export function PayloadStrip({
                   aria-selected={payload.id === session.activeId}
                   aria-controls={`${baseId}-panel-${payload.id}`}
                   aria-describedby={`${baseId}-status-${payload.id}`}
+                  title={rootExpression(payload.state)}
                   tabIndex={payload.id === session.activeId ? 0 : -1}
                   onClick={() => dispatch({
                     type: 'activate',
@@ -83,9 +84,7 @@ export function PayloadStrip({
                 >
                   {/* No visible status: it is read from the description below. */}
                   <strong className="eb-payload-name">{label}</strong>
-                  <code className="eb-payload-root" title={rootExpression(payload.state)}>
-                    {rootFunction(payload.state)}
-                  </code>
+                  <code className="eb-payload-root">{rootFunction(payload.state)}</code>
                 </button>
                 <span id={`${baseId}-status-${payload.id}`}
                   className="eb-visually-hidden">

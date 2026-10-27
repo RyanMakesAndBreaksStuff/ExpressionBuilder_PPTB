@@ -28,6 +28,13 @@ it('roves tabs, wraps arrows and focuses the surviving tab on close', () => {
   expect(screen.queryByRole('button', { name: /^Close / })).toBeNull();
 });
 
+it('shows the full root as a tooltip on the whole tab', () => {
+  render(<Harness />);
+  const tab = screen.getByRole('tab', { name: 'Payload 1, payload 1' });
+  expect(tab).toHaveAttribute('title', expect.stringMatching(/^outputs\(/));
+  expect(tab.querySelector('.eb-payload-root')).not.toHaveAttribute('title');
+});
+
 it('disables adding at five and exposes only one tab stop', () => {
   render(<Harness />);
   for (let i = 0; i < 4; i += 1) fireEvent.click(screen.getByRole('button', { name: '+ Add' }));

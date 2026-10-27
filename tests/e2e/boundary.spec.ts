@@ -10,7 +10,7 @@ test('platform and dependency boundaries stay isolated', () => {
 
   expect(findForbidden(files, 'window.toolboxAPI', ['packages/platform/src/pptbAdapter.ts', 'apps/pptb/src/main.tsx', 'tests/e2e'])).toEqual([]);
   expect(findForbidden(files, 'navigator.clipboard', ['packages/platform/src/webAdapter.ts', 'tests/e2e'])).toEqual([]);
-  expect(findForbidden(files, 'localStorage', ['packages/platform/src/webAdapter.ts', 'packages/platform/test', 'tests/e2e'])).toEqual([]);
+  expect(findForbidden(files, 'localStorage', ['packages/platform/src/webAdapter.ts', 'packages/platform/test', 'apps/web/test', 'tests/e2e'])).toEqual([]);
   const engineFiles = files.filter((file) => relative(root, file).replaceAll('\\', '/').startsWith('packages/engine/'));
   expect(findForbidden(engineFiles, "from 'react'", [])).toEqual([]);
   expect(findForbidden(engineFiles, 'from "react"', [])).toEqual([]);

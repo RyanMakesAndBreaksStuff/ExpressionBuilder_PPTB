@@ -39,7 +39,7 @@ async function expectInside(owner: Locator, target: Locator): Promise<void> {
 /** Names the active payload, pastes the sample, then selects the first item and names its loop. */
 async function loadSample(page: Page, name: string): Promise<void> {
   const panel = page.getByRole('tabpanel');
-  await panel.getByLabel('Action name').fill(name);
+  await panel.getByLabel('Action', { exact: true }).fill(name);
   await pasteSample(page, JSON.stringify(sample));
   await expect(panel.getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta'))
     .toHaveText(/^\d+ values?$/);
@@ -71,14 +71,14 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'JSON reference', exact: true }).click();
       // Two loaded payloads: only the active tabpanel is visible, so each check below is scoped to it.
       await loadSample(page, 'List Rows');
-      await page.getByRole('button', { name: '+ New payload', exact: true }).click();
+      await page.getByRole('button', { name: '+ Add', exact: true }).click();
       await loadSample(page, 'List Rows Again');
 
       for (const position of [2, 1]) await test.step('payload ' + position + ' is active', async () => {
         await page.getByRole('tab', { name: new RegExp(', payload ' + position + '$') }).click();
         const panel = page.getByRole('tabpanel');
         await expect(panel).toHaveCount(1);
-        await expect(panel.getByLabel('Action name')).toHaveValue(position === 1 ? 'List Rows' : 'List Rows Again');
+        await expect(panel.getByLabel('Action', { exact: true })).toHaveValue(position === 1 ? 'List Rows' : 'List Rows Again');
 
         const workspace = panel.locator('.eb-json-workspace');
         const cards = [
