@@ -61,3 +61,4 @@ undo-paste.md
 /scripts/capture-screenshots.mjs
 /SCREENSHOTS_PENDING.txt
 /playwright.config.ts
+/docs/specs/002-multi-payload-json-workspace/reference/13b-standalone.html
