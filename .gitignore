@@ -58,3 +58,6 @@ parse-notifications.md
 tokensaudit.md
 undo-paste.md
 /parse-notification-update.md
+/scripts/capture-screenshots.mjs
+/SCREENSHOTS_PENDING.txt
+/playwright.config.ts

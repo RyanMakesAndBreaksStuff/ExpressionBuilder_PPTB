@@ -2,7 +2,7 @@
 
 > **Version**: 1.3.1 · **License**: BSD-3-Clause · **Maintainer**: Ryan Rettinger
 
-Build Power Automate **Trigger Condition** and **Filter array** advanced-mode expressions visually, assemble **Workflow Definition Language function calls** from a 103-function catalog, and turn action or trigger outputs into rooted **JSON references** — all inside the Power Platform Toolbox, instead of hand-writing `@and(...)` / `@or(...)` predicates and discovering the syntax errors at runtime.
+Build Power Automate **Trigger Condition** and **Filter array** advanced-mode expressions visually, assemble **Workflow Definition Language function calls** from a 99-function catalog, and turn action or trigger outputs into rooted **JSON references** — all inside the Power Platform Toolbox, instead of hand-writing `@and(...)` / `@or(...)` predicates and discovering the syntax errors at runtime.
 
 ![The Expression Builder workbench: field toolbox, condition canvas, live diagnostics, and the generated Power Automate expression.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
@@ -16,8 +16,8 @@ No Dataverse connection? Import a field schema as Field JSON, a sample payload, 
 
 ## What It Does
 
-- **Visual condition composer** — nested AND/OR groups and rules, reorderable by drag handle or keyboard-accessible up/down buttons; per-rule wrappers apply `toLower`, `toUpper`, `trim`, `length`, or `coalesce` to both operands.
-- **Functions screen** — 103 Workflow Definition Language functions in String, Collection, Logical, Math, Date and time, and Conversion groups, with typed and required/optional argument badges, expanding variadic slots, nested calls, drag-to-insert, and live argument validation.
+- **Visual condition composer** — nested AND/OR groups and rules, reorderable by drag handle or keyboard-accessible up/down buttons; per-rule wrappers apply `toLower`, `toUpper`, `trim`, `length`, or `coalesce` to the field; `toLower`, `toUpper`, and `trim` also apply to the typed value.
+- **Functions screen** — 99 Workflow Definition Language functions in String, Collection, Logical, Math, Date and time, and Conversion groups, with typed and required/optional argument badges, expanding variadic slots, nested calls, drag-to-insert, and live argument validation.
 - **Live expression preview** — the generated Power Automate expression updates as you build, ready to copy.
 - **Dataverse field discovery** — connect to a table and the tool pulls its columns, types, and choice option sets straight from the connected environment.
 - **Schema import** — load fields from CSV, JSON, or JSON Schema when you have no live connection.
@@ -30,17 +30,17 @@ No Dataverse connection? Import a field schema as Field JSON, a sample payload, 
 
 Three tabs in the header — **Trigger / Filter**, **JSON reference**, and **Functions** — switch screens, and each keeps its state while you move between them.
 
-> **Screenshot placeholder — Screen tabs:** Capture the header showing the **Trigger / Filter**, **JSON reference**, and **Functions** tabs, with enough of the active workspace to locate them. Do not show a dropdown or menu; the tabs are always visible.
+![Expression Builder header with the Trigger / Filter, JSON reference, and Functions screen tabs above the Trigger / Filter workspace](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/screen-tabs.png)
 
-> **Screenshot placeholder — Functions navigation:** Capture **concat** selected, all six catalog groups collapsed, and two named payload groups with their match counts; expand one payload group so its reference rows are visible.
+![Functions screen with concat selected, the six catalog groups collapsed, and the Get customer and Get order payload groups with match counts, Get order expanded](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/functions-navigation.png)
 
-> **Screenshot placeholder — Function insertion and copy:** Capture a parsed path inserted into a **concat** argument, with the expected-type badges, required markers, status cards, the generated expression, and **Copy expression**. Use a structurally valid example.
+![concat arguments with a parsed Email reference inserted into text1, type badges, Valid status cards, the generated expression, and the Copy expression button](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/function-insertion.png)
 
-> **Screenshot placeholder — Multi-payload search:** Capture two named payloads containing a shared leaf path, the search results identifying both, and the selected leaf revealed in its own tree. Include the payload count and the **New payload** action.
+![Search all payloads listing Email matches from both Get customer and Get order, with the selected Email leaf revealed in its payload tree](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/multi-payload-search.png)
 
-> **Screenshot placeholder — Loop references:** Capture a selected path that contains an array index, showing the fixed-position reference, the `item()` and `items()` cards, a populated **Loop name**, the generated named-loop expression, and the Copy controls.
+![Reference card for an indexed path showing the fixed-position note, the item() and items() loop cards, a Loop name of Each customer, and their Copy buttons](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/loop-references.png)
 
-> **Screenshot placeholder — Retained typed edit:** Parse valid JSON, then make it invalid by typing and let the automatic parse run. Capture the invalid editor, the retained tree, and **Could not parse. Showing last successful payload.** beneath Sample JSON. Do not paste the invalid sample, because a paste clears the tree.
+![JSON reference with an invalid typed edit in Sample JSON, the previous tree still shown, and the status "Could not parse. Showing last successful payload."](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/retained-typed-edit.png)
 
 ## Install
 
@@ -61,7 +61,7 @@ To use Dataverse field discovery, select an environment connection in the Toolbo
 
 Other screens:
 
-- **Functions** — choose from 103 functions in six groups, fill typed/required/optional/variadic arguments, nest calls by click or drag, and copy the call bare or as `@{…}`. Parsed Value is one **Alt+Down** away from any argument.
+- **Functions** — choose from 99 functions in six groups, fill typed/required/optional/variadic arguments, nest calls by click or drag, and copy the call bare or as `@{…}`. Parsed Value is one **Alt+Down** away from any argument.
 - **JSON reference** — keep up to five payloads open, paste up to 1 MiB / 10,000 values / 64 levels of strict JSON, switch cards with the arrow keys, search across all payloads, and copy the selected reference.
 
 ## Permissions & External Connections

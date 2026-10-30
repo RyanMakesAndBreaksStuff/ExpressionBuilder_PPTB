@@ -6,11 +6,11 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 
 ## [Unreleased]
 
-## [1.3.1] — 2026-10-25
+## [1.3.1] — 2026-10-30
 
 ### Added
 
-- **Functions** screen: choose one of 103 Power Automate expression functions in six groups — String, Collection, Logical, Math, Date and time, and Conversion — fill its arguments, and copy the resulting expression. Argument badges show the expected type and whether a value is required. Picking a function while an argument is focused wraps that value; dragging a function onto an argument inserts its call.
+- **Functions** screen: choose one of 99 Power Automate expression functions in six groups — String, Collection, Logical, Math, Date and time, and Conversion — fill its arguments, and copy the resulting expression. Argument badges show the expected type and whether a value is required. Picking a function while an argument is focused wraps that value; dragging a function onto an argument inserts its call.
 - **Conversion** group with 24 functions, including `int`, `float`, `decimal`, `string`, `bool`, `json`, `xml`, `array`, `createArray`, base64, data URI, and URI component conversions. Deprecated functions are omitted, and conversion calls work when nested inside other arguments.
 - **Multiple JSON payloads**: keep up to five action or trigger outputs open at once, each with its own source, reference root, sample, selection, and loop name. Add a payload with **New payload** and close any card except the last.
 - **Search across payloads** in JSON reference: find a path or value in any parsed payload, see which payload it belongs to, and jump straight to it in that payload's tree.
@@ -23,7 +23,14 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 - Pasting into **Sample JSON** replaces the sample and parses it immediately; typing parses again after a short pause. A successful paste shows **Parsed · N values**, a material change made by typing shows **Payload updated · N values**, and whitespace, key-order, and equivalent number changes update quietly.
 - Payload cards show their root function, and the strip shows an `N / 5` count; both stay usable on narrow and short tool windows.
 - Pasted JSON remains local to the session. The tool still declares no `cspExceptions`, contacts no external domain, and stores only field profiles, UI preferences, and cached Dataverse metadata through the host `settings` API.
-- Cached Dataverse metadata is scoped to the selected environment, so changing connections no longer shows the previous environment's tables or fields.
+- Cached Dataverse metadata is scoped to the selected environment, so changing connections no longer shows the previous environment's tables or fields. The first load after upgrading fetches fresh data, and if the connection changes while fields are loading, the load stops with **The environment changed while loading fields. Please retry.**
+- The **Graphite** theme replaces Porcelain in both light and dark modes: solid primary buttons, a clearer focus ring, and refreshed status colours. The tool still follows the Toolbox theme.
+- Operators and the value box follow a rule's wrappers. `length` on a text column offers number operators and a numeric value box, a text wrapper on a date offers text operators, and a wrapper that cannot follow the current chain is disabled in the **Wrappers** menu.
+- Dataverse Lookup, Customer, and Owner columns now use the payload key Dataverse returns, `_<logicalname>_value`, in the generated expression.
+- Importing a JSON sample encodes keys that contain dots, so they resolve to the real key. JSON Schema import is stricter: it rejects a non-object root, imports a numeric `enum` as a number field with options, and skips an invalid or conflicting `enum` with a warning.
+- **Manage Profiles** disables Save, Load, and Delete while one is running and reports failures with a notification.
+- On **JSON reference**, **Action name** is now **Action**, and the **Selected path** breadcrumb is removed from the Reference card.
+- New diagnostics flag non-finite number literals and results whose type cannot be determined, and wrapper inputs of the wrong type say which function rejected which type.
 
 ### Fixed
 
@@ -34,7 +41,8 @@ Workspace-level changes (engine, shared UI, web host) are tracked in the [root C
 - Importing a saved condition rejects duplicate fields or nodes and non-text rule values with a message instead of loading a broken document.
 - Primitive array values appear once in the parsed tree, and the `length` and `coalesce` wrappers apply to the field side only.
 - A failed Dataverse field fetch is reported once and retried on the next connect instead of leaving an empty table.
-- Theme and settings failures at startup fall back to the default theme or a closed dialog, the switch-source dialog always opens on **Keep rules**, and the **Action name** field is marked as required.
+- A failed table list or related-table load shows **Could not load tables.** or **Could not load fields.** with a **Retry** button instead of looking empty.
+- Theme and settings failures at startup fall back to the default theme or a closed dialog, the switch-source dialog always opens on **Keep rules**, and the **Action** field is marked as required.
 
 ## [1.2.1] — 2026-10-04
 
