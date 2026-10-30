@@ -7,27 +7,6 @@ export interface PlatformSettings {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
-  /**
-   * Optional bulk read of every stored key/value pair. Implemented where the
-   * host exposes it (e.g. pptb, web localStorage); consumers that need to
-   * enumerate keys (such as an orphan sweep) must treat its absence as "not
-   * supported" and no-op rather than assuming an empty settings store.
-   */
-  getAll?(): Promise<Record<string, string> | null>;
-  /**
-   * Optional bulk write that REPLACES the entire settings object on the
-   * host. Callers must always build the payload from a full getAll() result
-   * minus only the keys they intend to remove/change — never from a partial
-   * set of keys — or unrelated stored data will be silently destroyed.
-   */
-  setAll?(values: Record<string, string>): Promise<void>;
-}
-
-/** A selectable data source the host can enumerate (e.g. a Dataverse connection). */
-export interface DataSourceRef {
-  id: string;
-  label: string;
-  kind: 'dataverse' | 'sharepoint' | 'sql';
 }
 
 /** A table/entity within a data source. */
@@ -53,14 +32,10 @@ export interface RelatedTableRef {
 }
 
 export interface DiscoverFieldsOptions {
-  /** Source id from listDataSources; omit for the host default. */
-  sourceId?: string;
   /** Logical name of the table to discover; omit to use host's current table. */
   table?: string;
   /** When true, also surface one-hop related navigation properties. */
   includeRelated?: boolean;
-  /** Bypass any adapter-side cache. */
-  refresh?: boolean;
 }
 
 export interface DiscoverFieldsResult {
@@ -78,16 +53,22 @@ export interface PlatformAdapter {
   onThemeChanged(handler: (theme: PlatformTheme) => void): () => void;
   settings: PlatformSettings;
 
-  /** Enumerate selectable sources. Optional — absent hosts are import-only. */
-  listDataSources?(): Promise<DataSourceRef[]>;
-  /** List tables for a source. Optional — absent hosts hide the table picker. */
-  getTables?(sourceId?: string): Promise<TableRef[]>;
+  /** List tables. Optional — absent hosts hide the table picker. */
+  getTables?(): Promise<TableRef[]>;
   /** Source-agnostic field discovery. Optional — absent hosts degrade to import/manual. */
   discoverFields?(options?: DiscoverFieldsOptions): Promise<DiscoverFieldsResult>;
   /** One-hop related navigation properties for a table. Optional. */
   getRelatedTables?(table: string): Promise<RelatedTableRef[]>;
   /** Discover a single relationship's columns as flattened, dotted-path fields. Optional. */
   discoverRelatedFields?(table: string, navigationProperty: string): Promise<DiscoverFieldsResult>;
+
+  /**
+   * Opaque scope for authenticated metadata caching, or `null` when the active
+   * environment cannot be verified. `null` means skip persistent cache reads and
+   * writes and continue with fresh discovery — it must not block that discovery.
+   * The string is an internal cache discriminator. Do not log or display it.
+   */
+  getMetadataCacheScope?(): Promise<string | null>;
 
   /**
    * @deprecated Use discoverFields({}) instead.

@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Accordion,
   AccordionHeader,
   AccordionItem,
   AccordionPanel,
+  Button,
   Spinner,
   Text,
   makeStyles,
@@ -39,13 +40,12 @@ export function FieldToolboxPane({
   canConnectTable = true,
   onToggleCollapsed,
   relatedSections,
+  relatedStatus,
   onExpandRelated,
   onCreateRuleFromField,
 }: FieldToolboxPaneProps) {
   const styles = useStyles();
   const [search, setSearch] = useState('');
-  /** Track which navigation properties have already triggered a discovery fetch. */
-  const [expandedNavs, setExpandedNavs] = useState(() => new Set<string>());
 
   // Split fields into primary (no group) and related (has group)
   const primaryFields = useMemo(() => fields.filter((f) => !f.group), [fields]);
@@ -71,15 +71,10 @@ export function FieldToolboxPane({
     });
   }, [primaryFields, needle]);
 
-  const handleAccordionToggle = useCallback(
-    (navigationProperty: string) => {
-      if (!expandedNavs.has(navigationProperty) && onExpandRelated) {
-        setExpandedNavs((prev) => new Set(prev).add(navigationProperty));
-        onExpandRelated(navigationProperty);
-      }
-    },
-    [expandedNavs, onExpandRelated],
-  );
+  // Only idle sections fetch on disclosure; failed ones retry from their panel button.
+  const handleAccordionToggle = (navigationProperty: string) => {
+    if ((relatedStatus?.[navigationProperty] ?? 'idle') === 'idle') onExpandRelated?.(navigationProperty);
+  };
 
   const hasContent = fields.length > 0 || (relatedSections && relatedSections.length > 0);
 
@@ -157,7 +152,7 @@ export function FieldToolboxPane({
                   {/* Related sections — lazy-loaded */}
                   {relatedSections?.map((section) => {
                     const sectionFields = fieldsByGroup.get(section.displayName) ?? [];
-                    const isLoaded = expandedNavs.has(section.navigationProperty);
+                    const status = relatedStatus?.[section.navigationProperty] ?? 'idle';
                     const visibleFields = needle
                       ? sectionFields.filter((f) =>
                           [f.label, f.id, f.type].join(' ').toLowerCase().includes(needle),
@@ -180,7 +175,18 @@ export function FieldToolboxPane({
                         </AccordionHeader>
                         <AccordionPanel>
                           <div className="eb-accordion-panel-content">
-                            {!isLoaded && sectionFields.length === 0 ? (
+                            {status === 'failed' ? (
+                              <>
+                                <Text size={100}>Could not load fields.</Text>
+                                <Button
+                                  size="small"
+                                  aria-label={`Retry loading ${section.displayName} fields`}
+                                  onClick={() => onExpandRelated?.(section.navigationProperty)}
+                                >
+                                  Retry
+                                </Button>
+                              </>
+                            ) : status !== 'succeeded' && sectionFields.length === 0 ? (
                               <Spinner size="extra-tiny" label="Loading..." />
                             ) : visibleFields.length === 0 ? (
                               <Text size={100}>No fields.</Text>

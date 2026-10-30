@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { builderDarkTheme, builderLightTheme } from '../src/theme/fluentTheme';
 import {
-  createGraphiteFluentTheme,
-  graphiteTokens,
+  createPorcelainFluentTheme,
   migratePaletteId,
+  porcelainTokens,
   type PaletteId,
 } from '../src/theme/workbenchTokens';
 
@@ -23,105 +23,146 @@ function contrastRatio(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+const PALETTES = ['porcelainLight', 'porcelainDark'] satisfies PaletteId[];
+
 describe('workbench Graphite tokens', () => {
-  it('matches the explorer Graphite palette exactly in both modes', () => {
-    expect(graphiteTokens.graphiteLight.swatches).toEqual(['#F6F8FA', '#FDFEFF', '#155EEF', '#087D78']);
-    expect(graphiteTokens.graphiteLight.cssVariables).toMatchObject({
-      '--bg': '#F6F8FA',
-      '--bg2': '#FBFCFD',
-      '--surface': '#FDFEFF',
-      '--surface2': '#EEF2F5',
-      '--surface3': '#E1E7EC',
-      '--border': '#D2DCE5',
-      '--border-strong': '#AEBDCA',
-      '--text': '#18212B',
-      '--text2': '#41505F',
-      '--text3': '#55626F',
-      '--accent': '#155EEF',
-      '--accent-strong': '#004EEB',
-      '--accent-ink': '#F7FAFF',
-      '--accent-2': '#087D78',
-      '--danger': '#BE4540',
-      '--warn': '#8B6414',
-      '--good': '#237754',
-      '--info': '#1E65C2',
+  it('uses assets/graphtokenss graphite-tokens.json under the existing palette ids', () => {
+    expect(porcelainTokens.porcelainLight.label).toBe('Graphite');
+    expect(porcelainTokens.porcelainLight.swatches).toEqual(['#f6f6f6', '#ffffff', '#111111', '#0a5aa8']);
+    expect(porcelainTokens.porcelainLight.cssVariables).toMatchObject({
+      '--bg': '#f6f6f6',
+      '--bg2': '#fbfbfb',
+      '--surface': '#ffffff',
+      '--surface2': '#eeeeee',
+      '--surface3': '#e0e0e0',
+      '--border': '#cfcfcf',
+      '--border-strong': '#9c9c9c',
+      '--interactive-stroke': '#666666',
+      '--text': '#0a0a0a',
+      '--text2': '#333333',
+      '--text3': '#555555',
+      '--accent': '#111111',
+      '--accent-strong': '#000000',
+      '--accent-ink': '#ffffff',
+      '--accent-soft': 'rgba(17, 17, 17, 0.12)',
+      '--accent-2': '#0a5aa8',
+      '--danger': '#a8281f',
+      '--danger-soft': 'rgba(168, 40, 31, 0.12)',
+      '--warn': '#7a4d00',
+      '--warn-soft': 'rgba(122, 77, 0, 0.12)',
+      '--good': '#17663f',
+      '--good-soft': 'rgba(23, 102, 63, 0.12)',
+      '--info': '#2a4bb0',
+      '--info-soft': 'rgba(42, 75, 176, 0.12)',
     });
 
-    expect(graphiteTokens.graphiteDark.swatches).toEqual(['#12161A', '#1B2228', '#77A7FF', '#55C5BB']);
-    expect(graphiteTokens.graphiteDark.cssVariables).toMatchObject({
-      '--bg': '#12161A',
-      '--bg2': '#161C21',
-      '--surface': '#1B2228',
-      '--surface2': '#232D35',
-      '--surface3': '#2D3943',
-      '--border': '#394955',
-      '--border-strong': '#526776',
-      '--text': '#EDF3F7',
-      '--text2': '#C8D3DC',
-      '--text3': '#9EADB9',
-      '--accent': '#77A7FF',
-      '--accent-strong': '#5690F4',
-      '--accent-ink': '#0C1A34',
-      '--accent-2': '#55C5BB',
-      '--danger': '#FF978D',
-      '--warn': '#EFC56E',
-      '--good': '#63C99B',
-      '--info': '#9ABEFF',
+    expect(porcelainTokens.porcelainDark.label).toBe('Graphite Dark');
+    expect(porcelainTokens.porcelainDark.swatches).toEqual(['#000000', '#0f0f0f', '#f2f2f2', '#8ec5ff']);
+    expect(porcelainTokens.porcelainDark.cssVariables).toMatchObject({
+      '--bg': '#000000',
+      '--bg2': '#060606',
+      '--surface': '#0f0f0f',
+      '--surface2': '#191919',
+      '--surface3': '#262626',
+      '--border': '#3a3a3a',
+      '--border-strong': '#595959',
+      '--interactive-stroke': '#a0a0a0',
+      '--text': '#fafafa',
+      '--text2': '#d4d4d4',
+      '--text3': '#a5a5a5',
+      '--accent': '#f2f2f2',
+      '--accent-strong': '#ffffff',
+      '--accent-ink': '#0a0a0a',
+      '--accent-soft': 'rgba(242, 242, 242, 0.16)',
+      '--accent-2': '#8ec5ff',
+      '--danger': '#ff8f86',
+      '--danger-soft': 'rgba(255, 143, 134, 0.16)',
+      '--warn': '#f0c460',
+      '--warn-soft': 'rgba(240, 196, 96, 0.16)',
+      '--good': '#62d69b',
+      '--good-soft': 'rgba(98, 214, 155, 0.16)',
+      '--info': '#92b2ff',
+      '--info-soft': 'rgba(146, 178, 255, 0.16)',
     });
   });
 
-  it('keeps derived alpha values and Fluent aliases aligned with Graphite', () => {
-    expect(graphiteTokens.graphiteLight.cssVariables).toMatchObject({
-      '--panel': 'rgba(253, 254, 255, 0.95)',
-      '--accent-soft': 'rgba(21, 94, 239, 0.12)',
-      '--danger-soft': 'rgba(190, 69, 64, 0.12)',
-      '--warn-soft': 'rgba(139, 100, 20, 0.12)',
-      '--good-soft': 'rgba(35, 119, 84, 0.12)',
-      '--info-soft': 'rgba(30, 101, 194, 0.12)',
+  it('keeps Fluent aliases aligned with Graphite', () => {
+    expect(createPorcelainFluentTheme('porcelainLight')).toMatchObject({
+      colorBrandBackground: '#111111',
+      colorNeutralForegroundOnBrand: '#ffffff',
+      colorNeutralStrokeAccessible: '#666666',
     });
-    expect(graphiteTokens.graphiteDark.cssVariables).toMatchObject({
-      '--panel': 'rgba(27, 34, 40, 0.94)',
-      '--accent-soft': 'rgba(119, 167, 255, 0.16)',
-      '--danger-soft': 'rgba(255, 151, 141, 0.14)',
-      '--warn-soft': 'rgba(239, 197, 110, 0.14)',
-      '--good-soft': 'rgba(99, 201, 155, 0.14)',
-      '--info-soft': 'rgba(154, 190, 255, 0.14)',
-    });
-    expect(createGraphiteFluentTheme('graphiteLight')).toMatchObject({
-      colorBrandBackground: '#155EEF',
-      colorNeutralForegroundOnBrand: '#F7FAFF',
-      colorNeutralStrokeAccessible: '#55626F',
-    });
-    expect(createGraphiteFluentTheme('graphiteDark')).toMatchObject({
-      colorBrandBackground: '#77A7FF',
-      colorNeutralForegroundOnBrand: '#0C1A34',
-      colorNeutralStrokeAccessible: '#9EADB9',
+    expect(createPorcelainFluentTheme('porcelainDark')).toMatchObject({
+      colorBrandBackground: '#f2f2f2',
+      colorNeutralForegroundOnBrand: '#0a0a0a',
+      colorNeutralStrokeAccessible: '#a0a0a0',
     });
   });
 
-  it.each(['graphiteLight', 'graphiteDark'] satisfies PaletteId[])(
-    'meets text, on-brand, and interactive-stroke contrast in %s',
-    (paletteId) => {
-      const vars = graphiteTokens[paletteId].cssVariables;
-      expect(contrastRatio(vars['--text'], vars['--surface'])).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(vars['--text2'], vars['--surface'])).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(vars['--text3'], vars['--surface'])).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(vars['--accent-ink'], vars['--accent'])).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(vars['--interactive-stroke'], vars['--surface'])).toBeGreaterThanOrEqual(3);
-    },
-  );
+  it.each(PALETTES)('meets text, status, on-brand, and interactive-stroke contrast in %s', (paletteId) => {
+    const vars = porcelainTokens[paletteId].cssVariables;
+    for (const name of ['--text', '--text2', '--text3', '--danger', '--warn', '--good', '--info'] as const) {
+      expect(contrastRatio(vars[name], vars['--surface']), name).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(vars[name], vars['--surface2']), `${name} on surface2`).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrastRatio(vars['--accent-ink'], vars['--accent'])).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(vars['--interactive-stroke'], vars['--surface'])).toBeGreaterThanOrEqual(3);
+  });
 
   it('migrates legacy IDs and rejects unknown saved values', () => {
-    expect(migratePaletteId('porcelainLight')).toBe('graphiteLight');
-    expect(migratePaletteId('porcelainDark')).toBe('graphiteDark');
-    expect(migratePaletteId('graphiteLight')).toBe('graphiteLight');
-    expect(migratePaletteId('graphiteDark')).toBe('graphiteDark');
+    expect(migratePaletteId('graphiteLight')).toBe('porcelainLight');
+    expect(migratePaletteId('graphiteDark')).toBe('porcelainDark');
+    expect(migratePaletteId('porcelainLight')).toBe('porcelainLight');
+    expect(migratePaletteId('porcelainDark')).toBe('porcelainDark');
     expect(migratePaletteId('unknown')).toBeNull();
     expect(migratePaletteId(null)).toBeNull();
   });
 
   it('keeps compatibility theme exports aligned with the live Graphite palette', () => {
-    expect(builderLightTheme).toMatchObject(createGraphiteFluentTheme('graphiteLight'));
-    expect(builderDarkTheme).toMatchObject(createGraphiteFluentTheme('graphiteDark'));
+    expect(builderLightTheme).toMatchObject(createPorcelainFluentTheme('porcelainLight'));
+    expect(builderDarkTheme).toMatchObject(createPorcelainFluentTheme('porcelainDark'));
+  });
+});
+
+describe('11a shell tokens (FR-7)', () => {
+  it('defines every shell variable in both palettes (AC-7.1)', () => {
+    const names = [
+      '--code', '--header-glass', '--panel-glass', '--glow-1', '--glow-2',
+      '--panel-shadow', '--dock-shadow', '--seg-track', '--seg-selected',
+    ] as const;
+    for (const paletteId of PALETTES) {
+      for (const name of names) {
+        expect(porcelainTokens[paletteId].cssVariables[name], `${paletteId} ${name}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('derives glass and glow from the Graphite surfaces and accents', () => {
+    expect(porcelainTokens.porcelainDark.cssVariables).toMatchObject({
+      '--code': '#000000',
+      '--header-glass': 'rgba(25, 25, 25, 0.92)',
+      '--panel-glass': 'rgba(15, 15, 15, 0.85)',
+      '--glow-1': 'rgba(242, 242, 242, 0.2)',
+      '--glow-2': 'rgba(142, 197, 255, 0.16)',
+    });
+    expect(porcelainTokens.porcelainLight.cssVariables).toMatchObject({
+      '--code': '#0f0f0f',
+      '--header-glass': 'rgba(238, 238, 238, 0.92)',
+      '--panel-glass': 'rgba(255, 255, 255, 0.85)',
+      '--glow-1': 'rgba(17, 17, 17, 0.14)',
+      '--glow-2': 'rgba(10, 90, 168, 0.12)',
+    });
+  });
+});
+
+describe('Functions dark code well', () => {
+  it.each(PALETTES)('keeps code text and syntax readable against the code background in %s', (paletteId) => {
+    const vars: Record<string, string> = porcelainTokens[paletteId].cssVariables;
+    for (const name of ['--code-text', '--code-text2', '--code-text3', '--code-accent', '--code-good', '--code-warn', '--code-danger']) {
+      expect(vars[name], name).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(contrastRatio(vars[name], vars['--code']), name).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(vars['--code-seg-track']).toBeTruthy();
+    expect(vars['--code-seg-selected']).toBeTruthy();
   });
 });

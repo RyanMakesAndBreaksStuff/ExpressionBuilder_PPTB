@@ -2,9 +2,66 @@
 
 All notable changes to this workspace. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-This file tracks the workspace as a whole (engine, platform, builder-ui, and both hosts). The published Power Platform Toolbox tool is versioned separately — see [apps/pptb/CHANGELOG.md](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/apps/pptb/CHANGELOG.md).
+This file tracks the workspace as a whole (engine, platform, builder-ui, and both hosts). The published Power Platform Toolbox tool is versioned separately — see [apps/pptb/public/CHANGELOG.md](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/apps/pptb/public/CHANGELOG.md).
 
 ## [Unreleased]
+
+## [1.3.1] — 2026-10-30
+
+### Added
+
+- **Functions** screen: pick a Workflow Definition Language function, fill its arguments, and copy the finished expression. The catalog holds 99 functions across six groups — String, Collection, Logical, Math, Date and time, and Conversion — each with its argument list, including required, optional, and variadic parameters, plus live validation. Picking a function while an argument is focused wraps that argument; dragging a function onto an argument inserts its call. Missing required arguments, gaps before a filled optional, and arguments that are not a valid literal, reference, or call are reported before copying.
+- **Conversion** functions group, 24 entries: `array`, `base64`, `base64ToBinary`, `base64ToJson`, `base64ToString`, `binary`, `bool`, `createArray`, `dataUri`, `dataUriToBinary`, `dataUriToString`, `decimal`, `decodeDataUri`, `decodeUriComponent`, `encodeBase64`, `encodeUriComponent`, `float`, `int`, `json`, `string`, `uriComponent`, `uriComponentToBinary`, `uriComponentToString`, and `xml`. The deprecated `decodeBase64` and `parse` functions are omitted. Conversion calls are accepted nested inside any argument.
+- **Multi-payload JSON reference workspace**: up to five independent payload cards, each with its own source, reference root, sample, selection, expansion state, and loop name. Cards show their label and root function, expose the full root expression and parse status to assistive technology, can be closed while more than one remains, and support arrow, Home, and End navigation. A **New payload** action adds an empty payload until the fifth.
+- **Cross-payload search** in JSON reference: search every parsed payload by path or value, see the payload label, path, and value preview for each match, and reveal the selected leaf in its own payload tree. Up to eight results are listed with the total match and parsed-payload counts.
+- **Parsed Value source groups** in Functions: each parsed payload is its own collapsible group in the nav, labelled with its action or trigger, with the reference root as a tooltip, so identical paths from different outputs produce the right reference. Primitive array elements appear once, as plain rows. A shared cap of 200 rows, per-source collapse, and array-item accordions keep large samples usable.
+- **Alt+Down** in a Functions argument moves focus into Parsed Value while keeping that argument as the insert target.
+- Browser coverage for multi-payload sessions, cross-payload search, Functions argument editing, and the JSON reference → Functions round trip.
+- Two diagnostics from the engine: `INVALID_LITERAL` (error, "Numeric literals must be finite.") for `NaN` and infinite number literals, and `UNMODELLED_RESULT` (warning, "Compatibility could not be established for this result.") when a `coalesce`, text wrapper, or `length` result cannot be typed. Wrapper inputs of the wrong type report `TYPE_MISMATCH` with a message such as `Function "toLower" does not accept number inputs.`
+- `wrapperChainContract` is exported from `@ryanmakes/eb_engine`, and `PlatformAdapter` gains an optional `getMetadataCacheScope()` that the PPTB adapter implements from the active connection.
+
+### Changed
+
+- The shell header is now a 48px pill with the title, three screen tabs, and the current screen's actions. The tabs, in order, are **Trigger / Filter**, **JSON reference**, and **Functions**; all three screens stay mounted, so their state survives switching, and the app reopens on the last screen you used. The expression-mode control, the **Import** overflow menu, and **Export** appear on **Trigger / Filter** only, and **JSON reference** shows its privacy line in the header.
+- **Trigger / Filter** replaces **Condition builder** as the condition screen's name. It keeps the expression-mode control, **Import** in the overflow menu, and the **Export** primary action.
+- Pasting into **Sample JSON** now replaces the whole sample and parses it immediately; typing re-parses automatically after a 600 ms pause. A successful paste raises **Parsed · N values**, and a material change made by typing raises **Payload updated · N values**.
+- JSON reference feedback distinguishes cosmetic from material edits: whitespace, object key order, and equivalent number spellings refresh the status without a notification or a reset of tree selection and expansion. An invalid automatic parse keeps the last successful tree usable and labels it as retained output; an invalid paste clears the tree, selection, and expansion and reports **Could not parse**.
+- Payload cards carry their root function and a screen-reader status (good, pending or warning, danger); the strip adds an `N / 5` count and a **New payload** action, and at 900px and below the search moves to its own row. The workspace and JSON cards are capped to the viewport minus 80px of host chrome, and payload tabs cap their width so **Close** stays reachable.
+- The PPTB app's `@pptb/types` dev dependency is upgraded from 1.2.5 to 1.2.7. Workspace packages move to 1.3.1 (root manifest 1.0.3), and the product docs now carry the matching version.
+- Cached Dataverse metadata is scoped to the selected environment, so changing connections no longer serves the previous environment's tables or field list.
+- Functions and JSON reference state remain in memory only: their contents are never persisted, uploaded, or added to the exported condition document, and only the last screen id is saved.
+- The **Graphite** theme replaces Porcelain for both light and dark modes. Primary buttons are solid rather than a gradient, the focus ring uses the code accent, and the JSON source input and sample textarea use a 12px radius. The stored palette ids stay `porcelainLight` and `porcelainDark`, so saved theme choices keep working.
+- Operators and the value editor follow a rule's wrapper chain. `length` on a string offers the number operators and a numeric value box; a text wrapper on a date offers string operators; `coalesce` on a nullable number offers only `equals` and `notEquals`. A wrapper that cannot follow the current chain is disabled in the **Wrappers** menu, and an imported operator outside the chain stays visible so it can be fixed.
+- Dataverse Lookup, Customer, and Owner columns reference the payload key `_<logicalname>_value`, for example `triggerBody()?['_ownerid_value']`, matching what Dataverse returns. The field id and label keep the logical name.
+- Sample import encodes `~`, `.`, and empty keys in field ids as `~0`, `~1`, and `~2`, so keys containing dots resolve to the real key; the label and generated reference still use the key as written.
+- JSON Schema import is stricter. A non-object root or a boolean schema is rejected with **Unsupported JSON Schema shape.** A numeric `enum` now imports as a number field with options instead of a choice with text labels. An `enum` with object, array, null, non-finite, or mixed members, or one that conflicts with the declared type, is skipped with a warning and the field keeps its declared type.
+- Cached Dataverse metadata uses a new `eb.metadata.v2` key scoped to the environment, so the first load after upgrading fetches fresh data. If the environment changes mid-load, the load stops with **The environment changed while loading fields. Please retry.**
+- **Manage Profiles** disables Save, Load, and Delete while one is running and reports failures as notifications that keep the typed name. Opening the dialog no longer rewrites stored settings.
+- On **JSON reference** the field label is shortened from **Action name** to **Action**, and the **Selected path** breadcrumb is removed from the Reference card.
+- The web host falls back to the system colour scheme when browser storage is blocked, and reports **Theme preference could not be saved.** when a theme choice cannot be stored.
+
+### Fixed
+
+- Native undo and redo work after pasting into **Sample JSON**; undo rewrites the sample and the ordinary automatic-edit rules validate the result.
+- A pending automatic parse is cancelled when its payload closes or a paste completes, so it cannot parse a different payload or raise a duplicate paste notification.
+- Valid material payload changes raise exactly one **Parsed** or **Payload updated** notice per change; an invalid automatic edit no longer repeats a success notice or discards the retained tree.
+- Payload close buttons stay inside narrow strips instead of being clipped by the tab width.
+- A render error is contained: the affected screen shows an alert with a **Reset** button, and the other screens keep working instead of the whole window going blank.
+- Importing a saved expression rejects duplicate field ids, duplicate node ids, and non-scalar rule values with a validation message instead of loading a broken document; stale rule and group selections are dropped.
+- Primitive array elements in a parsed payload are listed once, as plain rows; object arrays still group under `[n]`.
+- The `length` and `coalesce` wrappers apply to the field side only, while `toLower`, `toUpper`, and `trim` still mirror onto a string literal.
+- A failed Dataverse field fetch is reported once and is no longer cached, so the next connect retries instead of showing an empty table.
+- A rejected theme read or settings call during startup no longer throws: the app keeps its default theme and leaves onboarding closed.
+- The switch-source dialog opens on **Keep rules** every time, and the **Action** field on **JSON reference** is marked as required.
+- A failed table list or related-table load shows **Could not load tables.** or **Could not load fields.** with a **Retry** button instead of looking empty. The PPTB adapter now passes related-metadata failures through rather than returning an empty field list.
+
+### Removed
+
+- `listDataSources`, `DataSourceRef`, `DiscoverFieldsOptions.sourceId` and `.refresh`, and the `sourceId` parameter of `getTables()` are removed from `@ryanmakes/eb_platformadapter`. No host or caller used them, and PPTB behaviour is unchanged; integrators that passed them now get a compile error.
+- `PlatformSettings` is now `get`, `set`, and `remove`. The optional `getAll` and `setAll` are gone, and the web adapter can no longer call `localStorage.clear()`. The orphaned-profile sweep is deleted, so profile keys left behind by the pre-1.0.2 delete bug are no longer cleaned up when **Manage Profiles** opens; they were never listed.
+- Unused builder-ui files and exports (`ImportExportPanel`, `TypeGlyph`, `rootExpressionFor`, `ActiveSource`, and others) and dead theme CSS: 32 unreferenced selectors and 26 unused custom properties.
+
+## [1.2.1] — 2026-10-04
 
 ### Added
 

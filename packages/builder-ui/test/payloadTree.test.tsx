@@ -10,6 +10,10 @@ import {
   jsonReferenceReducer,
   type JsonReferenceState,
 } from '../src/workbench/jsonReferenceState';
+import {
+  createJsonPayloadSession,
+  jsonPayloadSessionReducer,
+} from '../src/workbench/jsonPayloadSession';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
 afterEach(() => cleanup());
@@ -99,7 +103,7 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
     expect(item(/^triggerBody\(\)/)).toHaveFocus();
   });
 
-  it('toggles from the chevron without selecting, and selects from the rest of the row (FR-034)', async () => {
+  it('toggles from the chevron without selecting, and selects and toggles from the rest of the row (FR-034)', async () => {
     const user = userEvent.setup();
     const { container } = render(<TreeHarness text={fixtureA1} />);
     const bodyChevron = item(/^body, object$/).querySelector('[data-chevron]') as Element;
@@ -111,7 +115,12 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
     await user.click(item(/^value, array$/));
     expect(selectedPath()).toBe('["body","value"]');
     expect(item(/^value, array$/)).toHaveAttribute('aria-selected', 'true');
+    expect(item(/^value, array$/)).toHaveAttribute('aria-expanded', 'true');
     expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+
+    await user.click(item(/^value, array$/));
+    expect(item(/^value, array$/)).toHaveAttribute('aria-expanded', 'false');
+    expect(selectedPath()).toBe('["body","value"]');
   });
 
   it('keeps the selection when an ancestor collapses, and focuses the collapsed row', async () => {
@@ -175,5 +184,60 @@ describe('PayloadTree (FR-030 to FR-039)', () => {
       'constructor, number, 2',
       'hasOwnProperty, number, 3',
     ]);
+  });
+
+  it('focuses and selects a revealed row past the array page, once per sequence', () => {
+    const initial = createJsonPayloadSession();
+    const pasted = jsonPayloadSessionReducer(initial, {
+      type: 'edit',
+      payloadId: initial.activeId,
+      action: {
+        type: 'pasteAndParse',
+        defaultActionName: 'Action',
+        text: JSON.stringify(Array.from({ length: 30 }, (_, index) => index)),
+      },
+    });
+    const parsed = pasted.payloads[0].state.parsed!;
+    const session = jsonPayloadSessionReducer(pasted, {
+      type: 'reveal',
+      match: {
+        payloadId: initial.activeId,
+        parsed,
+        path: [24],
+        payloadLabel: 'Payload 1',
+        pathLabel: '[24]',
+        preview: '24',
+      },
+    });
+    const state = session.payloads[0].state;
+    const tree = (reveal: typeof session.reveal) => (
+      <>
+        <button type="button">Elsewhere</button>
+        <h2 id="payload-heading">Payload</h2>
+        <PayloadTree
+          labelledBy="payload-heading"
+          value={parsed.value}
+          rootLabel="triggerBody()"
+          expanded={state.expanded}
+          showAll={state.showAll}
+          selectedPath={state.selectedPath}
+          onSelect={() => undefined}
+          onToggle={() => undefined}
+          onShowAll={() => undefined}
+          reveal={reveal}
+        />
+      </>
+    );
+    const view = render(tree(null));
+    const row = () => item(/^\[24\], number, 24$/);
+    expect(row()).toHaveAttribute('aria-selected', 'true');
+    expect(row()).not.toHaveFocus();
+
+    view.rerender(tree(session.reveal));
+    expect(row()).toHaveFocus();
+
+    screen.getByRole('button', { name: 'Elsewhere' }).focus();
+    view.rerender(tree(session.reveal));
+    expect(row()).not.toHaveFocus();
   });
 });

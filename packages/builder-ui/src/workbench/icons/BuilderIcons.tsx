@@ -15,28 +15,19 @@ export function CopyIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SunIcon(props: SVGProps<SVGSVGElement>) {
+// Filled glyphs, so they opt out of SvgIcon's stroke.
+export function TextAlignLeftIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgIcon {...props}>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07 6.7 17.3M17.3 6.7l1.77-1.77" />
+      <path fill="currentColor" stroke="none" d="M2 5.75C2 5.33579 2.33579 5 2.75 5H18.25C18.6642 5 19 5.33579 19 5.75C19 6.16421 18.6642 6.5 18.25 6.5H2.75C2.33579 6.5 2 6.16421 2 5.75ZM2 18.75C2 18.3358 2.33579 18 2.75 18H13.25C13.6642 18 14 18.3358 14 18.75C14 19.1642 13.6642 19.5 13.25 19.5H2.75C2.33579 19.5 2 19.1642 2 18.75ZM2.75 11.5C2.33579 11.5 2 11.8358 2 12.25C2 12.6642 2.33579 13 2.75 13H21.25C21.6642 13 22 12.6642 22 12.25C22 11.8358 21.6642 11.5 21.25 11.5H2.75Z" />
     </SvgIcon>
   );
 }
 
-export function MoonIcon(props: SVGProps<SVGSVGElement>) {
+export function TextAlignRightIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgIcon {...props}>
-      <path d="M20 14.2A8 8 0 0 1 9.8 4 8 8 0 1 0 20 14.2Z" />
-    </SvgIcon>
-  );
-}
-
-export function PanelIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgIcon {...props}>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M8 4v16M16 4v16" />
+      <path fill="currentColor" stroke="none" d="M5 5.75C5 5.33579 5.33579 5 5.75 5H21.25C21.6642 5 22 5.33579 22 5.75C22 6.16421 21.6642 6.5 21.25 6.5H5.75C5.33579 6.5 5 6.16421 5 5.75ZM10 18.75C10 18.3358 10.3358 18 10.75 18H21.25C21.6642 18 22 18.3358 22 18.75C22 19.1642 21.6642 19.5 21.25 19.5H10.75C10.3358 19.5 10 19.1642 10 18.75ZM2.75 11.5C2.33579 11.5 2 11.8358 2 12.25C2 12.6642 2.33579 13 2.75 13H21.25C21.6642 13 22 12.6642 22 12.25C22 11.8358 21.6642 11.5 21.25 11.5H2.75Z" />
     </SvgIcon>
   );
 }
@@ -115,15 +106,6 @@ export function MoveToGroupIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function PlusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgIcon {...props}>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </SvgIcon>
-  );
-}
-
 export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgIcon {...props}>
@@ -156,14 +138,6 @@ export function BuilderIcon(props: SVGProps<SVGSVGElement>) {
     <SvgIcon {...props}>
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </SvgIcon>
-  );
-}
-
-export function DiagIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
     </SvgIcon>
   );
 }
@@ -216,14 +190,3 @@ export function WrapIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function FieldsIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
-    </SvgIcon>
-  );
-}

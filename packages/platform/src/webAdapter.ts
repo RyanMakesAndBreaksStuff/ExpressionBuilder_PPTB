@@ -2,8 +2,24 @@ import type { PlatformAdapter, PlatformTheme } from './PlatformAdapter';
 
 const darkSchemeQuery = '(prefers-color-scheme: dark)';
 
-function getThemeFromMediaQuery(): PlatformTheme {
-  return matchMedia(darkSchemeQuery).matches ? 'dark' : 'light';
+export type WebTheme = 'light' | 'dark';
+
+export interface WebPlatformAdapter extends PlatformAdapter {
+  getThemeSnapshot(): WebTheme;
+  setTheme(theme: WebTheme): void;
+}
+
+const themeOverrideKey = 'eb.web.theme.override.v1';
+
+// A blocked storage binding or a throwing getItem is an absent override.
+// Theme and profile writes stay outside this guard so a rejected save still rejects.
+function readThemeOverride(): WebTheme | null {
+  try {
+    const value = localStorage.getItem(themeOverrideKey);
+    return value === 'light' || value === 'dark' ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 const TOAST_COLORS: Record<string, string> = {
@@ -36,7 +52,12 @@ function showToast(message: string, level: string) {
   setTimeout(() => el.remove(), level === 'error' ? 8000 : 4000);
 }
 
-export function createWebAdapter(): PlatformAdapter {
+export function createWebAdapter(): WebPlatformAdapter {
+  const mediaQuery = matchMedia(darkSchemeQuery);
+  const themeHandlers = new Set<(theme: PlatformTheme) => void>();
+  const getThemeSnapshot = (): WebTheme =>
+    readThemeOverride() ?? (mediaQuery.matches ? 'dark' : 'light');
+
   return {
     async copyToClipboard(text) {
       // Insecure contexts have no navigator.clipboard; name the problem instead
@@ -51,19 +72,25 @@ export function createWebAdapter(): PlatformAdapter {
       showToast(message, level);
     },
 
+    getThemeSnapshot,
+
+    setTheme(theme) {
+      localStorage.setItem(themeOverrideKey, theme);
+      themeHandlers.forEach((handler) => handler(theme));
+    },
+
     async getTheme() {
-      return getThemeFromMediaQuery();
+      return getThemeSnapshot();
     },
 
     onThemeChanged(handler) {
-      const mediaQuery = matchMedia(darkSchemeQuery);
-      const listener = (event: MediaQueryListEvent) => {
-        handler(event.matches ? 'dark' : 'light');
+      themeHandlers.add(handler);
+      const listener = () => {
+        if (readThemeOverride() === null) handler(getThemeSnapshot());
       };
-
       mediaQuery.addEventListener('change', listener);
-
       return () => {
+        themeHandlers.delete(handler);
         mediaQuery.removeEventListener('change', listener);
       };
     },
@@ -80,28 +107,6 @@ export function createWebAdapter(): PlatformAdapter {
       async remove(key) {
         localStorage.removeItem(key);
       },
-
-      async getAll() {
-        const result: Record<string, string> = {};
-        for (let i = 0; i < localStorage.length; i += 1) {
-          const key = localStorage.key(i);
-          if (key === null) continue;
-          const value = localStorage.getItem(key);
-          if (value !== null) result[key] = value;
-        }
-        return result;
-      },
-
-      async setAll(values) {
-        localStorage.clear();
-        for (const [key, value] of Object.entries(values)) {
-          localStorage.setItem(key, value);
-        }
-      },
-    },
-
-    async listDataSources() {
-      return [];
     },
 
     async getTables() {
