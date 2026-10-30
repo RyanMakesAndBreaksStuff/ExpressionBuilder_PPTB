@@ -107,3 +107,67 @@ describe('FieldToolboxPane', () => {
     expect(onCreateRuleFromField).not.toHaveBeenCalled();
   });
 });
+
+describe('FieldToolboxPane related sections', () => {
+  const sections = [{ navigationProperty: 'ownerid', displayName: 'Owner' }];
+
+  it('requests an idle section from the keyboard and shows loading while pending', async () => {
+    const onExpandRelated = vi.fn();
+    const user = userEvent.setup();
+    const view = render(
+      <FieldToolboxPane {...baseProps()} relatedSections={sections} onExpandRelated={onExpandRelated} />,
+    );
+    screen.getByRole('button', { name: /Owner/ }).focus();
+    await user.keyboard('{Enter}');
+    expect(onExpandRelated).toHaveBeenCalledExactlyOnceWith('ownerid');
+
+    view.rerender(
+      <FieldToolboxPane
+        {...baseProps()}
+        relatedSections={sections}
+        relatedStatus={{ ownerid: 'pending' }}
+        onExpandRelated={onExpandRelated}
+      />,
+    );
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    await user.keyboard('{Enter}');
+    expect(onExpandRelated).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes a keyboard retry for a failed section', async () => {
+    const onExpandRelated = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <FieldToolboxPane
+        {...baseProps()}
+        relatedSections={sections}
+        relatedStatus={{ ownerid: 'failed' }}
+        onExpandRelated={onExpandRelated}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /Owner/ }));
+    expect(onExpandRelated).not.toHaveBeenCalled();
+    expect(screen.getByText('Could not load fields.')).toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Retry loading Owner fields' }).focus();
+    await user.keyboard('{Enter}');
+    expect(onExpandRelated).toHaveBeenCalledExactlyOnceWith('ownerid');
+  });
+
+  it('shows the empty state, not failure, for a successful empty section', async () => {
+    const onExpandRelated = vi.fn();
+    render(
+      <FieldToolboxPane
+        {...baseProps()}
+        relatedSections={sections}
+        relatedStatus={{ ownerid: 'succeeded' }}
+        onExpandRelated={onExpandRelated}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /Owner/ }));
+    expect(screen.getByText('No fields.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Retry/ })).not.toBeInTheDocument();
+    expect(onExpandRelated).not.toHaveBeenCalled();
+  });
+});

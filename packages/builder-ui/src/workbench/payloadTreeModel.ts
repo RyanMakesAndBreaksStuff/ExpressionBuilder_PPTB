@@ -170,3 +170,51 @@ export function firstHiddenChildKey(root: unknown, row: PayloadMoreRow): string 
 function truncate(text: string): string {
   return text.length > PREVIEW_MAX_LENGTH ? `${text.slice(0, PREVIEW_MAX_LENGTH - 1)}…` : text;
 }
+
+export interface PayloadLeaf {
+  path: PayloadPath;
+  label: string;
+  value: unknown;
+}
+
+export function collectPayloadLeaves(value: unknown): PayloadLeaf[] {
+  const leaves: PayloadLeaf[] = [];
+
+  function visit(current: unknown, path: PayloadPath, label: string): void {
+    const children: Array<[string | number, unknown]> =
+      Array.isArray(current)
+        ? current.map((child, index) => [index, child])
+        : isJsonObject(current)
+          ? Object.entries(current)
+          : [];
+
+    if (children.length === 0) {
+      leaves.push({
+        path,
+        label: path.length === 0 ? '(root)' : label,
+        value: current,
+      });
+      return;
+    }
+
+    for (const [segment, child] of children) {
+      const key = segment === '' ? '""' : String(segment);
+      const nextLabel = typeof segment === 'number'
+        ? `${label}[${segment}]`
+        : label === '' ? key : `${label}.${key}`;
+      visit(child, [...path, segment], nextLabel);
+    }
+  }
+
+  visit(value, [], '');
+  return leaves;
+}
+
+/** The tab index a key moves to within a tablist of `count` tabs, or null when the key is not a navigation key. */
+export function nextTabIndex(key: string, index: number, count: number): number | null {
+  if (key === 'Home') return 0;
+  if (key === 'End') return count - 1;
+  if (key === 'ArrowRight') return (index + 1) % count;
+  if (key === 'ArrowLeft') return (index + count - 1) % count;
+  return null;
+}

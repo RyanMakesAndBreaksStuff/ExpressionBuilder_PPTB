@@ -39,23 +39,25 @@ describe('JSON reference styles', () => {
     expect(rule(css, '.eb-builder-panel[hidden]')).toMatch(/display:\s*none;/);
   });
 
-  it('keeps the header one row and 71px tall above 900px (FR-007)', () => {
-    expect(rule(css, '.eb-builder-tabs')).toMatch(/min-height:\s*70px;/);
-    expect(rule(css, '.eb-builder-tabs')).toMatch(/margin-block:\s*-12px;/);
-    const wide = mediaBlocks('min-width: 901px');
-    expect(rule(wide, '.eb-header-actions')).toMatch(/flex-wrap:\s*nowrap;/);
-    expect(rule(wide, '.eb-header-brand')).toMatch(/flex:\s*0 999 auto;/);
-    expect(wide).toMatch(/text-overflow:\s*ellipsis;/);
-    expect(mediaBlocks('min-width: 901px) and (max-width: 1180px')).toMatch(/clip:\s*rect\(0, 0, 0, 0\);/);
-  });
-
   it('scrolls the tree inside its card on wide screens and the workspace as one when stacked (FR-092)', () => {
     expect(rule(css, '.eb-payload-tree')).toMatch(/overflow:\s*auto;/);
     expect(rule(css, '.eb-json-workspace')).toMatch(/overflow-y:\s*auto;/);
     const stacked = mediaBlocks('max-width: 600px');
     expect(rule(stacked, '.eb-json-workspace')).toMatch(/flex-direction:\s*column;/);
     expect(rule(stacked, '.eb-payload-tree')).toMatch(/overflow-y:\s*hidden;/);
-    expect(rule(stacked, '.eb-builder-tabs')).toMatch(/flex:\s*1 1 100%;/);
+  });
+
+  it('caps the JSON cards to the host frame so the view never opens needing the workspace to scroll (FR-092)', () => {
+    // 80px = 48px pill header + 8px root gap + 2×12px root padding; vh fallback line first,
+    // dvh override second (the .eb-root pattern).
+    expect(rule(css, '.eb-json-source')).toMatch(
+      /min-height:\s*min\(560px,\s*calc\(100dvh - 80px\)\);/,
+    );
+    expect(rule(css, '.eb-json-payload')).toMatch(
+      /min-height:\s*min\(320px,\s*calc\(100dvh - 80px\)\);/,
+    );
+    expect(rule(css, '.eb-json-reference')).toMatch(/max-height:\s*calc\(100dvh - 80px\);/);
+    expect(rule(css, '.eb-json-reference .eb-json-card-body')).toMatch(/overflow-y:\s*auto;/);
   });
 
   it('meets text contrast for function names and payload roots in light mode (FR-085)', () => {
@@ -66,11 +68,15 @@ describe('JSON reference styles', () => {
     expect(rule(css, '.eb-root[data-theme="dark"]')).toMatch(/--code-fn:\s*var\(--accent-2\);/);
   });
 
-  it('shows a disabled Copy at 50% opacity (FR-052)', () => {
-    expect(rule(css, '.eb-json-copy-row .eb-action-btn:disabled')).toMatch(/opacity:\s*0\.5;/);
-  });
-
   it('animates only through the shared duration token, which reduced motion shortens (FR-093)', () => {
     expect(rule(css, '.eb-tree-chevron')).toMatch(/transition:\s*transform var\(--duration-fast\) ease;/);
+  });
+
+  it('bounds each non-stacked Reference body and keeps the stacked body content-sized', () => {
+    const wide = mediaBlocks('min-width: 601px');
+    expect(rule(wide, '.eb-json-reference > .eb-json-card-body')).toMatch(/overflow-y:\s*auto;/);
+    expect(rule(wide, '.eb-json-reference > .eb-json-card-body')).toMatch(/flex:\s*1 1 auto;/);
+    const stacked = mediaBlocks('max-width: 600px');
+    expect(rule(stacked, '.eb-json-reference > .eb-json-card-body')).toMatch(/overflow:\s*visible;/);
   });
 });

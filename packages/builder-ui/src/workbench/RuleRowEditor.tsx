@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import {
   Menu,
   MenuItemCheckbox,
@@ -6,13 +6,14 @@ import {
   MenuPopover,
   MenuTrigger,
 } from '@fluentui/react-components';
-import type { FieldDefinition } from '@ryanmakes/eb_engine';
-import { coerceValueForField, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
+import { wrapperChainContract, type FieldDefinition } from '@ryanmakes/eb_engine';
+import { chainYieldsNumber, findField, getDefaultValue, getOperatorsForField, getSafeOperator } from '../app/builderState';
 import type { RuleRowEditorProps } from './types';
 import { DuplicateIcon, TrashIcon, WrapIcon } from './icons/BuilderIcons';
 import { ConditionDragHandle } from './ConditionDragHandle';
 import { ConditionMoveButtons } from './ConditionMoveButtons';
 import { listGroupMoveTargets } from './dragDropModel';
+import { ValueEditor } from './ValueEditor';
 import { WRAPPERS } from './wrappers';
 
 export function RuleRowEditor({
@@ -35,7 +36,6 @@ export function RuleRowEditor({
   const fieldLabel = field?.label ?? rule.fieldId;
   const valueMissing = rule.value === undefined || rule.value === null || rule.value === '';
   const hasError = valueMissing && rule.operator !== 'empty' && rule.operator !== 'notEmpty';
-  const [rawValue, setRawValue] = useState(false);
   const appliedWraps = rule.wrappers ?? [];
   const nodeLabel = field?.label ?? `unknown field ${rule.fieldId}`;
   const hasReorderMetadata =
@@ -146,6 +146,12 @@ export function RuleRowEditor({
     ));
   }
 
+  const numericValue = field.type === 'number' || chainYieldsNumber(field, appliedWraps);
+  const operators = getOperatorsForField(field, appliedWraps);
+  // An imported operator outside the chain contract stays selectable so the user can see and correct it.
+  const operatorOptions = operators.includes(rule.operator) ? operators : [rule.operator, ...operators];
+  const appendableWrappers: readonly string[] = wrapperChainContract(field, appliedWraps).appendableWrappers;
+
   return renderDraggableRow((sourceRef, handle, isDragging = false) => (
     <div
       ref={sourceRef}
@@ -166,7 +172,7 @@ export function RuleRowEditor({
           if (!nextField) return;
           onUpdate(rule.id, {
             fieldId: nextField.id,
-            operator: getSafeOperator(nextField, rule.operator),
+            operator: getSafeOperator(nextField, rule.operator, appliedWraps),
             value: getDefaultValue(nextField),
           });
         }}
@@ -197,88 +203,21 @@ export function RuleRowEditor({
         aria-label={`Operator for ${fieldLabel}`}
         title="Select operator"
       >
-        {getOperatorsForField(field).map((operator) => (
+        {operatorOptions.map((operator) => (
           <option key={operator} value={operator}>
             {operator}
           </option>
         ))}
       </select>
       <div className="eb-value-wrap">
-        {field.options?.length && !rawValue ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? field.options[0].value)}
-            onChange={(event) => onUpdate(rule.id, { value: Number(event.target.value) })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            {field.options.map((option) => (
-              <option key={option.value} value={String(option.value)}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        ) : field.options?.length && rawValue ? (
-          <input
-            className="eb-input"
-            type="number"
-            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value === '' ? null : Number(event.target.value) })}
-            onClick={(e) => e.stopPropagation()}
-            placeholder="Raw value"
-            aria-label={`Raw value for ${fieldLabel}`}
-          />
-        ) : field.choices?.length ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? '')}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            {field.choices.map((choice) => (
-              <option key={choice} value={choice}>
-                {choice}
-              </option>
-            ))}
-          </select>
-        ) : field.type === 'boolean' ? (
-          <select
-            className="eb-select"
-            value={String(rule.value ?? false)}
-            onChange={(event) => onUpdate(rule.id, { value: event.target.value === 'true' })}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Value for ${fieldLabel}`}
-          >
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
-        ) : (
-          <input
-            className="eb-input"
-            type={field.type === 'number' ? 'number' : 'text'}
-            value={rule.value === undefined || rule.value === null ? '' : String(rule.value)}
-            onChange={(event) => onUpdate(rule.id, { value: coerceValueForField(event.target.value, field) })}
-            onClick={(e) => e.stopPropagation()}
-            placeholder={hasError ? 'Enter a value' : 'Value'}
-            aria-label={`Value for ${fieldLabel}`}
-          />
-        )}
-        {field.options?.length ? (
-          <button
-            type="button"
-            className="eb-icon-btn"
-            aria-label="Toggle raw value"
-            title="Toggle raw value"
-            aria-pressed={rawValue}
-            onClick={(e) => {
-              e.stopPropagation();
-              setRawValue((current) => !current);
-            }}
-          >
-            #
-          </button>
-        ) : null}
+        <ValueEditor
+          field={field}
+          rule={rule}
+          fieldLabel={fieldLabel}
+          hasError={hasError}
+          numericValue={numericValue}
+          onUpdate={onUpdate}
+        />
         {appliedWraps.length ? (
           <span className="eb-wrap-chip" aria-label={`Applied wraps: ${appliedWraps.join(', ')}`}>
             <WrapIcon />
@@ -295,7 +234,8 @@ export function RuleRowEditor({
             // keep already-applied in their current order, then append newly-checked in click order
             const kept = appliedWraps.filter((id) => set.has(id));
             const added = checkedItems.filter((id) => !appliedWraps.includes(id));
-            onUpdate(rule.id, { wrappers: [...kept, ...added] });
+            const wrappers = [...kept, ...added];
+            onUpdate(rule.id, { wrappers, operator: getSafeOperator(field, rule.operator, wrappers) });
           }}
         >
           <MenuTrigger disableButtonEnhancement>
@@ -317,6 +257,7 @@ export function RuleRowEditor({
                   name="wrappers"
                   value={w.id}
                   title={w.detail}
+                  disabled={!appliedWraps.includes(w.id) && !appendableWrappers.includes(w.id)}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span className="eb-menu-item-label">{w.label}</span>

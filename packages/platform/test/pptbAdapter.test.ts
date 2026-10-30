@@ -151,4 +151,114 @@ describe('createPptbAdapter', () => {
       await expect(adapter.settings.remove('key')).rejects.toThrow('host write failed');
     });
   });
+
+  describe('getMetadataCacheScope', () => {
+    type ActiveConnectionRead = NonNullable<PptbToolboxApi['connections']>['getActiveConnection'];
+
+    function adapterReading(read: () => unknown) {
+      return createPptbAdapter({
+        connections: { getActiveConnection: read as ActiveConnectionRead },
+      });
+    }
+
+    function connection(id: string, url: string) {
+      return {
+        id,
+        name: 'Contoso',
+        url,
+        environment: 'Dev' as const,
+        isActive: false,
+      };
+    }
+
+    it('is stable for an unchanged connection and changes when id or environment URL changes', async () => {
+      const read = vi.fn().mockImplementation(async () => connection('conn-1', 'https://Contoso.CRM.dynamics.com/orgs/contoso/'));
+      const adapter = adapterReading(read);
+      const again = adapterReading(async () => connection('  conn-1  ', 'https://contoso.crm.dynamics.com:443/orgs/contoso'));
+
+      const first = await adapter.getMetadataCacheScope?.();
+      const second = await adapter.getMetadataCacheScope?.();
+      const normalized = await again.getMetadataCacheScope?.();
+      const otherId = await adapterReading(async () => connection('conn-2', 'https://contoso.crm.dynamics.com/orgs/contoso')).getMetadataCacheScope?.();
+      const otherHost = await adapterReading(async () => connection('conn-1', 'https://fabrikam.crm.dynamics.com/orgs/contoso')).getMetadataCacheScope?.();
+      const otherPath = await adapterReading(async () => connection('conn-1', 'https://contoso.crm.dynamics.com/orgs/fabrikam')).getMetadataCacheScope?.();
+      const encodedSlash = await adapterReading(async () => connection('conn-1', 'https://contoso.crm.dynamics.com/orgs%2Fcontoso')).getMetadataCacheScope?.();
+      const otherPort = await adapterReading(async () => connection('conn-1', 'https://contoso.crm.dynamics.com:8443/orgs/contoso')).getMetadataCacheScope?.();
+      const otherScheme = await adapterReading(async () => connection('conn-1', 'http://contoso.crm.dynamics.com/orgs/contoso')).getMetadataCacheScope?.();
+      const dotted = await adapterReading(async () => connection('conn-1', 'https://contoso.crm.dynamics.com/orgs/../orgs/contoso')).getMetadataCacheScope?.();
+      const smashed = await adapterReading(async () => connection('conn-1","https://contoso.crm.dynamics.com/orgs/contoso', 'https://other.example/path')).getMetadataCacheScope?.();
+
+      const expected = 'env:["conn-1","https://contoso.crm.dynamics.com/orgs/contoso"]';
+      expect(first).toBe(expected);
+      expect(second).toBe(expected);
+      expect(normalized).toBe(expected);
+      expect(dotted).toBe(expected);
+      expect(read).toHaveBeenCalledTimes(2);
+      expect(otherId).not.toBe(expected);
+      expect(otherHost).not.toBe(expected);
+      expect(otherPath).not.toBe(expected);
+      expect(encodedSlash).toBe('env:["conn-1","https://contoso.crm.dynamics.com/orgs%2Fcontoso"]');
+      expect(encodedSlash).not.toBe(expected);
+      expect(otherPort).toBe('env:["conn-1","https://contoso.crm.dynamics.com:8443/orgs/contoso"]');
+      expect(otherScheme).not.toBe(expected);
+      expect(smashed).not.toBe(expected);
+      expect(first).not.toContain('Contoso');
+    });
+
+    it('drops query and fragment so tokens stay out of the scope', async () => {
+      const clean = await adapterReading(async () => connection('conn-1', 'https://contoso.crm.dynamics.com/org')).getMetadataCacheScope?.();
+      const withSecret = await adapterReading(async () =>
+        connection('conn-1', 'https://contoso.crm.dynamics.com/org?access_token=s3cr3t#session'),
+      ).getMetadataCacheScope?.();
+
+      expect(withSecret).toBe(clean);
+      expect(withSecret).toBe('env:["conn-1","https://contoso.crm.dynamics.com/org"]');
+      expect(withSecret).not.toContain('s3cr3t');
+      expect(withSecret).not.toContain('access_token');
+    });
+
+    it('returns null when capability, identity, or the scope read is unavailable', async () => {
+      await expect(createPptbAdapter({}).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(createPptbAdapter({ connections: {} }).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => null).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => undefined).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => 'conn-1').getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => ['conn-1']).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('   ', 'https://contoso.crm.dynamics.com')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('conn-1', '   ')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('conn-1', 'not a url')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('conn-1', '/orgs/contoso')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('conn-1', 'javascript:alert(1)')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => connection('conn-1', 'https://user:s3cr3t@contoso.crm.dynamics.com/org')).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(() => {
+        throw new Error('connections unavailable');
+      }).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(() => Promise.reject(new Error('connections unavailable'))).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => ({ ...connection('conn-1', 'https://contoso.crm.dynamics.com'), id: 12 })).getMetadataCacheScope?.()).resolves.toBeNull();
+      await expect(adapterReading(async () => ({ ...connection('conn-1', 'https://contoso.crm.dynamics.com'), url: 12 })).getMetadataCacheScope?.()).resolves.toBeNull();
+    });
+
+    it('does not log the connection id, environment url, or embedded secrets', async () => {
+      const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
+      const spies = methods.map((method) => vi.spyOn(console, method).mockImplementation(() => undefined));
+      try {
+        const scope = await adapterReading(async () =>
+          connection('private-connection-id', 'https://contoso.crm.dynamics.com/org?access_token=s3cr3t'),
+        ).getMetadataCacheScope?.();
+        const credentialed = await adapterReading(async () =>
+          connection('private-connection-id', 'https://user:s3cr3t@contoso.crm.dynamics.com/org'),
+        ).getMetadataCacheScope?.();
+        const logged = spies.flatMap((spy) => spy.mock.calls.flat().map((part) => String(part))).join('\n');
+
+        expect(scope).toBe('env:["private-connection-id","https://contoso.crm.dynamics.com/org"]');
+        expect(credentialed).toBeNull();
+        expect(logged).not.toContain('private-connection-id');
+        expect(logged).not.toContain('contoso.crm.dynamics.com');
+        expect(logged).not.toContain('s3cr3t');
+        expect(logged).not.toContain('access_token');
+      } finally {
+        for (const spy of spies) spy.mockRestore();
+      }
+    });
+  });
 });

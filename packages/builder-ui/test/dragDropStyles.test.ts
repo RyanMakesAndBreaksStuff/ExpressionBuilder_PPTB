@@ -224,7 +224,7 @@ describe('drag-and-drop visual contract', () => {
       '.eb-group-card.is-empty > .eb-group-children > .eb-condition-drop-target.is-terminal',
     );
 
-    expect(positionTarget).toMatch(/min-height:\s*32px\s*;/);
+    expect(positionTarget).toMatch(/min-height:\s*20px\s*;/);
     expect(positionTarget).not.toMatch(/margin-block\s*:/);
     expect(positionTarget).toMatch(/pointer-events:\s*none\s*;/);
     expect(emptyGroup).toMatch(/display:\s*flex\s*;/);
@@ -333,11 +333,20 @@ describe('drag-and-drop visual contract', () => {
     // behind a width breakpoint. .eb-canvas-card is the only flexible item in
     // .eb-center-col, so without a floor it absorbs the whole shortfall.
     const workspace = declarationBlock('.eb-workspace');
-    expect(workspace).toMatch(
-      /grid-template-rows:\s*minmax\(var\(--eb-workspace-min-height\),\s*1fr\)\s*;/,
-    );
     expect(workspace).toMatch(/overflow-y:\s*auto\s*;/);
     expect(workspace).not.toMatch(/\boverflow:\s*hidden\s*;/);
+
+    // The floor must also fit the host: a bare 320px floor overflows a short
+    // (~420px) PPTB frame once the shell chrome is subtracted, so the workspace
+    // scrolled dead space on launch. min() caps the floor at the viewport's
+    // actual supply (vh fallback first, dvh override second). 80px = 48px pill
+    // header + 8px root gap + 2×12px root padding.
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100vh - 80px\)\),\s*1fr\s*\)\s*;/,
+    );
+    expect(workspace).toMatch(
+      /grid-template-rows:\s*minmax\(\s*min\(var\(--eb-workspace-min-height\),\s*calc\(100dvh - 80px\)\),\s*1fr\s*\)\s*;/,
+    );
 
     // A real floor, not a placeholder, but low enough that a short host (PPTB
     // routinely gives ~420px total, ~350px after the header) can show the

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#12161A"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#12161A"/><rect x="340" y="250" width="160" height="48" rx="24" fill="#77A7FF"/><rect x="520" y="250" width="160" height="48" rx="24" fill="#394955"/><rect x="700" y="250" width="160" height="48" rx="24" fill="#394955"/><text x="600" y="530" font-family="Consolas,monospace" font-size="160" font-weight="700" fill="#77A7FF" text-anchor="middle">{ }</text></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>html,body{margin:0}body{background:#0B0E11}a{color:#77A7FF}a:hover{color:#9ABEFF}*{box-sizing:border-box}textarea::placeholder,input::placeholder{color:#9EADB9}</style>
+</helmet>
+<div data-screen-label="13b JSON reference" style="width:1280px;height:860px;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:hidden;font-family:'Segoe UI','Segoe UI Web (West European)',system-ui,sans-serif;color:#EDF3F7;background:radial-gradient(circle at 85% 10%,rgba(119,167,255,.2) 0,transparent 45%),radial-gradient(circle at 15% 85%,rgba(85,197,187,.16) 0,transparent 45%),#12161A">
+
+<div style="height:48px;flex:none;padding:0 18px;display:flex;align-items:center;gap:12px;border-radius:24px;background:rgba(35,45,53,.92);border:1px solid #394955;box-shadow:0 4px 16px rgba(0,0,0,.35)"><span style="flex:none;white-space:nowrap;font-size:15px;font-weight:600">Expression Builder</span><span style="color:#9EADB9">&#8250;</span><span style="height:30px;padding:0 12px;display:inline-flex;align-items:center;gap:8px;border-radius:15px;background:rgba(119,167,255,.16);color:#77A7FF;font-size:14px;white-space:nowrap">JSON reference<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#77A7FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span><span style="flex:1"></span><span style="font-size:13px;color:#C8D3DC">Pasted JSON is processed locally and is not uploaded or saved in any way.</span></div>
+
+<div style="position:relative;z-index:5;flex:none;display:flex;align-items:center;gap:12px">
+<div role="tablist" aria-label="Payloads" style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;padding:4px;border-radius:26px;background:rgba(35,45,53,.92);border:1px solid #394955">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<div role="tab" aria-selected="{{ t.sel }}" title="{{ t.status }}" onClick="{{ t.onClick }}" style="min-width:0;max-width:220px;height:42px;padding:0 6px 0 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:21px;background:{{ t.bg }}" style-hover="background:rgba(237,243,247,.08)"><span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ t.dot }}"></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2"><span style="font-size:13px;font-weight:{{ t.w }};color:{{ t.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span><span style="font:10.5px 'Cascadia Code',Consolas,monospace;color:{{ t.cap }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.root }}</span></div><sc-if value="{{ canClose }}" hint-placeholder-val="{{ true }}"><span onClick="{{ t.onClose }}" aria-label="Close payload" style="width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;color:#9EADB9;font-size:11px" style-hover="background:rgba(237,243,247,.16);color:#EDF3F7">&#10005;</span></sc-if></div>
+</sc-for>
+<div onClick="{{ onAdd }}" style="height:42px;padding:0 14px;display:flex;align-items:center;border-radius:21px;cursor:pointer;color:{{ addFg }};font-size:13px;font-weight:600;white-space:nowrap" style-hover="background:rgba(237,243,247,.08)">+ New payload</div>
+</div>
+<span style="flex:none;font-size:12px;color:#9EADB9">{{ countLabel }}</span>
+<div style="position:relative;width:280px;flex:none">
+<input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search all payloads" aria-label="Search all payloads" spellcheck="false" style="width:100%;height:34px;padding:0 12px 0 32px;border-radius:12px;border:1px solid #394955;border-bottom-color:#9EADB9;background:#1B2228;color:#EDF3F7;font:14px 'Segoe UI',sans-serif;outline:none" style-focus="border-color:#77A7FF;box-shadow:0 0 0 2px rgba(119,167,255,.35)">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9EADB9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:11px;top:10px"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+<sc-if value="{{ hasQ }}" hint-placeholder-val="{{ false }}">
+<div role="listbox" style="position:absolute;right:0;top:40px;width:420px;padding:6px;display:flex;flex-direction:column;gap:2px;border-radius:12px;background:#232D35;border:1px solid #394955;box-shadow:0 18px 48px rgba(0,0,0,.45)">
+<div style="padding:6px 8px 4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">{{ resLabel }}</div>
+<sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+<div role="option" onClick="{{ r.onClick }}" style="min-height:44px;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:8px;cursor:pointer" style-hover="background:rgba(119,167,255,.16)"><div style="display:flex;align-items:center;gap:8px"><span style="flex:none;height:18px;padding:0 7px;display:inline-flex;align-items:center;border-radius:9px;background:#2D3943;color:#C8D3DC;font-size:11px;font-weight:600;white-space:nowrap">{{ r.payload }}</span><span style="min-width:0;font:12.5px 'Cascadia Code',Consolas,monospace;color:#EDF3F7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.path }}</span></div><span style="font:11.5px 'Cascadia Code',Consolas,monospace;color:#EFC56E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.value }}</span></div>
+</sc-for>
+<sc-if value="{{ noRes }}" hint-placeholder-val="{{ false }}"><div style="padding:10px;font-size:13px;color:#9EADB9">No matches in parsed payloads.</div></sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div role="tabpanel" style="flex:1;min-height:0;display:flex;gap:12px">
+
+<section aria-label="Source" style="width:300px;flex:none;display:flex;flex-direction:column;border-radius:20px;background:#1B2228;border:1px solid #394955;box-shadow:0 1px 2px rgba(0,0,0,.22);overflow:hidden">
+<div style="height:38px;flex:none;padding:0 14px;display:flex;align-items:center;border-bottom:1px solid #394955;background:#232D35"><span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">Source</span></div>
+<div style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600;color:#C8D3DC">Reference root</span>
+<div role="radiogroup" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+<sc-for list="{{ rootSections }}" as="sec" hint-placeholder-count="2">
+<span style="grid-column:1 / -1;margin-top:2px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#9EADB9">{{ sec.heading }}</span>
+<sc-for list="{{ sec.options }}" as="o" hint-placeholder-count="2">
+<div role="radio" aria-checked="{{ o.on }}" onClick="{{ o.onClick }}" style="min-width:0;padding:7px 10px;display:flex;flex-direction:column;gap:2px;border-radius:10px;cursor:pointer;border:1px solid {{ o.bd }};background:{{ o.bg }}" style-hover="border-color:#526776"><span style="font-size:13px;font-weight:600">{{ o.label }}</span><code style="font:11px 'Cascadia Code',Consolas,monospace;color:#55C5BB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.detail }}</code></div>
+</sc-for>
+</sc-for>
+</div></div>
+<sc-if value="{{ isAction }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:6px"><label style="font-size:12px;font-weight:600;color:#C8D3DC">Action name</label><input value="{{ name }}" onChange="{{ onName }}" spellcheck="false" aria-invalid="{{ nameInvalid }}" style="height:34px;padding:0 12px;border-radius:12px;border:1px solid {{ nameBd }};border-bottom-color:{{ nameBb }};background:#232D35;color:#EDF3F7;font:14px 'Segoe UI',sans-serif;outline:none" style-focus="border-color:#77A7FF"><span style="font-size:11.5px;color:{{ nameHelpC }}">{{ nameHelp }}</span></div>
+</sc-if>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px"><label style="font-size:12px;font-weight:600;color:#C8D3DC">Sample JSON</label><textarea value="{{ text }}" onChange="{{ onText }}" spellcheck="false" placeholder="Paste the output from a flow run" style="flex:1;min-height:0;padding:10px 12px;border-radius:12px;border:1px solid #394955;background:#0E1216;color:#C8D3DC;font:12px/1.6 'Cascadia Code',Consolas,monospace;resize:none;outline:none" style-focus="border-color:#77A7FF"></textarea></div>
+<span role="status" style="font-size:12.5px;font-weight:600;color:{{ statusC }}">{{ status }}</span>
+<sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding:8px 10px;border-radius:10px;border:1px solid #FF978D;background:rgba(255,151,141,.14);font-size:12.5px">{{ err }}</div></sc-if>
+</div>
+</section>
+
+<div style="flex:1;min-width:0;display:flex;gap:12px">
+<section aria-label="Payload" style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;border-radius:20px;background:#1B2228;border:1px solid #394955;box-shadow:0 1px 2px rgba(0,0,0,.22);overflow:hidden">
+<div style="height:38px;flex:none;padding:0 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #394955;background:#232D35"><span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">Payload</span><span style="font-size:12px;color:#9EADB9">{{ valuesLabel }}</span></div>
+<sc-if value="{{ bodyHint }}" hint-placeholder-val="{{ false }}"><p style="margin:10px 14px 0;padding:8px 10px;border-radius:10px;background:rgba(154,190,255,.14);font-size:12.5px;color:#C8D3DC">This sample has a top-level <code style="font-family:'Cascadia Code',Consolas,monospace;color:#EDF3F7">body</code> key. If you pasted the full output, choose <strong style="color:#EDF3F7">Full output</strong>.</p></sc-if>
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center"><span style="font-size:15px;font-weight:600">No sample yet</span><span style="font-size:13px;color:#9EADB9;max-width:320px">Paste an action or trigger output from a flow run to parse it.</span></div></sc-if>
+<sc-if value="{{ hasTree }}" hint-placeholder-val="{{ true }}">
+<div role="tree" style="flex:1;min-height:0;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+<div role="treeitem" aria-selected="{{ r.sel }}" onClick="{{ r.onClick }}" style="position:relative;flex:none;height:32px;padding:0 10px 0 {{ r.pad }};display:flex;align-items:center;gap:8px;border-radius:8px;cursor:pointer;background:{{ r.bg }}" style-hover="background:rgba(237,243,247,.06)"><span style="display:{{ r.bar }};position:absolute;left:0;top:6px;width:3px;height:20px;border-radius:2px;background:#77A7FF"></span><span onClick="{{ r.onToggle }}" style="width:14px;flex:none;font-size:10px;color:#9EADB9;text-align:center">{{ r.caret }}</span><span style="font:{{ r.kw }} 13px {{ r.kf }};color:{{ r.kc }};white-space:nowrap">{{ r.label }}</span><span style="padding:1px 5px;border-radius:4px;background:{{ r.badgeBg }};color:#0C1A34;font-size:9px;font-weight:800;text-transform:uppercase">{{ r.t }}</span><span style="flex:1;min-width:0;text-align:right;font:12px 'Cascadia Code',Consolas,monospace;color:{{ r.pc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.preview }}</span></div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+
+<section aria-label="Reference" style="width:380px;flex:none;min-height:0;display:flex;flex-direction:column;border-radius:20px;background:#1B2228;border:1px solid #394955;box-shadow:0 1px 2px rgba(0,0,0,.22);overflow:hidden">
+<div style="height:38px;flex:none;padding:0 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #394955;background:#232D35"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9EADB9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9EADB9">Reference</span><span style="flex:1"></span><span style="font-size:12px;font-weight:600;color:#63C99B">{{ copyMsg }}</span></div>
+<div style="min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+<sc-if value="{{ hasTree }}" hint-placeholder-val="{{ true }}">
+<nav aria-label="Selected path" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="4"><span style="display:{{ c.sep }};color:#9EADB9">&#8250;</span><span style="height:24px;padding:0 10px;display:inline-flex;align-items:center;border-radius:12px;background:{{ c.bg }};color:{{ c.fg }};font:12px 'Cascadia Code',Consolas,monospace">{{ c.t }}</span></sc-for></nav>
+</sc-if>
+<sc-if value="{{ notReady }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:#9EADB9">{{ placeholder }}</span></sc-if>
+<sc-for list="{{ blocks }}" as="b" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:#0E1216;border:1px solid #394955">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#C8D3DC">{{ b.label }}</span><span title="{{ b.info }}" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid #526776;color:#9EADB9;font-size:10px;font-weight:700;cursor:help">i</span><span style="flex:1"></span><sc-if value="{{ b.canCopy }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:4px"><span onClick="{{ b.onInline }}" title="Paste into a text field (inline expression)" style="height:26px;padding:0 8px;display:inline-flex;align-items:center;border-radius:8px;background:rgba(237,243,247,.08);color:#C8D3DC;font:600 12px 'Cascadia Code',Consolas,monospace;cursor:pointer" style-hover="background:rgba(237,243,247,.16)">@{}</span><span onClick="{{ b.onBare }}" title="Paste directly into the formula editor" style="height:26px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-radius:8px;background:#77A7FF;color:#0C1A34;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#5690F4"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Copy</span></div></sc-if></div>
+<sc-if value="{{ b.hasLoop }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px"><label style="flex:none;font-size:12px;font-weight:600;color:#C8D3DC">Loop name</label><input value="{{ loopName }}" onChange="{{ onLoop }}" placeholder="Apply_to_each" spellcheck="false" style="flex:1;min-width:0;height:30px;padding:0 10px;border-radius:10px;border:1px solid #394955;border-bottom-color:#9EADB9;background:#232D35;color:#EDF3F7;font:13px 'Segoe UI',sans-serif;outline:none" style-focus="border-color:#77A7FF"></div></sc-if>
+<code style="font:13.5px/1.5 'Cascadia Code',Consolas,monospace;color:{{ b.exC }};word-break:break-all">{{ b.expr }}</code>
+<sc-if value="{{ b.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#EFC56E">{{ b.note }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:860},&quot;openSearch&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const MAX = 5;
+const SEED = [
+  { name: 'Get items', src: 'action', shape: 'full', sel: ['body', 'value', 0, 'Requester', 'Email'], data: { statusCode: 200, body: { value: [{ ID: 14, Title: 'Laptop refresh', Status: 'Approved', Requester: { DisplayName: "Dana O'Brien", Email: 'dana@contoso.com' } }, { ID: 15, Title: 'Monitor', Status: 'Pending', Requester: { DisplayName: 'Lee Park', Email: 'lee@contoso.com' } }], '@odata.nextLink': null } } },
+  { name: '', src: 'trigger', shape: 'body', sel: ['primarycontactid', 'emailaddress1'], data: { accountid: 'a41f-92', name: 'Contoso Ltd', statuscode: 1, revenue: 1250000, primarycontactid: { fullname: 'Ada Lovelace', emailaddress1: 'ada@contoso.com' } } },
+  { name: 'HTTP Get customer', src: 'action', shape: 'body', sel: ['tier'], stale: true, data: { id: 'c-881', tier: 'Gold', contact: { email: 'lee@fabrikam.com' } } },
+  { name: '', src: 'action', shape: 'full', sel: [], data: undefined },
+];
+const typeOf = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
+const kids = (v) => { const t = typeOf(v); return t === 'object' ? Object.keys(v).map((k) => [k, v[k]]) : t === 'array' ? v.map((x, i) => [i, x]) : []; };
+const count = (v) => 1 + kids(v).reduce((n, [, c]) => n + count(c), 0);
+const at = (v, p) => p.reduce((c, s) => (c == null ? undefined : c[s]), v);
+const esc = (s) => String(s).replace(/'/g, "''");
+const uname = (s) => esc(s.trim().replace(/\s+/g, '_'));
+const BADGE = { string: '#55C5BB', number: '#EFC56E', boolean: '#9ABEFF', object: '#77A7FF', array: '#77A7FF', null: '#9EADB9' };
+const rootOf = (src, shape, name) => src === 'trigger' ? (shape === 'full' ? 'triggerOutputs()' : 'triggerBody()') : `${shape === 'full' ? 'outputs' : 'body'}('${uname(name) || 'Action'}')`;
+const pathStr = (path) => path.map((s) => (typeof s === 'number' ? `[${s}]` : `?['${esc(s)}']`)).join('');
+const label = (path) => path.reduce((l, s) => (typeof s === 'number' ? `${l}[${s}]` : l ? `${l}.${s}` : s), '');
+const seed = () => SEED.map((p) => { const text = p.data === undefined ? '' : JSON.stringify(p.data, null, 2); return { ...p, loop: '', text, parsed: p.stale ? text.replace('"Gold"', '"Silver"') : text, err: null, collapsed: [], touched: false }; });
+
+class Component extends DCLogic {
+  state = { ps: seed(), act: 0, q: this.props.openSearch ? 'email' : '', copied: '' };
+  updP(patch, i = this.state.act) { this.setState((s) => ({ ps: s.ps.map((p, j) => (j === i ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch) } : p)) })); }
+  parse(i) {
+    this.updP((p) => {
+      if (!p.text.trim()) return {};
+      try { const d = JSON.parse(p.text); return { data: d, parsed: p.text, err: null, touched: true, sel: at(d, p.sel) === undefined ? [] : p.sel }; }
+      catch (e) { return { data: undefined, parsed: '', err: 'Not valid JSON: ' + e.message, sel: [], touched: true }; }
+    }, i);
+  }
+  copy(text, msg) { navigator.clipboard && navigator.clipboard.writeText(text).catch(() => {}); this.setState({ copied: msg }); clearTimeout(this.t); this.t = setTimeout(() => this.setState({ copied: '' }), 1500); }
+  componentDidUpdate(prev) { if (prev.openSearch !== this.props.openSearch) this.setState({ q: this.props.openSearch ? 'email' : '' }); }
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.pt); }
+  renderVals() {
+    const { ps, act, q: rawQ } = this.state;
+    const P = ps[act];
+    const labelOf = (p, i) => p.src === 'trigger' ? (() => { const n = ps.slice(0, i + 1).filter((x) => x.src === 'trigger').length; return n > 1 ? `Trigger ${n}` : 'Trigger'; })() : p.name.trim() || `Payload ${i + 1}`;
+    const statusOf = (p) => p.err ? ['Could not parse', '#FF978D'] : p.data === undefined ? ['Nothing parsed yet', '#9EADB9'] : p.text !== p.parsed ? ['Sample changed. Parse again to update.', '#EFC56E'] : [`Parsed · ${count(p.data)} values`, '#63C99B'];
+    const tabs = ps.map((p, i) => {
+      const on = i === act, [st, dot] = statusOf(p);
+      return {
+        name: labelOf(p, i), root: rootOf(p.src, p.shape, p.name), sel: String(on), dot, status: st, w: on ? 600 : 400,
+        bg: on ? 'rgba(119,167,255,.16)' : 'transparent', fg: on ? '#77A7FF' : '#C8D3DC', cap: on ? '#9ABEFF' : '#9EADB9',
+        onClick: () => this.setState({ act: i }),
+        onClose: (e) => { e.stopPropagation(); this.setState((s) => { if (s.ps.length === 1) return null; const n = s.ps.filter((_, j) => j !== i); return { ps: n, act: s.act === i ? Math.min(i, n.length - 1) : s.act > i ? s.act - 1 : s.act }; }); },
+      };
+    });
+
+    const rootSections = [['Action', 'action'], ['Trigger', 'trigger']].map(([heading, src]) => ({
+      heading,
+      options: [['Full output', 'full'], ['Body only', 'body']].map(([lbl, shape]) => {
+        const on = P.src === src && P.shape === shape;
+        return { label: lbl, detail: rootOf(src, shape, P.name), on: String(on), bd: on ? '#77A7FF' : '#394955', bg: on ? 'rgba(119,167,255,.16)' : '#232D35', onClick: () => this.updP({ src, shape }) };
+      }),
+    }));
+
+    const ok = P.data !== undefined;
+    const nameMissing = P.src === 'action' && !P.name.trim();
+    const nameInvalid = nameMissing && P.touched;
+    const ready = ok && !nameMissing;
+    const root = rootOf(P.src, P.shape, P.name);
+
+    const rows = [];
+    if (ok) {
+      const selK = JSON.stringify(P.sel);
+      const walk = (val, path, lvl, lbl) => {
+        const t = typeOf(val), ks = kids(val), on = JSON.stringify(path) === selK, pk = JSON.stringify(path), closed = P.collapsed.includes(pk);
+        const last = path[path.length - 1], idx = typeof last === 'number';
+        const preview = t === 'string' ? `"${val}"` : t === 'object' ? `{${ks.length}}` : t === 'array' ? `${ks.length} items` : String(val);
+        rows.push({ pad: 10 + lvl * 20 + 'px', caret: ks.length ? (closed ? '▸' : '▾') : '', label: lbl, t, badgeBg: BADGE[t], preview, pc: ks.length || BADGE[t] === '#77A7FF' ? '#9EADB9' : BADGE[t], sel: String(on), bg: on ? 'rgba(119,167,255,.16)' : 'transparent', bar: on ? 'block' : 'none',
+          kw: lvl === 0 || idx ? 400 : 600, kf: lvl === 0 || idx ? "'Cascadia Code',Consolas,monospace" : "'Segoe UI',sans-serif", kc: on ? '#77A7FF' : lvl === 0 ? '#55C5BB' : idx ? '#9EADB9' : '#EDF3F7',
+          onClick: () => this.updP({ sel: path }),
+          onToggle: (e) => { if (!ks.length) return; e.stopPropagation(); this.updP((p) => ({ collapsed: closed ? p.collapsed.filter((x) => x !== pk) : [...p.collapsed, pk] })); } });
+        if (!closed) ks.forEach(([kk, c]) => walk(c, [...path, kk], lvl + 1, typeof kk === 'number' ? `[${kk}]` : kk));
+      };
+      walk(P.data, [], 0, root);
+    }
+
+    const q = rawQ.trim().toLowerCase(), results = [];
+    let total = 0;
+    if (q) ps.forEach((p, pi) => { if (p.data === undefined) return; const leaf = (val, path) => { const ks = kids(val); if (ks.length) return ks.forEach(([kk, c]) => leaf(c, [...path, kk])); const pl = label(path), vp = JSON.stringify(val); if (!(pl + ' ' + vp).toLowerCase().includes(q)) return; total++; if (results.length < 8) results.push({ payload: labelOf(p, pi), path: pl || '(root)', value: vp, onClick: () => this.setState((s) => ({ act: pi, q: '', ps: s.ps.map((x, j) => (j === pi ? { ...x, sel: path, collapsed: [] } : x)) })) }); }; leaf(p.data, []); });
+    const parsedCount = ps.filter((p) => p.data !== undefined).length;
+
+    const idxs = P.sel.filter((s) => typeof s === 'number');
+    const lastIdx = P.sel.reduce((n, s, i) => (typeof s === 'number' ? i : n), -1);
+    const sub = lastIdx >= 0 ? P.sel.slice(lastIdx + 1) : null;
+    const ref = root + pathStr(P.sel);
+    const blocks = [];
+    if (ready) {
+      blocks.push({ label: 'Reference', info: 'Copy pastes the bare expression into the expression editor. Copy @{} wraps it for a text field.', expr: ref, exC: '#EDF3F7', canCopy: true, hasLoop: false, hasNote: idxs.length > 0, note: `Fixed position ${idxs.map((i) => `[${i}]`).join('')} reads that item only.`, onBare: () => this.copy(ref, 'Expression copied'), onInline: () => this.copy(`@{${ref}}`, 'Expression copied') });
+      if (sub) {
+        const item = 'item()' + pathStr(sub);
+        blocks.push({ label: 'Apply to each · item()', info: 'Use inside an Apply to each loop body.', expr: item, exC: '#EDF3F7', canCopy: true, hasLoop: false, hasNote: false, note: '', onBare: () => this.copy(item, 'Expression copied'), onInline: () => this.copy(`@{${item}}`, 'Expression copied') });
+        const items = P.loop.trim() ? `items('${uname(P.loop)}')${pathStr(sub)}` : '';
+        blocks.push({ label: 'Apply to each · items()', info: 'items() reads the current item of the named Apply to each, so it still works inside a nested loop.', expr: items || 'Enter the loop name to build items()', exC: items ? '#EDF3F7' : '#9EADB9', canCopy: !!items, hasLoop: true, hasNote: false, note: '', onBare: () => this.copy(items, 'Expression copied'), onInline: () => this.copy(`@{${items}}`, 'Expression copied') });
+      }
+    }
+    const [status, statusC] = statusOf(P);
+    const full = ps.length >= MAX;
+
+    return {
+      tabs, canClose: ps.length > 1, countLabel: `${ps.length} / ${MAX}`, addFg: full ? '#526776' : '#77A7FF',
+      onAdd: () => this.setState((s) => (s.ps.length >= MAX ? null : { ps: [...s.ps, { name: '', src: 'action', shape: 'full', sel: [], data: undefined, text: '', parsed: '', err: null, loop: '', collapsed: [], touched: false }], act: s.ps.length })),
+      q: rawQ, onQ: (e) => this.setState({ q: e.target.value }), hasQ: !!q, results, noRes: !!q && total === 0,
+      resLabel: `${total} match${total === 1 ? '' : 'es'} across ${parsedCount} parsed payload${parsedCount === 1 ? '' : 's'}`,
+      rootSections, isAction: P.src === 'action', name: P.name, nameInvalid: String(nameInvalid),
+      nameBd: nameInvalid ? '#FF978D' : '#394955', nameBb: nameInvalid ? '#FF978D' : '#9EADB9', nameHelpC: nameInvalid ? '#FF978D' : '#9EADB9',
+      nameHelp: nameInvalid ? 'Enter the action name to build the reference.' : 'As shown in the flow designer. Spaces become underscores.',
+      onName: (e) => this.updP({ name: e.target.value, touched: true }),
+      text: P.text,
+      onText: (e) => { const v = e.target.value, i = act; this.updP({ text: v }, i); clearTimeout(this.pt); this.pt = setTimeout(() => this.parse(i), 600); },
+      status, statusC, hasErr: !!P.err, err: P.err || '',
+      valuesLabel: ok ? `${count(P.data)} values` : '', isEmpty: !ok, hasTree: ok, rows,
+      bodyHint: ok && P.shape === 'body' && typeOf(P.data) === 'object' && 'body' in P.data,
+      crumbs: ok ? [{ t: root, bg: 'rgba(119,167,255,.16)', fg: '#77A7FF', sep: 'none' }, ...P.sel.map((s) => ({ t: typeof s === 'number' ? `[${s}]` : s, bg: 'rgba(239,197,110,.14)', fg: '#EFC56E', sep: 'inline' }))] : [],
+      notReady: !ready, placeholder: nameMissing && ok ? 'Enter an action name' : 'Parse a sample and select a value',
+      blocks, loopName: P.loop, onLoop: (e) => this.updP({ loop: e.target.value }), copyMsg: this.state.copied,
+    };
+  }
+}
+</script>
+</body>
+</html>

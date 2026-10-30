@@ -57,7 +57,7 @@ describe('RuleRowEditor', () => {
     const { onUpdate } = renderRow(baseRule);
     await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
-    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'] });
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'], operator: 'equals' });
   });
 
   it('removes a wrapper by unchecking it in the menu', async () => {
@@ -65,7 +65,7 @@ describe('RuleRowEditor', () => {
     const { onUpdate } = renderRow(wrappedRule);
     await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
-    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: [] });
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: [], operator: 'equals' });
   });
 
   it('shows existing wrappers pre-checked in the menu', async () => {
@@ -82,7 +82,7 @@ describe('RuleRowEditor', () => {
     const { onUpdate } = renderRow(wrappedRule);
     await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
-    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['trim', 'toLower'] });
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['trim', 'toLower'], operator: 'equals' });
   });
 
   it('unchecking one wrapper leaves the rest in place', async () => {
@@ -90,6 +90,44 @@ describe('RuleRowEditor', () => {
     const { onUpdate } = renderRow(wrappedRule);
     await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /trim/ }));
-    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'] });
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['toLower'], operator: 'equals' });
+  });
+
+  it('offers only numeric operators after length and switches an incompatible operator', async () => {
+    const containsRule: QueryRule = { ...baseRule, operator: 'contains' };
+    const { onUpdate } = renderRow(containsRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /length/ }));
+    const [, patch] = onUpdate.mock.calls[0];
+    expect(patch.wrappers).toEqual(['length']);
+    expect(patch.operator).not.toBe('contains');
+  });
+
+  it('lists number operators for a length chain and disables string wrappers after it', async () => {
+    renderRow({ ...baseRule, wrappers: ['length'] });
+    const operators = within(screen.getByLabelText('Operator for Name') as HTMLSelectElement)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(operators).toContain('greater');
+    expect(operators).not.toContain('contains');
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /toLower/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('menuitemcheckbox', { name: /length/ })).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('keeps an invalid imported chain visible and removable without rewriting it', async () => {
+    const { onUpdate } = renderRow({ ...baseRule, operator: 'contains', wrappers: ['length', 'toLower'] });
+    expect(screen.getByLabelText('Applied wraps: length, toLower')).toBeInTheDocument();
+    expect((screen.getByLabelText('Operator for Name') as HTMLSelectElement).value).toBe('contains');
+    expect(onUpdate).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Wrappers for Name' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /trim/ })).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /toLower/ }));
+    expect(onUpdate).toHaveBeenCalledWith('rule-1', { wrappers: ['length'], operator: 'equals' });
+  });
+
+  it('renders a number input for a length rule on a string field', () => {
+    renderRow({ ...baseRule, operator: 'greater', value: 4, wrappers: ['length'] });
+    expect(screen.getByLabelText('Value for Name')).toHaveAttribute('type', 'number');
   });
 });

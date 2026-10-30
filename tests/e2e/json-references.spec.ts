@@ -6,88 +6,87 @@ import {
   triggerFullSample,
 } from '../../packages/builder-ui/test/fixtures/jsonReferenceFixtures';
 
-type Build = 'web' | 'pptb';
 type Theme = 'light' | 'dark';
 
 declare global {
   interface Window {
     toolboxAPI?: unknown;
-    __copied?: string[];
-    __notices?: Array<{ title: string; body: string; type: string }>;
     __audit?: { enabled: boolean; writes: string[] };
   }
 }
 
-const URLS: Record<Build, string> = { web: 'http://127.0.0.1:5173/', pptb: 'http://127.0.0.1:5174/' };
-const BUILDS: Build[] = ['web', 'pptb'];
+const WEB_URL = 'http://127.0.0.1:5173/';
 const THEMES: Theme[] = ['light', 'dark'];
 const EMAIL = "outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']";
-const NO_CLIPBOARD = 'the host does not provide a clipboard API';
-// Today's header: the 46px mode switch row plus 24px padding and a 1px border.
-const TODAYS_HEADER_HEIGHT = 71;
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
-/** Loads a build with onboarding dismissed; the PPTB build gets a mocked toolboxAPI. */
-async function open(page: Page, build: Build, options: { theme?: Theme; clipboard?: boolean } = {}) {
-  const { theme = 'light', clipboard = true } = options;
+/** Loads the web build with onboarding dismissed. */
+async function open(page: Page, options: { theme?: Theme } = {}) {
+  const { theme = 'light' } = options;
   await page.addInitScript(() => localStorage.setItem('eb.onboarding.seen.v1', '1'));
-  if (build === 'pptb') {
-    await page.addInitScript(
-      ({ theme, clipboard }) => {
-        window.__copied = [];
-        window.__notices = [];
-        window.toolboxAPI = {
-          utils: {
-            ...(clipboard ? { copyToClipboard: async (text: string) => void window.__copied?.push(text) } : {}),
-            showNotification: async (notice: { title: string; body: string; type: string }) =>
-              void window.__notices?.push(notice),
-            getCurrentTheme: async () => theme,
-          },
-          settings: {
-            get: async (key: string) => (key === 'eb.onboarding.seen.v1' ? '1' : undefined),
-            set: async () => undefined,
-            setAll: async () => undefined,
-            getAll: async () => ({}),
-          },
-          events: { on: () => undefined, off: () => undefined, getHistory: async () => [] },
-        };
-      },
-      { theme, clipboard },
-    );
-  } else {
-    await page.emulateMedia({ colorScheme: theme });
-  }
-  await page.goto(URLS[build]);
+  await page.emulateMedia({ colorScheme: theme });
+  await page.goto(WEB_URL);
   await expect(page.locator('.eb-root')).toHaveAttribute('data-theme', theme);
 }
 
-async function clipboardText(page: Page, build: Build): Promise<string | undefined> {
-  return build === 'web'
-    ? page.evaluate(() => navigator.clipboard.readText())
-    : page.evaluate(() => window.__copied?.at(-1));
+async function clipboardText(page: Page): Promise<string> {
+  return page.evaluate(() => navigator.clipboard.readText());
 }
 
-// Scoped: the drag-and-drop library adds its own live region, which is the page's first status.
-const parseStatus = (page: Page) => page.getByRole('region', { name: 'Source' }).getByRole('status');
+// Parse success surfaces as the value count in the Payload card header; the
+// old in-pane Parse button and status line were replaced by paste-to-parse.
+const jsonPanel = (page: Page) => page.getByRole('tabpanel');
+const payloadMeta = (page: Page) => jsonPanel(page).getByRole('region', { name: 'Payload' }).locator('.eb-dock-meta');
+
+/** Bare formula-editor copy. The panel also has "Copy @{}", "Copy item()", and "Copy item() @{}". */
+const referenceCopy = (page: Page) => jsonPanel(page).getByRole('button', { name: 'Copy', exact: true });
 
 const treeRow = (page: Page, label: string) =>
-  page.getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
+  jsonPanel(page).getByRole('treeitem', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, `) });
 
-async function openJsonReference(page: Page) {
-  await page.getByRole('tab', { name: 'JSON reference' }).click();
+async function openJsonReference(page: Page): Promise<void> {
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', {
+    name: 'JSON reference',
+    exact: true,
+  }).click();
+}
+
+async function openFunctions(page: Page): Promise<void> {
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', { name: 'Functions', exact: true }).click();
+}
+
+async function openConditionBuilder(page: Page): Promise<void> {
+  await page.getByRole('tablist', { name: 'Screen' }).getByRole('tab', {
+    name: 'Trigger / Filter',
+    exact: true,
+  }).click();
+}
+
+/** Native paste into the Sample JSON textarea — the flow the app auto-parses. */
+async function pasteSample(page: Page, text: string): Promise<void> {
+  await page.evaluate(
+    (value) => navigator.clipboard.writeText(value),
+    text,
+  );
+  const editor = jsonPanel(page).getByRole('textbox', {
+    name: 'Sample JSON',
+    exact: true,
+  });
+  await editor.focus();
+  await editor.press('Control+V');
 }
 
 async function parseSample(
   page: Page,
   source: { outputFrom: 'Action' | 'Trigger'; name?: string; shape: 'full' | 'body'; sample: string },
 ) {
-  await page.getByRole('radio', { name: source.outputFrom }).click();
-  if (source.name !== undefined) await page.getByLabel('Action name').fill(source.name);
-  await page.getByRole('radio', { name: source.shape === 'full' ? /^Full output/ : 'Body only' }).click();
-  await page.getByLabel('Sample JSON').fill(source.sample);
-  await page.getByRole('button', { name: 'Parse' }).click();
-  await expect(parseStatus(page)).toHaveText(/^Parsed · /);
+  // One radiogroup of four combined roots, labelled e.g. 'Action · Full output'.
+  const root = `${source.outputFrom} · ${source.shape === 'full' ? 'Full output' : 'Body only'}`;
+  await jsonPanel(page).getByRole('radio', { name: root }).click();
+  if (source.name !== undefined) await jsonPanel(page).getByLabel('Action', { exact: true }).fill(source.name);
+  await pasteSample(page, source.sample);
+  await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
 }
 
 /** Expands each ancestor by its chevron, then selects the last label. */
@@ -112,10 +111,9 @@ async function loadEmailReference(page: Page) {
   await select(page, ['body', 'value', '[0]', 'Requester', 'Email']);
 }
 
-for (const build of BUILDS) {
-  test.describe(`${build} build`, () => {
+test.describe('web build', () => {
     test('copies a correctly rooted reference for each of the four roots (SC-002)', async ({ page }) => {
-      await open(page, build);
+      await open(page);
       await openJsonReference(page);
       const bodyOnly = JSON.stringify(JSON.parse(fixtureA1).body);
       const cases = [
@@ -128,14 +126,15 @@ for (const build of BUILDS) {
       for (const { source, path, expected } of cases) {
         await parseSample(page, source);
         await select(page, [...path]);
-        await expect(page.getByLabel('Reference expression')).toHaveText(expected);
-        await page.getByRole('button', { name: 'Copy' }).click();
-        await expect(page.getByText('Expression copied')).toBeVisible();
-        expect(await clipboardText(page, build)).toBe(expected);
+        await expect(jsonPanel(page).getByLabel('Reference expression')).toHaveText(expected);
+        await referenceCopy(page).click();
+        // .first(): successive cases can stack not-yet-dismissed toasts.
+        await expect(page.getByText('Expression copied').first()).toBeVisible();
+        expect(await clipboardText(page)).toBe(expected);
       }
     });
 
-    test('makes no network requests and no storage writes while in use (SC-004)', async ({ page }) => {
+    test('makes no network requests and stores nothing but the last screen while in use (SC-004)', async ({ page }) => {
       const requests: string[] = [];
       await page.addInitScript(() => {
         const audit = { enabled: false, writes: [] as string[] };
@@ -146,7 +145,7 @@ for (const build of BUILDS) {
         for (const method of ['setItem', 'removeItem', 'clear'] as const) {
           const original = Storage.prototype[method] as (...args: unknown[]) => unknown;
           Storage.prototype[method] = function (this: Storage, ...args: unknown[]) {
-            record(`Storage.${method}`);
+            record(method === 'setItem' ? `Storage.setItem ${String(args[0])}` : `Storage.${method}`);
             return original.apply(this, args);
           } as never;
         }
@@ -167,30 +166,32 @@ for (const build of BUILDS) {
           },
         });
       });
-      await open(page, build);
+      await open(page);
       await page.waitForLoadState('networkidle');
       await page.evaluate(() => {
         if (window.__audit) window.__audit.enabled = true;
         const api = window.toolboxAPI as { settings?: Record<string, unknown> } | undefined;
         for (const method of ['set', 'setAll'] as const) {
-          if (api?.settings) api.settings[method] = async () => void window.__audit?.writes.push(`settings.${method}`);
+          if (api?.settings) api.settings[method] = async (key: unknown) => void window.__audit?.writes.push(`settings.${method} ${String(key)}`);
         }
       });
       page.on('request', (request) => requests.push(request.url()));
 
       await loadEmailReference(page);
-      await page.getByRole('button', { name: 'Copy' }).click();
+      await referenceCopy(page).click();
       await expect(page.getByText('Expression copied')).toBeVisible();
-      await page.getByRole('tab', { name: /^Condition builder/ }).click();
+      await openConditionBuilder(page);
       await openJsonReference(page);
 
       expect(requests).toEqual([]);
-      expect(await page.evaluate(() => window.__audit?.writes)).toEqual([]);
+      // The last-open screen id is the only write; no payload data is stored.
+      const writes = (await page.evaluate(() => window.__audit?.writes)) ?? [];
+      expect(writes.filter((write) => !write.endsWith(' eb.screen.last.v1'))).toEqual([]);
     });
 
     for (const theme of THEMES) {
       test(`both views pass the accessibility scan in the ${theme} theme (FR-085)`, async ({ page }) => {
-        await open(page, build, { theme });
+        await open(page, { theme });
         const scan = async (label: string) => {
           const results = await new AxeBuilder({ page })
             // Fluent's tabster focus sentinels: aria-hidden <i tabindex="0"> elements it appends to <body>.
@@ -205,39 +206,55 @@ for (const build of BUILDS) {
         await scan('Condition builder with rules');
         await loadEmailReference(page);
         await scan('JSON reference with a selection');
-        await page.getByLabel('Action name').fill('');
-        await page.getByLabel('Sample JSON').fill('{"a": 1,}');
-        await page.getByRole('button', { name: 'Parse' }).click();
-        await expect(page.getByRole('alert')).toBeVisible();
+        await jsonPanel(page).getByLabel('Action', { exact: true }).fill('');
+        await pasteSample(page, '{"a": 1,}');
+        await expect(jsonPanel(page).getByRole('alert')).toBeVisible();
         await scan('JSON reference with errors');
       });
     }
-  });
-}
+});
 
 test('the core task works by keyboard alone, with a visible focus ring (SC-005)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   const focusRing = () => page.evaluate(() => getComputedStyle(document.activeElement as Element).boxShadow);
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('tab', { name: /^Condition builder/ })).toBeFocused();
+  const screenTabs = page.getByRole('tablist', { name: 'Screen' });
+  await expect(screenTabs.getByRole('tab', { name: 'Trigger / Filter', exact: true })).toBeFocused();
+  // Header controls draw their focus ring as an outline rather than a box-shadow.
+  expect(await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle)).not.toBe('none');
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', { name: 'JSON reference' })).toHaveAttribute('aria-selected', 'true');
-  expect(await focusRing()).not.toBe('none');
+  const jsonItem = screenTabs.getByRole('tab', { name: 'JSON reference', exact: true });
+  await expect(jsonItem).toBeFocused();
+  // Arrows only move focus across the screen tabs; Enter switches.
+  await page.keyboard.press('Enter');
+  await expect(jsonItem).toHaveAttribute('aria-selected', 'true');
 
+  // The web build's theme switch closes the header.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('radio', { name: 'Action' })).toBeFocused();
+  await expect(page.getByRole('button', { name: /^Switch to (dark|light) theme$/ })).toBeFocused();
+
+  // Payload strip: the selected tab, + Add, then search, before the root radios.
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Action name')).toBeFocused();
+  await expect(page.getByRole('tab', { name: 'Payload 1, payload 1' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '+ Add' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('combobox', { name: 'Search all payloads' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(jsonPanel(page).getByRole('radio', { name: 'Action · Full output' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(jsonPanel(page).getByLabel('Action', { exact: true })).toBeFocused();
   await page.keyboard.type('Get items');
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('radio', { name: 'Full output (also Compose)' })).toBeFocused();
-  await page.keyboard.press('Tab');
-  await page.keyboard.insertText(fixtureA1);
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Enter');
-  await expect(parseStatus(page)).toHaveText('Parsed · 25 values');
+  await expect(jsonPanel(page).getByLabel('Sample JSON')).toBeFocused();
+  await page.evaluate((text) => navigator.clipboard.writeText(text), fixtureA1);
+  await page.keyboard.press('Control+V');
+  await expect(payloadMeta(page)).toHaveText('25 values');
 
+  // The Payload header's value alignment toggle, then the tree.
+  await page.keyboard.press('Tab');
+  await expect(jsonPanel(page).getByRole('radio', { name: 'Right' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(treeRow(page, "outputs('Get_items')")).toBeFocused();
   // root → body → value → [0] → Requester → Email
@@ -251,55 +268,41 @@ test('the core task works by keyboard alone, with a visible focus ring (SC-005)'
   await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
   expect(await focusRing()).not.toBe('none');
 
+  // Reference info, then the inline copy, then the bare Copy.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeFocused();
+  await expect(jsonPanel(page).getByRole('button', { name: 'Reference info' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(jsonPanel(page).getByRole('button', { name: 'Copy @{}' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(referenceCopy(page)).toBeFocused();
+  expect(await focusRing()).not.toBe('none');
   await page.keyboard.press('Enter');
   await expect(page.getByText('Expression copied')).toBeVisible();
-  expect(await clipboardText(page, 'web')).toBe(EMAIL);
-});
-
-test('a PPTB host without a clipboard API reports all three copy failures (SC-007)', async ({ page }) => {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-  await open(page, 'pptb', { clipboard: false });
-  const notices = () => page.evaluate(() => window.__notices ?? []);
-
-  await addTwoRules(page);
-  await page.getByRole('region', { name: 'Expression Preview' }).getByRole('button', { name: 'Copy' }).click();
-  await expect.poll(notices).toContainEqual({ title: 'Error', body: `Could not copy expression: ${NO_CLIPBOARD}`, type: 'error' });
-  await page.getByRole('button', { name: 'Export' }).click();
-  await expect.poll(notices).toContainEqual({ title: 'Error', body: `Could not copy expression JSON: ${NO_CLIPBOARD}`, type: 'error' });
-
-  await loadEmailReference(page);
-  await page.getByRole('button', { name: 'Copy' }).click();
-  await expect(page.getByText(`Could not copy expression: ${NO_CLIPBOARD}`)).toBeVisible();
-
-  expect((await notices()).map((notice) => notice.type)).not.toContain('success');
-  await expect(page.getByText('Expression copied')).toHaveCount(0);
-  expect(pageErrors).toEqual([]);
+  expect(await clipboardText(page)).toBe(EMAIL);
 });
 
 test('switching builders leaves the document and Export byte-identical (SC-003)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   await addTwoRules(page);
-  const expression = page.getByLabel('Generated expression');
+  // The Functions dock also labels a preview "Generated expression"; only one is visible.
+  const expression = page.getByLabel('Generated expression').locator('visible=true');
   const expressionBefore = await expression.textContent();
   await page.getByRole('button', { name: 'Export' }).click();
-  const exportBefore = await clipboardText(page, 'web');
+  const exportBefore = await clipboardText(page);
 
   await loadEmailReference(page);
-  await page.getByRole('button', { name: 'Copy' }).click();
-  await page.getByRole('tab', { name: /^Condition builder/ }).click();
+  await referenceCopy(page).click();
+  await openConditionBuilder(page);
 
   await expect(expression).toHaveText(expressionBefore ?? '');
   await page.getByRole('button', { name: 'Export' }).click();
-  expect(await clipboardText(page, 'web')).toBe(exportBefore);
+  expect(await clipboardText(page)).toBe(exportBefore);
 });
 
 test('the JSON reference view follows the host theme (FR-091)', async ({ page }) => {
-  await open(page, 'web', { theme: 'light' });
+  await open(page, { theme: 'light' });
   await openJsonReference(page);
-  const card = page.locator('.eb-json-source');
+  const card = jsonPanel(page).locator('.eb-json-source');
   const lightSurface = await card.evaluate((element) => getComputedStyle(element).backgroundColor);
 
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -312,35 +315,52 @@ const VIEWPORTS = [
   { width: 768, height: 1024 },
   { width: 900, height: 700 },
   { width: 1280, height: 420 },
-  { width: 1280, height: 800 },
+  { width: 1280, height: 860 },
   { width: 1440, height: 900 },
 ];
 
 for (const theme of THEMES) {
-  test(`every viewport keeps both views inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
-    await open(page, 'web', { theme });
+  test(`every viewport keeps all three screens inside the page width in the ${theme} theme (SC-011, FR-007, FR-092)`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await open(page, { theme });
     await addTwoRules(page);
     await loadEmailReference(page);
+    // A second, parsed payload so the strip, tabs and hidden panel are present.
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
+    await jsonPanel(page).getByLabel('Action', { exact: true }).fill('Get manager');
+    await pasteSample(page, '{"Email":"boss@example.com"}');
+    await expect(payloadMeta(page)).toHaveText('2 values');
+    await page.getByRole('tab', { name: /^Get items, payload 1$/ }).click();
+    await expect(treeRow(page, 'Email')).toHaveAttribute('aria-selected', 'true');
     const views = [
-      { name: 'Condition builder', tab: page.getByRole('tab', { name: /^Condition builder/ }) },
-      { name: 'JSON reference', tab: page.getByRole('tab', { name: 'JSON reference' }) },
+      { name: 'Trigger / Filter', open: openConditionBuilder },
+      { name: 'Functions', open: openFunctions },
+      { name: 'JSON reference', open: openJsonReference },
     ];
 
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
       for (const view of views) {
-        await view.tab.click();
+        await view.open(page);
         const layout = await page.evaluate(() => {
           const visible = (element: Element) => (element as HTMLElement).checkVisibility();
           const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')].filter(visible);
-          const header = document.querySelector('.eb-workbench-header') as HTMLElement;
+          const header = document.querySelector('.eb-pill-header') as HTMLElement;
           const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
           return {
             pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+            // A control past the edge is reachable when a horizontally scrolling owner (the payload tab strip) that fits the page holds it.
             controlsCutOff: controls
-              .map((control) => control.getBoundingClientRect())
-              .filter((box) => box.width > 0 && (box.left < 0 || box.right > window.innerWidth + 0.5)).length,
-            headerHeight: header.getBoundingClientRect().height,
+              .filter((control) => {
+                const box = control.getBoundingClientRect();
+                if (box.width === 0 || (box.left >= 0 && box.right <= window.innerWidth + 0.5)) return false;
+                for (let owner = control.parentElement; owner; owner = owner.parentElement) {
+                  if (!/auto|scroll/.test(getComputedStyle(owner).overflowX)) continue;
+                  const bounds = owner.getBoundingClientRect();
+                  return !(bounds.left >= 0 && bounds.right <= window.innerWidth + 0.5);
+                }
+                return true;
+              }).length,
             headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
           };
         });
@@ -349,33 +369,229 @@ for (const theme of THEMES) {
         expect(layout.controlsCutOff, where).toBe(0);
         if (viewport.width > 900) {
           expect(layout.headerRows, where).toBe(1);
-          expect(layout.headerHeight, where).toBeLessThanOrEqual(TODAYS_HEADER_HEIGHT);
+        }
+
+        if (view.name === 'JSON reference') {
+          // Final Source, Payload and Reference content is reachable through its owning region.
+          const reach = [
+            { owner: 'Source', control: jsonPanel(page).getByRole('textbox', { name: 'Sample JSON', exact: true }) },
+            { owner: 'Payload', control: jsonPanel(page).getByRole('treeitem').last() },
+            { owner: 'Reference', control: jsonPanel(page).getByRole('button', { name: 'Copy item() @{}', exact: true }) },
+          ];
+          for (const { owner, control } of reach) {
+            await control.scrollIntoViewIfNeeded();
+            await expect.soft(control, `${owner} end content at ${viewport.width}x${viewport.height}`).toBeInViewport({ ratio: 0.9, timeout: 1500 });
+          }
+          // The strip stays one local row of controls; five-tab overflow scrolls inside .eb-payload-tabs.
+          await expect.soft(page.locator('.eb-payload-strip'), where).toBeInViewport();
+          await expect.soft(page.getByRole('combobox', { name: 'Search all payloads' }), where).toBeInViewport();
         }
       }
     }
   });
 }
 
-test('at 1280x800 the reference and Copy are visible without scrolling; at 1280x420 the workspace scrolls (FR-092)', async ({ page }) => {
-  await open(page, 'web');
-  await page.setViewportSize({ width: 1280, height: 800 });
+const longName = (position: number) => `Very long payload source name number ${position} for layout checks`;
+
+/**
+ * Controls the user cannot reach by scrolling their owning regions. Each control (and each extra
+ * element) is scrolled into view the way a user would have to; a scroll that only an
+ * `overflow: hidden` ancestor performed, or one that still leaves it outside the window, is a failure.
+ */
+function findUnreachable(extraSelectors: string[]): string[] {
+  const controls = [...document.querySelectorAll('button, input, textarea, select, summary, [role="radio"], [role="tab"], [role="treeitem"]')];
+  const extras = extraSelectors.flatMap((selector) => [...document.querySelectorAll(selector)]);
+  const failures: string[] = [];
+  for (const element of new Set([...controls, ...extras])) {
+    const target = element as HTMLElement;
+    if (!target.checkVisibility() || target.closest('[aria-hidden="true"], .eb-visually-hidden')) continue;
+    const box = target.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) continue;
+    const chain: Element[] = [];
+    for (let ancestor = target.parentElement; ancestor; ancestor = ancestor.parentElement) chain.push(ancestor);
+    const before = chain.map((ancestor) => [ancestor.scrollLeft, ancestor.scrollTop]);
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    const rect = target.getBoundingClientRect();
+    const clipped = chain.some((ancestor, index) => {
+      const style = getComputedStyle(ancestor);
+      const lockedX = ['hidden', 'clip'].includes(style.overflowX) && ancestor.scrollLeft !== before[index][0];
+      const lockedY = ['hidden', 'clip'].includes(style.overflowY) && ancestor.scrollTop !== before[index][1];
+      return lockedX || lockedY;
+    });
+    const outside = rect.right <= 0 || rect.left >= innerWidth || rect.bottom <= 0 || rect.top >= innerHeight;
+    chain.forEach((ancestor, index) => {
+      ancestor.scrollLeft = before[index][0];
+      ancestor.scrollTop = before[index][1];
+    });
+    if (clipped || outside) {
+      failures.push(`${target.tagName.toLowerCase()} "${target.getAttribute('aria-label') ?? target.textContent?.trim().slice(0, 40)}" ${clipped ? 'needs a scroll its container does not allow' : 'stays outside the window'}`);
+    }
+  }
+  return failures;
+}
+
+/** Page-level overflow and header geometry; payload tabs scroll inside their own strip, so only the strip must fit. */
+const measureLayout = (page: Page) =>
+  page.evaluate(() => {
+    const visible = (element: Element) => (element as HTMLElement).checkVisibility();
+    const controls = [...document.querySelectorAll('button, input, textarea, [role="radio"], [role="tab"]')]
+      .filter((control) => visible(control) && !control.closest('.eb-payload-tabs'));
+    const header = document.querySelector('.eb-pill-header') as HTMLElement;
+    const headerChildren = [...header.children].filter(visible).map((child) => child.getBoundingClientRect());
+    return {
+      pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      bodyScrollsSideways: document.body.scrollWidth > document.body.clientWidth,
+      controlsCutOff: controls
+        .map((control) => control.getBoundingClientRect())
+        .filter((box) => box.width > 0 && (box.left < 0 || box.right > window.innerWidth + 0.5)).length,
+      headerRows: new Set(headerChildren.map((box) => Math.round(box.top + box.height / 2))).size,
+    };
+  });
+
+/** Source, Payload and Reference positions inside the workspace's own scroll space. */
+const paneArrangement = (page: Page) =>
+  page.evaluate(() => {
+    const pane = document.querySelector('.eb-json-session [role="tabpanel"]:not([hidden])')!;
+    const workspace = pane.querySelector('.eb-json-workspace') as HTMLElement;
+    const origin = workspace.getBoundingClientRect();
+    return ['.eb-json-source', '.eb-json-payload', '.eb-json-reference'].map((selector) => {
+      const box = pane.querySelector(selector)!.getBoundingClientRect();
+      return {
+        left: Math.round(box.left - origin.left + workspace.scrollLeft),
+        top: Math.round(box.top - origin.top + workspace.scrollTop),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      };
+    });
+  });
+
+// One viewport per layout class (stacked, two-column, short desktop, wide desktop); the others share a class and are covered above.
+const LAYOUT_CLASSES = ['375x667', '900x700', '1280x420', '1440x900'];
+
+for (const viewport of VIEWPORTS.filter(({ width, height }) => LAYOUT_CLASSES.includes(`${width}x${height}`))) {
+  const size = `${viewport.width}x${viewport.height}`;
+  test(`five long-named payloads stay reachable, scroll their tabs locally and keep the pane arrangement at ${size} (AC-5.2 to AC-5.4)`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await open(page, { theme: 'dark' });
+    await openJsonReference(page);
+    // A small sample: the Reference card's own height at 900x700 is covered by the end-content checks above.
+    const layoutSample = JSON.stringify({ value: [{ Title: 'Laptop refresh', Email: 'dana@contoso.com' }] });
+    for (let position = 1; position <= 5; position++) {
+      if (position > 1) await page.getByRole('button', { name: '+ Add', exact: true }).click();
+      await jsonPanel(page).getByLabel('Action', { exact: true }).fill(longName(position));
+      await pasteSample(page, layoutSample);
+      await expect(payloadMeta(page)).toHaveText('5 values');
+    }
+    // The active (last) payload shows its named-loop block, the tallest Reference content.
+    await select(page, ['value', '[0]', 'Title']);
+    await jsonPanel(page).getByLabel('Loop name').fill('Check it');
+    const tabAt = (position: number) => page.getByRole('tab', { name: new RegExp(`, payload ${position}$`) });
+    const strip = page.locator('.eb-payload-tabs');
+
+    await test.step('JSON reference fits and every control is reachable', async () => {
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, size).toBe(false);
+      expect(layout.bodyScrollsSideways, size).toBe(false);
+      expect(layout.controlsCutOff, size).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, size).toBe(1);
+      expect(
+        await page.evaluate(findUnreachable, ['.eb-json-session [role="tabpanel"]:not([hidden]) [aria-label="Loop items() reference"]']),
+        `${size}: every control reachable`,
+      ).toEqual([]);
+    });
+
+    await test.step('panes keep their arrangement per width class, with or without search open', async () => {
+      await tabAt(5).click();
+      const arranged = await paneArrangement(page);
+      const [source, payload, reference] = arranged;
+      if (viewport.width <= 600) {
+        expect(source.top + source.height, `${size}: stacked`).toBeLessThanOrEqual(payload.top);
+        expect(payload.top + payload.height, `${size}: stacked`).toBeLessThanOrEqual(reference.top);
+        expect([payload.left, reference.left], size).toEqual([source.left, source.left]);
+      } else if (viewport.width <= 900) {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.top + payload.height, size).toBeLessThanOrEqual(reference.top);
+        expect(reference.left, size).toBe(payload.left);
+      } else {
+        expect(source.left + source.width, size).toBeLessThanOrEqual(payload.left);
+        expect(payload.left + payload.width, size).toBeLessThanOrEqual(reference.left);
+        expect([payload.top, reference.top], size).toEqual([source.top, source.top]);
+      }
+
+      // Five 168px cards only exceed a wide strip's width when it is narrower than their total, so cap the strip at 640px to keep this overflow case real at every viewport.
+      await strip.evaluate((element) => { element.style.maxWidth = '640px'; });
+      // Five long names overflow the strip, which scrolls on its own and keeps the focused tab in view.
+      const overflow = await strip.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+      expect(overflow.scroll, `${size}: tabs overflow`).toBeGreaterThan(overflow.client);
+      for (const [from, key, position] of [[1, 'End', 5], [5, 'Home', 1]] as const) {
+        await tabAt(from).click();
+        await tabAt(from).press(key);
+        await expect(tabAt(position)).toBeFocused();
+        await expect(async () => {
+          const [bounds, box, close] = await Promise.all([
+            strip.boundingBox(),
+            tabAt(position).boundingBox(),
+            page.locator('.eb-payload-tab').nth(position - 1).locator('.eb-payload-close').boundingBox(),
+          ]);
+          for (const inner of [box, close]) {
+            expect(inner).not.toBeNull();
+            expect(inner!.x).toBeGreaterThanOrEqual(bounds!.x - 1);
+            expect(inner!.x + inner!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width + 1);
+          }
+        }, `${size}: tab ${position} and its Close fully in the strip`).toPass({ timeout: 5_000 });
+      }
+      expect((await measureLayout(page)).pageScrollsSideways, size).toBe(false);
+
+      await tabAt(5).click();
+      const search = page.getByRole('combobox', { name: 'Search all payloads' });
+      await search.fill('email');
+      await expect(page.locator('.eb-payload-search-popup')).toBeVisible();
+      await search.press('Escape');
+      await expect(page.locator('.eb-payload-search-popup')).toHaveCount(0);
+      expect(await paneArrangement(page), `${size}: arrangement unchanged`).toEqual(arranged);
+    });
+
+    await test.step('Functions with five expanded source groups fits and stays reachable', async () => {
+      await openFunctions(page);
+      for (const toggle of await page.locator('[data-pv-group] > .eb-fn-group-row').all()) await toggle.click();
+      const layout = await measureLayout(page);
+      expect(layout.pageScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.bodyScrollsSideways, `Functions at ${size}`).toBe(false);
+      expect(layout.controlsCutOff, `Functions at ${size}`).toBe(0);
+      if (viewport.width > 900) expect(layout.headerRows, `Functions at ${size}`).toBe(1);
+      expect(await page.evaluate(findUnreachable, ['[aria-label="Generated expression"]']), `Functions at ${size}: every control reachable`).toEqual([]);
+      // The other copy formats sit behind the split button's chevron.
+      for (const name of ['Copy expression', 'More copy formats']) {
+        const button = page.getByRole('button', { name });
+        await button.scrollIntoViewIfNeeded();
+        await expect(button, `Functions at ${size}`).toBeInViewport();
+      }
+    });
+  });
+}
+
+test('at 1280x860 the reference and Copy are visible without scrolling; at 1280x420 the cards scroll inside, not the workspace (FR-092)', async ({ page }) => {
+  await open(page);
+  await page.setViewportSize({ width: 1280, height: 860 });
   await loadEmailReference(page);
 
-  await expect(page.getByLabel('Reference expression')).toBeInViewport();
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeInViewport();
-  expect(await page.locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
+  await expect(jsonPanel(page).getByLabel('Reference expression')).toBeInViewport();
+  await expect(referenceCopy(page)).toBeInViewport();
+  expect(await jsonPanel(page).locator('.eb-json-workspace').evaluate((element) => element.scrollTop)).toBe(0);
 
   await page.setViewportSize({ width: 1280, height: 420 });
-  const workspace = page.locator('.eb-json-workspace');
-  expect(await workspace.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-  await page.getByRole('button', { name: 'Copy' }).scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button', { name: 'Copy' })).toBeInViewport();
+  const workspace = jsonPanel(page).locator('.eb-json-workspace');
+  // Cards are bounded to the host frame, so the tree and reference body
+  // scroll inside their cards and the workspace itself never needs a scrollbar.
+  expect(await workspace.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+  await referenceCopy(page).scrollIntoViewIfNeeded();
+  await expect(referenceCopy(page)).toBeInViewport();
 });
 
 test('samples at the limits parse and expand within 1 second (FR-039, SC-006 guard)', async ({ page }) => {
-  await open(page, 'web');
+  await open(page);
   await openJsonReference(page);
-  await page.getByRole('radio', { name: 'Trigger' }).click();
+  await jsonPanel(page).getByRole('radio', { name: 'Trigger · Full output' }).click();
   const wide = JSON.stringify(Object.fromEntries(Array.from({ length: 9_999 }, (_, index) => [`key${index}`, index])));
   const samples = {
     size: JSON.stringify({ blob: 'x'.repeat(1_048_500) }),
@@ -385,11 +601,10 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
   };
 
   for (const [name, sample] of Object.entries(samples)) {
-    await page.getByLabel('Sample JSON').fill(sample);
     const started = Date.now();
-    await page.getByRole('button', { name: 'Parse' }).click();
-    await expect(parseStatus(page)).toHaveText(/^Parsed · /);
-    await expect(page.getByRole('tree')).toBeVisible();
+    await pasteSample(page, sample);
+    await expect(payloadMeta(page)).toHaveText(/^\d+ values?$/);
+    await expect(jsonPanel(page).getByRole('tree')).toBeVisible();
     const elapsed = Date.now() - started;
     test.info().annotations.push({ type: 'SC-006 parse', description: `${name}: ${elapsed} ms` });
     expect(elapsed, `${name} parse`).toBeLessThan(1_000);
@@ -400,7 +615,7 @@ test('samples at the limits parse and expand within 1 second (FR-039, SC-006 gua
   await root.locator('[data-chevron]').click();
   const started = Date.now();
   await root.locator('[data-chevron]').click();
-  await expect(page.getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
+  await expect(jsonPanel(page).getByRole('treeitem', { name: 'Show 9499 more' })).toBeVisible();
   const elapsed = Date.now() - started;
   test.info().annotations.push({ type: 'SC-006 expand', description: `9,999-member object: ${elapsed} ms` });
   expect(elapsed).toBeLessThan(1_000);

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FluentProvider, Spinner } from '@fluentui/react-components';
 import type { ExpressionMode, FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformAdapter, PlatformTheme } from '@ryanmakes/eb_platformadapter';
@@ -17,17 +17,17 @@ import {
 } from '../composer/queryActions';
 import type { QueryDocument } from '../composer/querySchema';
 import { parseSavedExpression, serializeSavedExpression } from '../importExport/savedExpressionSchema';
-import { diffFields, type FieldDrift } from '../importExport/metadataCache';
 import {
-  createGraphiteFluentTheme,
-  graphiteTokens,
+  createPorcelainFluentTheme,
+  porcelainTokens,
   type PaletteId,
-  type GraphiteThemeMode,
+  type PorcelainThemeMode,
 } from '../theme/workbenchTokens';
-import { countRules, deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
-import { isFieldDefinitionArray } from './fieldUtils';
+import { deriveBuilderState, findFirstRule, findRule, getDefaultValue, getSafeOperator } from './builderState';
+import { ErrorBoundary } from './ErrorBoundary';
 import { emptyStarterDocument, sampleFields } from './sampleData';
-import { applySource, diffSourceSwitch, discoverCached, discoverThroughAdapter, removeRules, referencedFieldIds } from './sourceState';
+import { useSourceDiscovery } from './useSourceDiscovery';
+import { applySource } from './sourceState';
 import { ConditionCanvas } from '../workbench/ConditionCanvas';
 import { ExpressionDocumentPanel } from '../workbench/ExpressionDocumentPanel';
 import { FieldToolboxPane } from '../workbench/FieldToolboxPane';
@@ -41,17 +41,27 @@ import { SwitchSourceDialog } from '../workbench/SwitchSourceDialog';
 import { SourceUpdatedDialog } from '../workbench/SourceUpdatedDialog';
 import { OnboardingPanel } from '../workbench/OnboardingPanel';
 import { SupportPane } from '../workbench/SupportPane';
-import { WorkbenchHeader } from '../workbench/WorkbenchHeader';
+import { ShellHeader } from '../workbench/ShellHeader';
 import { BuilderDragDropProvider } from '../workbench/BuilderDragDropProvider';
-import { JsonReferenceWorkspace } from '../workbench/JsonReferenceWorkspace';
-import type { BuilderPanelIds, BuilderView } from '../workbench/types';
+import { JsonPayloadWorkspace } from '../workbench/JsonPayloadWorkspace';
+import { FunctionsWorkspace } from '../workbench/FunctionsWorkspace';
+import {
+  createJsonPayloadSession, getParsedSources, jsonPayloadSessionReducer,
+} from '../workbench/jsonPayloadSession';
+import { SCREENS, type ScreenId } from '../workbench/screens';
 import {
   getDefaultWorkbenchState,
+  isShortViewport,
   isStackedViewport,
   toggleDock,
   togglePreview,
 } from '../workbench/workbenchState';
 import '../theme/tokens.css';
+import '../theme/shell.css';
+import '../theme/functions.css';
+import '../theme/jsonPayloads.css';
+
+const LAST_SCREEN_KEY = 'eb.screen.last.v1';
 
 const createRuleSeed = (field: FieldDefinition) => ({
   fieldId: field.id,
@@ -61,6 +71,7 @@ const createRuleSeed = (field: FieldDefinition) => ({
 
 export interface ExpressionBuilderShellProps {
   adapter: PlatformAdapter;
+  hostActions?: ReactNode;
   initialDocument?: QueryDocument;
   /**
    * Which build is hosting the shell. Table connections require a live Dataverse
@@ -69,42 +80,79 @@ export interface ExpressionBuilderShellProps {
    * opt into 'web'.
    */
   platform?: 'web' | 'pptb';
+  /**
+   * Host theme known before first paint. Without it the shell starts on
+   * porcelain dark and animates to the real theme, and that in-between frame
+   * fails color contrast.
+   */
+  initialTheme?: PlatformTheme;
 }
 
 export function ExpressionBuilderShell({
   adapter,
+  hostActions,
   initialDocument = emptyStarterDocument,
+  initialTheme,
   platform = 'pptb',
 }: ExpressionBuilderShellProps) {
   const canConnectTable = platform !== 'web';
   const [document, setDocument] = useState<QueryDocument>(initialDocument);
-  const [paletteId, setPaletteId] = useState<PaletteId>('graphiteDark');
+  const [paletteId, setPaletteId] = useState<PaletteId>(() =>
+    initialTheme ? normalizePalette(initialTheme) : 'porcelainDark',
+  );
   const [importDiagnostics, setImportDiagnostics] = useState<
     Array<{ severity: 'error' | 'warning'; message: string }>
   >([]);
   const [workbench, setWorkbench] = useState(() =>
-    getDefaultWorkbenchState({ stacked: isStackedViewport(), hasFields: initialDocument.fields.length > 0 }),
+    getDefaultWorkbenchState({
+      stacked: isStackedViewport(),
+      short: isShortViewport(),
+      hasFields: initialDocument.fields.length > 0,
+    }),
   );
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyResetTimer.current), []);
 
-  // Which builder is showing. Never persisted: every load opens on the
-  // Condition builder (FR-002) and a reload drops JSON reference state
-  // (FR-008). The JSON workspace mounts the first time it is opened and then
-  // stays mounted while hidden, so its state survives switching.
-  const [builderView, setBuilderView] = useState<BuilderView>('condition');
-  const [jsonReferenceOpened, setJsonReferenceOpened] = useState(false);
-  const builderIdBase = useId();
-  const panelIds: BuilderPanelIds = {
-    conditionTab: `${builderIdBase}-condition-tab`,
-    conditionPanel: `${builderIdBase}-condition-panel`,
-    jsonTab: `${builderIdBase}-json-tab`,
-    jsonPanel: `${builderIdBase}-json-panel`,
-  };
-  const changeBuilderView = (view: BuilderView) => {
-    setBuilderView(view);
-    if (view === 'jsonReference') setJsonReferenceOpened(true);
-  };
+  const [screen, setScreen] = useState<ScreenId>('condition');
+  // Reopen on the screen last used. Only the screen id is saved: JSON payloads
+  // still clear on reload. A switch made before the read lands wins.
+  const screenChosen = useRef(false);
+  useEffect(() => {
+    let current = true;
+    adapter.settings.get(LAST_SCREEN_KEY).then((stored) => {
+      const saved = SCREENS.find((entry) => entry.id === stored);
+      if (current && saved && !screenChosen.current) setScreen(saved.id);
+    }, () => undefined);
+    return () => {
+      current = false;
+    };
+  }, [adapter]);
+  const changeScreen = useCallback((next: ScreenId) => {
+    screenChosen.current = true;
+    setScreen(next);
+    adapter.settings.set(LAST_SCREEN_KEY, next).catch(() => undefined);
+  }, [adapter]);
+  const loadTables = useCallback(() => adapter.getTables?.() ?? Promise.resolve([]), [adapter]);
+  const [jsonSession, jsonDispatch] = useReducer(
+    jsonPayloadSessionReducer,
+    undefined,
+    createJsonPayloadSession,
+  );
+  // Each payload's parse notice reaches the host once, even across workspace remounts or adapter swaps.
+  const deliveredNotices = useRef(new Map<string, number>());
+  useEffect(() => {
+    for (const payload of jsonSession.payloads) {
+      const notice = payload.state.parseNotice;
+      const delivered = deliveredNotices.current.get(payload.id) ?? 0;
+      if (!notice || notice.id <= delivered) continue;
+      deliveredNotices.current.set(payload.id, notice.id);
+      void adapter.notify(notice.message, 'success');
+    }
+  }, [adapter, jsonSession.payloads]);
+  const parsedSources = useMemo(
+    () => getParsedSources(jsonSession.payloads),
+    [jsonSession.payloads],
+  );
 
   /**
    * Stacked, the Toolbox has to stay open on an empty document — it holds the
@@ -133,50 +181,20 @@ export function ExpressionBuilderShell({
     | 'switch'
     | 'drift';
   const [dialog, setDialog] = useState<OpenDialog>('none');
-  const [relatedSections, setRelatedSections] = useState<
-    Array<{ navigationProperty: string; displayName: string }>
-  >([]);
-
-  // Pending state for the switch-source confirmation dialog (T18).
-  type PendingSwitch = {
-    table: string;
-    tableLabel: string;
-    includeRelated: boolean;
-    fields: FieldDefinition[];
-    diff: import('./sourceState').SourceSwitchDiff;
-  };
-  const [pendingSwitch, setPendingSwitch] = useState<PendingSwitch | null>(null);
-
-  // Pending state for the drift summary dialog (T19).
-  type PendingDrift = { drift: FieldDrift; removedInUse: string[] };
-  const [pendingDrift, setPendingDrift] = useState<PendingDrift | null>(null);
-
-  /**
-   * Blocking overlay for retrieve/load operations. Without it the user can edit
-   * rules or start a second discovery while the first promise is still in
-   * flight, and the late result overwrites what they just did.
-   * ponytail: single label, not a counter — these operations are mutually
-   * exclusive because the overlay itself blocks starting a second one.
-   */
-  const [busy, setBusy] = useState<string | null>(null);
-  const runBusy = async <T,>(label: string, work: () => Promise<T>): Promise<T | undefined> => {
-    setBusy(label);
-    try {
-      return await work();
-    } finally {
-      setBusy(null);
-    }
-  };
+  const {
+    relatedSections, relatedStatus, busy, pendingSwitch, setPendingSwitch, pendingDrift, setPendingDrift,
+    runBusy, acceptSourceReplacement, connectFields, connectFieldsCached, handleExpandRelated,
+    handleTableConfirm, applyTableSwitch,
+  } = useSourceDiscovery(adapter, document, setDocument, setDialog);
 
   const derived = useMemo(() => deriveBuilderState(document), [document]);
-  const ruleCount = useMemo(() => countRules(document.root), [document.root]);
   const selectedRule = findRule(document.root, document.selectedRuleId) ?? findFirstRule(document.root);
   const diagnostics = [...importDiagnostics, ...derived.diagnostics];
-  const theme = graphiteTokens[paletteId].mode;
+  const theme = porcelainTokens[paletteId].mode;
 
   useEffect(() => {
     let active = true;
-    void adapter.getTheme().then((t) => { if (active) setPaletteId(normalizePalette(t)); });
+    void adapter.getTheme().then((t) => { if (active) setPaletteId(normalizePalette(t)); }, () => undefined);
     const unsubscribe = adapter.onThemeChanged((t) => setPaletteId(normalizePalette(t)));
     return () => { active = false; unsubscribe(); };
   }, [adapter]);
@@ -230,101 +248,7 @@ export function ExpressionBuilderShell({
     setDocument(result.document);
     setImportDiagnostics([]);
     setDialog('none');
-  };
-
-  /** Discover fields (cache-first). On refresh, diffs and shows the drift dialog (T19). */
-  const connectFieldsCached = async (
-    table: string,
-    tableLabel: string,
-    includeRelated: boolean,
-    refresh = false,
-  ) => {
-    const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, refresh);
-    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
-      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
-      return;
-    }
-
-    // T19: On refresh, diff the old vs new field set and surface a drift summary.
-    if (refresh && document.source?.kind === 'dataverse') {
-      const drift = diffFields(document.fields, fields);
-      const hasDrift = drift.added.length > 0 || drift.removed.length > 0 || drift.changed.length > 0;
-      if (hasDrift) {
-        const usedIds = referencedFieldIds(document.root);
-        const removedInUse = drift.removed.filter((f) => usedIds.has(f.id)).map((f) => f.id);
-        setPendingDrift({ drift, removedInUse });
-        setDialog('drift');
-      }
-    }
-    setDocument((current) =>
-      applySource(
-        current,
-        { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
-        fields,
-      ),
-    );
-
-    if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table)
-        .then((rels) =>
-          setRelatedSections(
-            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-          ),
-        )
-        .catch((err) => {
-          void adapter.notify(
-            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
-            'warning',
-          );
-        });
-    }
-  };
-
-  /** Legacy path used when no table is known (backward compat). */
-  const connectFields = async (table?: string, includeRelated?: boolean) => {
-    if (table) {
-      await connectFieldsCached(table, table, includeRelated ?? false);
-      return;
-    }
-    const result = await discoverThroughAdapter(adapter, undefined, includeRelated);
-    if (!isFieldDefinitionArray(result.fields) || result.fields.length === 0) {
-      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
-      return;
-    }
-    setDocument((current) =>
-      applySource(
-        current,
-        {
-          kind: 'dataverse',
-          label: result.table?.displayName ?? 'Dataverse',
-          tableLogicalName: result.table?.logicalName,
-          includeRelated,
-        },
-        result.fields,
-      ),
-    );
-  };
-
-  const handleExpandRelated = (navigationProperty: string) => {
-    const table = document.source?.tableLogicalName;
-    if (!table || !adapter.discoverRelatedFields) return;
-    void runBusy('Loading related fields…', () => adapter.discoverRelatedFields!(table, navigationProperty)
-      .then((result) => {
-        if (result.fields.length === 0) return;
-        setDocument((current) => ({
-          ...current,
-          fields: [
-            ...current.fields.filter((f) => !result.fields.some((nf) => nf.id === f.id)),
-            ...result.fields,
-          ],
-        }));
-      })
-      .catch((err) => {
-        void adapter.notify(
-          `Could not expand related fields: ${err instanceof Error ? err.message : 'unknown error'}`,
-          'warning',
-        );
-      }));
+    acceptSourceReplacement();
   };
 
   const createRuleFromField = (field: FieldDefinition) => {
@@ -364,81 +288,26 @@ export function ExpressionBuilderShell({
   };
 
   const loadSampleFields = () => {
+    acceptSourceReplacement();
     setDocument((current) =>
       applySource(current, { kind: 'sample', label: 'Sample fields' }, sampleFields),
     );
-    setRelatedSections([]);
   };
 
-  /**
-   * T18: Intercept table confirmation. Discovers fields first; if existing rules would
-   * become orphans, shows SwitchSourceDialog before applying. Otherwise applies directly.
-   */
-  const handleTableConfirm = async (table: string, tableLabel: string, includeRelated: boolean) => {
-    const fields = await discoverCached(adapter, adapter.settings, table, includeRelated, false);
-    if (!isFieldDefinitionArray(fields) || fields.length === 0) {
-      await adapter.notify('No fields discovered. Import a schema or add fields manually.', 'info');
-      return;
-    }
-    // Check against current document for rule collisions.
-    const diff = diffSourceSwitch(document, fields);
-    if (diff.affectedRuleIds.length > 0) {
-      setPendingSwitch({ table, tableLabel, includeRelated, fields, diff });
-      setDialog('switch');
-      return;
-    }
-    // No affected rules — apply directly.
-    applyTableSwitch(table, tableLabel, includeRelated, fields);
-  };
-
-  /** Apply a confirmed table switch, with optional rule removal. */
-  const applyTableSwitch = (
-    table: string,
-    tableLabel: string,
-    includeRelated: boolean,
-    fields: FieldDefinition[],
-    removeAffected?: string[],
-  ) => {
-    setDocument((current) => {
-      const base = applySource(
-        current,
-        { kind: 'dataverse', label: tableLabel, tableLogicalName: table, includeRelated },
-        fields,
-      );
-      return removeAffected?.length ? removeRules(base, removeAffected) : base;
-    });
-    if (adapter.getRelatedTables) {
-      void adapter.getRelatedTables(table)
-        .then((rels) =>
-          setRelatedSections(
-            rels.map((r) => ({ navigationProperty: r.navigationProperty, displayName: r.displayName })),
-          ),
-        )
-        .catch((err) => {
-          void adapter.notify(
-            `Could not load related tables: ${err instanceof Error ? err.message : 'unknown error'}`,
-            'warning',
-          );
-        });
-    } else {
-      setRelatedSections([]);
-    }
-  };
-
-  const paletteVars = graphiteTokens[paletteId].cssVariables;
+  const paletteVars = porcelainTokens[paletteId].cssVariables;
 
   return (
-    <FluentProvider theme={createGraphiteFluentTheme(paletteId)}>
+    <FluentProvider theme={createPorcelainFluentTheme(paletteId)}>
+      <ErrorBoundary>
       <div className="eb-root" data-theme={theme} style={paletteVars as CSSProperties}>
-        <WorkbenchHeader
+        <ShellHeader
+          screen={screen}
+          onScreenChange={changeScreen}
           mode={document.mode}
           onModeChange={updateMode}
-          onExport={() => void exportDocument()}
           onImport={() => setDialog('importExpression')}
-          builderView={builderView}
-          onBuilderViewChange={changeBuilderView}
-          ruleCount={ruleCount}
-          panelIds={panelIds}
+          onExport={() => void exportDocument()}
+          hostActions={hostActions}
         />
 
         <BuilderDragDropProvider
@@ -448,13 +317,12 @@ export function ExpressionBuilderShell({
           onReorderNode={reorderConditionNode}
           onMoveNode={moveConditionNode}
         >
-          {/* One main landmark for both builders (FR-005); each builder is a tab panel inside it. */}
+          {/* One main landmark contains every screen. */}
           <main className="eb-builder-main">
+            <ErrorBoundary>
             <div
-              id={panelIds.conditionPanel}
-              role="tabpanel"
-              aria-labelledby={panelIds.conditionTab}
-              hidden={builderView !== 'condition'}
+              aria-label="Trigger / Filter"
+              hidden={screen !== 'condition'}
               className="eb-builder-panel eb-workspace"
               style={
                 {
@@ -485,6 +353,7 @@ export function ExpressionBuilderShell({
                   );
                 }}
                 relatedSections={relatedSections}
+                relatedStatus={relatedStatus}
                 onExpandRelated={handleExpandRelated}
                 onCreateRuleFromField={createRuleFromField}
               />
@@ -563,24 +432,41 @@ export function ExpressionBuilderShell({
                 }
               />
             </div>
+            </ErrorBoundary>
 
+            <ErrorBoundary>
             <div
-              id={panelIds.jsonPanel}
-              role="tabpanel"
-              aria-labelledby={panelIds.jsonTab}
-              hidden={builderView !== 'jsonReference'}
+              aria-label="Functions"
+              hidden={screen !== 'functions'}
+              className="eb-builder-panel eb-functions-panel"
+            >
+              <FunctionsWorkspace
+                adapter={adapter}
+                sources={parsedSources}
+              />
+            </div>
+            </ErrorBoundary>
+
+            <ErrorBoundary>
+            <div
+              aria-label="JSON reference"
+              hidden={screen !== 'jsonReference'}
               className="eb-builder-panel eb-json-panel"
             >
-              {jsonReferenceOpened ? (
-                <JsonReferenceWorkspace adapter={adapter} active={builderView === 'jsonReference'} />
-              ) : null}
+              <JsonPayloadWorkspace
+                adapter={adapter}
+                active={screen === 'jsonReference'}
+                session={jsonSession}
+                dispatch={jsonDispatch}
+              />
             </div>
+            </ErrorBoundary>
           </main>
         </BuilderDragDropProvider>
 
         {busy ? (
           <div className="eb-busy-overlay" role="alert" aria-busy="true" aria-live="polite">
-            <Spinner label={busy} />
+            <Spinner label={busy.label} />
           </div>
         ) : null}
       </div>
@@ -589,8 +475,8 @@ export function ExpressionBuilderShell({
         open={dialog === 'import'}
         onDismiss={() => setDialog('none')}
         onImport={(fields, label) => {
+          acceptSourceReplacement();
           setDocument((current) => applySource(current, { kind: 'import', label }, fields));
-          setRelatedSections([]);
           setDialog('none');
         }}
       />
@@ -625,8 +511,8 @@ export function ExpressionBuilderShell({
         currentFields={document.fields}
         onDismiss={() => setDialog('none')}
         onLoad={(name, fields) => {
+          acceptSourceReplacement();
           setDocument((current) => applySource(current, { kind: 'profile', label: name }, fields));
-          setRelatedSections([]);
           setDialog('none');
         }}
         onNotify={adapter.notify}
@@ -634,7 +520,7 @@ export function ExpressionBuilderShell({
 
       <TablePickerDialog
         open={dialog === 'tablePicker'}
-        loadTables={() => adapter.getTables?.() ?? Promise.resolve([])}
+        loadTables={loadTables}
         onDismiss={() => setDialog('none')}
         onConfirm={(table, includeRelated) => {
           setDialog('none');
@@ -689,12 +575,13 @@ export function ExpressionBuilderShell({
       />
 
       <OnboardingPanel settings={adapter.settings} canConnectTable={canConnectTable} />
+      </ErrorBoundary>
     </FluentProvider>
   );
 }
 
 function normalizePalette(platformTheme: PlatformTheme): PaletteId {
-  const mode: GraphiteThemeMode =
+  const mode: PorcelainThemeMode =
     platformTheme === 'dark' || platformTheme === 'highContrast' ? 'dark' : 'light';
-  return mode === 'dark' ? 'graphiteDark' : 'graphiteLight';
+  return mode === 'dark' ? 'porcelainDark' : 'porcelainLight';
 }

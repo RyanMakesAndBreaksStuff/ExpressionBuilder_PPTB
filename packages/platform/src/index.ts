@@ -7,7 +7,6 @@ export type {
   PlatformAdapter,
   PlatformSettings,
   PlatformTheme,
-  DataSourceRef,
   TableRef,
   RelatedTableRef,
   DiscoverFieldsOptions,
@@ -15,6 +14,7 @@ export type {
 } from './PlatformAdapter';
 export { createPptbAdapter } from './pptbAdapter';
 export { createWebAdapter } from './webAdapter';
+export type { WebPlatformAdapter, WebTheme } from './webAdapter';
 
 export type {
   DataverseAttributeMetadata,

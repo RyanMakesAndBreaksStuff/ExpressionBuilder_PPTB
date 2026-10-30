@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.2.1",
+  "version": "1.3.1",
   "engines": {
     "node": ">=24.17.0 <25"
   },
@@ -29,7 +29,7 @@
       "name": "Ryan Rettinger",
       "url": "https://github.com/RyanMakesAndBreaksStuff"
     },
-    { 
+    {
       "name": "Matt Berg",
       "url": "https://github.com/MattBerg11"
     }
@@ -37,7 +37,7 @@
   "license": "BSD-3-Clause",
   "features": {
     "minAPI": "1.0.17",
-    "multiConnection": "none"
+    "connections": { "min": 0, "max":1 }
   },
   "configurations": {
     "repository": "https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB",
@@ -52,7 +52,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@pptb/types": "1.2.5",
+    "@pptb/types": "1.2.7",
     "@ryanmakes/eb_builder-ui": "file:../../packages/builder-ui",
     "@ryanmakes/eb_platformadapter": "file:../../packages/platform",
     "react": "^19.2.6",

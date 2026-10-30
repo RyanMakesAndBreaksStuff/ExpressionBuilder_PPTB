@@ -1,12 +1,13 @@
-﻿import { useEffect, useId, useReducer, useRef, type Dispatch } from "react";
+import { useEffect, useId, useRef, type Dispatch } from "react";
 import type { PlatformAdapter } from "@ryanmakes/eb_platformadapter";
+import { ChoiceGroup } from "./controls/ChoiceGroup";
+import { TextAlignLeftIcon, TextAlignRightIcon } from "./icons/BuilderIcons";
 import { JsonSourcePane } from "./JsonSourcePane";
 import { PayloadTree } from "./PayloadTree";
+import type { PayloadReveal } from "./jsonPayloadSession";
 import { ReferencePanel } from "./ReferencePanel";
 import {
 	copyText,
-	initialJsonReferenceState,
-	jsonReferenceReducer,
 	rootExpression,
 	showBodyHint,
 	type CopyFormat,
@@ -15,51 +16,62 @@ import {
 } from "./jsonReferenceState";
 import { countLabel } from "./payloadTreeModel";
 
+/** Where payload values sit in a tree row: after the key, or at the pane's right edge. */
+export type ValueAlign = "left" | "right";
+
+const VALUE_ALIGN_OPTIONS = [
+	{ value: "left", label: "Left", icon: <TextAlignLeftIcon /> },
+	{ value: "right", label: "Right", icon: <TextAlignRightIcon /> },
+] as const;
+
 interface JsonReferenceWorkspaceProps {
 	adapter: PlatformAdapter;
-	/** False while the Condition builder tab is selected; the workspace stays mounted so its state survives (FR-008). */
+	/** False while another screen is selected; the workspace stays mounted so its state survives (FR-008). */
 	active: boolean;
+	state: JsonReferenceState;
+	dispatch: Dispatch<JsonReferenceAction>;
+	reveal?: PayloadReveal | null;
+	valueAlign?: ValueAlign;
+	/** Omit to hide the alignment toggle. */
+	onValueAlignChange?: (value: ValueAlign) => void;
 }
 
 export function JsonReferenceWorkspace({
 	active,
 	adapter,
+	state,
+	dispatch,
+	reveal,
+	valueAlign = "right",
+	onValueAlignChange,
 }: JsonReferenceWorkspaceProps) {
-	const [state, dispatch] = useReducer(
-		jsonReferenceReducer,
-		initialJsonReferenceState,
-	);
 	const autoParseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	);
-	const prevParsedText = useRef<string | undefined>(undefined);
 
 	useEffect(() => () => clearTimeout(autoParseTimer.current), []);
 
-	// Notify the host when a parse succeeds with new content.
+	// Auto-parse an unvalidated edit after a short delay, only while visible.
 	useEffect(() => {
-		if (state.parsed && state.parsed.text !== prevParsedText.current) {
-			prevParsedText.current = state.parsed.text;
-			void adapter.notify(
-				`Parsed · ${countLabel(state.parsed.valueCount, "value")}`,
-				"success",
-			);
-		}
-	}, [adapter, state.parsed]);
-
-	// Auto-parse after a short delay when text is edited manually.
-	useEffect(() => {
-		if (!state.text.trim() || state.text === state.parsed?.text) return;
 		clearTimeout(autoParseTimer.current);
-		autoParseTimer.current = setTimeout(() => dispatch({ type: "parse" }), 600);
+		if (
+			!active ||
+			state.text === state.lastAttemptedText ||
+			(!state.text.trim() && state.lastSuccessfulPayload === null)
+		)
+			return;
+		autoParseTimer.current = setTimeout(
+			() => dispatch({ type: "autoParse", expectedText: state.text }),
+			600,
+		);
 		return () => clearTimeout(autoParseTimer.current);
-	}, [state.text, state.parsed?.text]);
-
-	// Clear any pending auto-parse when leaving the tab.
-	useEffect(() => {
-		if (active) return;
-		clearTimeout(autoParseTimer.current);
-	}, [active]);
+	}, [
+		active,
+		state.text,
+		state.lastAttemptedText,
+		state.lastSuccessfulPayload,
+		dispatch,
+	]);
 
 	const copy = async (format: CopyFormat) => {
 		const text = copyText(state, format);
@@ -93,7 +105,13 @@ export function JsonReferenceWorkspace({
 		<div className="eb-json-workspace">
 			<JsonSourcePane state={state} dispatch={dispatch} />
 			<div className="eb-json-content">
-				<PayloadPanel state={state} dispatch={dispatch} />
+				<PayloadPanel
+					state={state}
+					dispatch={dispatch}
+					reveal={reveal}
+					valueAlign={valueAlign}
+					onValueAlignChange={onValueAlignChange}
+				/>
 				<ReferencePanel
 					state={state}
 					onCopy={(format) => void copy(format)}
@@ -108,15 +126,24 @@ export function JsonReferenceWorkspace({
 interface PayloadPanelProps {
 	state: JsonReferenceState;
 	dispatch: Dispatch<JsonReferenceAction>;
+	reveal?: PayloadReveal | null;
+	valueAlign: ValueAlign;
+	onValueAlignChange?: (value: ValueAlign) => void;
 }
 
-function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
+function PayloadPanel({
+	dispatch,
+	onValueAlignChange,
+	reveal,
+	state,
+	valueAlign,
+}: PayloadPanelProps) {
 	const headingId = useId();
 	const { parsed } = state;
 
 	return (
 		<section
-			className="eb-json-card eb-json-payload"
+			className={`eb-json-card eb-json-payload is-values-${valueAlign}`}
 			aria-labelledby={headingId}>
 			<div className="eb-json-card-header">
 				<h2 id={headingId}>Payload</h2>
@@ -124,6 +151,15 @@ function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 					<span className="eb-dock-meta">
 						{countLabel(parsed.valueCount, "value")}
 					</span>
+				) : null}
+				{parsed && onValueAlignChange ? (
+					<ChoiceGroup
+						className="eb-json-value-align"
+						ariaLabel="Value alignment"
+						options={VALUE_ALIGN_OPTIONS}
+						value={valueAlign}
+						onChange={onValueAlignChange}
+					/>
 				) : null}
 			</div>
 			{showBodyHint(state) ? (
@@ -143,14 +179,12 @@ function PayloadPanel({ dispatch, state }: PayloadPanelProps) {
 					onSelect={(path) => dispatch({ type: "select", path })}
 					onToggle={(key) => dispatch({ type: "toggleExpanded", key })}
 					onShowAll={(key) => dispatch({ type: "showAll", key })}
+					reveal={reveal}
 				/>
 			) : (
 				<div className="eb-json-empty">
 					<p className="eb-json-empty-title">No sample yet</p>
-					<p>
-						Paste an action or trigger output from a flow run, then select
-						Parse.
-					</p>
+					<p>Paste an action or trigger output from a flow run to parse it.</p>
 				</div>
 			)}
 		</section>

@@ -34,6 +34,20 @@ describe('workbenchState', () => {
     });
   });
 
+  it('starts with the preview collapsed on a short viewport', () => {
+    // The empty canvas plus an expanded preview cannot fit a ~420px PPTB
+    // frame, so an expanded preview launched the app already scrolling.
+    expect(getDefaultWorkbenchState({ short: true })).toMatchObject({
+      previewCollapsed: true,
+    });
+  });
+
+  it('does not let a short viewport re-collapse the preview a user expanded', () => {
+    // Short/stacked are read once at mount; the toggle stays user-owned.
+    const state = getDefaultWorkbenchState({ short: true });
+    expect(togglePreview(state)).toMatchObject({ previewCollapsed: false });
+  });
+
   it('toggles individual dock and preview state without changing unrelated state', () => {
     const state = getDefaultWorkbenchState();
 

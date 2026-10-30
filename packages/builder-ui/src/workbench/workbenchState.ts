@@ -20,9 +20,30 @@ export function isStackedViewport(): boolean {
   return window.matchMedia(STACKED_LAYOUT_QUERY).matches;
 }
 
+/**
+ * Must match the short-viewport media query in `theme/tokens.css`
+ * (min-width: 601px and max-height: 620px): the wide-but-short hosts — the
+ * PPTB iframe at ~420px and short desktop windows — where the center column
+ * owns scrolling.
+ */
+export const SHORT_VIEWPORT_QUERY = '(min-width: 601px) and (max-height: 620px)';
+
+/**
+ * Read once, at mount, by the shell for the same reasons as
+ * `isStackedViewport`: short-host first paint must not open already needing
+ * a scrollbar, but a later resize to a short height leaves the user's
+ * collapse choices alone.
+ */
+export function isShortViewport(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia(SHORT_VIEWPORT_QUERY).matches;
+}
+
 export interface WorkbenchDefaults {
   /** Phone-width first paint — see `isStackedViewport`. */
   stacked?: boolean;
+  /** Wide-but-short first paint — see `isShortViewport`. */
+  short?: boolean;
   /** Whether the starting document already has fields to build rules from. */
   hasFields?: boolean;
 }
@@ -39,12 +60,19 @@ export interface WorkbenchDefaults {
  * empty canvas with no visible way to fill it. With fields already present those
  * entry points are recoverable — the rules are the point, and the Toolbox is one
  * tap away.
+ *
+ * Short (wide-but-short) hosts start with the preview collapsed: the empty
+ * canvas (~226px) plus the expanded preview (~174px) plus the row gap cannot
+ * fit the ~313px a 420px PPTB frame leaves after the header and workspace
+ * padding, so an expanded preview meant the app launched already needing a
+ * scrollbar. Collapsed, the empty state fits with room to spare; expanding the
+ * preview in a short host hands scrolling to the center column by design.
  */
-export function getDefaultWorkbenchState({ stacked = false, hasFields = false }: WorkbenchDefaults = {}): WorkbenchState {
+export function getDefaultWorkbenchState({ stacked = false, short = false, hasFields = false }: WorkbenchDefaults = {}): WorkbenchState {
   return {
     leftDockCollapsed: stacked && hasFields,
     rightDockCollapsed: stacked,
-    previewCollapsed: false,
+    previewCollapsed: short,
     rightTab: 'diagnostics',
     copyState: 'idle',
   };

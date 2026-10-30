@@ -13,21 +13,6 @@ import type {
 import { deleteNode } from '../composer/queryActions';
 import { readCache, writeCache } from '../importExport/metadataCache';
 
-/** The runtime view of the active source: the descriptor plus its resolved fields. */
-export interface ActiveSource {
-  descriptor: DataSourceDescriptor;
-  fields: FieldDefinition[];
-}
-
-const EMPTY_SOURCE: ActiveSource = {
-  descriptor: { kind: 'unknown' },
-  fields: [],
-};
-
-export function emptySource(): ActiveSource {
-  return EMPTY_SOURCE;
-}
-
 /** Apply a discovered/imported field set to a document, recording provenance. */
 export function applySource(
   document: QueryDocument,
@@ -68,13 +53,37 @@ export async function discoverCached(
   includeRelated: boolean,
   refresh: boolean,
 ): Promise<FieldDefinition[]> {
+  const scope = await metadataCacheScope(adapter);
+  // No verified environment identity: never touch the persistent cache.
+  if (scope === null) {
+    return (await discoverThroughAdapter(adapter, table, includeRelated)).fields;
+  }
+  const assertSameScope = async () => {
+    if ((await metadataCacheScope(adapter)) !== scope) {
+      throw new Error('The environment changed while loading fields. Please retry.');
+    }
+  };
   if (!refresh) {
-    const cached = await readCache(settings, table, includeRelated);
+    const cached = await readCache(settings, scope, table, includeRelated);
+    await assertSameScope();
     if (cached) return cached;
   }
   const result = await discoverThroughAdapter(adapter, table, includeRelated);
-  await writeCache(settings, table, includeRelated, result.fields);
+  await assertSameScope();
+  // Never cache an empty result: it would pin a transient failure / no-connection placeholder.
+  if (result.fields.length > 0) {
+    await writeCache(settings, scope, table, includeRelated, result.fields);
+    await assertSameScope();
+  }
   return result.fields;
+}
+
+async function metadataCacheScope(adapter: PlatformAdapter): Promise<string | null> {
+  try {
+    return (await adapter.getMetadataCacheScope?.()) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Collect every fieldId referenced by rules in the tree. */
@@ -147,7 +156,6 @@ export interface NewFieldInput {
   choices?: string[];
   nullable?: boolean;
   idOverride?: string;
-  pathOverride?: string[];
 }
 
 /** Build a user `FieldDefinition`; returns null if label is empty or the id collides. */
@@ -162,7 +170,7 @@ export function buildUserField(input: NewFieldInput, existing: FieldDefinition[]
     id,
     label,
     type: input.type,
-    path: input.pathOverride?.length ? input.pathOverride : [id],
+    path: [id],
     source: 'user',
   };
   if (input.type === 'choice' && input.choices?.length) field.choices = input.choices;

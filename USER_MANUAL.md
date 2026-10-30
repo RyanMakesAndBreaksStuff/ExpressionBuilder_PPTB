@@ -1,6 +1,6 @@
 # Power Automate Expression Builder — User Manual & Developer Documentation
 
-> **Version**: 1.0.2 | **Last updated**: 2026-09-04 | **Node**: `24.17.0` | **React**: `^19.2.6`
+> **Version**: 1.3.1 | **Last updated**: 2026-10-30 | **Node**: `24.17.0` | **React**: `^19.2.6`
 
 ---
 
@@ -22,9 +22,9 @@
 
 ## 1. What Is This?
 
-**Power Automate Expression Builder** is a React/TypeScript application for building **Trigger Condition** and **Filter Array** advanced-mode predicates for Power Automate flows. Instead of hand-writing complex `@and(...)` / `@or(...)` expressions, you use a visual composer to build conditions, which the app translates into valid Power Automate expression syntax.
+**Power Automate Expression Builder** is a React/TypeScript application for building **Trigger Condition** and **Filter Array** advanced-mode predicates, assembling **Workflow Definition Language function calls**, and turning action or trigger outputs into rooted **JSON references** for Power Automate flows. Instead of hand-writing complex `@and(...)` / `@or(...)` expressions, you use a visual workbench, which the app translates into valid Power Automate expression syntax.
 
-![Field toolbox on the left, the AND/OR condition builder in the centre, live diagnostics on the right, and the generated Power Automate expression at the bottom.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/expression-builder.png)
+![The Expression Builder workbench: field toolbox, condition canvas, support panes, and generated expression preview.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/expression-builder.png)
 
 ### Two Deployment Targets
 
@@ -35,13 +35,15 @@
 
 ### Key Features
 
-- **Visual condition composer** — Groups (AND/OR), rules, and nested logic, reorderable via drag handle or keyboard-accessible up/down move buttons.
-- **Live expression preview** — See the generated Power Automate expression as you build.
+- **Visual condition composer** — Groups (AND/OR), rules, and nested logic, reorderable via drag handle or keyboard-accessible up/down move buttons. Per-rule **Wrappers** transform the field, and `trim`, `toLower`, and `toUpper` also apply to the typed value.
+- **Functions screen** — Build a call from 99 Workflow Definition Language functions in six groups (String, Collection, Logical, Math, Date and time, Conversion). Arguments show their expected type and required/optional status; nesting, drag-to-insert, live validity, and copy in bare or `@{…}` form are built in.
+- **Live expression preview** — See the generated Power Automate expression as you build, including argument-set status on the Functions screen.
 - **Field discovery** — Connect to Dataverse tables to auto-discover fields and their types.
 - **Schema import** — Import fields from CSV, JSON, or JSON Schema when you don't have a live connection.
 - **Field profiles** — Save and reload field sets for reuse across sessions.
-- **Diagnostics** — Real-time validation with actionable error messages (type mismatches, unknown fields, unsupported operators).
-- **JSON references** — Paste an action or trigger output from a flow run, select any value in a tree, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Title']`. Pasted JSON is processed locally and is not uploaded or saved.
+- **Diagnostics** — Real-time validation with actionable error messages (type mismatches, unknown fields, unsupported operators, invalid function arguments).
+- **JSON references** — Keep up to five action or trigger outputs open, search across them, select any value in a tree, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Title']`. Pasted JSON is processed locally and is not uploaded or saved.
+- **Parsed Value insertion** — Every parsed payload appears in the Functions nav, so a sample path can be dropped into an argument by double-click, Enter, or **Alt+Down**.
 - **Graphite theme system** — accessible light/dark semantic themes adapted from Fluent UI v9.
 - **Dockable workspace** — Collapsible left toolbox and right support panes around the central canvas.
 
@@ -49,38 +51,37 @@
 
 ## 2. Architecture Overview
 
-The workspace follows a **layered architecture** with two shared packages and two thin host apps.
+The workspace follows a **layered architecture** with three shared packages and two thin host apps.
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  apps/web          │  apps/pptb                              │
-│  Browser host       │  Power Platform Toolbox host            │
-│  (createWebAdapter) │  (createPptbAdapter)                    │
-└─────────┬───────────┴──────────┬───────────────────────────────┘
-          │                      │
-          └──────────┬───────────┘
-                      │
-┌─────────────────────┴─────────────────────────────────────┐
-│  packages/builder-ui                                       │
-│  Shared Fluent UI v9 composer + workbench + theme system   │
-│  Exports: ExpressionBuilderShell + query document types    │
-│  (QueryGroup, QueryRule, ...) and actions (addRule, ...)    │
-└─────────────────────┬───────────────────────────────────────┘
-                       │
-              ┌────────┴────────┐
-              │                 │
-       ┌──────┴─────┐    ┌──────┴────┐
-       │ packages/  │    │ packages/ │
-       │ engine     │    │ platform  │
-       │ Pure TS    │    │ Platform  │
-       │ expression │    │ adapters  │
-       │ formatter  │    │ (web/pptb)│
-       └────────────┘    └───────────┘
+┌───────────────────────────────┬───────────────────────────────┐
+│  apps/web                     │  apps/pptb                    │
+│  Browser host                 │  Power Platform Toolbox host  │
+│  createWebAdapter()           │  createPptbAdapter()          │
+└───────────────┬───────────────┴───────────────┬───────────────┘
+                │                               │
+                └───────────────┬───────────────┘
+                                │
+┌───────────────────────────────┴───────────────────────────────┐
+│  packages/builder-ui                                          │
+│  Shared Fluent UI v9 screens, workbench, and theme system     │
+│  Exports ExpressionBuilderShell, the query document types     │
+│  (QueryGroup, QueryRule, ...) and actions (addRule, ...)      │
+└───────────────────────────────┬───────────────────────────────┘
+                                │
+                ┌───────────────┴───────────────┐
+                │                               │
+ ┌──────────────┴──────────────┐ ┌──────────────┴──────────────┐
+ │ packages/engine             │ │ packages/platform           │
+ │ Pure TypeScript             │ │ PlatformAdapter interface   │
+ │ AST + formatter             │ │ Web and PPTB adapters       │
+ │ Function catalog            │ │ Clipboard, notify, Dataverse│
+ └─────────────────────────────┘ └─────────────────────────────┘
 ```
 
 ### Design Principles
 
-1. **Pure engine** — `packages/engine` has zero UI dependencies. It only knows about expression AST nodes, field definitions, and formatting rules.
+1. **Pure engine** — `packages/engine` has zero UI dependencies. It only knows about expression AST nodes, field definitions, formatting rules, and the Workflow Definition Language function catalog.
 2. **Platform abstraction** — `packages/platform` defines a `PlatformAdapter` interface. The web and PPTB hosts implement this differently (clipboard, notifications, Dataverse API access).
 3. **Shared UI** — `packages/builder-ui` contains all visual components. The two apps are thin bootstraps that inject the correct adapter and render the shell.
 4. **Type safety** — All packages are TypeScript with `type: "module"`. Shared types flow from `engine` → `builder-ui` → `apps`.
@@ -107,6 +108,8 @@ ExpressionBuilder/
 │   │       ├── diagnostics.ts  # Error/warning diagnostic codes
 │   │       ├── operators.ts    # Operator support matrix by field type
 │   │       ├── functions.ts    # Function call validation and return types
+│   │       ├── functionCatalog.ts  # 99-function WDL catalog and argument metadata
+│   │       ├── argumentParser.ts   # Typed literals, nested calls, accessors
 │   │       ├── literals.ts     # Literal value formatting
 │   │       └── fieldReferences.ts  # Field reference formatting by mode
 │   ├── platform/               # Platform adapters and metadata
@@ -115,13 +118,15 @@ ExpressionBuilder/
 │   │       ├── webAdapter.ts   # Web host implementation
 │   │       ├── pptbAdapter.ts  # PPTB host implementation
 │   │       ├── dataverseMetadata.ts  # Dataverse attribute mapping
-│   │       └── dataverseApi.ts     # Dataverse API types
+│   │       └── dataverseApi.d.ts   # Dataverse API types
 │   └── builder-ui/             # Shared Fluent UI composer
 │       └── src/
 │           ├── app/
 │           │   ├── ExpressionBuilderShell.tsx  # Main app shell (state + layout)
 │           │   ├── builderState.ts             # Derived state (expression, diagnostics)
 │           │   ├── sourceState.ts              # Field source discovery + cache
+│           │   ├── useSourceDiscovery.ts       # Hook: table picker, refresh, and drift detection
+│           │   ├── ErrorBoundary.tsx           # Per-screen render-error containment + Reset
 │           │   └── sampleData.ts               # Demo field set
 │           ├── components/       # Small reusable UI components
 │           ├── composer/
@@ -129,11 +134,12 @@ ExpressionBuilder/
 │           │   └── queryActions.ts   # Document mutations (addRule, deleteNode, etc.)
 │           ├── importExport/
 │           │   ├── csvImport.ts          # CSV field import
-│           │   ├── fieldImport.ts        # Field profile management
+│           │   ├── fieldImport.ts        # Field JSON import
+│           │   ├── fieldProfiles.ts      # Saved field profiles (platform settings)
 │           │   ├── jsonSchemaImport.ts   # JSON Schema import
 │           │   └── savedExpressionSchema.ts  # Save/load expression JSON
 │           ├── theme/
-│           │   ├── workbenchTokens.ts  # Six-palette design token system
+│           │   ├── workbenchTokens.ts  # Graphite light/dark design tokens (runtime source)
 │           │   ├── fluentTheme.ts      # FluentProvider theme factory
 │           │   └── tokens.css            # CSS custom properties
 │           └── workbench/          # Workbench panels and dialogs
@@ -143,7 +149,22 @@ ExpressionBuilder/
 │               ├── ConditionMoveButtons.tsx  # Up/down keyboard-accessible reorder buttons
 │               ├── ConditionPositionTarget.tsx  # Drop-position targets between/inside groups
 │               ├── dragDropModel.ts          # Drag metadata + id encoding for condition nodes
-│               ├── WorkbenchHeader.tsx       # Top command bar
+│               ├── ShellHeader.tsx           # 48px pill header, screen tabs and screen actions
+│               ├── screens.ts                # Trigger / Filter, JSON reference, Functions
+│               ├── JsonReferenceWorkspace.tsx  # JSON reference screen
+│               ├── JsonPayloadWorkspace.tsx    # One payload's source and tree panes
+│               ├── PayloadStrip.tsx          # Payload tabs, status, New payload, close
+│               ├── PayloadSearch.tsx         # Cross-payload search results
+│               ├── payloadSearchModel.ts     # Search, ranking and 8-result cap
+│               ├── FunctionsWorkspace.tsx    # Functions screen
+│               ├── FunctionsNav.tsx          # Function groups + catalog search
+│               ├── ArgumentsPanel.tsx        # Argument inputs, nesting, Alt+Down
+│               ├── FunctionsDock.tsx         # Expression output, status, and Copy controls
+│               ├── ValueEditor.tsx           # Rule value input, matched to field type
+│               ├── ParsedValueEntries.tsx    # Parsed Value rows and array items
+│               ├── functionsState.ts         # Functions state, slots and validity
+│               ├── jsonPayloadSession.ts     # Up-to-five payload session reducer
+│               ├── parsedValueModel.ts       # Parsed Value groups and 200-row cap
 │               ├── FieldToolboxPane.tsx      # Left field/toolbox panel
 │               ├── SupportPane.tsx           # Right diagnostics/help panel
 │               ├── ExpressionDocumentPanel.tsx  # Bottom expression preview
@@ -225,37 +246,41 @@ npm run dev:pptb
 
 ### 5.2 The Workbench Layout
 
-The header's **Condition builder** and **JSON reference** tabs switch between the two builders. The layout below is the Condition builder; JSON reference is described in [5.8](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references).
+The 48px pill header holds the title, a tab for each screen, and the current screen's actions. The tabs, in order, are **Trigger / Filter**, **JSON reference**, and **Functions**; all three screens stay mounted, so their state survives switching, and the app reopens on the last screen you used. The expression-mode control, the **Import** overflow menu, and **Export** belong to **Trigger / Filter**, and **JSON reference** shows its privacy line in the header. The layout below is Trigger / Filter; JSON reference is described in [5.8](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#58-json-references) and Functions in [5.9](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/USER_MANUAL.md#59-functions).
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  WorkbenchHeader                                                  │
-│  [Mode: Trigger Condition ▼] [🌙Theme] [Export] [Import] [Copy]   │
+┌───────────────────────────────────────────────────────────────────┐
+│  ShellHeader (48px pill)                                          │
+│  Expression Builder                                               │
+│  [Trigger / Filter] [JSON reference] [Functions]                  │
+│                                     [segmented] [···] [Export]    │
 ├──────────────────┬────────────────────────┬───────────────────────┤
 │                  │                        │                       │
 │  FieldToolbox    │    ConditionCanvas     │    SupportPane        │
 │  (Left Dock)     │    (Center)            │    (Right Dock)       │
 │                  │                        │                       │
-│  • Table Picker  │    ┌─ AND ─┐          │    • Diagnostics      │
+│  • Table Picker  │    ┌─ AND ──┐          │    • Diagnostics      │
 │  • Field List    │    │ Rule 1 │          │    • Expression Help  │
 │  • Import/Export │    │ Rule 2 │          │    • Onboarding       │
-│  • Sample Data   │    └─ OR ──┘          │                       │
+│  • Sample Data   │    └─ OR ──┘           │                       │
 │                  │                        │                       │
 ├──────────────────┴────────────────────────┴───────────────────────┤
 │  ExpressionDocumentPanel                                          │
 │  @and(equals(triggerBody()['status'], 'active'), ...)             │
 │  [Copy] [Collapse]                                                │
-└─────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────────────┘
 ```
+
+![Expression Builder header with the Trigger / Filter, JSON reference, and Functions screen tabs above the Trigger / Filter workspace](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/screen-tabs.png)
 
 ### 5.3 Building Your First Expression
 
 #### Step 1: Load Fields
 
-- **Option A — Connect to Dataverse** (PPTB only): Click **Connect Table** → select a table → click **Confirm**. The app discovers all fields and their types.
-- **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste.
+- **Option A — Connect to Dataverse** (PPTB only): Click **Connect a table** → select a table → click **Connect**. The app discovers all fields and their types. Lookup, Customer, and Owner columns use the key Dataverse returns, `_<logicalname>_value`, in the generated expression. If a table or related-table load fails, the dialog or section says **Could not load tables.** or **Could not load fields.** and offers **Retry**.
+- **Option B — Import a schema**: Click **Import a schema** → pick a tab (Field JSON, Sample, Schema, or CSV) and paste. Sample import encodes `~`, `.`, and empty keys in field ids (`~0`, `~1`, `~2`) so a key such as `a.b` still resolves to the real key. Schema import rejects a non-object root or a boolean schema, imports a numeric `enum` as a number field with options, and skips an invalid or conflicting `enum` with a warning.
 
-  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/import-schema.png)
+  ![The Import field schema dialog, with tabs for Field JSON, Sample, Schema, and CSV.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/import-schema.png)
 
 - **Option C — Use sample data**: Click **Load Samples** to populate demo fields.
 - **Option D — Add manually**: Click **Add Field** and define fields one by one.
@@ -269,7 +294,7 @@ The header's **Condition builder** and **JSON reference** tabs switch between th
 
 Nested AND/OR groups, shown here in the dark theme:
 
-![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/docs/images/nested-groups-dark.png)
+![A nested OR group inside a top-level AND group, in dark mode, with the combined expression in the preview panel.](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/nested-groups-dark.png)
 
 #### Step 3: Review the Expression
 
@@ -289,7 +314,7 @@ The **Expression Preview** panel at the bottom updates live as you edit. The gen
 
 - **Copy** — Copies the expression to your clipboard for pasting into Power Automate.
 - **Export** — Copies the entire document as JSON (rules + fields) so you can reload it later.
-- **Import** — Paste exported JSON to restore a saved expression.
+- **Import** — Paste exported JSON to restore a saved expression; Import lives under the header's `···` menu on the **Trigger / Filter** screen.
 
 ### 5.4 Expression Modes
 
@@ -298,7 +323,7 @@ The **Expression Preview** panel at the bottom updates live as you edit. The gen
 | **Trigger Condition** | Filter when a flow should run | `triggerBody()` references  |
 | **Filter Array**      | Filter items in an array      | `item()` references         |
 
-Switch modes via the dropdown in the **Workbench Header**. The expression syntax changes automatically.
+Switch modes with the segmented control in the pill header while **Trigger / Filter** is active. The expression syntax changes automatically. **Functions** and **JSON reference** are separate screens reached through the header tabs, not expression modes.
 
 ### 5.5 Field Types & Supported Operators
 
@@ -312,11 +337,14 @@ Switch modes via the dropdown in the **Workbench Header**. The expression syntax
 
 ### 5.6 Function Wrappers
 
-Apply string transformations to both operands using the **Wrappers** feature:
+Transform a rule from that rule's **Wrappers** menu (the wrap icon). `trim`, `toLower`, and `toUpper` apply to **both operands**, so the field and the typed value are compared on equal terms. `length` and `coalesce` apply to the **field side only**:
 
-- `trim()` — Removes leading/trailing whitespace
-- `toLower()` / `toUpper()` — Case conversion
-- `coalesce()` — Null-safe fallback
+- `trim()` — Removes leading/trailing whitespace (both operands)
+- `toLower()` / `toUpper()` — Case conversion (both operands)
+- `length()` — Compares the field's string length instead of its text; the value editor becomes numeric (field only)
+- `coalesce()` — Null-safe fallback; emits `coalesce(field, '')` (field only)
+
+Checked wrappers stay in their applied order, and newly checked wrappers append. Clearing a wrapper removes it without disturbing the others.
 
 > ⚠️ The engine warns if you wrap a nullable field with `toLower`/`toUpper`/`trim` without `coalesce` first — this prevents runtime null errors in Power Automate.
 
@@ -324,8 +352,8 @@ Apply string transformations to both operands using the **Wrappers** feature:
 
 #### Switch Data Source
 
-1. Click **Switch Table** in the left panel.
-2. Select a new table and click **Confirm**.
+1. Open the data source menu in the left panel and choose **Switch table…**.
+2. Select a new table and click **Connect**.
 3. If existing rules reference fields not in the new table, the **Switch Source Dialog** appears:
    - **Keep rules** — Retains all rules; orphaned fields show as "unknown" in diagnostics.
    - **Remove affected rules** — Deletes rules that would become invalid.
@@ -353,25 +381,72 @@ Both paths call the same `moveNode`/`reorderNode` document actions, so diagnosti
 
 ### 5.8 JSON References
 
-The **JSON reference** tab in the header opens a second builder. Paste a sample output from a flow run, select any value, and copy a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']`. Using it never changes your condition document: when you switch back to **Condition builder**, the rules, mode and Export output are exactly as you left them.
+The **JSON reference** screen turns a sample action or trigger output into a correctly rooted reference such as `outputs('Get_items')?['body']?['value'][0]?['Requester']?['Email']`. Using it never changes your condition document: when you switch to **Trigger / Filter**, the rules, mode and Export output are exactly as you left them.
 
-1. **Output from** — choose **Action** and type the action name as the flow designer shows it, or choose **Trigger**. Spaces in the name become underscores and case is kept, because flow expressions match action names exactly.
-2. **The pasted JSON is** — say what you pasted:
-   - **Full output (also Compose)** roots the reference at `outputs('<name>')`, or `triggerOutputs()` for a trigger. Choose it for a run's whole output (`statusCode`, `headers` and `body`), and for Compose and other actions whose output has no `body` wrapper.
+**Payloads.** The screen starts with one empty payload. **New payload** adds another, up to five, and each payload is independent: its own source, reference root, sample, parsed tree, selection, expansion state, and loop name. Payload cards show the label and the root function (`outputs()`, `body()`, `triggerOutputs()`, or `triggerBody()`), with the full root expression and parse status announced to screen readers. Use Left/Right or Home/End while a card is focused, and close a card with its **Close** button — the last remaining card cannot be closed. Closing the active card activates its nearest neighbour. Action payloads are labelled by action name (or **Payload N** while the name is blank); multiple triggers become **Trigger**, **Trigger 2**, and so on.
+
+1. **Reference root** — under **Action** or **Trigger**, choose:
+   - **Full output** roots the reference at `outputs('<name>')`, or `triggerOutputs()` for a trigger. Choose it for a run's whole output (`statusCode`, `headers` and `body`), and for Compose and other actions whose output has no `body` wrapper.
    - **Body only** roots it at `body('<name>')`, or `triggerBody()`. Choose it when you pasted only the body. If the sample still has a top-level `body` key, a hint suggests **Full output**; the builder never changes the choice for you.
-3. **Sample JSON** — paste the output and select **Parse**. Samples up to 1 MiB, with up to 10,000 values and 64 levels of nesting, are accepted. If you edit the sample afterwards, the status says so, and the previous tree stays usable until you parse again.
-4. **Select a value** in the Payload tree: a string, number or boolean, or an object, an array, a null or the root itself. The Reference card shows the path and the reference.
-5. **Copy**, in one of two formats:
-   - **Expression editor** (the default) copies the bare reference, for the expression editor.
-   - **Inside text @{…}** copies `@{<reference>}`, for use inside a text field. An inline expression always produces text.
+2. **Action** — for an Action root, type the name as the flow designer shows it. Spaces become underscores and case is kept, because flow expressions match action names exactly. Triggers need no name.
+3. **Sample JSON** — paste the output from a flow run. Pasting replaces the current sample and parses immediately; while the JSON reference screen is showing and the payload is active, typing re-parses automatically after a 600 ms pause.
+4. **Select a value** in the Payload tree: a string, number or boolean, or an object, an array, a null or the root itself. Large objects and arrays page with **Show N more**. The Reference card shows the path and the reference.
+5. **Copy** with one of the two buttons on the Reference card:
+   - **Copy** puts the bare reference on the clipboard, for the expression editor.
+   - **Copy @{}** wraps it as `@{<reference>}`, for use inside a text field. An inline expression always produces text.
+
+**Parsing.** Parsing is strict JSON, checked in order, and the first failure stops it with an inline message: an empty sample, a sample larger than 1 MiB, invalid JSON, more than 10,000 values, or nesting deeper than 64 levels. Comments, trailing commas and single quotes are rejected, and a repeated key keeps its last value. A successful parse shows **Parsed · N values** in the payload status; a successful paste also raises that notification even when the payload is materially unchanged, while a material change made by typing raises **Payload updated · N values** instead. Whitespace, object key order, and equivalent number spellings refresh the status quietly without clearing selection or expansion. An invalid automatic parse keeps the previous tree usable and the status reads **Could not parse. Showing last successful payload.**; an invalid paste clears the tree, selection and expansion, and the status reads **Could not parse**. Before any parse attempt the status is **Nothing parsed yet**, and a pending edit shows **Sample changed. Waiting for valid JSON.**
+
+![JSON reference with an invalid typed edit in Sample JSON, the previous tree still shown, and the status "Could not parse. Showing last successful payload."](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/retained-typed-edit.png)
+
+**Search across payloads.** The **Search all payloads** box matches text in a leaf's path or value across every parsed payload. Results show the payload label, path, and a value preview, with a **N matches · M parsed payloads** count and up to eight results listed (or **No matches in parsed payloads.**). Use Up/Down and Enter to choose a result; choosing one activates that payload, expands its ancestors, and selects the leaf. Esc clears the search.
+
+![Search all payloads listing Email matches from both Get customer and Get order, with the selected Email leaf revealed in its payload tree](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/multi-payload-search.png)
 
 **Fixed positions.** An index such as `[0]` reads that one item, not each item in a loop, and the Reference card says so whenever the path contains one. To act on every item, use an Apply to each or a Filter array.
 
-**Loop references.** When the selected path contains an index, the Reference card also offers the part after the last index as `item()` and `items()` references for use inside an Apply to each over that array. `item()` reads the innermost loop's current item. `items('<loop name>')` reads the named loop's current item, so it still works inside a nested loop; type the Apply to each's name in **Loop name** — not the name of the action that produced the sample. Spaces become underscores.
+**Loop references.** When the selected path contains an index, the Reference card also offers the part after the last index as `item()` and `items()` references for use inside an Apply to each over that array. `item()` reads the innermost loop's current item. `items('<loop name>')` reads the named loop's current item, so it still works inside a nested loop; type the Apply to each's name in **Loop name** — not the name of the action that produced the sample. Spaces become underscores. Loop name is stored per payload.
 
-**Privacy.** Pasted JSON is processed locally and is not uploaded or saved by this feature. The sample is never sent anywhere, written to settings or browser storage, or added to the condition document or its Export, and reloading the app clears it.
+![Reference card for an indexed path showing the fixed-position note, the item() and items() loop cards, a Loop name of Each customer, and their Copy buttons](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/loop-references.png)
+
+**Privacy.** Pasted JSON is processed locally and is not uploaded or saved by this feature. The sample is never sent anywhere, written to settings or browser storage, or added to the condition document or its Export, and reloading the app clears every payload.
 
 **What a reference does not prove.** A reference is built from the sample you pasted. It does not prove that the action exists in your flow, that it has run, or that its output has this shape at run time. Check the expression in the flow.
+
+### 5.9 Functions
+
+The **Functions** screen builds a Workflow Definition Language call without hand-writing its syntax. Select the **Functions** tab to open it. Its state is memory-only: switching screens preserves it, but its contents are not persisted or added to the condition document.
+
+**Catalog.** The catalog contains 99 functions in six groups:
+
+| Group | Functions |
+| --- | --- |
+| String | 20 |
+| Collection | 14 |
+| Logical | 12 |
+| Math | 10 |
+| Date and time | 23 |
+| Conversion | 24 |
+
+The group counts above add up to 103 because four functions are listed under two groups each: `chunk` and `length` under String and Collection, and `isFloat` and `isInt` under String and Logical. Counted once each, the catalog holds 99 functions.
+
+All groups start collapsed and **concat** is selected, so the screen is usable immediately. Expand or collapse a group with its row; the search box filters function names, expands the groups that still have matches, and at the same time filters Parsed Value row labels. Deprecated `decodeBase64` and `parse` are not offered.
+
+![Functions screen with concat selected, the six catalog groups collapsed, and the Get customer and Get order payload groups with match counts, Get order expanded](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/functions-navigation.png)
+
+**Arguments.** The selected function's name appears above its argument list. Each argument has a type badge and a required or optional marker; variadic functions reveal another empty slot once the current last one is filled. An optional argument can stay blank, but an empty optional before a later filled argument must be filled first. An argument accepts:
+
+- a typed literal (`'text'`, `123`, `true`, `null`);
+- another function call, such as `toLower(triggerBody()?['name'])`;
+- an accessor, such as `triggerBody()?['email']` or `outputs('Get_items')?['body']?['value']`.
+
+Bare text is not a valid literal and is diagnosed. Picking a function while an argument is focused wraps that argument (for example, `trim` turns `triggerBody()?['name']` into `trim(triggerBody()?['name'])`). Dragging a function onto an argument inserts its call at that position. Missing required arguments, an empty optional before a filled one, and an argument that is not a valid literal, reference, or call are reported in the status cards, and **Copy expression** is disabled while the call is invalid. Argument types are checked for structure, not against the runtime types of your flow's data.
+
+**Parsed Value.** Each parsed payload is its own collapsible group below the function groups, labelled with its action or trigger and showing its match count; the reference root is available as a tooltip, so identical paths from different outputs insert the correct reference. Groups start collapsed, and primitive array elements are listed once as plain rows. Rows insert the bare reference on double-click or Enter, into the last focused argument (or the first empty argument when none is focused). **Alt+Down** from any argument expands Parsed Value and moves focus there without changing that insert target. A shared cap of 200 matching rows keeps large samples responsive; filtering runs before the cap, and **+N more — narrow with search** reports the remainder. Sources without an action name show **Set an action name in JSON reference**; with no parsed payload at all, a single **Parsed Value** group says **Parse a sample in JSON reference**.
+
+**Output.** The dock shows **Valid** or **Invalid**, the generated expression, and a breadcrumb of the active function and argument. Copy either the bare expression (for an expression editor) or the `@{…}` form (for text).
+
+![concat arguments with a parsed Email reference inserted into text1, type badges, Valid status cards, the generated expression, and the Copy expression button](https://raw.githubusercontent.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/main/assets/images/function-insertion.png)
 
 ---
 
@@ -403,8 +478,12 @@ const result = formatExpression(astNode, {
 | `formatPayloadReference`  | Root + typed path → payload reference, e.g. `outputs('Get_items')?['body']?['value'][0]` |
 | `formatPayloadRoot`       | Root only: `triggerBody()`, `triggerOutputs()`, `body('<name>')`, `outputs('<name>')` |
 | `formatLiteral`           | Value → quoted/unquoted literal string                |
+| `FUNCTION_CATALOG`        | 99 Workflow Definition Language functions with signatures, argument metadata, and group membership |
+| `FUNCTION_GROUPS` / `findFunction` | Catalog group order and lookup by name        |
+| `parseArgument`           | Classify an argument string as a typed literal, nested call, or accessor, with diagnostics |
 | `OPERATORS_BY_FIELD_TYPE` | Which operators each field type supports              |
 | `isOperatorSupported`     | Check whether a field type supports a given operator id |
+| `wrapperChainContract`    | Resolve what a rule's wrapper chain does to a field: its output type and which operators apply |
 | `FormatDiagnostic`        | Type for validation errors/warnings                   |
 
 ### 6.2 `packages/platform` — Platform Adapters
@@ -424,19 +503,19 @@ const webAdapter = createWebAdapter();
 const pptbAdapter = createPptbAdapter(window.toolboxAPI);
 ```
 
-**PlatformAdapter interface** (`discoverFields`/`getTables`/`getRelatedTables`/`discoverRelatedFields`/`listDataSources` are all optional — hosts may omit them):
+**PlatformAdapter interface** (`discoverFields`/`getTables`/`getRelatedTables`/`discoverRelatedFields`/`getMetadataCacheScope` are all optional — hosts may omit them):
 
 | Method                            | Purpose                                |
 | --------------------------------- | -------------------------------------- |
 | `copyToClipboard(text)`           | Copy text to the clipboard. Rejects when the host cannot copy: the PPTB adapter rejects when the host has no clipboard API, and the web adapter when the browser has none or refuses. |
 | `notify(message, level)`          | Show toast notification                |
-| `getTheme()` / `onThemeChanged()` | Light/dark/high-contrast theme         |
+| `getTheme()` / `onThemeChanged()` | Light or dark theme. The PPTB adapter reads `utils.getCurrentTheme()` and listens for `settings:updated`, because the host emits no dedicated theme event. |
 | `settings.get/set/remove`         | Persistent key-value storage           |
 | `discoverFields(options)`         | Discover fields from a connected table |
 | `getTables()`                     | List available Dataverse tables        |
 | `getRelatedTables()`              | Get one-hop navigation properties      |
 | `discoverRelatedFields()`         | Expand a related table's fields        |
-| `listDataSources()`               | Enumerate selectable data sources (optional) |
+| `getMetadataCacheScope()`         | Scope string for cached Dataverse metadata. The PPTB adapter builds it from the active connection; returning `null`, or omitting the method as the web adapter does, disables the persistent metadata cache. |
 | `getDataverseFields()` *(deprecated)* | Use `discoverFields({})` instead   |
 
 ### 6.3 `packages/builder-ui` — Shared UI Composer
@@ -445,7 +524,9 @@ The main application shell and all visual components.
 
 The package also re-exports the query-document types (`QueryDocument`, `QueryGroup`, `QueryNode`, `QueryRule`, `RulePatch`, `DataSourceDescriptor`, `DataSourceKind`) and document-mutation actions (`addGroup`, `addRule`, `changeGroupConjunction`, `deleteNode`, `duplicateRule`, `moveNode`, `reorderNode`, `selectRule`, `updateRule`) individually — see `packages/builder-ui/src/index.ts` for the exact list.
 
-The header's builder tabs switch between the condition workspace and **JSON reference**. That second builder is `workbench/JsonReferenceWorkspace.tsx` (Source pane, payload tree and Reference card). Its state reducer is `workbench/jsonReferenceState.ts`, and parsing with its limits is `importExport/jsonPayload.ts`. Its state lives in memory only: it is not part of `QueryDocument`, not exported from the package, and gone after a reload.
+The shell renders one of three screens, switched by the header tabs: **Trigger / Filter** (`ShellHeader.tsx`, `ConditionCanvas.tsx`), **JSON reference** (`JsonReferenceWorkspace.tsx`, `JsonPayloadWorkspace.tsx`, `PayloadStrip.tsx`, `PayloadSearch.tsx`), and **Functions** (`FunctionsWorkspace.tsx`, `FunctionsNav.tsx`, `ArgumentsPanel.tsx`, `FunctionsDock.tsx`). Screen IDs and labels live in `workbench/screens.ts`.
+
+JSON reference holds up to five payloads in `workbench/jsonPayloadSession.ts`; parsing with its limits is `importExport/jsonPayload.ts`, per-payload state is `workbench/jsonReferenceState.ts`, and cross-payload search is `workbench/payloadSearchModel.ts`. Functions state, argument slots, and validity are in `workbench/functionsState.ts`; parsed-value grouping and the 200-row cap are in `workbench/parsedValueModel.ts`. Both screens are memory-only: their state is not part of `QueryDocument`, not exported from the package, and gone after a reload. Each screen, and the shell itself, is wrapped in an error boundary, so a render error shows a `role="alert"` fallback with a **Reset** button instead of blanking the window.
 
 ```typescript
 import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
@@ -464,6 +545,8 @@ import { ExpressionBuilderShell } from '@ryanmakes/eb_builder-ui';
 | `adapter`         | `PlatformAdapter` | ✅       | Host environment adapter                                   |
 | `platform`        | `'web' \| 'pptb'` | ❌       | `'pptb'` (default) — affects table connection availability |
 | `initialDocument` | `QueryDocument`   | ❌       | Pre-load a saved expression document                       |
+| `hostActions`     | `ReactNode`       | ❌       | Extra header controls, rendered before the screen actions  |
+| `initialTheme`    | `PlatformTheme`   | ❌       | Theme to use until the host reports the current one        |
 
 ---
 
@@ -544,15 +627,20 @@ npm run test -w @ryanmakes/eb_builder-ui
 | File                                                                 | What it tests                     |
 | -------------------------------------------------------------------- | --------------------------------- |
 | `packages/engine/src/formatter.test.ts`                              | Expression formatting correctness |
+| `packages/builder-ui/test/functionsState.test.ts`                   | Function slots, wrapping, validity |
+| `packages/builder-ui/test/argumentsPanel.test.tsx`                  | Argument editing and Alt+Down     |
+| `packages/builder-ui/test/jsonPayloadSession.test.ts`               | Five-payload session reducer      |
+| `packages/builder-ui/test/payloadSearch.test.tsx`                   | Cross-payload search and 8-result cap |
+| `packages/builder-ui/test/parsedValueModel.test.ts`                 | Parsed Value grouping and 200-row cap |
 | `packages/builder-ui/src/importExport/csvImport.test.ts`             | CSV parsing edge cases            |
-| `packages/builder-ui/src/importExport/fieldImport.test.ts`           | Field profile serialization       |
+| `packages/builder-ui/src/importExport/fieldImport.test.ts`           | Field JSON import                 |
 | `packages/builder-ui/src/importExport/inferFromSample.test.ts`       | Type inference from sample data   |
 | `packages/builder-ui/src/importExport/jsonSchemaImport.test.ts`      | JSON Schema → FieldDefinition     |
 | `packages/builder-ui/src/importExport/savedExpressionSchema.test.ts` | Document save/load round-trip     |
 
 ### 8.2 E2E Tests (Playwright)
 
-End-to-end tests verify the full application in a real browser.
+End-to-end tests verify the full application in a real browser. The Playwright config defines one `chromium` project that runs on installed Microsoft Edge (`devices['Desktop Edge']` with `channel: 'msedge'`), so Edge must be present. Multi-payload sessions, cross-payload search, Functions argument editing, Alt+Down insertion, the 200-row Parsed Value cap, and switching across all three screens are covered by `tests/e2e/json-multi-payload.spec.ts`.
 
 ```bash
 # Run E2E tests
@@ -601,9 +689,9 @@ npm run build:web
 
 # Preview locally
 npm run preview:web
-
-# Deploy the contents of apps/web/dist/ to GitHub Pages
 ```
+
+Pushes to `main` deploy `apps/web/dist/` to GitHub Pages automatically through `.github/workflows/deploy-pages.yml`; run the commands above to check a build locally first.
 
 The `apps/web/dist` directory is a static Vite build containing `index.html` + hashed asset files.
 
@@ -710,7 +798,7 @@ npm run dev:web
 
 ---
 
-### Error 4: PPTB build fails with `pptb-validate` not found
+### Error 4: `pptb-validate` not found when running the validate script
 
 **Full error message:**
 
@@ -718,15 +806,16 @@ npm run dev:web
 'pptb-validate' is not recognized as an internal or external command
 ```
 
-**Cause:** The `pptb-validate` tool is not installed globally or not in your PATH. This tool is only needed for packaging, not for development.
+**Cause:** The PPTB app's `validate` script runs `pptb-validate`, which is not a dependency of this workspace. Validation is separate from the build — `npm run build:pptb` never calls it — so a missing CLI does not break packaging.
 
 **Solution:**
 
 ```bash
-# Skip the validate step during development
+# Build the package without validation
 npm run build:pptb
 
-# Or install the PPTB CLI globally (if available)
+# Or run validation from the PPTB app workspace, if the CLI is installed
+npm run validate -w @ryanmakes/expressionbuilder_pptb
 ```
 
 **Verify the fix:** Check that `apps/pptb/dist/index.html` exists.
@@ -756,16 +845,19 @@ npm run build
 **Full error message:**
 
 ```
-Error: browserType.launch: Executable doesn't exist at ...chromium...
+Error: browserType.launch: Executable doesn't exist at ...msedge...
 ```
 
-**Cause:** Playwright browsers are not installed.
+**Cause:** The project runs on the installed Microsoft Edge channel, and Edge is missing or Playwright cannot find it.
 
 **Solution:**
 
 ```bash
-npx playwright install
+# Install the Edge channel Playwright expects
+npx playwright install msedge
 ```
+
+Or install Microsoft Edge itself, then rerun the tests.
 
 **Verify the fix:**
 
@@ -799,6 +891,10 @@ error  React Hook useEffect is called conditionally  react-hooks/rules-of-hooks
 | **Diagnostic**       | A validation message (error or warning) produced by the expression engine during formatting.                  |
 | **Expression Mode**  | Either `triggerCondition` (for flow triggers) or `filterArray` (for array filtering).                         |
 | **Field Definition** | A typed schema describing a field: `id`, `label`, `type`, `path`, `choices`, `nullable`, etc.                 |
+| **Function Catalog** | The 99 Workflow Definition Language functions, their groups, signatures, return types, and argument metadata. |
+| **Screen Tabs**      | The three pill-header tabs, in order **Trigger / Filter**, **JSON reference**, and **Functions**.              |
+| **Parsed Value**     | A leaf from a parsed JSON payload, listed in Functions as an insertable reference grouped by payload.         |
+| **Payload**          | One action or trigger sample in JSON reference, with its own root, sample, tree, selection, and loop name.     |
 | **PPTB**             | Power Platform Toolbox — a desktop app for Power Platform developers that hosts custom tools.                 |
 | **Predicate**        | A boolean expression that evaluates to true or false.                                                         |
 | **Query Document**   | The complete state of the builder: mode, fields, root group, selected rule, and source descriptor.            |
@@ -850,8 +946,13 @@ import { ExpressionBuilderShell } from "@ryanmakes/eb_builder-ui";
 | -------------------- | -------------------------------------------------------- |
 | Theme tokens         | `packages/builder-ui/src/theme/workbenchTokens.ts`       |
 | Expression formatter | `packages/engine/src/formatter.ts`                       |
+| Function catalog     | `packages/engine/src/functionCatalog.ts`                 |
+| Argument parser      | `packages/engine/src/argumentParser.ts`                  |
 | Adapter contract     | `packages/platform/src/PlatformAdapter.ts`               |
 | Main app shell       | `packages/builder-ui/src/app/ExpressionBuilderShell.tsx` |
+| Screen switcher      | `packages/builder-ui/src/workbench/ShellHeader.tsx`      |
+| Functions screen     | `packages/builder-ui/src/workbench/FunctionsWorkspace.tsx` |
+| JSON payload session | `packages/builder-ui/src/workbench/jsonPayloadSession.ts` |
 | Query mutations      | `packages/builder-ui/src/composer/queryActions.ts`       |
 | Web bootstrap        | `apps/web/src/main.tsx`                                  |
 | PPTB bootstrap       | `apps/pptb/src/main.tsx`                                 |

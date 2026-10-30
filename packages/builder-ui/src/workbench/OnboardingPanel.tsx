@@ -36,9 +36,10 @@ export function OnboardingPanel({ settings, canConnectTable = true }: Onboarding
 
   useEffect(() => {
     let active = true;
+    // A failed read keeps the dialog closed so a broken store does not nag on every launch.
     void settings.get(SEEN_KEY).then((seen) => {
       if (active && !seen) setOpen(true);
-    });
+    }, () => undefined);
     return () => {
       active = false;
     };
@@ -46,7 +47,7 @@ export function OnboardingPanel({ settings, canConnectTable = true }: Onboarding
 
   const dismiss = () => {
     setOpen(false);
-    void settings.set(SEEN_KEY, '1');
+    settings.set(SEEN_KEY, '1').catch(() => undefined);
   };
 
   return (

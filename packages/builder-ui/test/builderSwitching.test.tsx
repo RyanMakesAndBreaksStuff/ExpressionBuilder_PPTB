@@ -1,15 +1,33 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExpressionBuilderShell } from '../src/app/ExpressionBuilderShell';
 import { sampleDocument } from '../src/app/sampleData';
-import type { QueryDocument } from '../src/composer/querySchema';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
 
-afterEach(() => cleanup());
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+	workspaceMount.key = 0;
+});
+
+const workspaceMount = vi.hoisted(() => ({ key: 0 }));
+
+vi.mock('../src/workbench/JsonReferenceWorkspace', async (importOriginal) => {
+	const actual = await importOriginal<
+		typeof import('../src/workbench/JsonReferenceWorkspace')
+	>();
+	return {
+		...actual,
+		JsonReferenceWorkspace: (
+			props: Parameters<typeof actual.JsonReferenceWorkspace>[0],
+		) => <actual.JsonReferenceWorkspace key={workspaceMount.key} {...props} />,
+	};
+});
 
 function createAdapter(): PlatformAdapter {
 	return {
@@ -29,149 +47,61 @@ function createAdapter(): PlatformAdapter {
 	};
 }
 
-// Three rules spread across nested groups (user story 3, scenario 5).
-const threeRuleDocument: QueryDocument = {
-	...sampleDocument,
-	root: {
-		...sampleDocument.root,
-		children: [
-			sampleDocument.root.children[0],
-			{
-				id: 'group-outer',
-				kind: 'group',
-				conjunction: 'or',
-				children: [
-					{
-						id: 'rule-a',
-						kind: 'rule',
-						fieldId: 'Approver',
-						operator: 'contains',
-						value: 'finance',
-					},
-					{
-						id: 'group-inner',
-						kind: 'group',
-						conjunction: 'and',
-						children: [
-							{
-								id: 'rule-b',
-								kind: 'rule',
-								fieldId: 'Amount',
-								operator: 'greater',
-								value: 10,
-							},
-						],
-					},
-				],
-			},
-		],
-	},
-};
+const screenTab = (label: string) =>
+	within(screen.getByRole('tablist', { name: 'Screen' })).getByRole('tab', { name: label });
 
-const conditionTab = () =>
-	screen.getByRole('tab', { name: /^Condition builder/ });
-const jsonTab = () => screen.getByRole('tab', { name: 'JSON reference' });
+async function goTo(user: UserEvent, label: string) {
+	await user.click(screenTab(label));
+}
+
+const sampleBox = () =>
+	screen.getByRole('textbox', { name: 'Sample JSON', exact: true });
+
+function editSample(text: string) {
+	fireEvent.input(sampleBox(), {
+		target: { value: text },
+	});
+}
+
+function pasteSample(text: string) {
+	fireEvent.input(sampleBox(), {
+		target: { value: text },
+		inputType: 'insertFromPaste',
+	});
+}
+
+async function advanceParse(ms = 600) {
+	await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+}
 
 async function exerciseJsonReference(user: UserEvent) {
-	await user.click(jsonTab());
-	await user.type(screen.getByLabelText('Action name'), 'Get items');
-	await user.click(screen.getByLabelText('Sample JSON'));
+	await goTo(user, 'JSON reference');
+	await user.type(screen.getByLabelText('Action'), 'Get items');
+	await user.click(sampleBox());
 	await user.paste(fixtureA1);
-	await user.click(screen.getByRole('button', { name: 'Parse' }));
 	await user.click(screen.getByRole('treeitem', { name: /^body, object$/ }));
 	await user.click(screen.getByRole('button', { name: 'Copy @{}' }));
 }
 
 describe('builder switching', () => {
-	it('opens on the Condition builder with two tabs after the brand (FR-001, FR-002)', () => {
-		render(<ExpressionBuilderShell adapter={createAdapter()} />);
-
-		const tablist = screen.getByRole('tablist', { name: 'Builders' });
-		expect(
-			within(tablist)
-				.getAllByRole('tab')
-				.map((tab) => tab.textContent),
-		).toEqual(['Condition builder0', 'JSON reference']);
-		expect(conditionTab()).toHaveAttribute('aria-selected', 'true');
-		expect(jsonTab()).toHaveAttribute('aria-selected', 'false');
-		expect(
-			screen.getByRole('heading', { level: 1 }).parentElement?.parentElement
-				?.nextElementSibling,
-		).toBe(tablist);
-	});
-
-	it('counts rules at every nesting level in the tab and its name (FR-003)', () => {
-		render(
-			<ExpressionBuilderShell
-				adapter={createAdapter()}
-				initialDocument={threeRuleDocument}
-			/>,
-		);
-
-		expect(
-			screen.getByRole('tab', { name: 'Condition builder, 3 rules' }),
-		).toHaveTextContent('3');
-	});
-
-	it("says '1 rule' for a single rule", () => {
-		render(
-			<ExpressionBuilderShell
-				adapter={createAdapter()}
-				initialDocument={{
-					...sampleDocument,
-					root: {
-						...sampleDocument.root,
-						children: [sampleDocument.root.children[0]],
-					},
-				}}
-			/>,
-		);
-
-		expect(
-			screen.getByRole('tab', { name: 'Condition builder, 1 rule' }),
-		).toBeInTheDocument();
-	});
-
-	it('follows the tabs pattern with automatic activation (FR-004)', async () => {
-		const user = userEvent.setup();
-		render(<ExpressionBuilderShell adapter={createAdapter()} />);
-
-		for (const tab of [conditionTab(), jsonTab()]) {
-			const panel = document.getElementById(
-				tab.getAttribute('aria-controls') ?? '',
-			);
-			expect(panel).toHaveAttribute('role', 'tabpanel');
-			expect(panel).toHaveAttribute('aria-labelledby', tab.id);
-		}
-		expect(conditionTab()).toHaveAttribute('tabindex', '0');
-		expect(jsonTab()).toHaveAttribute('tabindex', '-1');
-
-		conditionTab().focus();
-		await user.keyboard('{ArrowRight}');
-		expect(jsonTab()).toHaveFocus();
-		expect(jsonTab()).toHaveAttribute('aria-selected', 'true');
-		await user.keyboard('{ArrowRight}');
-		expect(conditionTab()).toHaveAttribute('aria-selected', 'true');
-		await user.keyboard('{End}');
-		expect(jsonTab()).toHaveAttribute('aria-selected', 'true');
-		await user.keyboard('{Home}');
-		expect(conditionTab()).toHaveFocus();
-		await user.keyboard('{ArrowLeft}');
-		expect(jsonTab()).toHaveAttribute('aria-selected', 'true');
-	});
-
-	it('shows one panel and exactly one main landmark at a time (FR-005)', async () => {
+	it('shows one screen and exactly one main landmark at a time (FR-005)', async () => {
 		const user = userEvent.setup();
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
 
 		expect(screen.getAllByRole('main')).toHaveLength(1);
-		expect(screen.getByRole('tabpanel')).toHaveAccessibleName(
-			'Condition builder, 0 rules',
-		);
+		expect(
+			[...document.querySelectorAll<HTMLElement>('.eb-builder-panel')]
+				.filter((panel) => !panel.hidden)
+				.map((panel) => panel.getAttribute('aria-label')),
+		).toEqual(['Trigger / Filter']);
 
-		await user.click(jsonTab());
+		await goTo(user, 'JSON reference');
 		expect(screen.getAllByRole('main')).toHaveLength(1);
-		expect(screen.getByRole('tabpanel')).toHaveAccessibleName('JSON reference');
+		expect(
+			[...document.querySelectorAll<HTMLElement>('.eb-builder-panel')]
+				.filter((panel) => !panel.hidden)
+				.map((panel) => panel.getAttribute('aria-label')),
+		).toEqual(['JSON reference']);
 		expect(
 			screen.queryByRole('heading', { name: /condition builder/i }),
 		).not.toBeInTheDocument();
@@ -188,7 +118,7 @@ describe('builder switching', () => {
 		).toBeInTheDocument();
 		expect(screen.queryByText(privacy)).not.toBeInTheDocument();
 
-		await user.click(jsonTab());
+		await goTo(user, 'JSON reference');
 		expect(
 			screen.queryByRole('radiogroup', { name: 'Expression mode' }),
 		).not.toBeInTheDocument();
@@ -200,7 +130,7 @@ describe('builder switching', () => {
 		).not.toBeInTheDocument();
 		expect(screen.getByText(privacy)).toBeInTheDocument();
 
-		await user.click(conditionTab());
+		await goTo(user, 'Trigger / Filter');
 		expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument();
 	});
 
@@ -214,11 +144,11 @@ describe('builder switching', () => {
 			'success',
 		);
 
-		await user.click(conditionTab());
-		await user.click(jsonTab());
+		await goTo(user, 'Trigger / Filter');
+		await goTo(user, 'JSON reference');
 
-		expect(screen.getByLabelText('Action name')).toHaveValue('Get items');
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue(fixtureA1);
+		expect(screen.getByLabelText('Action')).toHaveValue('Get items');
+		expect(sampleBox()).toHaveValue(fixtureA1);
 		expect(
 			screen.getByRole('treeitem', { name: /^body, object$/ }),
 		).toHaveAttribute('aria-selected', 'true');
@@ -247,25 +177,29 @@ describe('builder switching', () => {
 			return vi.mocked(adapter.copyToClipboard).mock.lastCall?.[0];
 		};
 
-		const expressionBefore = screen.getByLabelText(
-			'Generated expression',
-		).textContent;
+		const expressionBefore = within(
+			screen.getByLabelText('Trigger / Filter'),
+		).getByLabelText('Generated expression').textContent;
 		const exportBefore = await exportJson();
 		await exerciseJsonReference(user);
-		await user.click(conditionTab());
+		await goTo(user, 'Trigger / Filter');
 
-		expect(screen.getByLabelText('Generated expression').textContent).toBe(
-			expressionBefore,
-		);
+		expect(
+			within(screen.getByLabelText('Trigger / Filter')).getByLabelText(
+				'Generated expression',
+			).textContent,
+		).toBe(expressionBefore);
 		expect(
 			screen.getByRole('radio', { name: 'Trigger condition' }),
 		).toHaveAttribute('aria-checked', 'true');
 		expect(await exportJson()).toBe(exportBefore);
-		expect(adapter.settings.set).not.toHaveBeenCalled();
+		// Only the last-screen preference is persisted; no JSON reference data is.
+		const persisted = vi.mocked(adapter.settings.set).mock.calls.map(([key]) => key);
+		expect(new Set(persisted)).toEqual(new Set(['eb.screen.last.v1']));
 		expect(adapter.settings.remove).not.toHaveBeenCalled();
 	});
 
-	it('opens on the Condition builder with an empty JSON reference after a reload (user story 3, scenario 3)', async () => {
+	it('opens on Trigger / Filter with an empty JSON reference after a reload (user story 3, scenario 3)', async () => {
 		const user = userEvent.setup();
 		const { unmount } = render(
 			<ExpressionBuilderShell adapter={createAdapter()} />,
@@ -274,9 +208,202 @@ describe('builder switching', () => {
 		unmount();
 
 		render(<ExpressionBuilderShell adapter={createAdapter()} />);
-		expect(conditionTab()).toHaveAttribute('aria-selected', 'true');
-		await user.click(jsonTab());
-		expect(screen.getByLabelText('Sample JSON')).toHaveValue('');
+		expect(screenTab('Trigger / Filter')).toHaveAttribute('aria-selected', 'true');
+		await goTo(user, 'JSON reference');
+		expect(sampleBox()).toHaveValue('');
 		expect(screen.getByText('No sample yet')).toBeInTheDocument();
+	});
+
+	it('announces valid auto changes at 600ms and keeps formatting quiet', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":1}');
+		await advanceParse(599);
+		expect(adapter.notify).not.toHaveBeenCalled();
+		await advanceParse(1);
+		expect(adapter.notify).toHaveBeenCalledExactlyOnceWith('Parsed · 2 values', 'success');
+		editSample('{ "a": 1 }');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		// Shown in the editor status; the payload tab carries it as its description.
+		expect(screen.getAllByText('Parsed · 2 values')).toHaveLength(1);
+		expect(screen.getByRole('tab', { name: /^Payload 1, payload 1$/ }))
+			.toHaveAccessibleDescription(/Parsed · 2 values/);
+		editSample('{"a":2}');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		expect(adapter.notify).toHaveBeenLastCalledWith('Payload updated · 2 values', 'success');
+		expect(screen.getByRole('treeitem', { name: /^a, number, 2$/ })).toBeInTheDocument();
+	});
+
+	it('retains good output during invalid auto input without notifying on recovery', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		await user.click(screen.getByRole('treeitem', { name: /^a, number, 1$/ }));
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":');
+		await advanceParse();
+		expect(screen.getByRole('treeitem', { name: /^a, number, 1$/ })).toHaveAttribute('aria-selected', 'true');
+		expect(screen.getAllByText(
+			'Could not parse. Showing last successful payload.',
+		)).toHaveLength(1);
+		expect(screen.getByRole('tab', { name: /, payload 1$/ }))
+			.toHaveAccessibleDescription(/Could not parse. Showing last successful payload./);
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		editSample('{"a":1}');
+		await advanceParse();
+		expect(sampleBox()).toHaveAttribute('aria-invalid', 'false');
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+	});
+
+	it('announces each successful paste once and cancels pending automatic work', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":0}');
+		await advanceParse(300);
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledExactlyOnceWith('Parsed · 2 values', 'success');
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		expect(adapter.notify).toHaveBeenLastCalledWith('Parsed · 2 values', 'success');
+	});
+
+	it('does not replay across a real workspace remount or adapter replacement in StrictMode', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		const tree = (target: PlatformAdapter) => (
+			<StrictMode><ExpressionBuilderShell adapter={target} /></StrictMode>
+		);
+		const view = render(tree(adapter));
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
+		pasteSample('{"b":1}');
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		workspaceMount.key += 1;
+		view.rerender(tree(adapter));
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+		const replacement = createAdapter();
+		view.rerender(tree(replacement));
+		expect(replacement.notify).not.toHaveBeenCalled();
+		await user.click(screen.getByRole('tab', { name: /^Action, payload 1$/ }));
+		expect(replacement.notify).not.toHaveBeenCalled();
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":2}');
+		await advanceParse();
+		expect(replacement.notify).toHaveBeenCalledExactlyOnceWith(
+			'Payload updated · 2 values', 'success',
+		);
+	});
+
+	it('cancels automatic work while inactive and resumes an unvalidated edit on return', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"a":1}');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":2}');
+		await advanceParse(300);
+		fireEvent.click(screenTab('Trigger / Filter'));
+		await advanceParse();
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		fireEvent.click(screenTab('JSON reference'));
+		await advanceParse(599);
+		expect(adapter.notify).toHaveBeenCalledTimes(1);
+		await advanceParse(1);
+		expect(adapter.notify).toHaveBeenCalledTimes(2);
+	});
+
+	it('cancels pending validation on switching and restarts on return', async () => {
+		const user = userEvent.setup();
+		const adapter = createAdapter();
+		render(<ExpressionBuilderShell adapter={adapter} />);
+
+		await goTo(user, 'JSON reference');
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		editSample('{"a":1}');
+		await advanceParse(300);
+
+		fireEvent.click(screen.getByRole('button', {
+			name: '+ Add',
+			exact: true,
+		}));
+		await advanceParse(600);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('tab', {
+			name: /^Payload 1, payload 1$/,
+		}));
+		await advanceParse(599);
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		await advanceParse(1);
+		expect(screen.getByRole('tree')).toBeInTheDocument();
+		expect(adapter.notify).toHaveBeenCalledWith(
+			'Parsed · 2 values',
+			'success',
+		);
+	});
+
+	it('drops stale search results once a payload changes', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		pasteSample('{"email":1}');
+		const search = screen.getByRole('combobox', { name: 'Search all payloads' });
+		await user.type(search, 'email');
+		expect(screen.getAllByRole('option')).toHaveLength(1);
+		pasteSample('{"other":1}');
+		expect(screen.queryByRole('option')).not.toBeInTheDocument();
+		expect(screen.getByText('No matches in parsed payloads.')).toBeInTheDocument();
+	});
+
+	it('keeps inserted Functions argument text after the JSON source is renamed, re-rooted or closed', async () => {
+		const user = userEvent.setup();
+		render(<ExpressionBuilderShell adapter={createAdapter()} />);
+		await goTo(user, 'JSON reference');
+		await user.type(screen.getByLabelText('Action'), 'Get items');
+		pasteSample('{"a":1}');
+
+		await goTo(user, 'Functions');
+		await user.click(screen.getByRole('button', { name: 'Get items 1' }));
+		const text1 = screen.getByLabelText('text1');
+		await user.click(text1);
+		await user.dblClick(screen.getByRole('button', { name: 'a' }));
+		const inserted = "outputs('Get_items')?['a']";
+		expect(text1).toHaveValue(inserted);
+
+		await goTo(user, 'JSON reference');
+		await user.clear(screen.getByLabelText('Action'));
+		await user.type(screen.getByLabelText('Action'), 'Renamed');
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Renamed 1' })).toBeInTheDocument();
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('radio', { name: /Trigger.*Full output/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'a' })).toHaveAccessibleDescription("triggerOutputs()?['a']");
+
+		await goTo(user, 'JSON reference');
+		await user.click(screen.getByRole('button', { name: '+ Add' }));
+		await user.click(screen.getByRole('button', { name: /^Close Trigger, payload 1$/ }));
+		await goTo(user, 'Functions');
+		expect(text1).toHaveValue(inserted);
+		expect(screen.getByRole('button', { name: 'Parsed Value 0' })).toBeInTheDocument();
 	});
 });

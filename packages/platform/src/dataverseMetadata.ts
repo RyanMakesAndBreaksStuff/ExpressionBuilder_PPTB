@@ -32,6 +32,8 @@ const STRING_LIKE_REF_TYPES = new Set([
   'Uniqueidentifier',
   'PartyList',
 ]);
+/** Scalar GUID columns. Uniqueidentifier and PartyList keep the logical-name leaf. */
+const SCALAR_LOOKUP_TYPES = new Set(['Lookup', 'Customer', 'Owner']);
 const CHOICE_SINGLE_TYPES = new Set(['Picklist', 'State', 'Status']);
 /** Types we deliberately drop — the engine has no representation for them. */
 const UNSUPPORTED_TYPES = new Set(['File', 'Image', 'EntityName', 'Virtual', 'CalendarRules']);
@@ -58,6 +60,10 @@ function optionsOf(attr: DataverseAttributeMetadata): Array<{ label: string; val
 function isRequired(attr: DataverseAttributeMetadata): boolean {
   const level = attr.RequiredLevel?.Value;
   return level === 'SystemRequired' || level === 'ApplicationRequired';
+}
+
+function payloadLeaf(logicalName: string, dvType: string): string {
+  return SCALAR_LOOKUP_TYPES.has(dvType) ? `_${logicalName}_value` : logicalName;
 }
 
 function fieldTypeFor(dvType: string | undefined): FieldType | null {
@@ -88,6 +94,8 @@ function fieldTypeFor(dvType: string | undefined): FieldType | null {
  *
  * @param attr Attribute metadata (OptionSet already expanded for choice types).
  * @param pathPrefix Optional navigation prefix for related/flattened fields (T14).
+ * Lookup, Customer, and Owner change only the payload leaf to `_<LogicalName>_value`.
+ * `id` still joins the navigation prefix and logical name; prefixes are not rewritten.
  */
 export function mapDataverseAttribute(
   attr: DataverseAttributeMetadata,
@@ -103,9 +111,9 @@ export function mapDataverseAttribute(
     return null;
   }
 
-  const path = [...pathPrefix, attr.LogicalName];
+  const path = [...pathPrefix, payloadLeaf(attr.LogicalName, dvType)];
   const field: FieldDefinition = {
-    id: path.join('.'),
+    id: [...pathPrefix, attr.LogicalName].join('.'),
     label: labelOf(attr),
     type,
     path,

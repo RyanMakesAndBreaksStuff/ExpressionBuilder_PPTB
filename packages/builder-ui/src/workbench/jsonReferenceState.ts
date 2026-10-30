@@ -9,6 +9,7 @@ import {
 	keyToPath,
 	parsePayload,
 	pathKey,
+	payloadValuesEqual,
 	valueAtPath,
 	type ParsedPayload,
 } from "../importExport/jsonPayload";
@@ -22,6 +23,14 @@ export type CopyStatus =
 	| { kind: "copied" }
 	| { kind: "error"; reason: string };
 export type StatusTone = "muted" | "good" | "warn" | "danger";
+
+type ParseOrigin = "auto" | "paste" | "explicit";
+
+interface ParseNotice {
+	id: number;
+	origin: ParseOrigin;
+	message: string;
+}
 
 /**
  * Everything the user entered or chose in JSON reference (FR-008). It lives in
@@ -37,6 +46,9 @@ export interface JsonReferenceState {
 	loopName: string;
 	text: string;
 	parsed: ParsedPayload | null;
+	lastSuccessfulPayload: ParsedPayload | null;
+	lastAttemptedText: string | undefined;
+	parseNotice: ParseNotice | null;
 	error: string | null;
 	selectedPath: PayloadPath;
 	expanded: ReadonlySet<string>;
@@ -52,6 +64,7 @@ export type JsonReferenceAction =
 	| { type: "setLoopName"; value: string }
 	| { type: "setText"; value: string }
 	| { type: "parse" }
+	| { type: "autoParse"; expectedText?: string }
 	| { type: "pasteAndParse"; text: string; defaultActionName: string }
 	| { type: "setReferenceRoot"; outputFrom: OutputFrom; shape: PayloadShape }
 	| { type: "select"; path: PayloadPath }
@@ -83,6 +96,9 @@ export const initialJsonReferenceState: JsonReferenceState = {
 	loopName: "",
 	text: "",
 	parsed: null,
+	lastSuccessfulPayload: null,
+	lastAttemptedText: undefined,
+	parseNotice: null,
 	error: null,
 	selectedPath: [],
 	expanded: new Set<string>(),
@@ -113,15 +129,24 @@ export function jsonReferenceReducer(
 			return { ...state, loopName: action.value, copyStatus: IDLE };
 		// Editing keeps the last parsed tree usable; the status turns stale (FR-027).
 		case "setText":
-			return { ...state, text: action.value };
+			return state.text === action.value
+				? state
+				: {
+						...state,
+						text: action.value,
+						error: null,
+						lastAttemptedText: undefined,
+					};
+		case "autoParse":
+			return parseSample(state, "auto");
 		case "parse":
-			return parseSample(state);
+			return parseSample(state, "explicit");
 		case "pasteAndParse": {
 			const next: JsonReferenceState = { ...state, text: action.text };
 			if (state.outputFrom === "action" && state.actionName.trim() === "") {
 				next.actionName = action.defaultActionName;
 			}
-			return parseSample(next);
+			return parseSample(next, "paste");
 		}
 		case "setReferenceRoot":
 			return {
@@ -152,19 +177,59 @@ export function jsonReferenceReducer(
 	}
 }
 
-function parseSample(state: JsonReferenceState): JsonReferenceState {
+function parseSample(
+	state: JsonReferenceState,
+	origin: ParseOrigin,
+): JsonReferenceState {
 	const result = parsePayload(state.text);
 	if (!result.ok) {
+		if (origin === "auto") {
+			return {
+				...state,
+				actionNameTouched: true,
+				lastAttemptedText: state.text,
+				error: result.message,
+			};
+		}
 		// FR-026: the tree, the value count and the selection go.
 		return {
 			...state,
 			actionNameTouched: true,
+			lastAttemptedText: state.text,
 			parsed: null,
 			error: result.message,
 			selectedPath: [],
 			expanded: new Set<string>(),
 			showAll: new Set<string>(),
 			copyStatus: IDLE,
+		};
+	}
+	const materiallyChanged = state.lastSuccessfulPayload === null
+		|| !payloadValuesEqual(
+			state.lastSuccessfulPayload.value,
+			result.payload.value,
+		);
+	const parseNotice = origin !== "auto" || materiallyChanged
+		? {
+				id: (state.parseNotice?.id ?? 0) + 1,
+				origin,
+				message: `${
+					origin === "auto" && state.lastSuccessfulPayload !== null
+						? "Payload updated"
+						: "Parsed"
+				} · ${countLabel(result.payload.valueCount, "value")}`,
+			}
+		: state.parseNotice;
+
+	if (origin === "auto" && !materiallyChanged && state.parsed !== null) {
+		return {
+			...state,
+			actionNameTouched: true,
+			parsed: result.payload,
+			lastSuccessfulPayload: result.payload,
+			lastAttemptedText: state.text,
+			parseNotice,
+			error: null,
 		};
 	}
 	// FR-025: keep what still applies to the new sample, expand the root and
@@ -180,6 +245,9 @@ function parseSample(state: JsonReferenceState): JsonReferenceState {
 		...state,
 		actionNameTouched: true,
 		parsed: result.payload,
+		lastSuccessfulPayload: result.payload,
+		lastAttemptedText: state.text,
+		parseNotice,
 		error: null,
 		selectedPath: valueAtPath(value, state.selectedPath).found
 			? state.selectedPath
@@ -208,6 +276,15 @@ function referenceRoot(
 		return { kind: shape === "full" ? "triggerOutputs" : "triggerBody" };
 	return { kind: shape === "full" ? "outputs" : "body", actionName };
 }
+/**
+ * The reference root the user has chosen, or null while an action name is
+ * still required. Functions' Parsed Value group builds its expressions from
+ * this so both screens emit byte-identical reference text.
+ */
+export function currentReferenceRoot(state: JsonReferenceState): PayloadReferenceRoot | null {
+	if (isActionNameMissing(state)) return null;
+	return referenceRoot(state, state.shape, state.actionName);
+}
 
 /** The root to display for a shape; a missing name shows as Action_name (FR-014). */
 export function rootExpression(
@@ -218,21 +295,6 @@ export function rootExpression(
 		? ACTION_NAME_PLACEHOLDER
 		: state.actionName;
 	return formatPayloadRoot(referenceRoot(state, shape, actionName));
-}
-
-/** Root expression for any explicit outputFrom/shape combination. */
-export function rootExpressionFor(
-	state: JsonReferenceState,
-	outputFrom: OutputFrom,
-	shape: PayloadShape,
-): string {
-	const actionName =
-		outputFrom === "action" && state.actionName.trim() === ""
-			? ACTION_NAME_PLACEHOLDER
-			: state.actionName;
-	return formatPayloadRoot(
-		referenceRoot({ ...state, outputFrom }, shape, actionName),
-	);
 }
 
 export function canCopy(state: JsonReferenceState): boolean {
@@ -267,11 +329,16 @@ export function parseStatus(state: JsonReferenceState): {
 	text: string;
 	tone: StatusTone;
 } {
-	if (state.error !== null) return { text: "Could not parse", tone: "danger" };
+	if (state.error !== null) return {
+		text: state.parsed === null
+			? "Could not parse"
+			: "Could not parse. Showing last successful payload.",
+		tone: "danger",
+	};
 	if (state.parsed === null)
 		return { text: "Nothing parsed yet", tone: "muted" };
 	if (state.text !== state.parsed.text)
-		return { text: "Sample changed. Parse again to update.", tone: "warn" };
+		return { text: "Sample changed. Waiting for valid JSON.", tone: "warn" };
 	return {
 		text: `Parsed · ${countLabel(state.parsed.valueCount, "value")}`,
 		tone: "good",
