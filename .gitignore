@@ -49,7 +49,6 @@ tasks/lessons.md
 /.codegraph
 /CLAUDE.md
 /assets/JSON BUILDERFlow Functions UI.zip
-*.json
 /tests/e2e/fixtures/toolboxApiMock.ts
 /package-lock.json
 function-update.md
@@ -60,4 +59,3 @@ undo-paste.md
 /parse-notification-update.md
 /scripts/capture-screenshots.mjs
 /SCREENSHOTS_PENDING.txt
-/playwright.config.ts

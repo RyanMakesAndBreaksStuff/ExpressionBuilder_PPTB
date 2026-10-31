@@ -4,8 +4,6 @@ All notable changes to the published PPTB tool. Format follows [Keep a Changelog
 
 Workspace-level changes (engine, shared UI, web host) are tracked in the [root CHANGELOG](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/CHANGELOG.md).
 
-## [Unreleased]
-
 ## [1.3.1] — 2026-10-30
 
 ### Added

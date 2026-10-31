@@ -4,8 +4,6 @@ All notable changes to this workspace. Format follows [Keep a Changelog](https:/
 
 This file tracks the workspace as a whole (engine, platform, builder-ui, and both hosts). The published Power Platform Toolbox tool is versioned separately — see [apps/pptb/public/CHANGELOG.md](https://github.com/RyanMakesAndBreaksStuff/ExpressionBuilder_PPTB/blob/main/apps/pptb/public/CHANGELOG.md).
 
-## [Unreleased]
-
 ## [1.3.1] — 2026-10-30
 
 ### Added
