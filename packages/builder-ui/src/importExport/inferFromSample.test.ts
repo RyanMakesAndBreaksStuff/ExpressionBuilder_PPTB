@@ -34,6 +34,60 @@ describe('inferFieldsFromSample', () => {
     const fields = inferFieldsFromSample({ x: 1 });
     expect(fields[0].source).toBe('json');
   });
+
+  it('encodes a dotted key, a nested path, a tilde key, and an empty segment', () => {
+    expect(inferFieldsFromSample({ 'a.b': 1 }).map((f) => ({ id: f.id, path: f.path, label: f.label }))).toEqual([
+      { id: 'a~1b', path: ['a.b'], label: 'A B' },
+    ]);
+    expect(inferFieldsFromSample({ a: { b: 2 } }).map((f) => ({ id: f.id, path: f.path, label: f.label }))).toEqual([
+      { id: 'a.b', path: ['a', 'b'], label: 'B' },
+    ]);
+    expect(inferFieldsFromSample({ 'a~b': 1 }).map((f) => ({ id: f.id, path: f.path, label: f.label }))).toEqual([
+      { id: 'a~0b', path: ['a~b'], label: 'A~B' },
+    ]);
+    expect(inferFieldsFromSample({ '': 1 }).map((f) => ({ id: f.id, path: f.path, label: f.label }))).toEqual([
+      { id: '~2', path: [''], label: '' },
+    ]);
+  });
+
+  it('keeps a dotted key distinct from the nested path that used to share its id', () => {
+    const fields = inferFieldsFromSample({ 'a.b': 1, a: { b: 2 } });
+    expect(fields.map((f) => f.id)).toEqual(['a~1b', 'a.b']);
+    expect(fields.map((f) => f.path)).toEqual([['a.b'], ['a', 'b']]);
+    expect(fields.map((f) => f.type)).toEqual(['number', 'number']);
+    expect(new Set(fields.map((f) => f.id)).size).toBe(fields.length);
+  });
+
+  it('escapes tilde so an encoded dot or tilde cannot collide with a literal key', () => {
+    const fields = inferFieldsFromSample({ '~': 1, '~0': 2, 'a~1b': 3, 'a.b': 4 });
+    expect(fields.map((f) => f.id)).toEqual(['~0', '~00', 'a~01b', 'a~1b']);
+    expect(fields.map((f) => f.path)).toEqual([['~'], ['~0'], ['a~1b'], ['a.b']]);
+    expect(new Set(fields.map((f) => f.id)).size).toBe(fields.length);
+  });
+
+  it('encodes empty segments so they cannot collide with a dot or a ~2 key', () => {
+    expect(inferFieldsFromSample({ '': 1, '~2': 2 }).map((f) => ({ id: f.id, path: f.path }))).toEqual([
+      { id: '~2', path: [''] },
+      { id: '~02', path: ['~2'] },
+    ]);
+    expect(inferFieldsFromSample({ '': { b: 1 }, '.b': 2 }).map((f) => ({ id: f.id, path: f.path }))).toEqual([
+      { id: '~2.b', path: ['', 'b'] },
+      { id: '~1b', path: ['.b'] },
+    ]);
+    expect(inferFieldsFromSample({ '': { '': 1 }, '.': 2 }).map((f) => ({ id: f.id, path: f.path }))).toEqual([
+      { id: '~2.~2', path: ['', ''] },
+      { id: '~1', path: ['.'] },
+    ]);
+    expect(inferFieldsFromSample({ 'a.': 1, a: { '': 2 } }).map((f) => ({ id: f.id, path: f.path }))).toEqual([
+      { id: 'a~1', path: ['a.'] },
+      { id: 'a.~2', path: ['a', ''] },
+    ]);
+  });
+
+  it('still skips null and array values when keys need encoding', () => {
+    const fields = inferFieldsFromSample({ 'a.b': null, '~': ['x'], '': { x: [] }, score: 5 });
+    expect(fields.map((f) => f.id)).toEqual(['score']);
+  });
 });
 
 describe('parseSampleRecord', () => {
@@ -60,5 +114,17 @@ describe('parseSampleRecord', () => {
   it('returns error for non-object JSON', () => {
     const result = parseSampleRecord('"just a string"');
     expect('error' in result).toBe(true);
+  });
+
+  it('imports a dotted key and a nested path as two fields', () => {
+    const result = parseSampleRecord('{"a.b":1,"a":{"b":2},"a~b":3,"":4}');
+    expect(Array.isArray(result)).toBe(true);
+    const fields = result as ReturnType<typeof inferFieldsFromSample>;
+    expect(fields.map((f) => ({ id: f.id, path: f.path }))).toEqual([
+      { id: 'a~1b', path: ['a.b'] },
+      { id: 'a.b', path: ['a', 'b'] },
+      { id: 'a~0b', path: ['a~b'] },
+      { id: '~2', path: [''] },
+    ]);
   });
 });

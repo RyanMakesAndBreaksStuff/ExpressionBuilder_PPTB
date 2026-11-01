@@ -26,27 +26,8 @@ export interface ModeContext {
   note: string;
 }
 
-/** Which builder the header tabs show. Not an ExpressionMode: it is never saved (CON-004). */
-export type BuilderView = 'condition' | 'jsonReference';
-
-export interface BuilderPanelIds {
-  conditionTab: string;
-  conditionPanel: string;
-  jsonTab: string;
-  jsonPanel: string;
-}
-
-export interface WorkbenchHeaderProps {
-  mode: ExpressionMode;
-  onModeChange: (mode: ExpressionMode) => void;
-  onImport: () => void;
-  onExport: () => void;
-  builderView: BuilderView;
-  onBuilderViewChange: (view: BuilderView) => void;
-  /** Rules at every nesting level, groups excluded (FR-003). */
-  ruleCount: number;
-  panelIds: BuilderPanelIds;
-}
+/** Shell-owned load state for one related section; a missing entry is idle. */
+export type RelatedLoadStatus = 'idle' | 'pending' | 'succeeded' | 'failed';
 
 export interface FieldToolboxPaneProps {
   fields: FieldDefinition[];
@@ -63,7 +44,9 @@ export interface FieldToolboxPaneProps {
   canConnectTable?: boolean;
   /** Related navigation sections available for the active dataverse table (T14). */
   relatedSections?: Array<{ navigationProperty: string; displayName: string }>;
-  /** Called once when a related section is first expanded; resolves and appends its fields. */
+  /** Load status per navigation property for the current source generation. */
+  relatedStatus?: Record<string, RelatedLoadStatus>;
+  /** Called when an idle section is expanded or a failed one is retried; resolves and appends its fields. */
   onExpandRelated?: (navigationProperty: string) => void;
   /** Called when the user clicks a field row in the toolbox. */
   onCreateRuleFromField?: (field: FieldDefinition) => void;

@@ -24,10 +24,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
 
+      # The lockfile is not tracked, so there is nothing for `npm ci` or the
+      # setup-node npm cache to key on.
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build apps/web
         run: npm run build:web

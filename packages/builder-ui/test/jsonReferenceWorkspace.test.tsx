@@ -1,7 +1,9 @@
 ﻿// @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { useReducer } from 'react';
 import {
 	cleanup,
+	fireEvent,
 	render,
 	screen,
 	within,
@@ -11,11 +13,36 @@ import type { PlatformAdapter } from '@ryanmakes/eb_platformadapter';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JsonReferenceWorkspace } from '../src/workbench/JsonReferenceWorkspace';
 import {
+	initialJsonReferenceState,
+	jsonReferenceReducer,
+} from '../src/workbench/jsonReferenceState';
+import {
 	composeSample,
 	fixtureA1,
 	triggerBodySample,
 	triggerFullSample,
 } from './fixtures/jsonReferenceFixtures';
+
+function WorkspaceHarness({
+	adapter,
+	active = true,
+}: {
+	adapter: PlatformAdapter;
+	active?: boolean;
+}) {
+	const [state, dispatch] = useReducer(
+		jsonReferenceReducer,
+		initialJsonReferenceState,
+	);
+	return (
+		<JsonReferenceWorkspace
+			adapter={adapter}
+			active={active}
+			state={state}
+			dispatch={dispatch}
+		/>
+	);
+}
 
 afterEach(() => {
 	cleanup();
@@ -51,7 +78,7 @@ async function pasteAndParse(
 	actionName?: string,
 ) {
 	if (actionName !== undefined)
-		await user.type(screen.getByLabelText('Action name'), actionName);
+		await user.type(screen.getByLabelText('Action'), actionName);
 	await user.click(screen.getByLabelText('Sample JSON'));
 	await user.paste(sample);
 }
@@ -69,23 +96,28 @@ async function selectEmail(user: UserEvent) {
 }
 
 describe('JSON reference workspace', () => {
+	it('shows the parse status under the sample, not in the Payload pane (mock image 7)', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const source = screen.getByRole('region', { name: 'Source' });
+		expect(within(source).getByText('Nothing parsed yet')).toHaveClass('eb-json-status', 'is-muted');
+
+		await pasteAndParse(user, fixtureA1, 'Get items');
+		expect(within(source).getByText('Parsed · 25 values')).toHaveClass('eb-json-status', 'is-good');
+		expect(within(screen.getByRole('region', { name: 'Payload' })).queryByText('Parsed · 25 values')).toBeNull();
+	});
+
 	it('builds, shows and copies the reference to Email (user story 1, scenarios 1 and 2)', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 
 		await pasteAndParse(user, fixtureA1, 'Get items');
-		expect(adapter.notify).toHaveBeenCalledWith(
-			'Parsed · 25 values',
-			'success',
-		);
+		expect(adapter.notify).not.toHaveBeenCalled();
 		expect(screen.getByText('25 values')).toBeInTheDocument();
 
 		await selectEmail(user);
 		expect(expression()).toHaveTextContent(EMAIL_REFERENCE);
-		expect(
-			screen.getByRole('navigation', { name: 'Selected path' }),
-		).toHaveTextContent("outputs('Get_items')");
 		expect(
 			screen.getByText(
 				'Fixed position [0] reads that item only.',
@@ -100,7 +132,7 @@ describe('JSON reference workspace', () => {
 	it('notifies the host on copy success (FR-053)', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 
 		await user.click(screen.getByRole('button', { name: 'Copy' }));
@@ -110,7 +142,7 @@ describe('JSON reference workspace', () => {
 	it('references containers, nulls and the root (user story 1, scenario 3)', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await expand(user, /^body, object$/);
 
@@ -131,7 +163,7 @@ describe('JSON reference workspace', () => {
 
 	it('references a Compose output with Action and Full output (user story 1, scenario 4)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 		await pasteAndParse(user, composeSample, 'Compose');
 
 		await user.click(row(/^customer, object$/));
@@ -141,7 +173,7 @@ describe('JSON reference workspace', () => {
 	it('copies the inline form (user story 1, scenario 5)', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await selectEmail(user);
 
@@ -154,7 +186,7 @@ describe('JSON reference workspace', () => {
 	it('builds items() from the entered loop name, not the source action', async () => {
 		const user = userEvent.setup();
 		const adapter = createAdapter();
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 		await selectEmail(user);
 
@@ -191,7 +223,7 @@ describe('JSON reference workspace', () => {
 
 	it('hints at a top-level body key under Body only and still roots at body() (user story 1, scenario 6)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 
 		await user.click(screen.getByRole('radio', { name: /Action.*Body only/ }));
@@ -204,12 +236,12 @@ describe('JSON reference workspace', () => {
 
 	it('references trigger payloads without an action name (user story 2)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 
 		await user.click(
 			screen.getByRole('radio', { name: /Trigger.*Full output/ }),
 		);
-		expect(screen.queryByLabelText('Action name')).not.toBeInTheDocument();
+		expect(screen.queryByLabelText('Action')).not.toBeInTheDocument();
 		expect(
 			screen.getByRole('radio', { name: /Trigger.*Full output/ }),
 		).toHaveAccessibleDescription('triggerOutputs()');
@@ -242,7 +274,7 @@ describe('JSON reference workspace', () => {
 
 	it('reports invalid JSON and clears the tree (user story 4, scenario 2)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 
 		await user.clear(screen.getByLabelText('Sample JSON'));
@@ -259,7 +291,7 @@ describe('JSON reference workspace', () => {
 
 	it('shows the limit message and no tree (user story 4, scenario 3)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 
 		await pasteAndParse(user, JSON.stringify(new Array(10_000).fill(0)));
 		expect(screen.getByRole('alert')).toHaveTextContent(
@@ -270,7 +302,7 @@ describe('JSON reference workspace', () => {
 
 	it('keeps the old tree after an edit and says the sample changed (user story 4, scenario 4)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 
 		await user.type(screen.getByLabelText('Sample JSON'), ' ');
@@ -278,13 +310,42 @@ describe('JSON reference workspace', () => {
 		expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled();
 	});
 
+	it('replaces the whole sample on paste despite a partial selection', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const sample = screen.getByLabelText('Sample JSON') as HTMLTextAreaElement;
+		await user.click(sample);
+		await user.paste('{"old": 1}');
+		sample.setSelectionRange(0, 3);
+
+		await user.paste('{"a": 2}');
+
+		expect(sample.value).toBe('{"a": 2}');
+	});
+
+	it('still parses when the pasted JSON equals the typed JSON', () => {
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const sample = screen.getByLabelText('Sample JSON');
+		const json = '{"a": 1}';
+		fireEvent.input(sample, { target: { value: json } });
+		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+
+		fireEvent.input(sample, {
+			target: { value: json },
+			inputType: 'insertFromPaste',
+		});
+
+		expect(screen.getByRole('tree')).toBeInTheDocument();
+		expect(screen.getByLabelText('Action')).toHaveValue('Action');
+	});
+
 	it('blocks Copy and flags the field when the action name is blank (user story 4, scenario 5)', async () => {
 		const user = userEvent.setup();
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
-		const name = screen.getByLabelText('Action name');
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		const name = screen.getByLabelText('Action');
 
 		expect(name).toHaveAccessibleDescription(
-			'As shown in the flow designer. Spaces become underscores.',
+			'Spaces become underscores.',
 		);
 		expect(name).toHaveAttribute('aria-invalid', 'false');
 		await pasteAndParse(user, fixtureA1); // paste auto-fills name to "Action"
@@ -300,7 +361,7 @@ describe('JSON reference workspace', () => {
 		).toBeChecked();
 		expect(
 			screen.getByRole('radio', { name: /Action.*Full output/ }),
-		).toHaveAccessibleDescription("outputs('Action')");
+		).toHaveAccessibleDescription('outputs()');
 	});
 
 	it('never claims a copy the host refused (user story 4, scenario 6)', async () => {
@@ -308,7 +369,7 @@ describe('JSON reference workspace', () => {
 		const adapter = createAdapter(async () => {
 			throw new Error('the host does not provide a clipboard API');
 		});
-		render(<JsonReferenceWorkspace adapter={adapter} active />);
+		render(<WorkspaceHarness adapter={adapter} active />);
 		await pasteAndParse(user, fixtureA1, 'Get items');
 
 		await user.click(screen.getByRole('button', { name: 'Copy' }));
@@ -319,7 +380,7 @@ describe('JSON reference workspace', () => {
 	});
 
 	it('labels its panels and fields for assistive technology (FR-082, FR-084)', () => {
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 
 		expect(
 			screen
@@ -337,10 +398,10 @@ describe('JSON reference workspace', () => {
 	});
 
 	it('turns off spell checking, autocorrect, capitalisation and autocomplete (FR-062)', () => {
-		render(<JsonReferenceWorkspace adapter={createAdapter()} active />);
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
 
 		for (const field of [
-			screen.getByLabelText('Action name'),
+			screen.getByLabelText('Action'),
 			screen.getByLabelText('Sample JSON'),
 		]) {
 			expect(field).toHaveAttribute('spellcheck', 'false');
@@ -348,5 +409,23 @@ describe('JSON reference workspace', () => {
 			expect(field).toHaveAttribute('autocapitalize', 'off');
 			expect(field).toHaveAttribute('autocomplete', 'off');
 		}
+	});
+
+	it('lays the Reference panel out as the mock (image 6)', async () => {
+		const user = userEvent.setup();
+		render(<WorkspaceHarness adapter={createAdapter()} active />);
+		await pasteAndParse(user, fixtureA1, 'Get items');
+		await selectEmail(user);
+
+		const reference = expression().closest('.eb-json-copy-block') as HTMLElement;
+		expect(within(reference).getByText('Fixed position [0] reads that item only.')).toBeInTheDocument();
+		expect(within(reference).getByRole('button', { name: 'Copy' })).toHaveClass('is-primary');
+
+		expect(screen.getByText('Apply to each · item()')).toBeInTheDocument();
+		expect(screen.getByText('Apply to each · items()')).toBeInTheDocument();
+		expect(screen.getByText('Enter the loop name to build items()')).toBeInTheDocument();
+		expect(screen.getByLabelText('Loop name')).toHaveAccessibleDescription(/Spaces become underscores/);
+		await user.type(screen.getByLabelText('Loop name'), 'Apply to each');
+		expect(screen.queryByText('Enter the loop name to build items()')).toBeNull();
 	});
 });

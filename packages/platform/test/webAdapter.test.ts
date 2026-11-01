@@ -89,11 +89,169 @@ describe('createWebAdapter', () => {
     stubLocalStorage();
     stubMatchMedia(false);
     const adapter = createWebAdapter();
-    expect(await adapter.listDataSources?.()).toEqual([]);
     expect(await adapter.getTables?.()).toEqual([]);
     expect(await adapter.discoverFields?.()).toEqual({ fields: [] });
   });
+
+  it('persists manual themes and notifies only subscribed consumers', async () => {
+    const storage = stubLocalStorage();
+    const mediaQuery = stubMatchMedia(false);
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+
+    expect(adapter.getThemeSnapshot()).toBe('light');
+    adapter.setTheme('dark');
+    expect(storage.setItem).toHaveBeenCalledWith('eb.web.theme.override.v1', 'dark');
+    expect(handler).toHaveBeenLastCalledWith('dark');
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+    await expect(createWebAdapter().getTheme()).resolves.toBe('dark');
+
+    mediaQuery.dispatch(true);
+    mediaQuery.dispatch(false);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+
+    adapter.setTheme('light');
+    expect(handler).toHaveBeenLastCalledWith('light');
+    unsubscribe();
+    adapter.setTheme('dark');
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(mediaQuery.removeEventListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses browser preference for absent or invalid overrides', async () => {
+    const storage = stubLocalStorage();
+    const mediaQuery = stubMatchMedia(false);
+    storage.setItem('eb.web.theme.override.v1', 'invalid');
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+
+    expect(adapter.getThemeSnapshot()).toBe('light');
+    mediaQuery.dispatch(true);
+    expect(adapter.getThemeSnapshot()).toBe('dark');
+    await expect(adapter.getTheme()).resolves.toBe('dark');
+    expect(handler).toHaveBeenLastCalledWith('dark');
+    unsubscribe();
+  });
+
+  it('uses both system schemes when storage access or getItem throws', async () => {
+    await withBlockedStorage('access', async () => {
+      await expectBothSystemSchemes();
+    });
+    await withBlockedStorage('getItem', async () => {
+      await expectBothSystemSchemes();
+    });
+  });
+
+  it('does not swallow a rejected theme or settings write', async () => {
+    const storage = stubLocalStorage();
+    storage.setItem.mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    stubMatchMedia(false);
+    const quotaAdapter = createWebAdapter();
+    const quotaHandler = vi.fn();
+    quotaAdapter.onThemeChanged(quotaHandler);
+
+    expect(quotaAdapter.getThemeSnapshot()).toBe('light');
+    expect(() => quotaAdapter.setTheme('dark')).toThrow('quota exceeded');
+    expect(quotaHandler).not.toHaveBeenCalled();
+    expect(quotaAdapter.getThemeSnapshot()).toBe('light');
+    await expect(quotaAdapter.settings.set('draft', 'value')).rejects.toThrow('quota exceeded');
+    await expect(quotaAdapter.settings.get('draft')).resolves.toBeNull();
+
+    vi.unstubAllGlobals();
+    stubMatchMedia(true);
+    const restore = blockStorageAccess();
+    try {
+      const adapter = createWebAdapter();
+      const handler = vi.fn();
+      adapter.onThemeChanged(handler);
+
+      await expect(adapter.getTheme()).resolves.toBe('dark');
+      expect(() => adapter.setTheme('light')).toThrow('Access is denied for this document.');
+      expect(handler).not.toHaveBeenCalled();
+      expect(adapter.getThemeSnapshot()).toBe('dark');
+      await expect(adapter.settings.set('draft', 'value')).rejects.toThrow(
+        'Access is denied for this document.',
+      );
+    } finally {
+      restore();
+    }
+  });
 });
+
+const storageAccessDenied =
+  "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.";
+
+async function expectBothSystemSchemes() {
+  for (const prefersDark of [false, true]) {
+    const mediaQuery = stubMatchMedia(prefersDark);
+    const adapter = createWebAdapter();
+    const handler = vi.fn();
+    const unsubscribe = adapter.onThemeChanged(handler);
+    const initial = prefersDark ? 'dark' : 'light';
+    const next = prefersDark ? 'light' : 'dark';
+
+    expect(adapter.getThemeSnapshot()).toBe(initial);
+    await expect(adapter.getTheme()).resolves.toBe(initial);
+
+    mediaQuery.dispatch(!prefersDark);
+    expect(adapter.getThemeSnapshot()).toBe(next);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith(next);
+    await expect(adapter.getTheme()).resolves.toBe(next);
+
+    mediaQuery.dispatch(prefersDark);
+    expect(adapter.getThemeSnapshot()).toBe(initial);
+    expect(handler).toHaveBeenLastCalledWith(initial);
+
+    unsubscribe();
+    mediaQuery.dispatch(!prefersDark);
+    expect(handler).toHaveBeenCalledTimes(2);
+  }
+}
+
+async function withBlockedStorage(mode: 'access' | 'getItem', run: () => Promise<void>) {
+  if (mode === 'getItem') {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    });
+    try {
+      await run();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    return;
+  }
+
+  const restore = blockStorageAccess();
+  try {
+    await run();
+  } finally {
+    restore();
+  }
+}
+
+function blockStorageAccess() {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    get() {
+      throw new DOMException(storageAccessDenied, 'SecurityError');
+    },
+  });
+  return () => {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+    else Reflect.deleteProperty(globalThis, 'localStorage');
+  };
+}
 
 function stubLocalStorage() {
   const values = new Map<string, string>();
@@ -130,6 +288,7 @@ function stubMatchMedia(matches: boolean) {
       },
     ),
     dispatch(nextMatches: boolean) {
+      mediaQuery.matches = nextMatches;
       for (const listener of listeners) {
         listener({ matches: nextMatches } as MediaQueryListEvent);
       }

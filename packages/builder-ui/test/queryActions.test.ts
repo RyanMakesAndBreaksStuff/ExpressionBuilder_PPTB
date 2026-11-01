@@ -294,4 +294,65 @@ describe('queryActions', () => {
       withDescendant,
     );
   });
+
+  describe('default insertion into a nested group longer than the root', () => {
+    const rule = (id: string) => ({
+      id,
+      kind: 'rule' as const,
+      fieldId: 'Status',
+      operator: 'equals' as const,
+      value: id,
+    });
+    const deepDocument: QueryDocument = {
+      ...sampleDocument,
+      root: {
+        ...sampleDocument.root,
+        children: [
+          {
+            id: 'group-deep',
+            kind: 'group',
+            conjunction: 'or',
+            children: [rule('rule-a'), rule('rule-b'), rule('rule-c')],
+          },
+          rule('rule-status'),
+        ],
+      },
+    };
+    const deepChildIds = (doc: QueryDocument) => {
+      const group = doc.root.children[0];
+      return group.kind === 'group' ? group.children.map((child) => child.id) : [];
+    };
+
+    it('appends a default rule at the end of the nested target', () => {
+      const result = addRule(deepDocument, 'group-deep', { id: 'rule-new' });
+      expect(deepChildIds(result)).toEqual(['rule-a', 'rule-b', 'rule-c', 'rule-new']);
+      expect(result.selectedRuleId).toBe('rule-new');
+    });
+
+    it('appends a default group at the end of the nested target', () => {
+      const result = addGroup(deepDocument, 'group-deep', { id: 'group-new' });
+      expect(deepChildIds(result)).toEqual(['rule-a', 'rule-b', 'rule-c', 'group-new']);
+    });
+
+    it('appends a default moveNode at the end of the nested target', () => {
+      const result = moveNode(deepDocument, 'rule-status', 'group-deep');
+      expect(deepChildIds(result)).toEqual(['rule-a', 'rule-b', 'rule-c', 'rule-status']);
+      expect(result.root.children.map((child) => child.id)).toEqual(['group-deep']);
+    });
+
+    it('keeps explicit indices', () => {
+      expect(deepChildIds(moveNode(deepDocument, 'rule-status', 'group-deep', 1))).toEqual([
+        'rule-a',
+        'rule-status',
+        'rule-b',
+        'rule-c',
+      ]);
+      expect(deepChildIds(addRule(deepDocument, 'group-deep', { id: 'rule-new' }, 0))).toEqual([
+        'rule-new',
+        'rule-a',
+        'rule-b',
+        'rule-c',
+      ]);
+    });
+  });
 });

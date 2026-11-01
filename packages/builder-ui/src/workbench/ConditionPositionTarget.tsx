@@ -58,7 +58,7 @@ export function ConditionPositionTarget({
     id: conditionPositionDropId(groupId, beforeNodeId),
     data: metadata,
     type: 'condition-position',
-    // These separators are thin (~32px) with tall rule rows between them, so
+    // These separators are thin (~20px) with tall rule rows between them, so
     // the default detector (pointer/shape intersection) leaves ~130px dead
     // zones over each rule where nothing is targeted and a drop is discarded.
     // closestCenter always ranks every accepted position by distance, so the

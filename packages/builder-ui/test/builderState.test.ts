@@ -63,4 +63,29 @@ describe('deriveBuilderState — wrappers', () => {
     const { expression } = deriveBuilderState(document);
     expect(expression).toContain("coalesce(triggerBody()?['name'], '')");
   });
+
+  const titleRule = (value: string | number, wrappers: string[], operator = 'greater'): QueryNode => ({
+    id: 'rule-1', kind: 'rule', fieldId: 'name', operator, value, wrappers,
+  });
+
+  it('length compares against a numeric literal', () => {
+    const { expression } = deriveBuilderState(doc(titleRule(4, ['length']), [nameField]));
+    expect(expression).toContain("greater(length(triggerBody()?['name']), 4)");
+    expect(expression).not.toContain("length('");
+  });
+
+  it('length with a legacy string value still emits a number', () => {
+    const { expression } = deriveBuilderState(doc(titleRule('4', ['length']), [nameField]));
+    expect(expression).toContain("greater(length(triggerBody()?['name']), 4)");
+  });
+
+  it('trim+toLower still wraps both sides', () => {
+    const { expression } = deriveBuilderState(doc(titleRule('x', ['trim', 'toLower'], 'equals'), [nameField]));
+    expect(expression).toContain("equals(toLower(trim(triggerBody()?['name'])), toLower(trim('x')))");
+  });
+
+  it('coalesce wraps only the left side', () => {
+    const { expression } = deriveBuilderState(doc(titleRule('x', ['coalesce'], 'equals'), [nameField]));
+    expect(expression).toContain("equals(coalesce(triggerBody()?['name'], ''), 'x')");
+  });
 });

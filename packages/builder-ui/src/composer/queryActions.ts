@@ -123,10 +123,11 @@ const addChildToGroup = (
   group: QueryGroup,
   parentGroupId: string,
   child: QueryNode,
-  index = group.children.length,
+  index?: number,
 ): QueryGroup => {
   if (group.id === parentGroupId) {
-    const insertionIndex = Math.max(0, Math.min(index, group.children.length));
+    const count = group.children.length;
+    const insertionIndex = Math.max(0, Math.min(index ?? count, count));
     return {
       ...group,
       children: [

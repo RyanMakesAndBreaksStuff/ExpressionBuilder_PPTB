@@ -184,7 +184,7 @@ describe('JSON reference state', () => {
 		);
 
 		expect(parseStatus(edited)).toEqual({
-			text: 'Sample changed. Parse again to update.',
+			text: 'Sample changed. Waiting for valid JSON.',
 			tone: 'warn',
 		});
 		expect(copyText(edited)).toBe(
@@ -371,5 +371,121 @@ describe('JSON reference state', () => {
 
 		expect(state.actionName).toBe('My Action');
 		expect(copyText(state)).toBe("outputs('My_Action')");
+	});
+});
+
+describe('parse notification events', () => {
+	it('creates the first automatic event and an update with the same count', () => {
+		const first = run(
+			{ type: 'setText', value: '{"a":1}' },
+			{ type: 'autoParse' },
+		);
+		expect(first.parseNotice).toEqual({
+			id: 1, origin: 'auto', message: 'Parsed · 2 values',
+		});
+		const next = [
+			{ type: 'setText', value: '{"a":2}' } as const,
+			{ type: 'autoParse' } as const,
+		].reduce(jsonReferenceReducer, first);
+		expect(next.parseNotice).toEqual({
+			id: 2, origin: 'auto', message: 'Payload updated · 2 values',
+		});
+	});
+
+	it('refreshes equivalent text without a new event or tree-state reset', () => {
+		const before = run(
+			{ type: 'pasteAndParse', text: '{"a":[1]}', defaultActionName: 'Action' },
+			{ type: 'select', path: ['a', 0] },
+			{ type: 'toggleExpanded', key: pathKey(['a']) },
+			{ type: 'showAll', key: pathKey(['a']) },
+		);
+		const edited = jsonReferenceReducer(before, {
+			type: 'setText', value: '{ "a": [1] }',
+		});
+		const after = jsonReferenceReducer(edited, { type: 'autoParse' });
+		expect(after.parsed?.text).toBe(after.text);
+		expect(after.error).toBeNull();
+		expect(after.parseNotice).toBe(before.parseNotice);
+		expect(after.selectedPath).toBe(before.selectedPath);
+		expect(after.expanded).toBe(before.expanded);
+		expect(after.showAll).toBe(before.showAll);
+		expect(after.lastAttemptedText).toBe(after.text);
+	});
+
+	it('retains the last good automatic output through invalid input and recovery', () => {
+		const before = run(
+			{ type: 'pasteAndParse', text: '{"a":1}', defaultActionName: 'Action' },
+			{ type: 'select', path: ['a'] },
+		);
+		const failed = [
+			{ type: 'setText', value: '{"a":' } as const,
+			{ type: 'autoParse' } as const,
+		].reduce(jsonReferenceReducer, before);
+		expect(failed.parsed).toBe(before.parsed);
+		expect(failed.selectedPath).toBe(before.selectedPath);
+		expect(failed.expanded).toBe(before.expanded);
+		expect(failed.lastSuccessfulPayload).toBe(before.lastSuccessfulPayload);
+		expect(failed.parseNotice).toBe(before.parseNotice);
+		expect(failed.error).toMatch(/^Not valid JSON: /);
+		const recovered = [
+			{ type: 'setText', value: '{"a":1}' } as const,
+			{ type: 'autoParse' } as const,
+		].reduce(jsonReferenceReducer, failed);
+		expect(recovered.error).toBeNull();
+		expect(recovered.parseNotice).toBe(before.parseNotice);
+	});
+
+	it('keeps the semantic baseline when invalid paste clears displayed output', () => {
+		const before = run({
+			type: 'pasteAndParse', text: '{"a":1}', defaultActionName: 'Action',
+		});
+		const failed = jsonReferenceReducer(before, {
+			type: 'pasteAndParse', text: '{', defaultActionName: 'Action',
+		});
+		expect(failed.parsed).toBeNull();
+		expect(failed.lastSuccessfulPayload).toBe(before.lastSuccessfulPayload);
+		const recovered = [
+			{ type: 'setText', value: '{"a":1}' } as const,
+			{ type: 'autoParse' } as const,
+		].reduce(jsonReferenceReducer, failed);
+		expect(recovered.parsed?.value).toEqual({ a: 1 });
+		expect(recovered.parseNotice).toBe(before.parseNotice);
+	});
+
+	it('treats a repeated successful paste as a new operation', () => {
+		const action = {
+			type: 'pasteAndParse', text: '{"a":1}', defaultActionName: 'Action',
+		} as const;
+		const first = run(action);
+		const second = jsonReferenceReducer(first, action);
+		expect(second.parseNotice?.id).toBe(2);
+		expect(second.parseNotice?.origin).toBe('paste');
+		expect(second.parseNotice?.message).toBe('Parsed · 2 values');
+	});
+
+	it('is deterministic when React evaluates the same reducer input twice', () => {
+		const before = run({ type: 'setText', value: '{"a":1}' });
+		expect(jsonReferenceReducer(before, { type: 'autoParse' })).toEqual(
+			jsonReferenceReducer(before, { type: 'autoParse' }),
+		);
+		expect(before.parseNotice).toBeNull();
+	});
+
+	it.each([
+		['empty input', ''],
+		['too many values', JSON.stringify(new Array(10_000).fill(0))],
+		['too much depth', '['.repeat(66) + ']'.repeat(66)],
+	])('keeps the baseline and creates no automatic event for %s', (_name, text) => {
+		const before = run({
+			type: 'pasteAndParse', text: '{"a":1}', defaultActionName: 'Action',
+		});
+		const after = [
+			{ type: 'setText', value: text } as const,
+			{ type: 'autoParse' } as const,
+		].reduce(jsonReferenceReducer, before);
+		expect(after.parsed).toBe(before.parsed);
+		expect(after.lastSuccessfulPayload).toBe(before.lastSuccessfulPayload);
+		expect(after.parseNotice).toBe(before.parseNotice);
+		expect(after.error).not.toBeNull();
 	});
 });

@@ -1,7 +1,7 @@
 import type { FieldDefinition } from '@ryanmakes/eb_engine';
 import type { PlatformSettings } from '@ryanmakes/eb_platformadapter';
 
-const PREFIX = 'eb.metadata.v1';
+const PREFIX = 'eb.metadata.v2';
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 interface CacheEntry {
@@ -9,17 +9,19 @@ interface CacheEntry {
   fetchedAt: number;
 }
 
-export function cacheKey(table: string, includeRelated: boolean): string {
-  return `${PREFIX}.${table}.${includeRelated ? 'rel' : 'flat'}`;
+// JSON tuple keeps scope/table components unambiguous even when they contain delimiters.
+export function cacheKey(scope: string, table: string, includeRelated: boolean): string {
+  return `${PREFIX}.${JSON.stringify([scope, table, includeRelated])}`;
 }
 
 export async function readCache(
   settings: PlatformSettings,
+  scope: string,
   table: string,
   includeRelated: boolean,
   ttlMs: number = DEFAULT_TTL_MS,
 ): Promise<FieldDefinition[] | null> {
-  const raw = await settings.get(cacheKey(table, includeRelated));
+  const raw = await settings.get(cacheKey(scope, table, includeRelated));
   if (!raw) return null;
   try {
     const entry = JSON.parse(raw) as CacheEntry;
@@ -32,20 +34,22 @@ export async function readCache(
 
 export async function writeCache(
   settings: PlatformSettings,
+  scope: string,
   table: string,
   includeRelated: boolean,
   fields: FieldDefinition[],
 ): Promise<void> {
   const entry: CacheEntry = { fields, fetchedAt: Date.now() };
-  await settings.set(cacheKey(table, includeRelated), JSON.stringify(entry));
+  await settings.set(cacheKey(scope, table, includeRelated), JSON.stringify(entry));
 }
 
 export async function invalidate(
   settings: PlatformSettings,
+  scope: string,
   table: string,
   includeRelated: boolean,
 ): Promise<void> {
-  await settings.remove(cacheKey(table, includeRelated));
+  await settings.remove(cacheKey(scope, table, includeRelated));
 }
 
 // ── Field drift (T19) ───────────────────────────────────────────────────────

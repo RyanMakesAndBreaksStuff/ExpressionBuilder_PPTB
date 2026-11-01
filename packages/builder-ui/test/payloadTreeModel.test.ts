@@ -5,6 +5,7 @@ import {
   OBJECT_PAGE_SIZE,
   ROOT_KEY,
   buildVisibleRows,
+  collectPayloadLeaves,
   firstHiddenChildKey,
   previewValue,
   selectionSummary,
@@ -108,5 +109,27 @@ describe('previews and summaries', () => {
     expect(selectionSummary(null)).toBe('null');
     expect(selectionSummary({})).toBe('object');
     expect(selectionSummary([])).toBe('array');
+  });
+});
+
+describe('collectPayloadLeaves', () => {
+  it('walks every leaf with path labels, including empty keys and array indexes', () => {
+    expect(collectPayloadLeaves({ '': 1, rows: [{ a: 'x' }, []], n: null })).toEqual([
+      { path: [''], label: '""', value: 1 },
+      { path: ['rows', 0, 'a'], label: 'rows[0].a', value: 'x' },
+      { path: ['rows', 1], label: 'rows[1]', value: [] },
+      { path: ['n'], label: 'n', value: null },
+    ]);
+  });
+
+  it('is not paged: leaves past the page sizes are included', () => {
+    const leaves = collectPayloadLeaves(Array.from({ length: ARRAY_PAGE_SIZE + 5 }, (_, i) => i));
+    expect(leaves).toHaveLength(ARRAY_PAGE_SIZE + 5);
+    expect(leaves.at(-1)).toEqual({ path: [ARRAY_PAGE_SIZE + 4], label: `[${ARRAY_PAGE_SIZE + 4}]`, value: ARRAY_PAGE_SIZE + 4 });
+  });
+
+  it('labels a scalar root (root)', () => {
+    expect(collectPayloadLeaves(7)).toEqual([{ path: [], label: '(root)', value: 7 }]);
+    expect(collectPayloadLeaves({})).toEqual([{ path: [], label: '(root)', value: {} }]);
   });
 });

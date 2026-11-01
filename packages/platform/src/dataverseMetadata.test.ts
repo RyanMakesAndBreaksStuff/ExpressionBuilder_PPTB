@@ -96,3 +96,87 @@ describe('mapDataverseAttribute — choice options', () => {
     expect(field?.choices).toEqual(['Active', 'Inactive']);
   });
 });
+
+describe('mapDataverseAttribute — scalar lookup payload paths', () => {
+  it('uses a _value payload leaf for Lookup, Customer, and Owner', () => {
+    const cases = [
+      { attributeType: 'Lookup', logicalName: 'parentaccountid' },
+      { attributeType: 'Customer', logicalName: 'customerid' },
+      { attributeType: 'Owner', logicalName: 'ownerid' },
+    ] as const;
+
+    for (const { attributeType, logicalName } of cases) {
+      const field = mapDataverseAttribute(
+        base({ LogicalName: logicalName, AttributeType: attributeType }),
+      );
+      expect(field).toMatchObject({
+        id: logicalName,
+        logicalName,
+        path: [`_${logicalName}_value`],
+        type: 'string',
+      });
+    }
+  });
+
+  it('keeps Uniqueidentifier and PartyList on the logical-name leaf', () => {
+    for (const attributeType of ['Uniqueidentifier', 'PartyList'] as const) {
+      const field = mapDataverseAttribute(
+        base({ LogicalName: 'accountid', AttributeType: attributeType }),
+      );
+      expect(field).toMatchObject({
+        id: 'accountid',
+        logicalName: 'accountid',
+        path: ['accountid'],
+        type: 'string',
+      });
+    }
+  });
+
+  it('rewrites only a lookup leaf under an expanded navigation prefix', () => {
+    const lookup = mapDataverseAttribute(
+      base({ LogicalName: 'ownerid', AttributeType: 'Lookup' }),
+      ['customerid_account'],
+    );
+    expect(lookup).toMatchObject({
+      id: 'customerid_account.ownerid',
+      logicalName: 'ownerid',
+      path: ['customerid_account', '_ownerid_value'],
+    });
+
+    const name = mapDataverseAttribute(
+      base({ LogicalName: 'name', AttributeType: 'String' }),
+      ['customerid_account'],
+    );
+    expect(name).toMatchObject({
+      id: 'customerid_account.name',
+      logicalName: 'name',
+      path: ['customerid_account', 'name'],
+    });
+  });
+
+  it('preserves a custom logical name inside the lookup payload leaf', () => {
+    const field = mapDataverseAttribute(
+      base({ LogicalName: 'new_accountid', AttributeType: 'Lookup' }),
+    );
+    expect(field).toMatchObject({
+      id: 'new_accountid',
+      logicalName: 'new_accountid',
+      path: ['_new_accountid_value'],
+    });
+  });
+
+  it('reads LookupType from AttributeTypeName for the payload leaf', () => {
+    const field = mapDataverseAttribute(
+      base({
+        LogicalName: 'ownerid',
+        AttributeType: undefined,
+        AttributeTypeName: { Value: 'LookupType' },
+      }),
+    );
+    expect(field).toMatchObject({
+      id: 'ownerid',
+      logicalName: 'ownerid',
+      path: ['_ownerid_value'],
+    });
+  });
+});

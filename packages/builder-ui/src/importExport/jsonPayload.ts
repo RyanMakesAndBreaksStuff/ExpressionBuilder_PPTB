@@ -61,6 +61,22 @@ export function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Compare validated JSON data independently of object-key order and source formatting. */
+export function payloadValuesEqual(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return Array.isArray(left)
+      && Array.isArray(right)
+      && left.length === right.length
+      && left.every((value, index) => payloadValuesEqual(value, right[index]));
+  }
+  if (!isJsonObject(left) || !isJsonObject(right)) return false;
+  const keys = Object.keys(left);
+  return keys.length === Object.keys(right).length
+    && keys.every((key) => Object.hasOwn(right, key)
+      && payloadValuesEqual(left[key], right[key]));
+}
+
 export function payloadValueType(value: unknown): PayloadValueType {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';

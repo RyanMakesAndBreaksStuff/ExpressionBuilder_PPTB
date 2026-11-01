@@ -38,52 +38,57 @@ const useStyles = makeStyles({
   radio: { minWidth: 0, maxWidth: '100%', whiteSpace: 'normal' },
 });
 
-export function SwitchSourceDialog({ open, diff, targetLabel, onDismiss, onConfirm }: SwitchSourceDialogProps) {
+/** Stateful body - mounted fresh each open, so `mode` resets to keep. */
+function SwitchSourceDialogBody({ diff, targetLabel, onDismiss, onConfirm }: Omit<SwitchSourceDialogProps, 'open'>) {
   const styles = useStyles();
   const [mode, setMode] = useState<'keep' | 'remove'>('keep');
   const affected = diff.affectedRuleIds.length;
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => (!d.open ? onDismiss() : undefined)}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>Switch source to {targetLabel}</DialogTitle>
-          <DialogContent className={styles.body}>
-            {affected === 0 ? (
-              <Text>No existing rules reference fields missing from the new source.</Text>
-            ) : (
-              <>
-                <MessageBar className={styles.messageBar} intent="warning">
-                  <MessageBarBody>
-                    {affected} rule{affected === 1 ? '' : 's'} reference{affected === 1 ? 's' : ''} fields that
-                    don't exist in {targetLabel}.
-                  </MessageBarBody>
-                </MessageBar>
-                <RadioGroup
-                  className={styles.radioGroup}
-                  value={mode}
-                  onChange={(_, d) => setMode(d.value as 'keep' | 'remove')}
-                >
-                  <Radio
-                    className={styles.radio}
-                    value="keep"
-                    label="Keep rules and flag unknown fields (recommended)"
-                  />
-                  <Radio className={styles.radio} value="remove" label="Remove the affected rules" />
-                </RadioGroup>
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button appearance="secondary" onClick={onDismiss}>
-              Cancel
-            </Button>
-            <Button appearance="primary" onClick={() => onConfirm(mode)}>
-              Switch
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
+    <DialogBody>
+      <DialogTitle>Switch source to {targetLabel}</DialogTitle>
+      <DialogContent className={styles.body}>
+        {affected === 0 ? (
+          <Text>No existing rules reference fields missing from the new source.</Text>
+        ) : (
+          <>
+            <MessageBar className={styles.messageBar} intent="warning">
+              <MessageBarBody>
+                {affected} rule{affected === 1 ? '' : 's'} reference{affected === 1 ? 's' : ''} fields that
+                don't exist in {targetLabel}.
+              </MessageBarBody>
+            </MessageBar>
+            <RadioGroup
+              className={styles.radioGroup}
+              value={mode}
+              onChange={(_, d) => setMode(d.value as 'keep' | 'remove')}
+            >
+              <Radio
+                className={styles.radio}
+                value="keep"
+                label="Keep rules and flag unknown fields (recommended)"
+              />
+              <Radio className={styles.radio} value="remove" label="Remove the affected rules" />
+            </RadioGroup>
+          </>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button appearance="secondary" onClick={onDismiss}>
+          Cancel
+        </Button>
+        <Button appearance="primary" onClick={() => onConfirm(mode)}>
+          Switch
+        </Button>
+      </DialogActions>
+    </DialogBody>
+  );
+}
+
+export function SwitchSourceDialog({ open, ...rest }: SwitchSourceDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={(_, d) => (!d.open ? rest.onDismiss() : undefined)}>
+      <DialogSurface>{open && <SwitchSourceDialogBody {...rest} />}</DialogSurface>
     </Dialog>
   );
 }

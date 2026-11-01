@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "mode": "triggerCondition",
+  "fields": [
+    {
+      "id": "Status",
+      "label": "Status",
+      "type": "choice",
+      "path": ["Status"],
+      "choices": ["Approved", "Rejected", "Pending"]
+    }
+  ],
+  "selectedRuleId": "rule-status",
+  "root": {
+    "id": "root",
+    "kind": "group",
+    "conjunction": "and",
+    "children": [
+      {
+        "id": "rule-status",
+        "kind": "rule",
+        "fieldId": "Status",
+        "operator": "equals",
+        "value": "Approved"
+      }
+    ]
+  }
+}

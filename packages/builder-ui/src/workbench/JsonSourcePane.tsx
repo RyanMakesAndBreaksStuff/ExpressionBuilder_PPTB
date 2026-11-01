@@ -2,7 +2,7 @@ import { Fragment, useId, type Dispatch, type KeyboardEvent } from "react";
 import {
 	ACTION_NAME_PLACEHOLDER,
 	NO_TEXT_ASSISTANCE,
-	rootExpressionFor,
+	parseStatus,
 	showActionNameInvalid,
 	type JsonReferenceAction,
 	type JsonReferenceState,
@@ -34,6 +34,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 	const errorId = `${id}-error`;
 	const nameInvalid = showActionNameInvalid(state);
 	const rootKey: ReferenceRootKey = `${state.outputFrom}-${state.shape}`;
+	const status = parseStatus(state);
 
 	const rootSections = [
 		{
@@ -44,14 +45,14 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 					label: "Full output",
 					ariaLabel: "Action · Full output",
 					detailId: `${id}-af`,
-					detail: rootExpressionFor(state, "action", "full"),
+					detail: "outputs()",
 				},
 				{
 					key: "action-body" as ReferenceRootKey,
 					label: "Body only",
 					ariaLabel: "Action · Body only",
 					detailId: `${id}-ab`,
-					detail: rootExpressionFor(state, "action", "body"),
+					detail: "body()",
 				},
 			],
 		},
@@ -63,14 +64,14 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 					label: "Full output",
 					ariaLabel: "Trigger · Full output",
 					detailId: `${id}-tf`,
-					detail: rootExpressionFor(state, "trigger", "full"),
+					detail: "triggerOutputs()",
 				},
 				{
 					key: "trigger-body" as ReferenceRootKey,
 					label: "Body only",
 					ariaLabel: "Trigger · Body only",
 					detailId: `${id}-tb`,
-					detail: rootExpressionFor(state, "trigger", "body"),
+					detail: "triggerBody()",
 				},
 			],
 		},
@@ -147,8 +148,8 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 
 				{state.outputFrom === "action" ? (
 					<div className="eb-json-field">
-						<label className="eb-label" htmlFor={nameId}>
-							Action name
+						<label className="eb-label is-required" htmlFor={nameId}>
+							Action
 						</label>
 						<input
 							{...NO_TEXT_ASSISTANCE}
@@ -166,7 +167,7 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 							className={`eb-json-help${nameInvalid ? " is-invalid" : ""}`}>
 							{nameInvalid
 								? "Enter the action name to build the reference."
-								: "As shown in the flow designer. Spaces become underscores."}
+								: "Spaces become underscores."}
 						</p>
 					</div>
 				) : null}
@@ -183,21 +184,23 @@ export function JsonSourcePane({ dispatch, state }: JsonSourcePaneProps) {
 						value={state.text}
 						aria-invalid={state.error !== null}
 						aria-describedby={state.error !== null ? errorId : undefined}
-						onChange={(event) =>
-							dispatch({ type: "setText", value: event.target.value })
-						}
+						onInput={(event) => {
+							const { value } = event.currentTarget;
+							dispatch(
+								(event.nativeEvent as InputEvent).inputType === "insertFromPaste"
+									? { type: "pasteAndParse", text: value, defaultActionName: ACTION_NAME_PLACEHOLDER }
+									: { type: "setText", value },
+							);
+						}}
 						onPaste={(event) => {
 							const pasted = event.clipboardData.getData("text");
 							if (!pasted) return;
-							event.preventDefault();
-							dispatch({
-							type: "pasteAndParse",
-								text: pasted,
-								defaultActionName: ACTION_NAME_PLACEHOLDER,
-							});
+							event.currentTarget.select();
 						}}
 					/>
 				</div>
+
+				<p className={`eb-json-status is-${status.tone}`}>{status.text}</p>
 
 				{state.error !== null ? (
 					<div id={errorId} role="alert" className="eb-json-error">

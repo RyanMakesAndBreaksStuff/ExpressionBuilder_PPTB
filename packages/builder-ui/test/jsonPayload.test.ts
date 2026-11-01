@@ -8,6 +8,7 @@ import {
   parsePayload,
   pathKey,
   payloadValueType,
+  payloadValuesEqual,
   valueAtPath,
 } from '../src/importExport/jsonPayload';
 import { fixtureA1 } from './fixtures/jsonReferenceFixtures';
@@ -132,5 +133,34 @@ describe('payload paths', () => {
       'number',
       'boolean',
     ]);
+  });
+});
+
+describe('material payload equality', () => {
+  it.each([
+    ['whitespace', '{"a":1}', '{ "a": 1 }', true],
+    ['object key order', '{"a":1,"b":2}', '{"b":2,"a":1}', true],
+    ['number spelling', '{"a":1}', '{"a":1.0}', true],
+    ['value with unchanged count', '{"a":1}', '{"a":2}', false],
+    ['added key', '{"a":1}', '{"a":1,"b":2}', false],
+    ['removed key', '{"a":1,"b":2}', '{"a":1}', false],
+    ['renamed key', '{"a":1}', '{"b":1}', false],
+    ['changed type', '{"a":1}', '{"a":"1"}', false],
+    ['array order', '[1,2]', '[2,1]', false],
+    ['nested value', '{"a":{"b":1}}', '{"a":{"b":2}}', false],
+    ['empty container type', '{}', '[]', false],
+    ['null versus value', 'null', 'false', false],
+    ['own built-in key', '{"__proto__":1}', '{"__proto__":2}', false],
+    ['same null', 'null', 'null', true],
+  ] as const)('compares %s', (_label, left, right, expected) => {
+    expect(payloadValuesEqual(JSON.parse(left), JSON.parse(right))).toBe(expected);
+  });
+
+  it('compares the complete value beyond the rendered preview', () => {
+    const prefix = 'x'.repeat(120);
+    expect(payloadValuesEqual(
+      { value: prefix + 'a' },
+      { value: prefix + 'b' },
+    )).toBe(false);
   });
 });

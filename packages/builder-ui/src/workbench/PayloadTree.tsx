@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -11,6 +12,7 @@ import {
 } from 'react';
 import type { PayloadPath } from '@ryanmakes/eb_engine';
 import { pathKey } from '../importExport/jsonPayload';
+import type { PayloadReveal } from './jsonPayloadSession';
 import {
   ROOT_KEY,
   buildVisibleRows,
@@ -32,11 +34,13 @@ interface PayloadTreeProps {
   onSelect: (path: PayloadPath) => void;
   onToggle: (key: string) => void;
   onShowAll: (key: string) => void;
+  reveal?: PayloadReveal | null;
 }
 
 /**
  * A flat WAI-ARIA tree view with single selection (FR-036): one tab stop that
- * roves between rows, the chevron toggles without selecting (FR-034), and
+ * roves between rows, the chevron toggles without selecting (FR-034), the
+ * rest of a parent row selects and toggles, and
  * sample content is only ever rendered as text (FR-038).
  */
 export function PayloadTree({
@@ -45,6 +49,7 @@ export function PayloadTree({
   onSelect,
   onShowAll,
   onToggle,
+  reveal,
   rootLabel,
   selectedPath,
   showAll,
@@ -56,6 +61,18 @@ export function PayloadTree({
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const rowElements = useRef(new Map<string, HTMLDivElement>());
   const focusPending = useRef(false);
+  const handledReveal = useRef(0);
+
+  useLayoutEffect(() => {
+    if (!reveal || handledReveal.current === reveal.sequence) return;
+    const key = pathKey(reveal.path);
+    const row = rowElements.current.get(key);
+    if (!row) return;
+    handledReveal.current = reveal.sequence;
+    setFocusedKey(key);
+    row.focus();
+    row.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [reveal, rows]);
 
   const tabStopKey =
     focusedKey !== null && indexByKey.has(focusedKey) ? focusedKey : nearestVisibleKey(indexByKey, selectedPath);
@@ -95,13 +112,11 @@ export function PayloadTree({
     } else if (row.expandable && (event.target as Element).closest('[data-chevron]')) {
       onToggle(row.key);
       moveFocus(row.key);
-    } else if (row.expandable) {
-      onToggle(row.key);
-      setFocusedKey(row.key);
-      onSelect(row.path);
     } else {
       setFocusedKey(row.key);
       onSelect(row.path);
+      // The rest of a parent row also expands or collapses it.
+      if (row.expandable) onToggle(row.key);
     }
   };
 
