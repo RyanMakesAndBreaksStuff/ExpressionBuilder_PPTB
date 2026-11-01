@@ -59,3 +59,12 @@ undo-paste.md
 /parse-notification-update.md
 /scripts/capture-screenshots.mjs
 /SCREENSHOTS_PENDING.txt
+/docs/specs/002-multi-payload-json-workspace/reference/13b-standalone.html
+
+# Agent and planning files (keep out of main)
+**/CLAUDE.md
+**/AGENTS.md
+GEMINI.md
+.cursor
+.serena
+.github/copilot-instructions.md
