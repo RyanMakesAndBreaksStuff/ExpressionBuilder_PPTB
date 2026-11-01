@@ -33,7 +33,7 @@ const OPTIONSET_CAST_BY_TYPE: Record<string, string> = {
 };
 
 /**
- * Local mirror of the real `@pptb/types` API surface (1.2.5), narrowed to the
+ * Local mirror of the real `@pptb/types` API surface (1.2.7), narrowed to the
  * namespaces this adapter actually uses (`utils`, `settings`, `events`,
  * `connections`) and with every member made optional. Optionality matters for two reasons:
  * tests construct partial fakes, and the adapter must degrade gracefully when
@@ -86,7 +86,7 @@ function normalizeTheme(theme: string | null | undefined): PlatformTheme {
   }
 
   // PPTB's real `utils.getCurrentTheme()` only ever resolves "light" | "dark"
-  // (see @pptb/types 1.2.5) — it never emits a high-contrast value. This
+  // (see @pptb/types 1.2.7) — it never emits a high-contrast value. This
   // branch is kept anyway because `PlatformTheme` is a port-level type shared
   // with `webAdapter.ts` and any future adapter; normalizing here means the
   // port's `highContrast` value stays reachable without every call site
@@ -223,7 +223,7 @@ export function createPptbAdapter(
       },
 
       async remove(key) {
-        // The real PPTB host settings API (v1.2.5) exposes only
+        // The real PPTB host settings API (v1.2.7) exposes only
         // getAll/get/set/setAll — there is no settings.remove. Emulate
         // deletion via read-modify-write. This is not atomic: a concurrent
         // write landing between getAll and setAll would be lost
